@@ -1586,6 +1586,22 @@ describe('canonicalJson', () => {
     expect(() => canonicalJson(Number.POSITIVE_INFINITY)).toThrow(/non-finite/);
     expect(() => canonicalJson(() => 1)).toThrow(/unsupported/);
   });
+
+  it('refuses objects that are not plain, rather than collapsing them to {}', () => {
+    // None of these has own enumerable keys, so without the prototype guard
+    // every one of them serialises to `{}` — two different Dates would hash
+    // identically to each other and to an empty object.
+    expect(() => canonicalJson(new Date(0))).toThrow(/only plain objects/);
+    expect(() => canonicalJson(new Map([['a', 1]]))).toThrow(/only plain objects/);
+    expect(() => canonicalJson(new Set([1]))).toThrow(/only plain objects/);
+  });
+
+  it('accepts a null-prototype object, which is still plain data', () => {
+    const bare = Object.create(null) as Record<string, unknown>;
+    bare.b = 1;
+    bare.a = 2;
+    expect(canonicalJson(bare)).toBe('{"a":2,"b":1}');
+  });
 });
 ```
 
@@ -1623,6 +1639,16 @@ export function canonicalJson(value: unknown): string {
   }
 
   if (t === 'object') {
+    // Plain objects only. A Date, Map, Set or class instance has no own
+    // enumerable keys, so it would serialise to `{}` — two different Dates
+    // hashing identically to each other and to an empty object. In a
+    // tamper-evident chain, refusing is far better than collapsing silently.
+    const proto = Object.getPrototypeOf(value);
+    if (proto !== Object.prototype && proto !== null) {
+      throw new Error(
+        `canonicalJson: only plain objects are serialisable, got ${Object.prototype.toString.call(value)}`,
+      );
+    }
     const obj = value as Record<string, unknown>;
     const keys = Object.keys(obj).filter((k) => obj[k] !== undefined).sort();
     const body = keys.map((k) => `${JSON.stringify(k)}:${canonicalJson(obj[k])}`).join(',');
@@ -1681,6 +1707,17 @@ describe('hashEvent', () => {
 
   it('changes when the schema version changes', () => {
     expect(hashEvent(draft, null, 0)).not.toBe(hashEvent({ ...draft, schemaVersion: 2 }, null, 0));
+  });
+
+  it('changes when only the type changes', () => {
+    // Built with a cast on purpose. The discriminated union forbids a type that
+    // disagrees with its payload, so this value cannot arise in play — the test
+    // is checking hashEvent's field coverage, not a reachable event. Without it,
+    // dropping `type` from the hashed material passes every other case here,
+    // and a future event type reusing an existing payload shape would hash
+    // identically to the event it was meant to be distinct from.
+    const retyped = { ...draft, type: 'MOVE_BLOCKED' } as unknown as DraftEvent;
+    expect(hashEvent(draft, null, 0)).not.toBe(hashEvent(retyped, null, 0));
   });
 
   it('changes when only the rng counter changes', () => {
