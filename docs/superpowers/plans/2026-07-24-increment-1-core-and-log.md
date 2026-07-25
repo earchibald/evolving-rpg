@@ -305,6 +305,14 @@ describe('makeGrid', () => {
     input[0] = WALL;
     expect(tileAt(g, 0, 0)).toBe(FLOOR);
   });
+
+  it('freezes what it returns, so a shared grid cannot be written through', () => {
+    // readonly typing stops nothing at runtime; a cast or JSON-sourced data
+    // writes straight through it. EMPTY_STATE.grid is shared by every fold.
+    const g = makeGrid(2, 1, [FLOOR, FLOOR]);
+    expect(Object.isFrozen(g)).toBe(true);
+    expect(Object.isFrozen(g.tiles)).toBe(true);
+  });
 });
 
 describe('idx', () => {
@@ -369,7 +377,10 @@ export function makeGrid(width: number, height: number, tiles: readonly number[]
   if (tiles.length !== width * height) {
     throw new Error(`makeGrid: expected ${width * height} tiles, got ${tiles.length}`);
   }
-  return { width, height, tiles: [...tiles] };
+  // Frozen as well as copied. EMPTY_STATE.grid is the one grid every fold in
+  // the process shares as its baseline, and `readonly` alone stops nothing at
+  // runtime — a cast, or JSON-sourced data, writes straight through it.
+  return Object.freeze({ width, height, tiles: Object.freeze([...tiles]) });
 }
 
 export function idx(grid: Grid, x: number, y: number): number {
@@ -722,6 +733,10 @@ describe('EMPTY_STATE', () => {
   it('is frozen, so a reducer mutating its accumulator fails loudly instead of corrupting every later replay', () => {
     expect(Object.isFrozen(EMPTY_STATE)).toBe(true);
     expect(Object.isFrozen(EMPTY_STATE.entities)).toBe(true);
+    // The grid too: it is a separate object, and freezing the state around it
+    // leaves it writable. Every fold in the process shares this one grid.
+    expect(Object.isFrozen(EMPTY_STATE.grid)).toBe(true);
+    expect(Object.isFrozen(EMPTY_STATE.grid.tiles)).toBe(true);
   });
 });
 ```
@@ -1234,6 +1249,18 @@ export function apply(state: GameState, event: GameEvent): GameState {
 
     case 'TURN_ADVANCED':
       return { ...state, turn: event.payload.turn, activeEntityId: event.payload.activeEntityId };
+
+    default: {
+      // Exhaustive at compile time — the never assignment is what proves it —
+      // and loud at runtime. Without this arm the switch falls off the end and
+      // returns undefined while still typed GameState, so a log carrying an
+      // event type this engine does not know folds to nothing and every later
+      // read dereferences it. A log from a newer engine is an expected input,
+      // not an exotic one, which is exactly why this must throw rather than
+      // quietly return the state unchanged.
+      const unhandled: never = event;
+      throw new Error(`apply: unknown event type ${String((unhandled as { type: unknown }).type)}`);
+    }
   }
 }
 ```
@@ -1877,12 +1904,36 @@ describe('append', () => {
     expect(() => append(emptyLog(), 'nope', createWorld(1, 12, 8, 10))).toThrow(/unknown head/);
   });
 
-  it('refuses the same draft twice at the same head', () => {
-    // Same content plus same position means the same id, so this is a
-    // double-append rather than a legitimate new event.
+  it('returns the existing event and an unchanged log for a repeat append', () => {
+    // Same content plus same position is the same event, not corruption.
+    // Convergent history is ordinary once refs exist — undo a move and redo it,
+    // or make the same move in two forks — so this must be idempotent.
     const draft = createWorld(1, 12, 8, 10);
     const first = append(emptyLog(), null, draft);
-    expect(() => append(first.log, null, draft)).toThrow(/duplicate event id/);
+    const again = append(first.log, null, draft);
+
+    expect(again.event).toBe(first.event);
+    expect(again.log.events.size).toBe(first.log.events.size);
+    expect(again.log).toBe(first.log);
+  });
+
+  it('lets a world redo a move it reset away', () => {
+    // The regression that shipped: reset moves a head back, and the next press
+    // of the same key reproduces an id already in the log. This threw, and the
+    // debug view has no try/catch, so that key silently stopped working.
+    const first = append(emptyLog(), null, createWorld(20260724, 24, 16, 60));
+    let log = first.log;
+
+    const moveOnce = (head: string): string => {
+      const moved = append(log, head, attemptMove(fold(log, head), 'player', 1, 0));
+      log = moved.log;
+      return moved.event.id;
+    };
+
+    const afterFirst = moveOnce(first.event.id);
+    // Rewind to before that move, then make exactly the same move again.
+    expect(() => moveOnce(first.event.id)).not.toThrow();
+    expect(moveOnce(first.event.id)).toBe(afterFirst);
   });
 });
 
@@ -1963,6 +2014,41 @@ describe('verifyChain', () => {
     expect(verifyChain(emptyLog(), null)).toBeNull();
   });
 
+  it('refuses an event type it cannot reduce, instead of folding to nothing', () => {
+    // An alien type hashes perfectly well — hashing proves integrity, never
+    // intelligibility. Before this check, fold() returned undefined while
+    // verifyChain reported the log sound, which is precisely what the spec says
+    // must never happen: abort and report, never silently continue. A log
+    // written by a newer engine is the expected way this arrives.
+    const alien = {
+      type: 'STRIKE',
+      schemaVersion: 1,
+      rngCounter: 0,
+      payload: { attacker: 'player', target: 'goblin', damage: 3 },
+    } as unknown as DraftEvent;
+
+    const { log, event } = append(emptyLog(), null, alien);
+    const divergence = verifyChain(log, event.id);
+
+    expect(divergence).not.toBeNull();
+    expect(divergence?.reason).toMatch(/unknown event type STRIKE/);
+  });
+
+  it('refuses an event whose schemaVersion this engine does not implement', () => {
+    const future = {
+      type: 'MOVE',
+      schemaVersion: 99,
+      rngCounter: 0,
+      payload: { entityId: 'player', from: { x: 0, y: 0 }, to: { x: 1, y: 0 } },
+    } as unknown as DraftEvent;
+
+    const { log, event } = append(emptyLog(), null, future);
+    const divergence = verifyChain(log, event.id);
+
+    expect(divergence).not.toBeNull();
+    expect(divergence?.reason).toMatch(/schemaVersion 99/);
+  });
+
   it('catches a tampered payload', () => {
     const { log, head } = build();
     const tampered: EventLog = { events: new Map(log.events) };
@@ -2007,9 +2093,14 @@ That last test needs two more imports at the top of the file:
 
 ```ts
 import { SCHEMA_VERSIONS } from '../../src/core/events.js';
+import type { DraftEvent } from '../../src/core/events.js';
 ```
 
 `GameEvent` is already imported as a type and is still used by the tamper test above.
+`DraftEvent` is needed by the two rejection tests, which cast synthetic events
+past the union deliberately — they exercise what `verifyChain` does with input
+the type system cannot vouch for, which is the only kind of input that matters
+for a log read off disk.
 
 - [ ] **Step 2: Run it to verify it fails**
 
@@ -2023,6 +2114,7 @@ import { apply } from '../core/apply.js';
 import { EMPTY_STATE } from '../core/state.js';
 import type { GameState } from '../core/state.js';
 import type { DraftEvent, GameEvent } from '../core/events.js';
+import { SCHEMA_VERSIONS } from '../core/events.js';
 import { hashEvent } from './hash.js';
 
 export interface EventLog {
@@ -2070,7 +2162,16 @@ export function append(
   }
 
   const id = hashEvent(draft, head, seq);
-  if (log.events.has(id)) throw new Error(`append: duplicate event id ${id}`);
+
+  // Idempotent, not fatal. Identity is content plus position, so an id already
+  // present means this exact event at this exact point in history already
+  // exists — which is a legitimate, ordinary occurrence once refs exist:
+  // reset a world and redo the move you just undid, or make the same move in
+  // two forks of one state. Convergent history is a feature of content
+  // addressing, and returning the existing event keeps the log append-only
+  // while letting all three work.
+  const existing = log.events.get(id);
+  if (existing !== undefined) return { log, event: existing };
 
   const event = deepFreeze({ ...draft, id, parent: head, seq } as GameEvent);
   const events = new Map(log.events);
@@ -2112,20 +2213,44 @@ export interface Divergence {
  * Never repairs anything — a divergence is a fact to report, not to smooth over.
  */
 export function verifyChain(log: EventLog, head: string | null): Divergence | null {
+  // Treated as a runtime lookup table rather than a typed record, because the
+  // whole point here is that the input is untrusted: an event's `type` is
+  // `EventType` to the compiler but an arbitrary string in a log read off disk.
+  const known: Record<string, number> = SCHEMA_VERSIONS;
+
   let state = EMPTY_STATE;
+  let expectedSeq = 0;
 
   for (const event of chain(log, head)) {
-    const draft = {
-      type: event.type,
-      schemaVersion: event.schemaVersion,
-      rngCounter: event.rngCounter,
-      payload: event.payload,
-    } as DraftEvent;
-
-    const recomputed = hashEvent(draft, event.parent, event.seq);
+    // `hashEvent` reads only type, schemaVersion, rngCounter and payload, and
+    // GameEvent is DraftEvent plus its position fields, so the event goes
+    // straight in. A hand-rolled projection here would be a second encoding of
+    // "what gets hashed" — and forgetting to update it after adding a hashed
+    // field would make every honest chain start failing verification.
+    const recomputed = hashEvent(event, event.parent, event.seq);
     if (recomputed !== event.id) {
       return { seq: event.seq, eventId: event.id, reason: `hash mismatch, recomputed ${recomputed}` };
     }
+
+    // Reject unreducible events *before* apply sees them. An alien type hashes
+    // perfectly well — hashing proves integrity, never intelligibility.
+    const version = known[event.type];
+    if (version === undefined) {
+      return { seq: event.seq, eventId: event.id, reason: `unknown event type ${String(event.type)}` };
+    }
+    if (event.schemaVersion !== version) {
+      return {
+        seq: event.seq,
+        eventId: event.id,
+        reason: `${event.type} is schemaVersion ${event.schemaVersion}, this engine implements ${version}`,
+      };
+    }
+
+    if (event.seq !== expectedSeq) {
+      return { seq: event.seq, eventId: event.id, reason: `sequence gap: expected seq ${expectedSeq}` };
+    }
+    expectedSeq += 1;
+
     if (state.rngCounter !== event.rngCounter) {
       return {
         seq: event.seq,
