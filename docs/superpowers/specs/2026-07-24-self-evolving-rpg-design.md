@@ -266,8 +266,19 @@ before any code, matching the practice in `~/Code/agent-adventures`. Each one en
 | Building all four rungs at once | increment discipline; each increment ends playable |
 | Canon poisoned by a bad commit | consistency guard, plus forking as the escape hatch |
 
+## Settled by probe
+
+- **`localStorage` persists across reloads** in a page published from Claude Code — confirmed
+  empirically at five successive loads, 2026-07-24. A world can therefore carry its own save
+  between sessions with no export round-trip, and the `downloads` capability becomes a
+  convenience for sharing rather than the primary save path. The quota ceiling (~5–10 MB) still
+  applies, so snapshot-and-truncate stays in the design.
+
 ## Open
 
-- Whether a page published from Claude Code exposes `window.claude.complete`, and whether
-  `localStorage` survives a reload there. A probe is deployed; until it reports, the `sdk`
-  transport is the development default and nothing in this design depends on the answer.
+- Whether a page published from Claude Code exposes `window.claude.complete`. Anthropic's own
+  documentation confirms AI-powered artifacts exist, with no API key needed and usage counted
+  against each viewer's own subscription; what remains unverified is only whether that same
+  ambient runtime reaches pages published through Claude Code rather than authored in a chat.
+  Until it reports, the `sdk` transport is the development default. Nothing in this design
+  depends on the answer — the Oracle's transports are interchangeable by construction.

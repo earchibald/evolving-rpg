@@ -2548,6 +2548,22 @@ import { createWorld, attemptMove, advanceTurn } from '../src/core/commands.js';
 import { canonicalJson } from '../src/log/canonical.js';
 import { ENGINE_VERSION } from '../src/version.js';
 
+// A red golden-replay test means a real regression, or a deliberate behaviour
+// change needing a schemaVersion bump and an upcaster. It does not mean the
+// fixture is stale. Regenerating is the one action that silently destroys the
+// guarantee this whole project rests on, and it was previously a single
+// frictionless command — so it now requires saying so out loud.
+if (process.env.ALLOW_GOLDEN_REGEN !== '1') {
+  console.error(
+    'Refusing to regenerate tests/fixtures/golden-run.json.\n\n' +
+      'If the golden test is failing, diagnose the regression — do not replace\n' +
+      'the fixture. If you genuinely intend to replace it, and have bumped the\n' +
+      'affected schemaVersion and written any upcaster needed:\n\n' +
+      '  ALLOW_GOLDEN_REGEN=1 npm run golden\n',
+  );
+  process.exit(1);
+}
+
 const SEED = 12345;
 const WIDTH = 24;
 const HEIGHT = 16;
@@ -2604,8 +2620,11 @@ console.log(`finalStateHash: ${fixture.finalStateHash}`);
 
 - [ ] **Step 2: Generate the fixture**
 
-Run: `npm run golden`
+Run: `ALLOW_GOLDEN_REGEN=1 npm run golden`
 Expected: prints `events: 201`, plus a head hash and a final state hash.
+
+The env var is required by the guard above. This is the one time it should be
+used — after this, a bare `npm run golden` refuses, which is the point.
 
 - [ ] **Step 3: Write the golden replay test**
 
@@ -2618,8 +2637,9 @@ import fixture from '../fixtures/golden-run.json';
 import { emptyLog, append, chain, fold, verifyChain } from '../../src/log/chain.js';
 import { createWorld, attemptMove, advanceTurn } from '../../src/core/commands.js';
 import { canonicalJson } from '../../src/log/canonical.js';
+import { hashEvent } from '../../src/log/hash.js';
 import type { EventLog } from '../../src/log/chain.js';
-import type { GameEvent } from '../../src/core/events.js';
+import type { DraftEvent, GameEvent } from '../../src/core/events.js';
 
 const STEPS: Record<string, readonly [number, number]> = {
   N: [0, -1], S: [0, 1], E: [1, 0], W: [-1, 0],
@@ -2676,6 +2696,40 @@ describe('golden replay', () => {
     rebuilt.forEach((event, i) => {
       expect(canonicalJson(event)).toBe(canonicalJson(recorded[i]));
     });
+  });
+
+  it('detects a counter that disagrees with the state, even when the event hashes correctly', () => {
+    // The flipped-tile case below can only ever fire the hash check, because
+    // rngCounter is itself hashed — so no payload tamper can reach the counter
+    // comparison, and deleting that whole branch would break nothing. This
+    // forges the case the counter check actually exists for: an event that is
+    // internally self-consistent but disagrees with the state the events before
+    // it produce. A spliced or regrafted event looks exactly like this.
+    const log = logFromFixture();
+    const events = chain(log, fixture.head);
+    const last = events[events.length - 1];
+    if (last === undefined) throw new Error('fixture problem: empty chain');
+
+    const drifted = { ...last, rngCounter: last.rngCounter + 1 };
+    const reHashed = {
+      ...drifted,
+      id: hashEvent(
+        {
+          type: drifted.type,
+          schemaVersion: drifted.schemaVersion,
+          rngCounter: drifted.rngCounter,
+          payload: drifted.payload,
+        } as DraftEvent,
+        drifted.parent,
+        drifted.seq,
+      ),
+    } as GameEvent;
+    log.events.set(reHashed.id, reHashed);
+
+    const divergence = verifyChain(log, reHashed.id);
+    expect(divergence).not.toBeNull();
+    expect(divergence?.reason).toMatch(/rng counter/);
+    expect(divergence?.seq).toBe(last.seq);
   });
 
   it('detects a single flipped tile in the recorded world', () => {
