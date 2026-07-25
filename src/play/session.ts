@@ -1,4 +1,6 @@
-import { append, fold } from '../log/chain.js';
+import { append, fold, chain } from '../log/chain.js';
+import { getRef, fork, reset, listRefs } from '../log/refs.js';
+import type { Refs } from '../log/refs.js';
 import { attemptMove, advanceTurn, endsTurn, wait, takeUnderfoot, outcome } from '../core/commands.js';
 import { decide } from '../core/ai.js';
 import { findEntity, isAlive } from '../core/entity.js';
@@ -123,4 +125,53 @@ export function runWorldTurns(position: Position, playerId: string, maxSteps = 6
   }
 
   return current;
+}
+
+/** Marks a world nobody is playing any more. Visible in the name on purpose:
+ *  a graveyard you have to consult a field to recognise is not a graveyard. */
+export const GRAVE_MARK = '†';
+
+export function isGrave(name: string): boolean {
+  return name.includes(GRAVE_MARK);
+}
+
+export interface Burial {
+  refs: Refs;
+  /** The world your corpse is in, or null if you are still alive. */
+  grave: string | null;
+}
+
+/**
+ * What death does.
+ *
+ * The branch you died on is kept, under a new name, forever. The world you are
+ * playing rewinds to its beginning. Nothing is deleted — `reset` moves a
+ * pointer and the abandoned events stay exactly where they were, which is the
+ * property increment 1 built and never had a reason to use until now.
+ *
+ * The cost is paid by construction rather than by bookkeeping. Rewinding
+ * re-folds from the root, so anything you had picked up is un-picked-up: the
+ * keen edge is back on the floor where it started, and the only version of you
+ * that ever held it is the one lying dead on the other branch. No inventory
+ * needs to be taken away, because state was never stored in the first place.
+ *
+ * This is the answer to "why fork". Until dying was something history had to
+ * keep, forking was a devtool.
+ */
+export function buryIfDead(
+  log: EventLog,
+  refs: Refs,
+  active: string,
+  playerId = 'player',
+): Burial {
+  const ref = getRef(refs, active);
+  if (outcome(fold(log, ref.head), playerId) !== 'dead') return { refs, grave: null };
+
+  const past = listRefs(refs).filter((r) => r.name.startsWith(`${active}${GRAVE_MARK}`)).length;
+  const grave = `${active}${GRAVE_MARK}${past + 1}`;
+
+  const kept = fork(log, refs, active, grave, ref.head, 'died here');
+
+  const root = chain(log, ref.head)[0];
+  return { refs: reset(log, kept, active, root?.id ?? null), grave };
 }

@@ -1,7 +1,7 @@
 import { emptyLog, append, chain, fold, verifyChain } from '../log/chain.js';
 import { emptyRefs, createRef, getRef, setHead, fork, reset, listRefs } from '../log/refs.js';
 import { createWorld } from '../core/commands.js';
-import { playerStep, playerWait, runWorldTurns } from '../play/session.js';
+import { playerStep, playerWait, runWorldTurns, buryIfDead, isGrave } from '../play/session.js';
 import { isAlive } from '../core/entity.js';
 import { outcome, toHit, hitChance } from '../core/commands.js';
 import { itemAt } from '../core/item.js';
@@ -217,7 +217,9 @@ function render(): void {
   for (const ref of listRefs(refs)) {
     const li = document.createElement('li');
     const marker = ref.name === active ? '→ ' : '  ';
-    li.textContent = `${marker}${ref.name} @ ${String(ref.head).slice(0, 10)} (engine ${ref.engineVersion})`;
+    const kind = isGrave(ref.name) ? ' — a grave' : '';
+    li.textContent = `${marker}${ref.name} @ ${String(ref.head).slice(0, 10)}${kind}`;
+    if (isGrave(ref.name)) li.classList.add('grave');
     li.style.cursor = 'pointer';
     li.addEventListener('click', () => {
       active = ref.name;
@@ -266,8 +268,17 @@ function narrate(fresh: readonly GameEvent[]): string {
 }
 
 function finish(before: number, head: string): void {
+  const told = narrate(chain(log, head).slice(before));
+
+  // Death is handled here rather than inside the step, because it is not a move
+  // — it is what the world does about a move that went badly.
+  const burial = buryIfDead(log, refs, active);
+  refs = burial.refs;
+
   persist();
-  say(narrate(chain(log, head).slice(before)));
+  say(burial.grave === null
+    ? told
+    : `${told}${told === '' ? '' : '  ·  '}you die. your body stays in ${burial.grave}; the world begins again`);
   render();
 }
 
