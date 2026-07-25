@@ -161,7 +161,8 @@ describe('fold', () => {
   it('reaches a state where the player exists and turns have passed', () => {
     const { log, head } = build();
     const state = fold(log, head);
-    expect(state.entities).toHaveLength(1);
+    expect(state.entities.length).toBeGreaterThanOrEqual(1);
+    expect(state.entities[0]?.id).toBe('player');
     expect(state.turn).toBeGreaterThanOrEqual(2);
     expect(state.rngCounter).toBeGreaterThan(0);
   });
@@ -192,18 +193,18 @@ describe('verifyChain', () => {
     // must never happen: abort and report, never silently continue. A log
     // written by a newer engine is the expected way this arrives.
     const alien = {
-      type: 'STRIKE',
+      type: '__NEVER_AN_EVENT__',
       schemaVersion: 1,
       rngCounter: 0,
       rngDraws: 0,
-      payload: { attacker: 'player', target: 'goblin', damage: 3 },
+      payload: { nonsense: true },
     } as unknown as DraftEvent;
 
     const { log, event } = append(emptyLog(), null, alien);
     const divergence = verifyChain(log, event.id);
 
     expect(divergence).not.toBeNull();
-    expect(divergence?.reason).toMatch(/unknown event type STRIKE/);
+    expect(divergence?.reason).toMatch(/unknown event type __NEVER_AN_EVENT__/);
   });
 
   it('refuses an event whose schemaVersion this engine does not implement', () => {

@@ -50,21 +50,40 @@ export function upcastEvent(raw: unknown): DraftEvent {
   }
   if (version === current) return raw as DraftEvent;
 
-  if (version !== 1) throw new Error(`upcastEvent: no upcaster from ${type} v${version}`);
-
+  // WORLD_INIT has had two changes, so it walks the ladder a step at a time
+  // rather than jumping. Each `if` is one version's worth of change, and adding
+  // v4 later means adding one more — not rewriting the ones below it.
   if (type === 'WORLD_INIT') {
-    const { counterAfter, ...rest } = event.payload as { counterAfter?: unknown };
-    if (typeof counterAfter !== 'number') {
-      throw new Error('upcastEvent: WORLD_INIT v1 has no counterAfter to derive draws from');
+    const payload = { ...event.payload };
+    let rngDraws = typeof event.rngDraws === 'number' ? event.rngDraws : 0;
+
+    if (version <= 1) {
+      // v1 → v2: randomness accounting moved from the payload to the envelope.
+      const counterAfter = payload.counterAfter;
+      if (typeof counterAfter !== 'number') {
+        throw new Error('upcastEvent: WORLD_INIT v1 has no counterAfter to derive draws from');
+      }
+      rngDraws = counterAfter - event.rngCounter;
+      delete payload.counterAfter;
     }
+
+    if (version <= 2) {
+      // v2 → v3: a world arrives with its inhabitants. Worlds written before
+      // that had none, and an empty list says so honestly — inventing
+      // occupants for an old log would be fabricating history, not migrating it.
+      payload.opponents = payload.opponents ?? [];
+    }
+
     return {
       type: 'WORLD_INIT',
       schemaVersion: current,
       rngCounter: event.rngCounter,
-      rngDraws: counterAfter - event.rngCounter,
-      payload: rest,
-    } as DraftEvent;
+      rngDraws,
+      payload,
+    } as unknown as DraftEvent;
   }
+
+  if (version !== 1) throw new Error(`upcastEvent: no upcaster from ${type} v${version}`);
 
   // Cast through unknown: the payload came off disk as a Record, and narrowing
   // it per type here would duplicate the validation verifyChain already does

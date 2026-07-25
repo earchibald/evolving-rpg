@@ -52,8 +52,8 @@ describe('upcastEvent', () => {
   });
 
   it('refuses an event type it has no upcaster for', () => {
-    expect(() => upcastEvent({ type: 'STRIKE', schemaVersion: 1, rngCounter: 0, payload: {} }))
-      .toThrow(/unknown event type STRIKE/);
+    expect(() => upcastEvent({ type: '__NEVER_AN_EVENT__', schemaVersion: 1, rngCounter: 0, payload: {} }))
+      .toThrow(/unknown event type __NEVER_AN_EVENT__/);
   });
 });
 

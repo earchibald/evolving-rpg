@@ -1,9 +1,13 @@
 import { emptyLog, append, chain, fold, verifyChain } from '../log/chain.js';
 import { emptyRefs, createRef, getRef, setHead, fork, reset, listRefs } from '../log/refs.js';
-import { createWorld, attemptMove, advanceTurn, endsTurn } from '../core/commands.js';
+import { createWorld } from '../core/commands.js';
+import { playerStep, runWorldTurns } from '../play/session.js';
+import { isAlive } from '../core/entity.js';
 import { WALL, idx } from '../core/grid.js';
 import type { EventLog } from '../log/chain.js';
 import type { Refs } from '../log/refs.js';
+import type { Entity } from '../core/entity.js';
+import type { GameEvent } from '../core/events.js';
 
 const SEED = 20260724;
 const WIDTH = 24;
@@ -40,6 +44,14 @@ function render(): void {
   const state = fold(log, head);
   const player = state.entities[0];
 
+  // Living creatures win the tile over corpses, so a body never hides a threat.
+  const occupant = new Map<number, Entity>();
+  for (const e of state.entities) {
+    const key = idx(state.grid, e.pos.x, e.pos.y);
+    const standing = occupant.get(key);
+    if (standing === undefined || (!isAlive(standing) && isAlive(e))) occupant.set(key, e);
+  }
+
   const grid = el('grid');
   grid.style.gridTemplateColumns = `repeat(${state.grid.width}, 20px)`;
   grid.textContent = '';
@@ -48,12 +60,18 @@ function render(): void {
       const cell = document.createElement('div');
       cell.className = 'cell';
       if (state.grid.tiles[idx(state.grid, x, y)] === WALL) cell.classList.add('wall');
-      if (player !== undefined && player.pos.x === x && player.pos.y === y) cell.classList.add('player');
+
+      const here = occupant.get(idx(state.grid, x, y));
+      if (here !== undefined) {
+        if (!isAlive(here)) cell.classList.add('dead');
+        else if (here.kind === 'you') cell.classList.add('player');
+        else cell.classList.add('foe');
+      }
       grid.appendChild(cell);
     }
   }
 
-  const rows: Array<readonly [string, string]> = [
+  const rows: Array<[string, string]> = [
     ['world', active],
     ['turn', String(state.turn)],
     ['position', player === undefined ? '—' : `${player.pos.x}, ${player.pos.y}`],
@@ -64,6 +82,13 @@ function render(): void {
     ['events in chain', String(chain(log, head).length)],
     ['events in log', String(log.events.size)],
   ];
+
+  for (const e of state.entities) {
+    rows.push([
+      `${e.id}${e.kind === 'you' ? '' : ' (' + e.kind + ')'}`,
+      isAlive(e) ? `hp ${e.stats.hp} at ${e.pos.x}, ${e.pos.y}` : `dead at ${e.pos.x}, ${e.pos.y}`,
+    ]);
+  }
   const readout = el('readout');
   readout.textContent = '';
   for (const [label, value] of rows) {
@@ -86,25 +111,42 @@ function render(): void {
   }
 }
 
-function step(dx: number, dy: number): void {
-  const head = getRef(refs, active).head;
-  const draft = attemptMove(fold(log, head), 'player', dx, dy);
-  const moved = append(log, head, draft);
-  log = moved.log;
-  refs = setHead(refs, active, moved.event.id);
+/** Turns the events one keypress produced into a line a person can read. */
+function narrate(fresh: readonly GameEvent[]): string {
+  const lines: string[] = [];
 
-  // A refused action costs no turn. The attempt is still recorded — bumping a
-  // wall says something real about whether the map reads legibly — but the
-  // clock does not move for something that did not happen.
-  if (endsTurn(draft)) {
-    const turned = append(log, moved.event.id, advanceTurn(fold(log, moved.event.id)));
-    log = turned.log;
-    refs = setHead(refs, active, turned.event.id);
+  for (const event of fresh) {
+    if (event.type === 'MOVE_BLOCKED') {
+      lines.push(`blocked: ${event.payload.reason} — no turn spent`);
+      continue;
+    }
+    if (event.type !== 'STRIKE') continue;
+
+    const p = event.payload;
+    const mine = p.attackerId === 'player';
+    const who = mine ? `you hit ${p.targetId}` : `${p.attackerId} hits you`;
+    const missed = mine ? `you miss ${p.targetId}` : `${p.attackerId} misses you`;
+    lines.push(p.hit ? `${who} for ${p.damage} (${p.roll} vs ${p.needed})` : `${missed} (${p.roll} vs ${p.needed})`);
   }
 
-  say(moved.event.type === 'MOVE_BLOCKED'
-    ? `blocked: ${moved.event.payload.reason} — no turn spent`
-    : '');
+  return lines.join('  ·  ');
+}
+
+function step(dx: number, dy: number): void {
+  const head = getRef(refs, active).head;
+  if (head === null) return;
+
+  const before = chain(log, head).length;
+
+  // One keypress is your action *and* everything the world does in reply. The
+  // turn loop lives in play/session so this view and the golden generator drive
+  // the game the same way — they drifted once when it was duplicated.
+  const acted = playerStep({ log, head }, 'player', dx, dy);
+  const after = runWorldTurns(acted.position, 'player');
+  log = after.log;
+  refs = setHead(refs, active, after.head);
+
+  say(narrate(chain(log, after.head).slice(before)));
   render();
 }
 

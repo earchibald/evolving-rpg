@@ -18,6 +18,9 @@ const worldInit: GameEvent = {
     tiles: [FLOOR, FLOOR, WALL, FLOOR, FLOOR, FLOOR],
     seed: 99,
     player: { id: 'player', kind: 'you', pos: { x: 0, y: 0 }, stats: { hp: 10, might: 3, wits: 3, speed: 4 }, tags: [] },
+    opponents: [
+      { id: 'thing-1', kind: 'thing', pos: { x: 1, y: 1 }, stats: { hp: 5, might: 4, wits: 1, speed: 3 }, tags: [] },
+    ],
   },
 };
 
@@ -29,8 +32,12 @@ describe('apply WORLD_INIT', () => {
     expect(tileAt(started.grid, 2, 0)).toBe(WALL);
   });
 
-  it('places the player and makes them active on turn 1', () => {
-    expect(started.entities).toHaveLength(1);
+  it('seats the player first, then the world inhabitants, and starts on turn 1', () => {
+    // Player first is load-bearing: several readouts and the AI's quarry lookup
+    // assume entities[0] is you.
+    expect(started.entities).toHaveLength(2);
+    expect(started.entities[0]?.id).toBe('player');
+    expect(started.entities[1]?.id).toBe('thing-1');
     expect(started.entities[0]?.pos).toEqual({ x: 0, y: 0 });
     expect(started.activeEntityId).toBe('player');
     expect(started.turn).toBe(1);
@@ -151,6 +158,10 @@ describe('apply TURN_ADVANCED', () => {
 
 describe('apply with an event it cannot reduce', () => {
   it('throws rather than falling off the switch and returning undefined', () => {
+    // The stand-in used to be 'STRIKE' — which then shipped as a real event
+    // type in increment 2, quietly turning this into a test that an ordinary
+    // event throws. An impossible case must be named something that will stay
+    // impossible.
     // This is the only test that pins the default arm. verifyChain rejects
     // unknown types before apply ever sees them, so every other test passes
     // with the arm deleted — and then fold() silently returns undefined while
@@ -158,14 +169,14 @@ describe('apply with an event it cannot reduce', () => {
     // tests stay green.
     const alien = {
       id: 'x', parent: null, seq: 0,
-      type: 'STRIKE',
+      type: '__NEVER_AN_EVENT__',
       schemaVersion: 1,
       rngCounter: 0,
       rngDraws: 0,
-      payload: { attacker: 'player', target: 'goblin', damage: 3 },
+      payload: { nonsense: true },
     } as unknown as GameEvent;
 
-    expect(() => apply(EMPTY_STATE, alien)).toThrow(/unknown event type STRIKE/);
+    expect(() => apply(EMPTY_STATE, alien)).toThrow(/unknown event type __NEVER_AN_EVENT__/);
   });
 });
 

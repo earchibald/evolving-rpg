@@ -2,7 +2,8 @@ import { sha256 } from '@noble/hashes/sha256';
 import { bytesToHex } from '@noble/hashes/utils';
 import fixture from '../fixtures/golden-run.json';
 import { emptyLog, append, chain, fold, verifyChain } from '../../src/log/chain.js';
-import { createWorld, attemptMove, advanceTurn, endsTurn } from '../../src/core/commands.js';
+import { createWorld } from '../../src/core/commands.js';
+import { playerStep, runWorldTurns } from '../../src/play/session.js';
 import { canonicalJson } from '../../src/log/canonical.js';
 import { hashEvent } from '../../src/log/hash.js';
 import type { EventLog } from '../../src/log/chain.js';
@@ -22,17 +23,32 @@ describe('golden replay', () => {
   it('has the expected shape', () => {
     expect(fixture.script).toHaveLength(100);
 
-    // Encoded as the rule rather than a magic total: one world init, one event
-    // per script input, and a turn advance only for inputs that actually
-    // happened. A blocked move is recorded but costs no turn — so if that
-    // regressed, this fails, where a bare `toHaveLength(170)` would only say
-    // the number moved without saying why.
-    const count = (t: string): number =>
-      (fixture.events as ReadonlyArray<{ type: string }>).filter((e) => e.type === t).length;
+    type Recorded = { type: string; rngDraws: number; payload: Record<string, unknown> };
+    const events = fixture.events as unknown as ReadonlyArray<Recorded>;
+    const count = (t: string): number => events.filter((e) => e.type === t).length;
 
-    expect(count('MOVE') + count('MOVE_BLOCKED')).toBe(100);
-    expect(count('TURN_ADVANCED')).toBe(count('MOVE'));
-    expect(fixture.events).toHaveLength(1 + 100 + count('MOVE'));
+    // The run is a real playthrough, not a walk: the world takes its turns too,
+    // so the totals are not derivable from the script alone. What *is* fixed is
+    // that every script input produces exactly one player action — a move, a
+    // refusal, or a blow.
+    const byPlayer = events.filter(
+      (e) => e.payload.entityId === 'player' || e.payload.attackerId === 'player',
+    );
+    expect(byPlayer).toHaveLength(100);
+
+    // Draw accounting, stated as the rule rather than as totals. This is the
+    // assertion that makes verifyChain's counter check worth having: before
+    // combat existed every event declared the same count, and the check could
+    // be satisfied without ever noticing.
+    for (const e of events) {
+      if (e.type === 'STRIKE') expect(e.rngDraws).toBe(2);
+      else if (e.type === 'WORLD_INIT') expect(e.rngDraws).toBeGreaterThan(0);
+      else expect(e.rngDraws).toBe(0);
+    }
+
+    // A fixture with no fight in it would leave the newest and riskiest code
+    // untouched by the strongest test in the repo.
+    expect(count('STRIKE')).toBeGreaterThan(0);
   });
 
   it('verifies: every hash recomputes and every rng counter lines up', () => {
@@ -56,26 +72,17 @@ describe('golden replay', () => {
     log = first.log;
     let head = first.event.id;
 
-    // This loop is deliberately a restatement of the generator's, not an import
-    // of it: sharing the code would make a bug in the loop invisible to the very
-    // test meant to catch it. The cost is that the two can drift — and they just
-    // did, when blocked moves stopped ending a turn and only the generator was
-    // updated. That drift is the test doing its job, so the fix is to restate
-    // the rule here rather than to collapse the duplication.
+    // Deliberately a restatement of the generator's drive loop, not an import
+    // of it — sharing the code would make a bug in the loop invisible to the
+    // very test meant to catch it. It has already drifted once, and the test
+    // caught it, which is the argument for keeping the duplication.
     for (const key of fixture.script) {
       const step = STEPS[key];
       if (step === undefined) throw new Error(`bad script character ${key}`);
-
-      const draft = attemptMove(fold(log, head), 'player', step[0], step[1]);
-      const moved = append(log, head, draft);
-      log = moved.log;
-      head = moved.event.id;
-
-      if (endsTurn(draft)) {
-        const turned = append(log, head, advanceTurn(fold(log, head)));
-        log = turned.log;
-        head = turned.event.id;
-      }
+      const acted = playerStep({ log, head }, 'player', step[0], step[1]);
+      const after = runWorldTurns(acted.position, 'player');
+      log = after.log;
+      head = after.head;
     }
 
     expect(head).toBe(fixture.head);

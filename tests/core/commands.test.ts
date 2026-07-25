@@ -1,6 +1,10 @@
-import { createWorld, attemptMove, advanceTurn, endsTurn } from '../../src/core/commands.js';
+import {
+  createWorld, attemptMove, advanceTurn, endsTurn,
+  OPPONENT_COUNT, OPPONENT_MIN_DISTANCE,
+} from '../../src/core/commands.js';
 import { apply } from '../../src/core/apply.js';
-import { generateMap } from '../../src/core/mapgen.js';
+import { generateMap, pickSpawnPoints } from '../../src/core/mapgen.js';
+import { intBetween } from '../../src/core/rng.js';
 import { EMPTY_STATE } from '../../src/core/state.js';
 import { FLOOR, WALL, makeGrid } from '../../src/core/grid.js';
 import type { GameEvent } from '../../src/core/events.js';
@@ -17,14 +21,36 @@ describe('createWorld', () => {
       .toBe(JSON.stringify(createWorld(4242, 24, 16, 60)));
   });
 
-  it('starts from counter zero and records the counter generation actually reached', () => {
+  it('records every draw generation made, the map and its inhabitants alike', () => {
     const draft = createWorld(4242, 24, 16, 60);
     expect(draft.rngCounter).toBe(0);
-    // Tied to the generator's real output rather than merely positive: a
-    // hardcoded constant satisfies a > 0 check while silently breaking replay.
-    // Draws now live on the envelope, not in the payload. Generation begins at
-    // counter 0, so the counter it finished on is exactly the draw count.
-    expect(draft.rngDraws).toBe(generateMap(4242, 0, 24, 16, 60).counterAfter);
+
+    // Tied to the generators' real output rather than merely positive: a
+    // hardcoded constant satisfies a `> 0` check while silently breaking replay.
+    // Placing inhabitants draws too, so the total is the map's plus theirs —
+    // which is the whole reason the draw count had to move onto the envelope.
+    const map = generateMap(4242, 0, 24, 16, 60);
+    const spawned = pickSpawnPoints(
+      4242, map.counterAfter, map.grid, map.start, OPPONENT_COUNT, OPPONENT_MIN_DISTANCE,
+    );
+    expect(draft.rngDraws).toBe(spawned.counterAfter);
+    expect(draft.rngDraws).toBeGreaterThan(map.counterAfter);
+  });
+
+  it('places its inhabitants reachable, apart, and clear of you', () => {
+    const draft = createWorld(4242, 24, 16, 60);
+    const { player, opponents } = draft.payload;
+    expect(opponents).toHaveLength(OPPONENT_COUNT);
+
+    const seen = new Set<string>();
+    for (const o of opponents) {
+      const distance = Math.abs(o.pos.x - player.pos.x) + Math.abs(o.pos.y - player.pos.y);
+      expect(distance).toBeGreaterThanOrEqual(OPPONENT_MIN_DISTANCE);
+      seen.add(`${o.pos.x},${o.pos.y}`);
+    }
+    // Distinct tiles: picking from a shrinking list is what guarantees this,
+    // and two creatures on one square would be a state nothing else expects.
+    expect(seen.size).toBe(OPPONENT_COUNT);
   });
 
   it('gives the player the four stats', () => {
@@ -75,9 +101,26 @@ describe('attemptMove', () => {
     expect(draft.payload).toMatchObject({ reason: 'out-of-bounds' });
   });
 
-  it('blocks on another living entity', () => {
+  it('strikes a hostile occupant instead of moving into it', () => {
+    // Bump to attack: walking into something hostile is the attack, which keeps
+    // the entire game on four inputs.
     const state = fixture([
       { id: 'other', kind: 'thing', pos: { x: 0, y: 0 }, stats: { hp: 4, might: 1, wits: 1, speed: 1 }, tags: [] },
+    ]);
+    const draft = attemptMove(state, 'player', -1, 0);
+    expect(draft.type).toBe('STRIKE');
+    expect(draft.payload).toMatchObject({ attackerId: 'player', targetId: 'other' });
+    // The literal 2, deliberately, not STRIKE_DRAWS: asserting a constant
+    // against itself moves both sides together and can never fail. Caught by
+    // mutating the constant and watching nothing here notice.
+    expect(draft.rngDraws).toBe(2);
+  });
+
+  it('is merely blocked by something of its own kind', () => {
+    // Alike kinds do not fight. Without this, a crowd of creatures would brawl
+    // with each other on the way to you instead of arriving.
+    const state = fixture([
+      { id: 'twin', kind: 'you', pos: { x: 0, y: 0 }, stats: { hp: 4, might: 1, wits: 1, speed: 1 }, tags: [] },
     ]);
     const draft = attemptMove(state, 'player', -1, 0);
     expect(draft.type).toBe('MOVE_BLOCKED');
@@ -157,5 +200,89 @@ describe('endsTurn', () => {
     const state = fixture();
     expect(endsTurn(attemptMove(state, 'player', 1, 0))).toBe(false);
     expect(endsTurn(attemptMove(state, 'player', 0, -1))).toBe(false);
+  });
+});
+
+describe('striking', () => {
+  // Two creatures a step apart, so a bump is an attack.
+  function brawl(counter: number): GameState {
+    return {
+      grid: makeGrid(3, 1, [FLOOR, FLOOR, FLOOR]),
+      entities: [
+        { id: 'player', kind: 'you', pos: { x: 0, y: 0 }, stats: { hp: 10, might: 3, wits: 3, speed: 4 }, tags: [] },
+        { id: 'thing-1', kind: 'thing', pos: { x: 1, y: 0 }, stats: { hp: 5, might: 4, wits: 1, speed: 3 }, tags: [] },
+      ],
+      turn: 1,
+      activeEntityId: 'player',
+      seed: 5,
+      rngCounter: counter,
+    };
+  }
+
+  /** Searches for a counter that rolls under the target, rather than hardcoding
+   *  one — a hardcoded counter would silently stop testing a miss the moment
+   *  the RNG or the to-hit maths changed. */
+  function counterRolling(predicate: (roll: number) => boolean): number {
+    for (let c = 0; c < 5000; c += 1) if (predicate(intBetween(5, c, 1, 20))) return c;
+    throw new Error('no counter found — the generator or the range changed');
+  }
+
+  it('records a miss as a miss, and still spends both draws', () => {
+    const needed = 10 + 3 - 3;
+    const draft = attemptMove(brawl(counterRolling((r) => r < needed)), 'player', 1, 0);
+    expect(draft.type).toBe('STRIKE');
+    expect(draft.payload).toMatchObject({ hit: false, damage: 0 });
+    // Spending the same count either way is what keeps the counter's progress
+    // independent of the outcome. Literal, not the constant — see above.
+    expect(draft.rngDraws).toBe(2);
+  });
+
+  it('records the roll and the number it needed, not just the verdict', () => {
+    const draft = attemptMove(brawl(counterRolling((r) => r >= 10)), 'player', 1, 0);
+    expect(draft.payload).toMatchObject({ needed: 10, hit: true });
+    expect((draft.payload as { roll: number }).roll).toBeGreaterThanOrEqual(1);
+    expect((draft.payload as { roll: number }).roll).toBeLessThanOrEqual(20);
+  });
+
+  it('deals between one and the attacker might', () => {
+    const draft = attemptMove(brawl(counterRolling((r) => r >= 10)), 'player', 1, 0);
+    const { damage } = draft.payload as { damage: number };
+    expect(damage).toBeGreaterThanOrEqual(1);
+    expect(damage).toBeLessThanOrEqual(3);
+  });
+
+  it('takes hit points away on a hit', () => {
+    const state = brawl(counterRolling((r) => r >= 10));
+    const draft = attemptMove(state, 'player', 1, 0);
+    const after = apply(state, { ...draft, id: 'x', parent: null, seq: 0 } as GameEvent);
+    const { damage } = draft.payload as { damage: number };
+    expect(after.entities[1]?.stats.hp).toBe(5 - damage);
+  });
+
+  it('takes no hit points on a miss, but still spends the draws', () => {
+    // Not object identity: a miss changes nobody, yet the counter still moves by
+    // two, so the state genuinely differs. Distinguishing "no damage" from "no
+    // draws" is the whole point — conflating them would hide a counter that
+    // failed to advance, and that surfaces later as a replay divergence.
+    const state = brawl(counterRolling((r) => r < 10));
+    const draft = attemptMove(state, 'player', 1, 0);
+    const after = apply(state, { ...draft, id: 'x', parent: null, seq: 0 } as GameEvent);
+
+    expect(after.entities).toBe(state.entities);
+    expect(after.rngCounter).toBe(state.rngCounter + 2);
+  });
+
+  it('clamps at zero rather than letting a corpse get deader', () => {
+    const state = brawl(counterRolling((r) => r >= 10));
+    const dying: GameState = {
+      ...state,
+      entities: [
+        state.entities[0] as Entity,
+        { ...(state.entities[1] as Entity), stats: { hp: 1, might: 4, wits: 1, speed: 3 } },
+      ],
+    };
+    const draft = attemptMove(dying, 'player', 1, 0);
+    const after = apply(dying, { ...draft, id: 'x', parent: null, seq: 0 } as GameEvent);
+    expect(after.entities[1]?.stats.hp).toBe(0);
   });
 });

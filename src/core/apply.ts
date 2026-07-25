@@ -11,15 +11,19 @@ function reduce(state: GameState, event: GameEvent): GameState {
   switch (event.type) {
     case 'WORLD_INIT': {
       const p = event.payload;
+      // Copied out of the payload rather than referenced into state: the event
+      // is frozen and shared by every fork, so aliasing it would let one world
+      // rewrite another's history.
+      const seeded = [p.player, ...p.opponents].map((s) => ({
+        id: s.id,
+        kind: s.kind,
+        pos: { x: s.pos.x, y: s.pos.y },
+        stats: { ...s.stats },
+        tags: [...s.tags],
+      }));
       return {
         grid: makeGrid(p.width, p.height, p.tiles),
-        entities: [{
-          id: p.player.id,
-          kind: p.player.kind,
-          pos: { x: p.player.pos.x, y: p.player.pos.y },
-          stats: { ...p.player.stats },
-          tags: [...p.player.tags],
-        }],
+        entities: seeded,
         turn: 1,
         activeEntityId: p.player.id,
         seed: p.seed,
@@ -39,6 +43,22 @@ function reduce(state: GameState, event: GameEvent): GameState {
 
     case 'MOVE_BLOCKED':
       return state;
+
+    case 'STRIKE': {
+      const p = event.payload;
+      if (!p.hit) return state;
+      return {
+        ...state,
+        entities: state.entities.map((e) =>
+          e.id === p.targetId
+            // Clamped at zero: a corpse is dead, not increasingly dead, and
+            // letting hp run negative would make "how badly did it lose" a
+            // number nothing reads and every display has to special-case.
+            ? { ...e, stats: { ...e.stats, hp: Math.max(0, e.stats.hp - p.damage) } }
+            : e,
+        ),
+      };
+    }
 
     case 'TURN_ADVANCED':
       return { ...state, turn: event.payload.turn, activeEntityId: event.payload.activeEntityId };

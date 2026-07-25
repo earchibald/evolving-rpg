@@ -4,7 +4,8 @@ import { fileURLToPath } from 'node:url';
 import { sha256 } from '@noble/hashes/sha256';
 import { bytesToHex } from '@noble/hashes/utils';
 import { emptyLog, append, chain, fold } from '../src/log/chain.js';
-import { createWorld, attemptMove, advanceTurn, endsTurn } from '../src/core/commands.js';
+import { createWorld } from '../src/core/commands.js';
+import { playerStep, runWorldTurns } from '../src/play/session.js';
 import { canonicalJson } from '../src/log/canonical.js';
 import { ENGINE_VERSION } from '../src/version.js';
 
@@ -44,17 +45,15 @@ let head = first.event.id;
 for (const key of SCRIPT) {
   const step = STEPS[key];
   if (step === undefined) throw new Error(`bad script character ${key}`);
-  const draft = attemptMove(fold(log, head), 'player', step[0], step[1]);
-  const moved = append(log, head, draft);
-  log = moved.log;
-  head = moved.event.id;
 
-  // A refused action costs no turn — see endsTurn in the command layer.
-  if (endsTurn(draft)) {
-    const turned = append(log, head, advanceTurn(fold(log, head)));
-    log = turned.log;
-    head = turned.event.id;
-  }
+  // A real playthrough, not just a walk: the world takes its turns too, so the
+  // recorded run exercises the AI, combat, and a draw count that actually
+  // varies. A golden fixture that never fights would leave the newest and
+  // riskiest code untouched by the strongest test in the repo.
+  const acted = playerStep({ log, head }, 'player', step[0], step[1]);
+  const after = runWorldTurns(acted.position, 'player');
+  log = after.log;
+  head = after.head;
 }
 
 const finalState = fold(log, head);
