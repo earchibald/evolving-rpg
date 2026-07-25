@@ -714,6 +714,11 @@ describe('EMPTY_STATE', () => {
   it('is a solid one-tile grid, so nothing is walkable before a world exists', () => {
     expect(isPassable(EMPTY_STATE.grid, 0, 0)).toBe(false);
   });
+
+  it('is frozen, so a reducer mutating its accumulator fails loudly instead of corrupting every later replay', () => {
+    expect(Object.isFrozen(EMPTY_STATE)).toBe(true);
+    expect(Object.isFrozen(EMPTY_STATE.entities)).toBe(true);
+  });
 });
 ```
 
@@ -762,24 +767,34 @@ import { WALL, makeGrid } from './grid.js';
 import type { Grid } from './grid.js';
 import type { Entity } from './entity.js';
 
+/** `readonly` throughout, matching `Grid`'s convention, because `apply()` is
+ *  required to be pure — the type should refuse in-place mutation rather than
+ *  rely on every future reducer remembering not to. `readonly Entity[]` still
+ *  permits `map`, `find` and spread; it removes only `push`, `splice` and
+ *  index assignment. */
 export interface GameState {
-  grid: Grid;
-  entities: Entity[];
-  turn: number;
-  activeEntityId: string | null;
-  seed: number;
-  rngCounter: number;
+  readonly grid: Grid;
+  readonly entities: readonly Entity[];
+  readonly turn: number;
+  readonly activeEntityId: string | null;
+  readonly seed: number;
+  readonly rngCounter: number;
 }
 
-/** What a fold starts from. A WORLD_INIT event replaces it wholesale. */
-export const EMPTY_STATE: GameState = {
+const NO_ENTITIES: readonly Entity[] = Object.freeze([]);
+
+/** What a fold starts from. A WORLD_INIT event replaces it wholesale.
+ *  Frozen as well as typed readonly: every fold in the process shares this one
+ *  object, so a reducer that mutated its accumulator in place would corrupt the
+ *  baseline for every later replay and fail somewhere far from the cause. */
+export const EMPTY_STATE: GameState = Object.freeze({
   grid: makeGrid(1, 1, [WALL]),
-  entities: [],
+  entities: NO_ENTITIES,
   turn: 0,
   activeEntityId: null,
   seed: 0,
   rngCounter: 0,
-};
+});
 ```
 
 - [ ] **Step 5: Run tests to verify they pass**
@@ -1205,6 +1220,7 @@ import { EMPTY_STATE } from '../../src/core/state.js';
 import { FLOOR, WALL, makeGrid } from '../../src/core/grid.js';
 import type { GameEvent } from '../../src/core/events.js';
 import type { GameState } from '../../src/core/state.js';
+import type { Entity } from '../../src/core/entity.js';
 
 function seal(draft: ReturnType<typeof createWorld>): GameEvent {
   return { ...draft, id: 'x', parent: null, seq: 0 } as GameEvent;
@@ -1234,11 +1250,16 @@ describe('createWorld', () => {
   });
 });
 
-// A hand-built 3x2 world: floor everywhere except (2,0).
-function fixture(): GameState {
+// A hand-built 3x2 world: floor everywhere except (2,0). Extra entities are
+// passed in rather than pushed afterwards, because GameState.entities is
+// readonly — the type refuses in-place mutation on purpose.
+function fixture(extra: Entity[] = []): GameState {
   return {
     grid: makeGrid(3, 2, [FLOOR, FLOOR, WALL, FLOOR, FLOOR, FLOOR]),
-    entities: [{ id: 'player', kind: 'you', pos: { x: 1, y: 0 }, stats: { hp: 10, might: 3, wits: 3, speed: 4 }, tags: [] }],
+    entities: [
+      { id: 'player', kind: 'you', pos: { x: 1, y: 0 }, stats: { hp: 10, might: 3, wits: 3, speed: 4 }, tags: [] },
+      ...extra,
+    ],
     turn: 1,
     activeEntityId: 'player',
     seed: 5,
@@ -1266,16 +1287,18 @@ describe('attemptMove', () => {
   });
 
   it('blocks on another living entity', () => {
-    const state = fixture();
-    state.entities.push({ id: 'other', kind: 'thing', pos: { x: 0, y: 0 }, stats: { hp: 4, might: 1, wits: 1, speed: 1 }, tags: [] });
+    const state = fixture([
+      { id: 'other', kind: 'thing', pos: { x: 0, y: 0 }, stats: { hp: 4, might: 1, wits: 1, speed: 1 }, tags: [] },
+    ]);
     const draft = attemptMove(state, 'player', -1, 0);
     expect(draft.type).toBe('MOVE_BLOCKED');
     expect(draft.payload).toMatchObject({ reason: 'occupied' });
   });
 
   it('walks through the dead', () => {
-    const state = fixture();
-    state.entities.push({ id: 'corpse', kind: 'thing', pos: { x: 0, y: 0 }, stats: { hp: 0, might: 1, wits: 1, speed: 1 }, tags: [] });
+    const state = fixture([
+      { id: 'corpse', kind: 'thing', pos: { x: 0, y: 0 }, stats: { hp: 0, might: 1, wits: 1, speed: 1 }, tags: [] },
+    ]);
     expect(attemptMove(state, 'player', -1, 0).type).toBe('MOVE');
   });
 
@@ -1296,8 +1319,9 @@ describe('attemptMove', () => {
 
 describe('advanceTurn', () => {
   it('keeps the turn number when the round has not wrapped', () => {
-    const state = fixture();
-    state.entities.push({ id: 'zzz', kind: 'thing', pos: { x: 2, y: 1 }, stats: { hp: 4, might: 1, wits: 1, speed: 1 }, tags: [] });
+    const state = fixture([
+      { id: 'zzz', kind: 'thing', pos: { x: 2, y: 1 }, stats: { hp: 4, might: 1, wits: 1, speed: 1 }, tags: [] },
+    ]);
     const draft = advanceTurn(state);
     expect(draft.payload).toEqual({ activeEntityId: 'zzz', turn: 1 });
   });
