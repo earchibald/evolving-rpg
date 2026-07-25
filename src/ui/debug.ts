@@ -8,6 +8,8 @@ import { itemAt } from '../core/item.js';
 import { save, load, clear, emptySession } from '../play/store.js';
 import { Oracle, describeQuestion } from '../oracle/oracle.js';
 import { cliTransport } from '../oracle/transports.js';
+import { send } from '../channels/channels.js';
+import type { Channel, Note } from '../channels/channels.js';
 import { WALL, EXIT, idx, tileAt } from '../core/grid.js';
 import type { EventLog } from '../log/chain.js';
 import type { Refs } from '../log/refs.js';
@@ -201,6 +203,44 @@ function calledCreature(kind: string, e: { stats: { hp: number; might: number; s
   })).name;
 }
 
+/** Everything said, newest last, kept in memory for the session and on disk
+ *  for good. */
+const notes: Note[] = [];
+
+/** What the player can currently see, so the gamemaster is not answering blind. */
+function scene(): Record<string, unknown> {
+  const head = getRef(refs, active).head;
+  const state = fold(log, head);
+  const you = state.entities[0];
+  return {
+    turn: state.turn,
+    you: you === undefined ? null : { at: you.pos, hitPoints: you.stats.hp, might: you.stats.might },
+    around: state.entities.filter((e) => e.kind !== 'you' && isAlive(e)).map((e) => ({
+      called: calledCreature(e.kind, e), at: e.pos, hitPoints: e.stats.hp,
+    })),
+    underfoot: state.items.map((i) => ({ at: i.pos })),
+    named: Object.values(oracle.known()).filter((a) => a.line !== '').map((a) => a.name),
+  };
+}
+
+async function speak(channel: Channel, said: string): Promise<void> {
+  const head = getRef(refs, active).head;
+  const state = fold(log, head);
+
+  const note = await send(oracle, channel, said, {
+    world: active, head, turn: state.turn, scene: scene(),
+  }, new Date().toISOString(), async (n) => {
+    await fetch('/__notes', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(n),
+    });
+  });
+
+  notes.push(note);
+  render();
+}
+
 const KEYS: Record<string, readonly [number, number]> = {
   ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0],
   w: [0, -1], s: [0, 1], a: [-1, 0], d: [1, 0],
@@ -265,64 +305,124 @@ function render(): void {
 
   nameWhatIsHere(state);
 
-  const rows: Array<[string, string]> = [
-    ['world', active],
-    ['outcome', outcome(state)],
-    ['turn', String(state.turn)],
-    ['way out', (() => {
-      if (player === undefined) return '—';
-      const at = state.grid.tiles.indexOf(EXIT);
-      if (at < 0) return 'none';
-      const ex = at % state.grid.width;
-      const ey = Math.floor(at / state.grid.width);
-      return `${Math.abs(ex - player.pos.x) + Math.abs(ey - player.pos.y)} away, at ${ex}, ${ey}`;
-    })()],
-    ['position', player === undefined ? '—' : `${player.pos.x}, ${player.pos.y}`],
-    ['hit points', player === undefined ? '—' : `${player.stats.hp}`],
-    ['might / wits / speed', player === undefined ? '—'
-      : `${player.stats.might} / ${player.stats.wits} / ${player.stats.speed}`],
-    ['your damage', player === undefined ? '—' : `1–${player.stats.might}`],
-    ['seed', String(state.seed)],
-    ['rng counter', String(state.rngCounter)],
-    ['events in chain', String(chain(log, head).length)],
-    ['events in log', String(log.events.size)],
+  // ── what you decide on, beside the map ─────────────────────────────────
+  const exitAt = state.grid.tiles.indexOf(EXIT);
+  const exitPos = exitAt < 0 ? null : { x: exitAt % state.grid.width, y: Math.floor(exitAt / state.grid.width) };
+  const toExit = player === undefined || exitPos === null
+    ? '—'
+    : `${Math.abs(exitPos.x - player.pos.x) + Math.abs(exitPos.y - player.pos.y)} away`;
+
+  const hurt = player !== undefined && player.stats.hp <= 3;
+  const done = outcome(state);
+
+  const vitals: Array<[string, string, string]> = [
+    ['hit points', player === undefined ? '—' : String(player.stats.hp), hurt ? 'urgent' : ''],
+    ['you deal', player === undefined ? '—' : `1–${player.stats.might}`, ''],
+    ['the way out', toExit, done === 'escaped' ? 'good' : ''],
+    ['standing at', player === undefined ? '—' : `${player.pos.x}, ${player.pos.y}`, ''],
+    ['turn', String(state.turn), ''],
+    ['world', active, ''],
   ];
+  if (done !== 'playing') vitals.unshift(['this run', done, done === 'dead' ? 'urgent' : 'good']);
 
-  for (const i of state.items) {
-    const called = oracle.ask(describeQuestion('item', i.kind, { grants: i.grants })).name;
-    rows.push([called, `at ${i.pos.x}, ${i.pos.y}`]);
-  }
-
-  // Every creature states the two numbers that decide whether to fight it: what
-  // you need to hit it, and what it needs to hit you. Without these, "is this
-  // fight worth taking" is a guess dressed up as a decision.
-  for (const e of state.entities) {
-    if (e.kind === 'you') continue;
-    const label = `${e.id} — ${calledCreature(e.kind, e)}`;
-    if (!isAlive(e)) {
-      rows.push([label, `dead at ${e.pos.x}, ${e.pos.y}`]);
-      continue;
-    }
-    const away = player === undefined
-      ? '?'
-      : String(Math.abs(e.pos.x - player.pos.x) + Math.abs(e.pos.y - player.pos.y));
-    const yours = player === undefined ? '' : `you hit on ${toHit(player, e)}+ (${hitChance(player, e)}/20)`;
-    const theirs = player === undefined ? '' : `it hits on ${toHit(e, player)}+ for 1–${e.stats.might}`;
-    rows.push([label, `hp ${e.stats.hp} · ${away} away · ${yours} · ${theirs}`]);
-  }
-  const readout = el('readout');
-  readout.textContent = '';
-  for (const [label, value] of rows) {
+  const vitalsEl = el('vitals');
+  vitalsEl.textContent = '';
+  for (const [label, value, tone] of vitals) {
     const dt = document.createElement('dt');
     dt.textContent = label;
     const dd = document.createElement('dd');
     dd.textContent = value;
-    readout.append(dt, dd);
+    if (tone !== '') dd.className = tone;
+    vitalsEl.append(dt, dd);
   }
 
-  // What the world has said, kept where it can be read rather than announced.
-  // Naming is silent by request: prose that interrupts a turn is a different
-  // game from one that rewards looking.
+  // ── what is here, and what it costs ────────────────────────────────────
+  const threats = el('threats');
+  threats.textContent = '';
+
+  for (const i of state.items) {
+    const called = oracle.ask(describeQuestion('item', i.kind, { grants: i.grants })).name;
+    const li = document.createElement('li');
+    li.style.borderLeftColor = 'var(--item)';
+    const who = document.createElement('span');
+    who.className = 'who';
+    who.textContent = called;
+    const odds = document.createElement('span');
+    odds.className = 'odds';
+    const reach = player === undefined ? '?' : Math.abs(i.pos.x - player.pos.x) + Math.abs(i.pos.y - player.pos.y);
+    odds.textContent = `${reach} away · +${i.grants.might} might`;
+    li.append(who, odds);
+    threats.appendChild(li);
+  }
+
+  for (const e of state.entities) {
+    if (e.kind === 'you') continue;
+    const li = document.createElement('li');
+    const who = document.createElement('span');
+    who.className = 'who';
+    who.textContent = calledCreature(e.kind, e);
+
+    const odds = document.createElement('span');
+    odds.className = 'odds';
+    if (!isAlive(e)) {
+      li.className = 'gone';
+      odds.textContent = `dead at ${e.pos.x}, ${e.pos.y}`;
+    } else {
+      const away = player === undefined
+        ? '?'
+        : Math.abs(e.pos.x - player.pos.x) + Math.abs(e.pos.y - player.pos.y);
+      odds.textContent = player === undefined
+        ? `hp ${e.stats.hp}`
+        : `hp ${e.stats.hp} · ${away} away · you hit ${toHit(player, e)}+ (${hitChance(player, e)}/20) · it hits ${toHit(e, player)}+ for 1–${e.stats.might}`;
+    }
+    li.append(who, odds);
+    threats.appendChild(li);
+  }
+
+  // ── under the floorboards ──────────────────────────────────────────────
+  const detail = el('detail');
+  detail.textContent = '';
+  for (const [label, value] of [
+    ['seed', String(state.seed)],
+    ['rng counter', String(state.rngCounter)],
+    ['events in chain', String(chain(log, head).length)],
+    ['events in log', String(log.events.size)],
+  ] as Array<[string, string]>) {
+    const dt = document.createElement('dt');
+    dt.textContent = label;
+    const dd = document.createElement('dd');
+    dd.textContent = value;
+    detail.append(dt, dd);
+  }
+
+  // ── the world's own thinking, never hidden ─────────────────────────────
+  // On screen at all times, idle or not. A model working invisibly is exactly
+  // what this interface must not be.
+  const queued = oracle.queue();
+  const busy = queued.filter((c) => c.state === 'asking');
+  const now = el('now');
+  now.className = busy.length === 0 ? 'now' : 'now busy';
+  now.textContent = busy.length === 0
+    ? 'the world is not thinking about anything'
+    : `thinking · ${busy.map((c) => `${c.subject} ${(c.ms / 1000).toFixed(0)}s`).join(' · ')}`;
+
+  const asking = el('oracle');
+  asking.textContent = '';
+  if (queued.length === 0) {
+    const li = document.createElement('li');
+    li.className = 'idle';
+    li.textContent = 'nothing asked yet';
+    asking.appendChild(li);
+  } else {
+    for (const call of queued) {
+      const li = document.createElement('li');
+      li.className = call.state;
+      li.textContent = `${call.state} · ${call.subject} · ${(call.ms / 1000).toFixed(1)}s · ${call.detail}`;
+      asking.appendChild(li);
+    }
+  }
+
+  // ── what the world has said, to be read rather than announced ──────────
   const spoken = el('names');
   spoken.textContent = '';
   const said = Object.values(oracle.known())
@@ -344,30 +444,36 @@ function render(): void {
     }
   }
 
-  const asking = el('oracle');
-  asking.textContent = '';
-  const queue = oracle.queue();
-  if (queue.length === 0) {
+  // ── what has been said to whom ─────────────────────────────────────────
+  const saidList = el('notes');
+  saidList.textContent = '';
+  for (const n of notes.slice(-6)) {
     const li = document.createElement('li');
-    li.textContent = 'the world is not thinking about anything';
-    li.className = 'idle';
-    asking.appendChild(li);
-  } else {
-    for (const call of queue) {
-      const li = document.createElement('li');
-      li.className = call.state;
-      li.textContent = `${call.state} · ${call.intent} ${call.subject} · ${(call.ms / 1000).toFixed(1)}s · ${call.detail}`;
-      asking.appendChild(li);
+    li.className = n.channel;
+    const who = document.createElement('span');
+    who.className = 'who';
+    who.textContent = n.channel;
+    const words = document.createElement('span');
+    words.className = 'said';
+    words.textContent = ` “${n.said}”`;
+    li.append(who, words);
+    if (n.reply !== null) li.append(document.createTextNode(` — ${n.reply}`));
+    if (n.trouble !== null) {
+      const bad = document.createElement('span');
+      bad.className = 'trouble';
+      bad.textContent = ` — no reply: ${n.trouble}`;
+      li.append(bad);
     }
+    saidList.appendChild(li);
   }
 
   const list = el('refs');
   list.textContent = '';
   for (const ref of listRefs(refs)) {
     const li = document.createElement('li');
-    const marker = ref.name === active ? '→ ' : '  ';
-    const kind = isGrave(ref.name) ? ' — a grave' : '';
-    li.textContent = `${marker}${ref.name} @ ${String(ref.head).slice(0, 10)}${kind}`;
+    const kind = isGrave(ref.name) ? ' · a grave' : '';
+    li.textContent = `${ref.name === active ? '▸ ' : '  '}${ref.name}${kind}`;
+    if (ref.name === active) li.classList.add('here');
     if (isGrave(ref.name)) li.classList.add('grave');
     li.style.cursor = 'pointer';
     li.addEventListener('click', () => {
@@ -461,7 +567,28 @@ function hold(): void {
   finish(before, after.head);
 }
 
+function wire(formId: string, inputId: string, channel: Channel): void {
+  const form = el(formId) as HTMLFormElement;
+  const input = el(inputId) as HTMLInputElement;
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const said = input.value.trim();
+    if (said === '') return;
+    input.value = '';
+    void speak(channel, said);
+    render();
+  });
+}
+
+wire('designer-form', 'designer-said', 'designer');
+wire('gm-form', 'gm-said', 'gamemaster');
+
 window.addEventListener('keydown', (event) => {
+  // Typing into a channel is not playing. Without this, writing "search the
+  // wall" walks you four squares west.
+  const target = event.target;
+  if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) return;
+
   if (event.key === '.' || event.key === ' ') {
     event.preventDefault();
     hold();

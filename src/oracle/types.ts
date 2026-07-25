@@ -7,7 +7,7 @@
  *
  * This increment needs exactly one of them.
  */
-export type Intent = 'describe';
+export type Intent = 'describe' | 'gamemaster';
 
 /**
  * What is being asked about.

@@ -20,6 +20,32 @@ export function chroniclePlugin(): Plugin {
   return {
     name: 'evolving-rpg:chronicle',
     configureServer(server) {
+      // Notes: one line per thing said, appended, never rewritten. Kept beside
+      // the chronicle rather than inside it — they are about the game and
+      // around it, not events within it.
+      server.middlewares.use('/__notes', (req, res) => {
+        if (req.method !== 'POST') {
+          res.statusCode = 405;
+          res.end('POST only');
+          return;
+        }
+        let body = '';
+        req.on('data', (chunk) => { body += String(chunk); });
+        req.on('end', () => {
+          try {
+            const note = JSON.parse(body) as Record<string, unknown>;
+            const out = resolve(process.cwd(), 'runs/notes.jsonl');
+            mkdirSync(dirname(out), { recursive: true });
+            appendFileSync(out, `${JSON.stringify(note)}\n`, 'utf8');
+            res.statusCode = 204;
+            res.end();
+          } catch (error) {
+            res.statusCode = 500;
+            res.end(String(error));
+          }
+        });
+      });
+
       server.middlewares.use('/__chronicle', (req, res) => {
         if (req.method !== 'POST') {
           res.statusCode = 405;

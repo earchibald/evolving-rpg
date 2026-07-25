@@ -3,29 +3,82 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>evolving-rpg — debug view</title>
+    <title>evolving-rpg</title>
     <link rel="stylesheet" href="/src/ui/debug.css" />
   </head>
   <body>
-    <main id="app">
-      <h1>debug view</h1>
-      <p class="hint">Arrow keys or WASD to move, full stop or space to hold. Everything you do becomes an event.</p>
-      <div id="grid" class="grid" role="img" aria-label="game grid"></div>
-      <dl id="readout" class="readout"></dl>
-      <div class="controls">
-        <button id="verify" type="button">Verify chain</button>
-        <button id="fork" type="button">Fork here</button>
-        <button id="rewind" type="button">Reset back 10 events</button>
-        <button id="newrun" type="button">Another world</button>
-        <button id="wipe" type="button">Wipe everything</button>
-      </div>
-      <p id="status" class="status" role="status"></p>
-      <h2 class="section">what the world calls things</h2>
-      <ul id="names" class="names"></ul>
-      <h2 class="section">the world is thinking</h2>
-      <ul id="oracle" class="oracle"></ul>
-      <ul id="refs" class="refs"></ul>
-    </main>
+    <div id="app">
+      <header class="top">
+        <h1>evolving&#8209;rpg</h1>
+        <p class="keys"><kbd>&larr;&uarr;&rarr;&darr;</kbd> or <kbd>wasd</kbd> to move &middot; walk into something to strike &middot; <kbd>.</kbd> to hold</p>
+        <p id="now" class="now" role="status"></p>
+      </header>
+
+      <main class="play">
+        <div class="board">
+          <div id="grid" class="grid" role="img" aria-label="the world"></div>
+          <p id="status" class="status" role="status"></p>
+        </div>
+
+        <aside class="panel">
+          <section>
+            <h2>you</h2>
+            <dl id="vitals" class="vitals"></dl>
+          </section>
+          <section>
+            <h2>what is here</h2>
+            <ul id="threats" class="threats"></ul>
+          </section>
+        </aside>
+      </main>
+
+      <section class="channels-wrap">
+        <div class="channels">
+          <form id="designer-form" class="channel designer">
+            <label for="designer-said">to the <strong>game designer</strong> &mdash; you, out here, about the game</label>
+            <input id="designer-said" type="text" autocomplete="off" placeholder="the wall bump feels bad" />
+          </form>
+          <form id="gm-form" class="channel gamemaster">
+            <label for="gm-said">to the <strong>gamemaster</strong> &mdash; your character, in there, about the world</label>
+            <input id="gm-said" type="text" autocomplete="off" placeholder="what does the ash smell like?" />
+          </form>
+        </div>
+        <ul id="notes" class="notes"></ul>
+      </section>
+
+      <details class="more">
+        <summary>the rest of it</summary>
+
+        <div class="more-grid">
+          <section>
+            <h2>what the world calls things</h2>
+            <ul id="names" class="names"></ul>
+          </section>
+
+          <section>
+            <h2>the world is thinking</h2>
+            <ul id="oracle" class="oracle"></ul>
+          </section>
+
+          <section>
+            <h2>worlds</h2>
+            <ul id="refs" class="refs"></ul>
+            <div class="controls">
+              <button id="verify" type="button">Verify chain</button>
+              <button id="fork" type="button">Fork here</button>
+              <button id="rewind" type="button">Reset back 10</button>
+              <button id="newrun" type="button">Another world</button>
+              <button id="wipe" type="button">Wipe everything</button>
+            </div>
+          </section>
+
+          <section>
+            <h2>under the floorboards</h2>
+            <dl id="detail" class="vitals"></dl>
+          </section>
+        </div>
+      </details>
+    </div>
     <script type="module" src="/src/ui/debug.ts"></script>
   </body>
 </html>

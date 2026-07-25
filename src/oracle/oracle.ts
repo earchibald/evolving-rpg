@@ -167,6 +167,57 @@ export class Oracle {
     this.onChange();
   }
 
+  /**
+   * Asks something that is not a fact about the world.
+   *
+   * Queued and visible like everything else, and never remembered. A question
+   * put to the gamemaster is a conversation, not canon: caching it would mean
+   * asking the same thing twice gives the same words back, which is the
+   * opposite of what a conversation is for. The distinction is exactly why
+   * canon is keyed by content — that key is only meaningful for things that
+   * are true, rather than things that were said.
+   *
+   * Unlike `ask`, this can fail, and the caller has to cope. Nothing depends
+   * on it, which is what makes that acceptable.
+   */
+  async consult(question: Question): Promise<Answer> {
+    if (this.transport === null) throw new Error('nothing is listening');
+
+    const id = String(this.nextId).padStart(4, '0');
+    this.nextId += 1;
+
+    const call: Call = {
+      id,
+      intent: question.intent,
+      subject: question.subject,
+      state: 'asking',
+      ms: 0,
+      detail: this.transport.name,
+    };
+    this.calls.set(id, call);
+    this.raisedAt.set(id, this.now());
+    this.onChange();
+
+    const started = this.now();
+    try {
+      const said = await this.transport.ask(question);
+      this.calls.set(id, { ...call, state: 'answered', detail: said.name.slice(0, 60) });
+      this.onChange();
+      return {
+        name: said.name,
+        line: said.line,
+        source: 'model',
+        model: said.model,
+        ms: this.now() - started,
+        costUsd: said.costUsd,
+      };
+    } catch (error) {
+      this.calls.set(id, { ...call, state: 'failed', detail: String(error).slice(0, 80) });
+      this.onChange();
+      throw error;
+    }
+  }
+
   /** Drops finished entries, so the queue shows work rather than history. */
   forget(): void {
     for (const [id, call] of this.calls) {

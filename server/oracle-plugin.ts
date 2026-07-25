@@ -23,6 +23,19 @@ import type { Plugin } from 'vite';
 
 const TIMEOUT_MS = 45_000;
 
+function gamemasterPrompt(context: Record<string, unknown>): string {
+  return [
+    String(context.instruction ?? ''),
+    '',
+    `What is around you: ${JSON.stringify(context.scene ?? {})}`,
+    `The player says: ${String(context.asked ?? '')}`,
+    '',
+    'Reply with ONLY a JSON object, no prose around it, no code fence:',
+    '{"name": "<four words or fewer, a label for this exchange>",',
+    ' "line": "<your answer, second person, under forty words>"}',
+  ].join('\n');
+}
+
 function prompt(subject: string, context: unknown): string {
   return [
     'You are naming one thing in a cold, quiet, attentive world.',
@@ -74,12 +87,14 @@ export function oraclePlugin(): Plugin {
         req.on('data', (chunk) => { body += String(chunk); });
         req.on('end', () => {
           let subject = '';
-          let context: unknown = {};
+          let context: Record<string, unknown> = {};
+          let intent = 'describe';
           try {
-            const question = JSON.parse(body) as { subject?: unknown; context?: unknown };
+            const question = JSON.parse(body) as { subject?: unknown; context?: unknown; intent?: unknown };
             if (typeof question.subject !== 'string') throw new Error('no subject');
             subject = question.subject;
-            context = question.context ?? {};
+            context = (question.context ?? {}) as Record<string, unknown>;
+            if (typeof question.intent === 'string') intent = question.intent;
           } catch (error) {
             res.statusCode = 400;
             res.end(String(error));
@@ -88,7 +103,12 @@ export function oraclePlugin(): Plugin {
 
           execFile(
             'claude',
-            ['-p', prompt(subject, context), '--output-format', 'json'],
+            [
+              '-p',
+              intent === 'gamemaster' ? gamemasterPrompt(context) : prompt(subject, context),
+              '--output-format',
+              'json',
+            ],
             { timeout: TIMEOUT_MS, maxBuffer: 4 * 1024 * 1024 },
             (error, stdout) => {
               res.setHeader('content-type', 'application/json');

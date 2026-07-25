@@ -1,67 +1,169 @@
+/*
+ * One screen for playing, everything else folded away.
+ *
+ * The rule: anything you need while deciding your next move sits above the fold
+ * and beside the map — hit points, what you deal, how far the way out is, and
+ * what each creature costs to fight. Anything true but not urgent — seeds,
+ * counters, event totals, the graveyard, the prose the world has spoken — lives
+ * under a fold, reachable and out of the way.
+ *
+ * One exception: the world's own thinking stays on screen at all times, even
+ * when idle. A model working invisibly is precisely what this interface must
+ * not be.
+ */
+
 :root {
   --ground: #14161a;
+  --raised: #191c21;
   --ink: #e8e9ec;
-  --soft: #9aa2b2;
+  --soft: #99a1b0;
+  --faint: #5b6472;
+  --rule: #2a2f38;
   --wall: #2c3038;
   --floor: #1b1e24;
   --player: #f0ad3c;
-  --rule: #333842;
+  --foe: #b5483c;
+  --exit: #2f8f74;
+  --item: #b39237;
+  --designer: #8fb0d6;
+  --gamemaster: #d8a13c;
 }
+
+* { box-sizing: border-box; }
 
 body {
   margin: 0;
-  padding: 2rem 1.5rem;
   background: var(--ground);
   color: var(--ink);
   font: 14px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
-main { max-width: 60rem; margin: 0 auto; display: flex; flex-direction: column; gap: 1.25rem; }
-h1 { font-size: 1rem; letter-spacing: .12em; text-transform: uppercase; color: var(--soft); margin: 0; }
-.hint { margin: 0; color: var(--soft); }
+#app {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 1rem 1.25rem 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
 
-.grid { display: grid; gap: 1px; width: max-content; overflow-x: auto; }
+/* ── header ───────────────────────────────────────────────────────────── */
+
+.top { display: flex; flex-wrap: wrap; align-items: baseline; gap: .6rem 1rem; margin: 0; }
+.top h1 {
+  margin: 0; font-size: .95rem; font-weight: 600;
+  letter-spacing: .16em; text-transform: uppercase;
+}
+.keys { margin: 0; color: var(--faint); font-size: .8rem; }
+kbd {
+  background: var(--raised); border: 1px solid var(--rule); border-radius: 3px;
+  padding: 0 .3rem; color: var(--soft);
+}
+
+.now { margin: 0 0 0 auto; font-size: .8rem; color: var(--faint); }
+.now.busy { color: var(--player); }
+
+/* ── the board and the panel ──────────────────────────────────────────── */
+
+.play { display: flex; gap: 1.25rem; align-items: flex-start; flex-wrap: wrap; }
+.board { display: flex; flex-direction: column; gap: .6rem; }
+
+.grid { display: grid; gap: 1px; width: max-content; }
 .cell { width: 20px; height: 20px; background: var(--floor); }
 .cell.wall { background: var(--wall); }
 .cell.player { background: var(--player); }
-
-.readout { display: grid; grid-template-columns: max-content 1fr; gap: .2rem 1rem; margin: 0; }
-.readout dt { color: var(--soft); }
-.readout dd { margin: 0; font-variant-numeric: tabular-nums; }
-
-.controls { display: flex; gap: .5rem; flex-wrap: wrap; }
-button {
-  font: inherit; color: var(--ground); background: var(--ink);
-  border: 1px solid var(--ink); border-radius: 3px; padding: .35rem .8rem; cursor: pointer;
-}
-button:focus-visible { outline: 2px solid var(--player); outline-offset: 2px; }
-
-.status { margin: 0; min-height: 1.5em; color: var(--player); }
-.refs { margin: 0; padding-left: 1.2rem; color: var(--soft); }
-
-.cell.foe { background: #b5483c; }
+.cell.foe { background: var(--foe); }
 .cell.dead { background: #4a2e2a; }
+.cell.exit { background: var(--exit); }
+.cell.item { background: var(--item); }
+/* Ringed rather than filled, so a creature standing on the prize stays visible
+   as a creature while the square still reads as worth taking. */
+.cell.guarding { box-shadow: inset 0 0 0 2px var(--item); }
 
-.cell.exit { background: #2f6f5e; }
-.cell.item { background: #6b5a2e; }
+/* What just happened, under the map, because that is where the eye already is
+   after a move. Fixed height so the board never shifts under you. */
+.status { margin: 0; min-height: 2.6em; max-width: 62ch; color: var(--player); }
 
-/* Something is standing on the prize. Ringed rather than filled, so the
-   creature stays the colour it is while the square still reads as worth
-   taking. */
-.cell.guarding { box-shadow: inset 0 0 0 2px #b39237; }
+.panel { flex: 1 1 20rem; min-width: 18rem; display: flex; flex-direction: column; gap: 1rem; }
+.panel section, .more-grid section { display: flex; flex-direction: column; gap: .4rem; }
 
+h2 {
+  margin: 0; font-size: .72rem; font-weight: 500;
+  letter-spacing: .14em; text-transform: uppercase; color: var(--faint);
+  border-bottom: 1px solid var(--rule); padding-bottom: .3rem;
+}
+
+.vitals { display: grid; grid-template-columns: max-content 1fr; gap: .15rem .9rem; margin: 0; }
+.vitals dt { color: var(--soft); }
+.vitals dd { margin: 0; font-variant-numeric: tabular-nums; }
+.vitals dd.urgent { color: var(--foe); }
+.vitals dd.good { color: var(--exit); }
+
+.threats { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: .45rem; }
+.threats li { border-left: 2px solid var(--foe); padding-left: .55rem; }
+.threats li.gone { border-left-color: var(--faint); color: var(--faint); }
+.threats .who { display: block; color: var(--ink); }
+.threats .odds { color: var(--soft); font-size: .82rem; }
+
+/* ── channels ─────────────────────────────────────────────────────────── */
+
+.channels-wrap { display: flex; flex-direction: column; gap: .6rem; }
+.channels { display: flex; gap: 1rem; flex-wrap: wrap; }
+.channel { flex: 1 1 24rem; display: flex; flex-direction: column; gap: .25rem; }
+.channel label { font-size: .78rem; color: var(--faint); }
+.channel input {
+  font: inherit; background: var(--raised); color: var(--ink);
+  border: 1px solid var(--rule); border-radius: 3px; padding: .4rem .6rem;
+}
+.channel input::placeholder { color: #4a515d; }
+/* Never the same conversation, so never the same colour. */
+.channel.designer strong { color: var(--designer); }
+.channel.gamemaster strong { color: var(--gamemaster); }
+.channel.designer input:focus { outline: 2px solid var(--designer); outline-offset: 1px; }
+.channel.gamemaster input:focus { outline: 2px solid var(--gamemaster); outline-offset: 1px; }
+
+.notes { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: .35rem; max-width: 78ch; }
+.notes li { color: var(--soft); border-left: 2px solid var(--rule); padding-left: .55rem; }
+.notes .designer { border-left-color: var(--designer); }
+.notes .gamemaster { border-left-color: var(--gamemaster); }
+.notes .who { font-size: .75rem; text-transform: uppercase; letter-spacing: .1em; }
+.notes .designer .who { color: var(--designer); }
+.notes .gamemaster .who { color: var(--gamemaster); }
+.notes .said { color: var(--ink); }
+.notes .trouble { color: var(--foe); }
+
+/* ── true, but not urgent ─────────────────────────────────────────────── */
+
+.more { border-top: 1px solid var(--rule); padding-top: .75rem; }
+.more summary {
+  cursor: pointer; color: var(--faint); font-size: .8rem;
+  letter-spacing: .1em; text-transform: uppercase;
+}
+.more summary:focus-visible { outline: 2px solid var(--player); outline-offset: 2px; }
+.more-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(21rem, 1fr));
+  gap: 1.25rem; margin-top: 1rem;
+}
+
+.names, .oracle, .refs { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: .3rem; }
+.names li, .oracle li, .refs li { color: var(--soft); }
+.names .name { color: var(--ink); }
+.idle { color: var(--faint); }
+.oracle .asking { color: var(--player); }
+.oracle .answered { color: #6f9e7f; }
+.oracle .failed { color: var(--foe); }
+.refs li { cursor: pointer; }
+.refs .here { color: var(--ink); }
 .refs .grave { color: #7d6a6a; }
 
-.section {
-  font-size: .75rem; letter-spacing: .12em; text-transform: uppercase;
-  color: var(--soft); margin: .5rem 0 0; font-weight: 500;
+.controls { display: flex; gap: .4rem; flex-wrap: wrap; margin-top: .35rem; }
+button {
+  font: inherit; font-size: .82rem; color: var(--ground); background: var(--soft);
+  border: 1px solid var(--soft); border-radius: 3px; padding: .3rem .7rem; cursor: pointer;
 }
-.oracle { margin: 0; padding-left: 1.2rem; color: var(--soft); }
-.oracle .idle { color: #4d545f; }
-.oracle .asking { color: #d8a13c; }
-.oracle .answered { color: #6f9e7f; }
-.oracle .failed { color: #b5483c; }
+button:hover { background: var(--ink); border-color: var(--ink); }
+button:focus-visible { outline: 2px solid var(--player); outline-offset: 2px; }
 
-.names { margin: 0; padding-left: 1.2rem; color: var(--soft); max-width: 62ch; }
-.names .name { color: var(--ink); }
-.names .idle { color: #4d545f; }
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
