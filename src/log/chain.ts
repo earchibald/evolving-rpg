@@ -2,6 +2,7 @@ import { apply } from '../core/apply.js';
 import { EMPTY_STATE } from '../core/state.js';
 import type { GameState } from '../core/state.js';
 import type { DraftEvent, GameEvent } from '../core/events.js';
+import { SCHEMA_VERSIONS } from '../core/events.js';
 import { hashEvent } from './hash.js';
 
 export interface EventLog {
@@ -49,7 +50,16 @@ export function append(
   }
 
   const id = hashEvent(draft, head, seq);
-  if (log.events.has(id)) throw new Error(`append: duplicate event id ${id}`);
+
+  // Idempotent, not fatal. Identity is content plus position, so an id already
+  // present means this exact event at this exact point in history already
+  // exists — which is a legitimate, ordinary occurrence once refs exist:
+  // reset a world and redo the move you just undid, or make the same move in
+  // two forks of one state. Convergent history is a feature of content
+  // addressing, and returning the existing event keeps the log append-only
+  // while letting all three work.
+  const existing = log.events.get(id);
+  if (existing !== undefined) return { log, event: existing };
 
   const event = deepFreeze({ ...draft, id, parent: head, seq } as GameEvent);
   const events = new Map(log.events);
@@ -91,20 +101,44 @@ export interface Divergence {
  * Never repairs anything — a divergence is a fact to report, not to smooth over.
  */
 export function verifyChain(log: EventLog, head: string | null): Divergence | null {
+  // Treated as a runtime lookup table rather than a typed record, because the
+  // whole point here is that the input is untrusted: an event's `type` is
+  // `EventType` to the compiler but an arbitrary string in a log read off disk.
+  const known: Record<string, number> = SCHEMA_VERSIONS;
+
   let state = EMPTY_STATE;
+  let expectedSeq = 0;
 
   for (const event of chain(log, head)) {
-    const draft = {
-      type: event.type,
-      schemaVersion: event.schemaVersion,
-      rngCounter: event.rngCounter,
-      payload: event.payload,
-    } as DraftEvent;
-
-    const recomputed = hashEvent(draft, event.parent, event.seq);
+    // `hashEvent` reads only type, schemaVersion, rngCounter and payload, and
+    // GameEvent is DraftEvent plus its position fields, so the event goes
+    // straight in. A hand-rolled projection here would be a second encoding of
+    // "what gets hashed" — and forgetting to update it after adding a hashed
+    // field would make every honest chain start failing verification.
+    const recomputed = hashEvent(event, event.parent, event.seq);
     if (recomputed !== event.id) {
       return { seq: event.seq, eventId: event.id, reason: `hash mismatch, recomputed ${recomputed}` };
     }
+
+    // Reject unreducible events *before* apply sees them. An alien type hashes
+    // perfectly well — hashing proves integrity, never intelligibility.
+    const version = known[event.type];
+    if (version === undefined) {
+      return { seq: event.seq, eventId: event.id, reason: `unknown event type ${String(event.type)}` };
+    }
+    if (event.schemaVersion !== version) {
+      return {
+        seq: event.seq,
+        eventId: event.id,
+        reason: `${event.type} is schemaVersion ${event.schemaVersion}, this engine implements ${version}`,
+      };
+    }
+
+    if (event.seq !== expectedSeq) {
+      return { seq: event.seq, eventId: event.id, reason: `sequence gap: expected seq ${expectedSeq}` };
+    }
+    expectedSeq += 1;
+
     if (state.rngCounter !== event.rngCounter) {
       return {
         seq: event.seq,

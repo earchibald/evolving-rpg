@@ -12,7 +12,10 @@ export function makeGrid(width: number, height: number, tiles: readonly number[]
   if (tiles.length !== width * height) {
     throw new Error(`makeGrid: expected ${width * height} tiles, got ${tiles.length}`);
   }
-  return { width, height, tiles: [...tiles] };
+  // Frozen as well as copied. EMPTY_STATE.grid is the one grid every fold in
+  // the process shares as its baseline, and `readonly` alone stops nothing at
+  // runtime — a cast, or JSON-sourced data, writes straight through it.
+  return Object.freeze({ width, height, tiles: Object.freeze([...tiles]) });
 }
 
 export function idx(grid: Grid, x: number, y: number): number {

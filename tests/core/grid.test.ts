@@ -21,6 +21,14 @@ describe('makeGrid', () => {
     input[0] = WALL;
     expect(tileAt(g, 0, 0)).toBe(FLOOR);
   });
+
+  it('freezes what it returns, so a shared grid cannot be written through', () => {
+    // readonly typing stops nothing at runtime; a cast or JSON-sourced data
+    // writes straight through it. EMPTY_STATE.grid is shared by every fold.
+    const g = makeGrid(2, 1, [FLOOR, FLOOR]);
+    expect(Object.isFrozen(g)).toBe(true);
+    expect(Object.isFrozen(g.tiles)).toBe(true);
+  });
 });
 
 describe('idx', () => {

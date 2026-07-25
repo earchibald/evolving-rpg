@@ -49,5 +49,17 @@ export function apply(state: GameState, event: GameEvent): GameState {
 
     case 'TURN_ADVANCED':
       return { ...state, turn: event.payload.turn, activeEntityId: event.payload.activeEntityId };
+
+    default: {
+      // Exhaustive at compile time — the never assignment is what proves it —
+      // and loud at runtime. Without this arm the switch falls off the end and
+      // returns undefined while still typed GameState, so a log carrying an
+      // event type this engine does not know folds to nothing and every later
+      // read dereferences it. A log from a newer engine is an expected input,
+      // not an exotic one, which is exactly why this must throw rather than
+      // quietly return the state unchanged.
+      const unhandled: never = event;
+      throw new Error(`apply: unknown event type ${String((unhandled as { type: unknown }).type)}`);
+    }
   }
 }

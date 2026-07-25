@@ -3,7 +3,7 @@ import { createWorld, attemptMove, advanceTurn } from '../../src/core/commands.j
 import { EMPTY_STATE } from '../../src/core/state.js';
 import { SCHEMA_VERSIONS } from '../../src/core/events.js';
 import type { EventLog } from '../../src/log/chain.js';
-import type { GameEvent } from '../../src/core/events.js';
+import type { DraftEvent, GameEvent } from '../../src/core/events.js';
 
 /** Builds a short but real run: a world, then a few steps. */
 function build(): { log: EventLog; head: string } {
@@ -75,12 +75,36 @@ describe('append', () => {
     expect(() => append(emptyLog(), 'nope', createWorld(1, 12, 8, 10))).toThrow(/unknown head/);
   });
 
-  it('refuses the same draft twice at the same head', () => {
-    // Same content plus same position means the same id, so this is a
-    // double-append rather than a legitimate new event.
+  it('returns the existing event and an unchanged log for a repeat append', () => {
+    // Same content plus same position is the same event, not corruption.
+    // Convergent history is ordinary once refs exist — undo a move and redo it,
+    // or make the same move in two forks — so this must be idempotent.
     const draft = createWorld(1, 12, 8, 10);
     const first = append(emptyLog(), null, draft);
-    expect(() => append(first.log, null, draft)).toThrow(/duplicate event id/);
+    const again = append(first.log, null, draft);
+
+    expect(again.event).toBe(first.event);
+    expect(again.log.events.size).toBe(first.log.events.size);
+    expect(again.log).toBe(first.log);
+  });
+
+  it('lets a world redo a move it reset away', () => {
+    // The regression that shipped: reset moves a head back, and the next press
+    // of the same key reproduces an id already in the log. This threw, and the
+    // debug view has no try/catch, so that key silently stopped working.
+    const first = append(emptyLog(), null, createWorld(20260724, 24, 16, 60));
+    let log = first.log;
+
+    const moveOnce = (head: string): string => {
+      const moved = append(log, head, attemptMove(fold(log, head), 'player', 1, 0));
+      log = moved.log;
+      return moved.event.id;
+    };
+
+    const afterFirst = moveOnce(first.event.id);
+    // Rewind to before that move, then make exactly the same move again.
+    expect(() => moveOnce(first.event.id)).not.toThrow();
+    expect(moveOnce(first.event.id)).toBe(afterFirst);
   });
 });
 
@@ -159,6 +183,41 @@ describe('verifyChain', () => {
 
   it('passes an empty chain', () => {
     expect(verifyChain(emptyLog(), null)).toBeNull();
+  });
+
+  it('refuses an event type it cannot reduce, instead of folding to nothing', () => {
+    // An alien type hashes perfectly well — hashing proves integrity, never
+    // intelligibility. Before this check, fold() returned undefined while
+    // verifyChain reported the log sound, which is precisely what the spec says
+    // must never happen: abort and report, never silently continue. A log
+    // written by a newer engine is the expected way this arrives.
+    const alien = {
+      type: 'STRIKE',
+      schemaVersion: 1,
+      rngCounter: 0,
+      payload: { attacker: 'player', target: 'goblin', damage: 3 },
+    } as unknown as DraftEvent;
+
+    const { log, event } = append(emptyLog(), null, alien);
+    const divergence = verifyChain(log, event.id);
+
+    expect(divergence).not.toBeNull();
+    expect(divergence?.reason).toMatch(/unknown event type STRIKE/);
+  });
+
+  it('refuses an event whose schemaVersion this engine does not implement', () => {
+    const future = {
+      type: 'MOVE',
+      schemaVersion: 99,
+      rngCounter: 0,
+      payload: { entityId: 'player', from: { x: 0, y: 0 }, to: { x: 1, y: 0 } },
+    } as unknown as DraftEvent;
+
+    const { log, event } = append(emptyLog(), null, future);
+    const divergence = verifyChain(log, event.id);
+
+    expect(divergence).not.toBeNull();
+    expect(divergence?.reason).toMatch(/schemaVersion 99/);
   });
 
   it('catches a tampered payload', () => {

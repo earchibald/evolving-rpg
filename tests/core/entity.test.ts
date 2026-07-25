@@ -41,5 +41,9 @@ describe('EMPTY_STATE', () => {
   it('is frozen, so a reducer mutating its accumulator fails loudly instead of corrupting every later replay', () => {
     expect(Object.isFrozen(EMPTY_STATE)).toBe(true);
     expect(Object.isFrozen(EMPTY_STATE.entities)).toBe(true);
+    // The grid too: it is a separate object, and freezing the state around it
+    // leaves it writable. Every fold in the process shares this one grid.
+    expect(Object.isFrozen(EMPTY_STATE.grid)).toBe(true);
+    expect(Object.isFrozen(EMPTY_STATE.grid.tiles)).toBe(true);
   });
 });
