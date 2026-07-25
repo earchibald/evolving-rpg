@@ -6,6 +6,8 @@ import { isAlive } from '../core/entity.js';
 import { outcome, toHit, hitChance } from '../core/commands.js';
 import { itemAt } from '../core/item.js';
 import { save, load, clear, emptySession } from '../play/store.js';
+import { Oracle, describeQuestion } from '../oracle/oracle.js';
+import { cliTransport } from '../oracle/transports.js';
 import { WALL, EXIT, idx, tileAt } from '../core/grid.js';
 import type { EventLog } from '../log/chain.js';
 import type { Refs } from '../log/refs.js';
@@ -113,6 +115,63 @@ function persist(): void {
   flushChronicle();
 }
 
+/**
+ * The world's voice.
+ *
+ * Canon is kept beside the session, so a name survives a reload the same way a
+ * world does — and a name once spoken is never asked about again, which is what
+ * keeps the cost proportional to novelty rather than to how long you play.
+ */
+const CANON_KEY = 'evolving-rpg/canon/v1';
+
+function rememberedCanon(): Record<string, never> {
+  try {
+    const raw = window.localStorage.getItem(CANON_KEY);
+    return raw === null ? {} : JSON.parse(raw);
+  } catch {
+    return {};
+  }
+}
+
+const oracle = new Oracle({
+  transport: cliTransport(),
+  known: rememberedCanon(),
+  onChange: () => {
+    try {
+      window.localStorage.setItem(CANON_KEY, JSON.stringify(oracle.known()));
+    } catch { /* quota; the world keeps its names for this session at least */ }
+    render();
+  },
+});
+
+/**
+ * Asks about everything on screen that has not been named yet.
+ *
+ * Per kind rather than per creature: a name is a fact about the world, not
+ * about one of its occupants, so every `thing` shares one — and that is also
+ * why naming three creatures costs one question instead of three.
+ */
+function nameWhatIsHere(state: ReturnType<typeof fold>): void {
+  for (const e of state.entities) {
+    if (e.kind === 'you') continue;
+    oracle.ask(describeQuestion('creature', e.kind, {
+      hitPoints: e.stats.hp,
+      might: e.stats.might,
+      speed: e.stats.speed,
+    }));
+  }
+  for (const i of state.items) {
+    oracle.ask(describeQuestion('item', i.kind, { grants: i.grants }));
+  }
+}
+
+/** What the world calls a kind of thing, whether or not it has answered yet. */
+function calledCreature(kind: string, e: { stats: { hp: number; might: number; speed: number } }): string {
+  return oracle.ask(describeQuestion('creature', kind, {
+    hitPoints: e.stats.hp, might: e.stats.might, speed: e.stats.speed,
+  })).name;
+}
+
 const KEYS: Record<string, readonly [number, number]> = {
   ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0],
   w: [0, -1], s: [0, 1], a: [-1, 0], d: [1, 0],
@@ -175,6 +234,8 @@ function render(): void {
     }
   }
 
+  nameWhatIsHere(state);
+
   const rows: Array<[string, string]> = [
     ['world', active],
     ['outcome', outcome(state)],
@@ -199,7 +260,8 @@ function render(): void {
   ];
 
   for (const i of state.items) {
-    rows.push([i.kind, `at ${i.pos.x}, ${i.pos.y}`]);
+    const called = oracle.ask(describeQuestion('item', i.kind, { grants: i.grants })).name;
+    rows.push([called, `at ${i.pos.x}, ${i.pos.y}`]);
   }
 
   // Every creature states the two numbers that decide whether to fight it: what
@@ -207,7 +269,7 @@ function render(): void {
   // fight worth taking" is a guess dressed up as a decision.
   for (const e of state.entities) {
     if (e.kind === 'you') continue;
-    const label = e.id;
+    const label = `${e.id} — ${calledCreature(e.kind, e)}`;
     if (!isAlive(e)) {
       rows.push([label, `dead at ${e.pos.x}, ${e.pos.y}`]);
       continue;
@@ -227,6 +289,47 @@ function render(): void {
     const dd = document.createElement('dd');
     dd.textContent = value;
     readout.append(dt, dd);
+  }
+
+  // What the world has said, kept where it can be read rather than announced.
+  // Naming is silent by request: prose that interrupts a turn is a different
+  // game from one that rewards looking.
+  const spoken = el('names');
+  spoken.textContent = '';
+  const said = Object.values(oracle.known())
+    .filter((a) => a.line !== '')
+    .sort((a, b) => a.name.localeCompare(b.name));
+  if (said.length === 0) {
+    const li = document.createElement('li');
+    li.className = 'idle';
+    li.textContent = 'nothing has been named yet';
+    spoken.appendChild(li);
+  } else {
+    for (const a of said) {
+      const li = document.createElement('li');
+      const strong = document.createElement('span');
+      strong.className = 'name';
+      strong.textContent = a.name;
+      li.append(strong, document.createTextNode(` — ${a.line}`));
+      spoken.appendChild(li);
+    }
+  }
+
+  const asking = el('oracle');
+  asking.textContent = '';
+  const queue = oracle.queue();
+  if (queue.length === 0) {
+    const li = document.createElement('li');
+    li.textContent = 'the world is not thinking about anything';
+    li.className = 'idle';
+    asking.appendChild(li);
+  } else {
+    for (const call of queue) {
+      const li = document.createElement('li');
+      li.className = call.state;
+      li.textContent = `${call.state} · ${call.intent} ${call.subject} · ${(call.ms / 1000).toFixed(1)}s · ${call.detail}`;
+      asking.appendChild(li);
+    }
   }
 
   const list = el('refs');
