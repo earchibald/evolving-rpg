@@ -38,8 +38,12 @@ export function createWorld(
 }
 
 export function attemptMove(state: GameState, entityId: string, dx: number, dy: number): DraftEvent {
-  if (Math.abs(dx) + Math.abs(dy) !== 1) {
-    throw new Error(`attemptMove: expected a single step, got (${dx}, ${dy})`);
+  // Integers as well as magnitude: (0.5, 0.5) sums to exactly 1, so a
+  // magnitude-only guard would land the player between tiles — and from a
+  // fractional position every later move reads as blocked, because a
+  // non-integer array index resolves to undefined.
+  if (!Number.isInteger(dx) || !Number.isInteger(dy) || Math.abs(dx) + Math.abs(dy) !== 1) {
+    throw new Error(`attemptMove: expected a single orthogonal step, got (${dx}, ${dy})`);
   }
   const mover = findEntity(state.entities, entityId);
   if (mover === undefined) throw new Error(`attemptMove: no entity ${entityId}`);
