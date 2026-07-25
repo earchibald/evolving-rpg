@@ -76,14 +76,40 @@ describe('upcastChain', () => {
     expect(migrated.head).not.toBe(v1.head);
   });
 
-  it('preserves meaning: the migrated chain folds to exactly the state v1 folded to', () => {
-    // This is the only thing a migration can honestly promise, and the whole
-    // reason the v1 fixture was kept. v1 set the counter from payload.counterAfter
-    // and never moved it again; v2 sets it from rngCounter + rngDraws and adds
-    // zero thereafter. Different mechanism, identical result — byte for byte.
+  it('preserves meaning: every field v1 had folds to the value v1 folded to', () => {
+    // Compared field by field rather than by digest, and the reason is worth
+    // recording. This test began as a hash comparison against v1's recorded
+    // finalStateHash, and that held exactly as long as GameState's *shape* did.
+    // The moment state gained an `items` field, an old log's fold necessarily
+    // hashed differently while meaning precisely the same thing.
+    //
+    // So the honest invariant is not "identical bytes" but "identical meaning in
+    // every field that existed at the time, and empty in the ones that did not".
+    // A migration cannot promise that a container it never saw stays the same
+    // size.
     const state = fold(migrated.log, migrated.head);
-    const digest = bytesToHex(sha256(new TextEncoder().encode(canonicalJson(state))));
-    expect(digest).toBe(v1.finalStateHash);
+
+    expect(state.turn).toBe(101);
+    expect(state.seed).toBe(12345);
+    expect(state.rngCounter).toBe(122);
+    expect(state.grid.width).toBe(24);
+    expect(state.grid.height).toBe(16);
+    expect(state.entities).toHaveLength(1);
+    expect(state.entities[0]?.id).toBe('player');
+
+    // Fields that did not exist when the log was written are empty, not invented.
+    expect(state.items).toEqual([]);
+  });
+
+  it('folds to a state that still hashes stably, just not to v1 digest', () => {
+    // Determinism itself is unaffected by the shape change: two folds of the
+    // migrated chain agree with each other, which is the property replay needs.
+    const a = fold(migrated.log, migrated.head);
+    const b = fold(migrated.log, migrated.head);
+    const digest = (s: unknown): string =>
+      bytesToHex(sha256(new TextEncoder().encode(canonicalJson(s))));
+    expect(digest(a)).toBe(digest(b));
+    expect(digest(a)).not.toBe(v1.finalStateHash);
   });
 
   it('does not retroactively change what an old log meant', () => {

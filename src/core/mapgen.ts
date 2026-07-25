@@ -1,7 +1,8 @@
-import { FLOOR, WALL, makeGrid } from './grid.js';
+import { FLOOR, WALL, EXIT, makeGrid } from './grid.js';
 import type { Grid } from './grid.js';
 import { intBetween } from './rng.js';
 import { reachableFrom } from './reachability.js';
+import { isPassable } from './grid.js';
 
 export interface SpawnResult {
   points: Array<{ x: number; y: number }>;
@@ -106,4 +107,52 @@ export function generateMap(
   throw new Error(
     `generateMap: no acceptable layout in ${MAX_ATTEMPTS} attempts (seed ${seed}, ${width}x${height}, ${wallCount} walls)`,
   );
+}
+
+/**
+ * The farthest walkable tile from the start, by flood-fill distance rather than
+ * straight-line — so "far" means far to walk, not far to look at. Ties break on
+ * tile index, which is deterministic and independent of traversal order.
+ *
+ * Draws nothing: where the way out lies is decided by the map's shape, not by
+ * chance, which is what makes every world's journey the longest one available
+ * to it rather than an accident.
+ */
+export function farthestFrom(grid: Grid, start: { x: number; y: number }): { x: number; y: number } {
+  const seen = new Map<number, number>();
+  const queue: Array<{ x: number; y: number; d: number }> = [{ ...start, d: 0 }];
+  seen.set(start.y * grid.width + start.x, 0);
+
+  let best = { x: start.x, y: start.y };
+  let bestDistance = -1;
+  let bestIndex = Number.POSITIVE_INFINITY;
+
+  while (queue.length > 0) {
+    const here = queue.shift();
+    if (here === undefined) break;
+
+    const index = here.y * grid.width + here.x;
+    if (here.d > bestDistance || (here.d === bestDistance && index < bestIndex)) {
+      best = { x: here.x, y: here.y };
+      bestDistance = here.d;
+      bestIndex = index;
+    }
+
+    for (const [nx, ny] of [[here.x + 1, here.y], [here.x - 1, here.y], [here.x, here.y + 1], [here.x, here.y - 1]] as const) {
+      if (!isPassable(grid, nx, ny)) continue;
+      const key = ny * grid.width + nx;
+      if (seen.has(key)) continue;
+      seen.set(key, here.d + 1);
+      queue.push({ x: nx, y: ny, d: here.d + 1 });
+    }
+  }
+
+  return best;
+}
+
+/** Carves the way out into the tiles. The exit is a place, so it lives in the map. */
+export function withExit(grid: Grid, exit: { x: number; y: number }): Grid {
+  const tiles = [...grid.tiles];
+  tiles[exit.y * grid.width + exit.x] = EXIT;
+  return makeGrid(grid.width, grid.height, tiles);
 }

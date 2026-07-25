@@ -1,5 +1,5 @@
 import { append, fold } from '../log/chain.js';
-import { attemptMove, advanceTurn, endsTurn } from '../core/commands.js';
+import { attemptMove, advanceTurn, endsTurn, wait, takeUnderfoot, outcome } from '../core/commands.js';
 import { decide } from '../core/ai.js';
 import { findEntity, isAlive } from '../core/entity.js';
 import type { Action } from '../core/ai.js';
@@ -56,11 +56,37 @@ function draftFor(state: GameState, entityId: string, action: Action): DraftEven
   );
 }
 
+/** Picks up whatever the mover is now standing on. Rides along with the move
+ *  that reached it rather than costing a turn of its own — stooping is not a
+ *  decision, walking there was. */
+function collect(position: Position, entityId: string): Position {
+  const taken = takeUnderfoot(fold(position.log, position.head), entityId);
+  return taken === null ? position : commit(position, taken);
+}
+
 export function playerStep(position: Position, playerId: string, dx: number, dy: number): {
   position: Position;
-  draft: DraftEvent;
+  draft: DraftEvent | null;
 } {
-  const draft = attemptMove(fold(position.log, position.head), playerId, dx, dy);
+  const state = fold(position.log, position.head);
+
+  // A finished run takes no more input. Without this you can walk off the exit
+  // you just reached, or keep playing a corpse.
+  if (outcome(state, playerId) !== 'playing') return { position, draft: null };
+
+  const draft = attemptMove(state, playerId, dx, dy);
+  return { position: collect(commit(position, draft), playerId), draft };
+}
+
+/** Hold position and let the world come to you. */
+export function playerWait(position: Position, playerId: string): {
+  position: Position;
+  draft: DraftEvent | null;
+} {
+  const state = fold(position.log, position.head);
+  if (outcome(state, playerId) !== 'playing') return { position, draft: null };
+
+  const draft = wait(state, playerId);
   return { position: commit(position, draft), draft };
 }
 
@@ -80,6 +106,8 @@ export function runWorldTurns(position: Position, playerId: string, maxSteps = 6
 
     const player = findEntity(state.entities, playerId);
     if (player === undefined || !isAlive(player)) return current;
+    // A reached exit ends the world's turn too — nothing gets a parting shot.
+    if (outcome(state, playerId) !== 'playing') return current;
 
     const active = state.activeEntityId;
     if (active === null || active === playerId) return current;

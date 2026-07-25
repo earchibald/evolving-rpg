@@ -13,6 +13,7 @@ function room(entities: Entity[], walls: Array<[number, number]> = []): GameStat
   return {
     grid: makeGrid(width, height, tiles),
     entities,
+    items: [],
     turn: 1,
     activeEntityId: entities[0]?.id ?? null,
     seed: 7,

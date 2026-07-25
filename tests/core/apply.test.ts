@@ -17,6 +17,7 @@ const worldInit: GameEvent = {
     width: 3, height: 2,
     tiles: [FLOOR, FLOOR, WALL, FLOOR, FLOOR, FLOOR],
     seed: 99,
+    items: [],
     player: { id: 'player', kind: 'you', pos: { x: 0, y: 0 }, stats: { hp: 10, might: 3, wits: 3, speed: 4 }, tags: [] },
     opponents: [
       { id: 'thing-1', kind: 'thing', pos: { x: 1, y: 1 }, stats: { hp: 5, might: 4, wits: 1, speed: 3 }, tags: [] },

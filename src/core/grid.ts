@@ -1,5 +1,8 @@
 export const FLOOR = 0;
 export const WALL = 1;
+/** The way out. Walkable like floor — it is a place, not an object, which is
+ *  why it lives in the tiles rather than in a list of things. */
+export const EXIT = 2;
 
 export interface Grid {
   readonly width: number;
@@ -32,6 +35,10 @@ export function tileAt(grid: Grid, x: number, y: number): number {
   return grid.tiles[idx(grid, x, y)] ?? WALL;
 }
 
+/** Anything that is not wall. Stated as a negative on purpose: every tile kind
+ *  added from here — exit, and whatever comes after — is walkable unless it
+ *  says otherwise, so a new kind cannot become accidentally impassable by
+ *  nobody remembering to add it to a list. */
 export function isPassable(grid: Grid, x: number, y: number): boolean {
-  return tileAt(grid, x, y) === FLOOR;
+  return tileAt(grid, x, y) !== WALL;
 }

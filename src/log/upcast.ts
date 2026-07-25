@@ -50,9 +50,9 @@ export function upcastEvent(raw: unknown): DraftEvent {
   }
   if (version === current) return raw as DraftEvent;
 
-  // WORLD_INIT has had two changes, so it walks the ladder a step at a time
-  // rather than jumping. Each `if` is one version's worth of change, and adding
-  // v4 later means adding one more — not rewriting the ones below it.
+  // WORLD_INIT has changed three times, so it walks the ladder a step at a
+  // time rather than jumping. Each block is one version's worth of change, in
+  // order, and the next one means adding a block rather than rewriting these.
   if (type === 'WORLD_INIT') {
     const payload = { ...event.payload };
     let rngDraws = typeof event.rngDraws === 'number' ? event.rngDraws : 0;
@@ -72,6 +72,12 @@ export function upcastEvent(raw: unknown): DraftEvent {
       // that had none, and an empty list says so honestly — inventing
       // occupants for an old log would be fabricating history, not migrating it.
       payload.opponents = payload.opponents ?? [];
+    }
+
+    if (version <= 3) {
+      // v3 → v4: worlds carry what is lying in them. Older ones carried
+      // nothing, and an empty list says exactly that.
+      payload.items = payload.items ?? [];
     }
 
     return {

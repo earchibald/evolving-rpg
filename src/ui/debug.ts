@@ -1,9 +1,11 @@
 import { emptyLog, append, chain, fold, verifyChain } from '../log/chain.js';
 import { emptyRefs, createRef, getRef, setHead, fork, reset, listRefs } from '../log/refs.js';
 import { createWorld } from '../core/commands.js';
-import { playerStep, runWorldTurns } from '../play/session.js';
+import { playerStep, playerWait, runWorldTurns } from '../play/session.js';
 import { isAlive } from '../core/entity.js';
-import { WALL, idx } from '../core/grid.js';
+import { outcome } from '../core/commands.js';
+import { itemAt } from '../core/item.js';
+import { WALL, EXIT, idx, tileAt } from '../core/grid.js';
 import type { EventLog } from '../log/chain.js';
 import type { Refs } from '../log/refs.js';
 import type { Entity } from '../core/entity.js';
@@ -59,7 +61,10 @@ function render(): void {
     for (let x = 0; x < state.grid.width; x += 1) {
       const cell = document.createElement('div');
       cell.className = 'cell';
-      if (state.grid.tiles[idx(state.grid, x, y)] === WALL) cell.classList.add('wall');
+      const tile = state.grid.tiles[idx(state.grid, x, y)];
+      if (tile === WALL) cell.classList.add('wall');
+      if (tile === EXIT) cell.classList.add('exit');
+      if (itemAt(state.items, x, y) !== undefined) cell.classList.add('item');
 
       const here = occupant.get(idx(state.grid, x, y));
       if (here !== undefined) {
@@ -73,6 +78,7 @@ function render(): void {
 
   const rows: Array<[string, string]> = [
     ['world', active],
+    ['outcome', outcome(state)],
     ['turn', String(state.turn)],
     ['position', player === undefined ? '—' : `${player.pos.x}, ${player.pos.y}`],
     ['hp / might / wits / speed', player === undefined ? '—'
@@ -82,6 +88,14 @@ function render(): void {
     ['events in chain', String(chain(log, head).length)],
     ['events in log', String(log.events.size)],
   ];
+
+  for (const i of state.items) {
+    rows.push([i.kind, `at ${i.pos.x}, ${i.pos.y}`]);
+  }
+
+  for (const i of state.items) {
+    rows.push([i.kind, `at ${i.pos.x}, ${i.pos.y}`]);
+  }
 
   for (const e of state.entities) {
     rows.push([
@@ -120,6 +134,8 @@ function narrate(fresh: readonly GameEvent[]): string {
       lines.push(`blocked: ${event.payload.reason} — no turn spent`);
       continue;
     }
+    if (event.type === 'WAIT') { lines.push('you hold still'); continue; }
+    if (event.type === 'ITEM_TAKEN') { lines.push(`you take ${event.payload.itemId}`); continue; }
     if (event.type !== 'STRIKE') continue;
 
     const p = event.payload;
@@ -130,6 +146,11 @@ function narrate(fresh: readonly GameEvent[]): string {
   }
 
   return lines.join('  ·  ');
+}
+
+function finish(before: number, head: string): void {
+  say(narrate(chain(log, head).slice(before)));
+  render();
 }
 
 function step(dx: number, dy: number): void {
@@ -146,11 +167,28 @@ function step(dx: number, dy: number): void {
   log = after.log;
   refs = setHead(refs, active, after.head);
 
-  say(narrate(chain(log, after.head).slice(before)));
-  render();
+  finish(before, after.head);
+}
+
+function hold(): void {
+  const head = getRef(refs, active).head;
+  if (head === null) return;
+
+  const before = chain(log, head).length;
+  const waited = playerWait({ log, head }, 'player');
+  const after = runWorldTurns(waited.position, 'player');
+  log = after.log;
+  refs = setHead(refs, active, after.head);
+
+  finish(before, after.head);
 }
 
 window.addEventListener('keydown', (event) => {
+  if (event.key === '.' || event.key === ' ') {
+    event.preventDefault();
+    hold();
+    return;
+  }
   const move = KEYS[event.key];
   if (move === undefined) return;
   event.preventDefault();

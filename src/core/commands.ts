@@ -1,8 +1,10 @@
-import { generateMap, pickSpawnPoints } from './mapgen.js';
+import { generateMap, pickSpawnPoints, farthestFrom, withExit } from './mapgen.js';
 import { inBounds, isPassable } from './grid.js';
 import { findEntity, isAlive } from './entity.js';
 import { intBetween } from './rng.js';
 import type { Entity } from './entity.js';
+import { itemAt } from './item.js';
+import { EXIT, tileAt } from './grid.js';
 import { nextActive } from './turns.js';
 import { SCHEMA_VERSIONS } from './events.js';
 import type { DraftEvent } from './events.js';
@@ -63,14 +65,24 @@ export function createWorld(
   playerId = 'player',
 ): Extract<DraftEvent, { type: 'WORLD_INIT' }> {
   const generated = generateMap(seed, 0, width, height, wallCount);
+
+  // The way out sits at the far end of the map, so a run has a direction and
+  // the journey is the longest one this world affords rather than an accident.
+  const exit = farthestFrom(generated.grid, generated.start);
+  const grid = withExit(generated.grid, exit);
+
   const spawned = pickSpawnPoints(
     seed,
     generated.counterAfter,
-    generated.grid,
+    grid,
     generated.start,
     OPPONENT_COUNT,
     OPPONENT_MIN_DISTANCE,
   );
+
+  // Placed on the last creature's tile: the edge is guarded, so taking it means
+  // going through something. An item you can pick up for free is not a choice.
+  const guarded = spawned.points[spawned.points.length - 1] ?? exit;
 
   return {
     type: 'WORLD_INIT',
@@ -82,8 +94,14 @@ export function createWorld(
     payload: {
       width,
       height,
-      tiles: [...generated.grid.tiles],
+      tiles: [...grid.tiles],
       seed,
+      items: [{
+        id: 'keen-edge',
+        kind: 'a keen edge',
+        pos: { x: guarded.x, y: guarded.y },
+        grants: { hp: 0, might: 2, wits: 0, speed: 0 },
+      }],
       player: {
         id: playerId,
         kind: 'you',
@@ -179,7 +197,64 @@ export function attemptMove(state: GameState, entityId: string, dx: number, dy: 
  * later becomes a declarative rule rather than a function.
  */
 export function endsTurn(draft: DraftEvent): boolean {
-  return draft.type !== 'MOVE_BLOCKED';
+  // ITEM_TAKEN rides along with the move that reached it, so it must not spend
+  // a second turn of its own.
+  return draft.type !== 'MOVE_BLOCKED' && draft.type !== 'ITEM_TAKEN';
+}
+
+/**
+ * Holding position.
+ *
+ * Without this, time passes only when you move — so a player could never let
+ * something come to them and had to walk into its reach instead. Found by
+ * playing: blocked moves correctly cost no turn, which left no way at all to
+ * spend one deliberately.
+ */
+export function wait(state: GameState, entityId: string): Extract<DraftEvent, { type: 'WAIT' }> {
+  return {
+    type: 'WAIT',
+    schemaVersion: SCHEMA_VERSIONS.WAIT,
+    rngCounter: state.rngCounter,
+    rngDraws: 0,
+    payload: { entityId },
+  };
+}
+
+/** What is underfoot, if anything worth having. */
+export function takeUnderfoot(
+  state: GameState,
+  entityId: string,
+): Extract<DraftEvent, { type: 'ITEM_TAKEN' }> | null {
+  const taker = findEntity(state.entities, entityId);
+  if (taker === undefined) return null;
+
+  const item = itemAt(state.items, taker.pos.x, taker.pos.y);
+  if (item === undefined) return null;
+
+  return {
+    type: 'ITEM_TAKEN',
+    schemaVersion: SCHEMA_VERSIONS.ITEM_TAKEN,
+    rngCounter: state.rngCounter,
+    rngDraws: 0,
+    payload: { entityId, itemId: item.id, grants: { ...item.grants } },
+  };
+}
+
+export type Outcome = 'playing' | 'escaped' | 'dead';
+
+/**
+ * How the run stands.
+ *
+ * Derived rather than stored, and no event records it. Standing on the exit is
+ * escaping and no hit points is dying — both already true in the state, and a
+ * second recording of a fact is a second thing that can disagree with the
+ * first. The same reason canon is folded rather than kept.
+ */
+export function outcome(state: GameState, playerId = 'player'): Outcome {
+  const player = findEntity(state.entities, playerId);
+  if (player === undefined || !isAlive(player)) return 'dead';
+  if (tileAt(state.grid, player.pos.x, player.pos.y) === EXIT) return 'escaped';
+  return 'playing';
 }
 
 export function advanceTurn(state: GameState): Extract<DraftEvent, { type: 'TURN_ADVANCED' }> {

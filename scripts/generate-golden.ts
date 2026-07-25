@@ -51,6 +51,7 @@ for (const key of SCRIPT) {
   // varies. A golden fixture that never fights would leave the newest and
   // riskiest code untouched by the strongest test in the repo.
   const acted = playerStep({ log, head }, 'player', step[0], step[1]);
+  void acted.draft;
   const after = runWorldTurns(acted.position, 'player');
   log = after.log;
   head = after.head;

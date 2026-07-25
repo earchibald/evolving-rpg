@@ -1,4 +1,5 @@
 import { makeGrid } from './grid.js';
+import { granted } from './item.js';
 import type { GameEvent } from './events.js';
 import type { GameState } from './state.js';
 
@@ -24,6 +25,12 @@ function reduce(state: GameState, event: GameEvent): GameState {
       return {
         grid: makeGrid(p.width, p.height, p.tiles),
         entities: seeded,
+        items: p.items.map((i) => ({
+          id: i.id,
+          kind: i.kind,
+          pos: { x: i.pos.x, y: i.pos.y },
+          grants: { ...i.grants },
+        })),
         turn: 1,
         activeEntityId: p.player.id,
         seed: p.seed,
@@ -43,6 +50,23 @@ function reduce(state: GameState, event: GameEvent): GameState {
 
     case 'MOVE_BLOCKED':
       return state;
+
+    // Waiting changes nothing by itself. It exists so that passing time is a
+    // choice a player can make rather than something only walls impose on them
+    // — and so the chronicle can tell "held position" apart from "had no move".
+    case 'WAIT':
+      return state;
+
+    case 'ITEM_TAKEN': {
+      const p = event.payload;
+      return {
+        ...state,
+        entities: state.entities.map((e) =>
+          e.id === p.entityId ? { ...e, stats: granted(e.stats, p.grants) } : e,
+        ),
+        items: state.items.filter((i) => i.id !== p.itemId),
+      };
+    }
 
     case 'STRIKE': {
       const p = event.payload;

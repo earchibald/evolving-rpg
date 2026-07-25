@@ -41,3 +41,6 @@ button:focus-visible { outline: 2px solid var(--player); outline-offset: 2px; }
 
 .cell.foe { background: #b5483c; }
 .cell.dead { background: #4a2e2a; }
+
+.cell.exit { background: #2f6f5e; }
+.cell.item { background: #6b5a2e; }

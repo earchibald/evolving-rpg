@@ -1,6 +1,7 @@
 import { WALL, makeGrid } from './grid.js';
 import type { Grid } from './grid.js';
 import type { Entity } from './entity.js';
+import type { Item } from './item.js';
 
 /** `readonly` throughout, matching `Grid`'s convention, because `apply()` is
  *  required to be pure — the type should refuse in-place mutation rather than
@@ -10,6 +11,7 @@ import type { Entity } from './entity.js';
 export interface GameState {
   readonly grid: Grid;
   readonly entities: readonly Entity[];
+  readonly items: readonly Item[];
   readonly turn: number;
   readonly activeEntityId: string | null;
   readonly seed: number;
@@ -17,6 +19,7 @@ export interface GameState {
 }
 
 const NO_ENTITIES: readonly Entity[] = Object.freeze([]);
+const NO_ITEMS: readonly Item[] = Object.freeze([]);
 
 /** What a fold starts from. A WORLD_INIT event replaces it wholesale.
  *  Frozen as well as typed readonly: every fold in the process shares this one
@@ -25,6 +28,7 @@ const NO_ENTITIES: readonly Entity[] = Object.freeze([]);
 export const EMPTY_STATE: GameState = Object.freeze({
   grid: makeGrid(1, 1, [WALL]),
   entities: NO_ENTITIES,
+  items: NO_ITEMS,
   turn: 0,
   activeEntityId: null,
   seed: 0,
