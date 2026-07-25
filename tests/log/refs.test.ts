@@ -99,10 +99,31 @@ describe('fork', () => {
     expect(fold(grown.log, getRef(refs, 'Ashfall').head).turn).toBeGreaterThanOrEqual(1);
   });
 
-  it('rejects a fork point that is not on the source chain', () => {
+  it('rejects a fork point absent from the log', () => {
     const { log, head } = build();
     const refs = createRef(emptyRefs(), 'Ashfall', head, 8, '');
     expect(() => fork(log, refs, 'Ashfall', 'Ashfall-b', 'a'.repeat(64), '')).toThrow(/not on the chain/);
+  });
+
+  it('rejects a fork point that is in the log but on another branch', () => {
+    // The case above proves less than it appears to: a hash absent from the log
+    // is refused by chain()'s missing-event guard even with the ancestry check
+    // removed, so it never exercises that check. This one uses a hash that is
+    // genuinely in the log, just not an ancestor of the ref being forked.
+    const { log, head } = build();
+    const at = chain(log, head)[4];
+    if (at === undefined) throw new Error('fixture problem: no event at index 4');
+
+    let refs = createRef(emptyRefs(), 'Ashfall', head, 8, '');
+    refs = fork(log, refs, 'Ashfall', 'Sidetrack', at.id, '');
+
+    // Grow the fork so it holds an event Ashfall's own chain does not.
+    const sideHead = getRef(refs, 'Sidetrack').head;
+    const grown = append(log, sideHead, attemptMove(fold(log, sideHead), 'player', 0, 1));
+    refs = setHead(refs, 'Sidetrack', grown.event.id);
+
+    expect(() => fork(grown.log, refs, 'Ashfall', 'Bogus', grown.event.id, ''))
+      .toThrow(/not on the chain/);
   });
 
   it('rejects a name already in use', () => {
@@ -133,8 +154,16 @@ describe('reset', () => {
 
     let refs = createRef(emptyRefs(), 'Ashfall', head, 8, '');
     refs = reset(log, refs, 'Ashfall', target.id);
+
+    // The name of this test claims the events survive, so check that rather
+    // than only that a pointer can be reassigned. Restoring a string would
+    // pass even if reset had deleted everything it abandoned.
+    expect(chain(log, head)).toHaveLength(9);
+    expect(fold(log, head).turn).toBeGreaterThan(fold(log, target.id).turn);
+
     refs = setHead(refs, 'Ashfall', head);
     expect(getRef(refs, 'Ashfall').head).toBe(head);
+    expect(fold(log, getRef(refs, 'Ashfall').head).turn).toBe(fold(log, head).turn);
   });
 
   it('refuses a target that is not an ancestor of the current head', () => {
