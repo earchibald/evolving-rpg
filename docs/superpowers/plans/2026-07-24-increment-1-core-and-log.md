@@ -11,7 +11,8 @@
 ## Global Constraints
 
 - `apply()` must be pure: no RNG, no clock, no network, no I/O. Copied from spec: *"State changes exactly one way: `apply(state, event) → state`."*
-- `apply()` is total over **validated** events — those whose hash verifies and whose payload the command layer produced. A payload that is type-valid but internally inconsistent (a tile count disagreeing with the declared width and height) throws, and that is intended: a corrupted log must fail loudly rather than fold into a nonsense state. `verifyChain` is the gate for an untrusted log; `fold` alone does not validate, so do not fold a log you have not verified.
+- `apply()` is total over **validated** events. "Validated" is a conjunction: the event's hash verifies, *and* its payload came from the command layer. Only the first half is checkable at fold time — `verifyChain` re-derives hashes; nothing can re-derive provenance, which rests on the command layer being the sole writer of payloads.
+- A payload that is type-valid but internally inconsistent with the `Grid` it describes throws out of `makeGrid`. That covers **both** of its preconditions — a tile count disagreeing with the declared size, and a non-positive width or height — and is not an exhaustive list of blessed exceptions but a single rule: an inconsistent grid payload is a corrupted log, and a corrupted log must fail loudly rather than fold into a nonsense state. `fold` alone does not validate, so do not fold a log you have not verified.
 - All randomness resolves at command time and is recorded in the event payload. Events carry `rngCounter` = the counter value **before** the event ran.
 - Every event type carries a `schemaVersion`. Changing an existing type's meaning requires bumping it and writing an upcaster — never edit in place.
 - No test may touch the network.
@@ -956,7 +957,9 @@ git commit -m "feat: deterministic initiative order and turn advance"
 - Produces: `SCHEMA_VERSIONS`, `type EventType`, `WorldInitPayload`, `MovePayload`, `MoveBlockedPayload`, `TurnAdvancedPayload`, `type DraftEvent`, `type GameEvent = DraftEvent & { id: string; parent: string | null; seq: number }`, `apply(state: GameState, event: GameEvent): GameState`.
 
 `apply` is the load-bearing function of the whole project. It must never call
-the RNG, read a clock, or throw on a well-formed event. `rngCounter` on an event
+the RNG or read a clock. It is total over *validated* events; a payload that is
+internally inconsistent with the `Grid` it describes throws, deliberately —
+see the Global Constraints for what that means and why. `rngCounter` on an event
 is the counter *before* it ran; only `WORLD_INIT` advances the stored counter,
 using its own recorded `counterAfter`.
 
@@ -1187,10 +1190,12 @@ import type { GameState } from './state.js';
  * random was resolved when the command ran and is recorded in the payload,
  * which is what makes a replay faithful rather than merely similar.
  *
- * Total over *validated* events. A WORLD_INIT payload whose tile count
- * disagrees with its declared size throws out of makeGrid, and that is
- * deliberate: it happens only to a corrupted log, where failing loudly beats
- * folding nonsense. Verify an untrusted log with verifyChain before folding it.
+ * Total over *validated* events. A WORLD_INIT payload that is internally
+ * inconsistent with the grid it describes — a tile count disagreeing with the
+ * declared size, or a non-positive width or height — throws out of makeGrid.
+ * That is deliberate rather than a gap: it happens only to a corrupted log,
+ * where failing loudly beats folding nonsense. Verify an untrusted log with
+ * verifyChain before folding it.
  */
 export function apply(state: GameState, event: GameEvent): GameState {
   switch (event.type) {
