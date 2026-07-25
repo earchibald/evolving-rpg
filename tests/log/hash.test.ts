@@ -38,6 +38,17 @@ describe('hashEvent', () => {
     expect(hashEvent(draft, null, 0)).not.toBe(hashEvent({ ...draft, schemaVersion: 2 }, null, 0));
   });
 
+  it('changes when only the type changes', () => {
+    // Built with a cast on purpose. The discriminated union forbids a type that
+    // disagrees with its payload, so this value cannot arise in play — the test
+    // is checking hashEvent's field coverage, not a reachable event. Without it,
+    // dropping `type` from the hashed material passes every other case here,
+    // and a future event type reusing an existing payload shape would hash
+    // identically to the event it was meant to be distinct from.
+    const retyped = { ...draft, type: 'MOVE_BLOCKED' } as unknown as DraftEvent;
+    expect(hashEvent(draft, null, 0)).not.toBe(hashEvent(retyped, null, 0));
+  });
+
   it('changes when only the rng counter changes', () => {
     // Guards against rngCounter being left out of the hashed material. Without
     // this test, dropping the field entirely still passes every other case here

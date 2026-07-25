@@ -36,4 +36,20 @@ describe('canonicalJson', () => {
     expect(() => canonicalJson(Number.POSITIVE_INFINITY)).toThrow(/non-finite/);
     expect(() => canonicalJson(() => 1)).toThrow(/unsupported/);
   });
+
+  it('refuses objects that are not plain, rather than collapsing them to {}', () => {
+    // None of these has own enumerable keys, so without the prototype guard
+    // every one of them serialises to `{}` — two different Dates would hash
+    // identically to each other and to an empty object.
+    expect(() => canonicalJson(new Date(0))).toThrow(/only plain objects/);
+    expect(() => canonicalJson(new Map([['a', 1]]))).toThrow(/only plain objects/);
+    expect(() => canonicalJson(new Set([1]))).toThrow(/only plain objects/);
+  });
+
+  it('accepts a null-prototype object, which is still plain data', () => {
+    const bare = Object.create(null) as Record<string, unknown>;
+    bare.b = 1;
+    bare.a = 2;
+    expect(canonicalJson(bare)).toBe('{"a":2,"b":1}');
+  });
 });

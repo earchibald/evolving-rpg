@@ -24,6 +24,16 @@ export function canonicalJson(value: unknown): string {
   }
 
   if (t === 'object') {
+    // Plain objects only. A Date, Map, Set or class instance has no own
+    // enumerable keys, so it would serialise to `{}` — two different Dates
+    // hashing identically to each other and to an empty object. In a
+    // tamper-evident chain, refusing is far better than collapsing silently.
+    const proto = Object.getPrototypeOf(value);
+    if (proto !== Object.prototype && proto !== null) {
+      throw new Error(
+        `canonicalJson: only plain objects are serialisable, got ${Object.prototype.toString.call(value)}`,
+      );
+    }
     const obj = value as Record<string, unknown>;
     const keys = Object.keys(obj).filter((k) => obj[k] !== undefined).sort();
     const body = keys.map((k) => `${JSON.stringify(k)}:${canonicalJson(obj[k])}`).join(',');
