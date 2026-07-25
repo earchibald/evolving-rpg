@@ -5,6 +5,7 @@ import { playerStep, playerWait, runWorldTurns } from '../play/session.js';
 import { isAlive } from '../core/entity.js';
 import { outcome } from '../core/commands.js';
 import { itemAt } from '../core/item.js';
+import { save, load, clear, emptySession } from '../play/store.js';
 import { WALL, EXIT, idx, tileAt } from '../core/grid.js';
 import type { EventLog } from '../log/chain.js';
 import type { Refs } from '../log/refs.js';
@@ -21,10 +22,79 @@ let log: EventLog = emptyLog();
 let refs: Refs = emptyRefs();
 let active = MAIN;
 let forkCount = 0;
+let booted = '';
 
-const first = append(log, null, createWorld(SEED, WIDTH, HEIGHT, WALLS));
-log = first.log;
-refs = createRef(refs, MAIN, first.event.id, 0, 'opening run');
+function freshWorld(): void {
+  const session = emptySession(MAIN);
+  const first = append(session.log, null, createWorld(SEED, WIDTH, HEIGHT, WALLS));
+  log = first.log;
+  refs = createRef(session.refs, MAIN, first.event.id, 0, 'opening run');
+  active = MAIN;
+}
+
+// Restore before anything else. A refused save is worth saying out loud rather
+// than silently starting over — losing a run quietly is how you stop trusting
+// that anything is being kept.
+try {
+  const restored = load();
+  if (restored === null) {
+    freshWorld();
+    booted = 'new world';
+  } else {
+    log = restored.log;
+    refs = restored.refs;
+    active = restored.active;
+    booted = `restored ${refs.byName.size} world(s), ${log.events.size} events`;
+  }
+} catch (error) {
+  freshWorld();
+  booted = `save refused (${String(error)}) — started over`;
+}
+
+/**
+ * Writes the session to localStorage and mirrors it to the dev server, so a
+ * round played here is readable from the repository afterwards.
+ *
+ * The mirror is coalesced rather than fired per action. Unawaited posts race,
+ * and the first version of this wrote snapshots of 26, 41 and then 36 events —
+ * leaving a *stale* chronicle on disk. Handing back an out-of-date history is
+ * worse than handing back none, because nothing about it looks wrong.
+ *
+ * At most one request is in flight; whatever happened most recently is what
+ * goes next, and intermediate states are simply skipped. The save is a
+ * snapshot of everything, so skipping one loses nothing.
+ */
+let inFlight = false;
+let pendingSnapshot: ReturnType<typeof save> = null;
+
+function flushChronicle(): void {
+  if (inFlight || pendingSnapshot === null) return;
+
+  const body = JSON.stringify(pendingSnapshot);
+  pendingSnapshot = null;
+  inFlight = true;
+
+  void fetch('/__chronicle', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body,
+  })
+    .catch(() => {
+      // No dev server, or a build. The localStorage copy is what matters for
+      // continuing to play; this one is for reading afterwards.
+    })
+    .finally(() => {
+      inFlight = false;
+      flushChronicle();
+    });
+}
+
+function persist(): void {
+  const snapshot = save(log, refs, active, new Date().toISOString());
+  if (snapshot === null) return;
+  pendingSnapshot = snapshot;
+  flushChronicle();
+}
 
 const KEYS: Record<string, readonly [number, number]> = {
   ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0],
@@ -128,7 +198,12 @@ function render(): void {
     const marker = ref.name === active ? '→ ' : '  ';
     li.textContent = `${marker}${ref.name} @ ${String(ref.head).slice(0, 10)} (engine ${ref.engineVersion})`;
     li.style.cursor = 'pointer';
-    li.addEventListener('click', () => { active = ref.name; say(`switched to ${ref.name}`); render(); });
+    li.addEventListener('click', () => {
+      active = ref.name;
+      persist();
+      say(`switched to ${ref.name}`);
+      render();
+    });
     list.appendChild(li);
   }
 }
@@ -157,6 +232,7 @@ function narrate(fresh: readonly GameEvent[]): string {
 }
 
 function finish(before: number, head: string): void {
+  persist();
   say(narrate(chain(log, head).slice(before)));
   render();
 }
@@ -215,6 +291,7 @@ el('fork').addEventListener('click', () => {
   const name = `${active}-${forkCount}`;
   refs = fork(log, refs, active, name, null, 'forked from the debug view');
   active = name;
+  persist();
   say(`forked to ${name} — no events were copied`);
   render();
 });
@@ -224,9 +301,19 @@ el('rewind').addEventListener('click', () => {
   const target = events[Math.max(0, events.length - 11)];
   if (target === undefined) { say('nothing to rewind to'); return; }
   refs = reset(log, refs, active, target.id);
+  persist();
   say(`reset to seq ${target.seq} — the abandoned events are still in the log`);
   render();
 });
 
+el('newrun').addEventListener('click', () => {
+  clear();
+  freshWorld();
+  persist();
+  say('new world — the old save is gone');
+  render();
+});
+
 render();
-say('ready');
+persist();
+say(booted);
