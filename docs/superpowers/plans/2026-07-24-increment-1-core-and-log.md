@@ -1873,6 +1873,23 @@ describe('chain', () => {
     broken.events.delete(victim.id);
     expect(() => chain(broken, head)).toThrow(/missing event/);
   });
+
+  it('refuses a cycle rather than walking forever', () => {
+    // Content addressing makes a real cycle unreachable by appending, so this
+    // is a hand-forged log: two events made to point at each other. Without the
+    // guard the walk never terminates and the process dies on memory rather
+    // than reporting a corrupt log.
+    const { log, head } = build();
+    const events = chain(log, head);
+    const earlier = events[1];
+    const later = events[2];
+    if (earlier === undefined || later === undefined) throw new Error('fixture problem');
+
+    const looped: EventLog = { events: new Map(log.events) };
+    looped.events.set(earlier.id, { ...earlier, parent: later.id } as GameEvent);
+
+    expect(() => chain(looped, later.id)).toThrow(/cycle/);
+  });
 });
 
 describe('fold', () => {
