@@ -9,11 +9,14 @@ const worldInit: GameEvent = {
   type: 'WORLD_INIT',
   schemaVersion: SCHEMA_VERSIONS.WORLD_INIT,
   rngCounter: 0,
+  // Map generation consumed 128 draws. In v1 this lived in the payload as
+  // `counterAfter`; it is now an ordinary envelope field like every other
+  // event's, which is what lets a second consumer of randomness exist.
+  rngDraws: 128,
   payload: {
     width: 3, height: 2,
     tiles: [FLOOR, FLOOR, WALL, FLOOR, FLOOR, FLOOR],
     seed: 99,
-    counterAfter: 128,
     player: { id: 'player', kind: 'you', pos: { x: 0, y: 0 }, stats: { hp: 10, might: 3, wits: 3, speed: 4 }, tags: [] },
   },
 };
@@ -33,7 +36,7 @@ describe('apply WORLD_INIT', () => {
     expect(started.turn).toBe(1);
   });
 
-  it('records the seed and the counter the generator finished on', () => {
+  it('records the seed, and a counter advanced by the draws generation made', () => {
     expect(started.seed).toBe(99);
     expect(started.rngCounter).toBe(128);
   });
@@ -62,6 +65,7 @@ describe('apply MOVE', () => {
     type: 'MOVE',
     schemaVersion: SCHEMA_VERSIONS.MOVE,
     rngCounter: 128,
+    rngDraws: 0,
     payload: { entityId: 'player', from: { x: 0, y: 0 }, to: { x: 1, y: 0 } },
   });
 
@@ -77,19 +81,21 @@ describe('apply MOVE', () => {
     expect(moved.rngCounter).toBe(128);
   });
 
-  it('ignores the event own rngCounter, so only WORLD_INIT can move it', () => {
-    // A deliberately mismatched counter. verifyChain would reject this event,
-    // but apply must not read the field at all: if it copied the counter from
-    // the event, the replay check that compares them would be circular and
-    // would pass while proving nothing.
-    const bogus = apply(started, {
+  it('advances the counter by the event own draws, and by nothing else', () => {
+    // v1's rule was "only WORLD_INIT can move the counter", and that is exactly
+    // what v2 replaced: every event declares its own draws and apply advances by
+    // precisely that. So this is a test of the new rule rather than the old one
+    // patched into passing — a distinction worth keeping, because a migration
+    // that quietly rewrites its predecessor's tests has proved nothing.
+    const drew = apply(started, {
       id: 'e1', parent: 'e0', seq: 1,
       type: 'MOVE',
       schemaVersion: SCHEMA_VERSIONS.MOVE,
-      rngCounter: 999999,
+      rngCounter: 128,
+      rngDraws: 3,
       payload: { entityId: 'player', from: { x: 0, y: 0 }, to: { x: 1, y: 0 } },
     });
-    expect(bogus.rngCounter).toBe(128);
+    expect(drew.rngCounter).toBe(131);
   });
 
   it('leaves every entity alone when the id matches nobody', () => {
@@ -98,6 +104,7 @@ describe('apply MOVE', () => {
       type: 'MOVE',
       schemaVersion: SCHEMA_VERSIONS.MOVE,
       rngCounter: 128,
+      rngDraws: 0,
       payload: { entityId: 'ghost', from: { x: 0, y: 0 }, to: { x: 1, y: 0 } },
     });
     expect(nobody.entities).toEqual(started.entities);
@@ -111,6 +118,7 @@ describe('apply MOVE_BLOCKED', () => {
     type: 'MOVE_BLOCKED',
     schemaVersion: SCHEMA_VERSIONS.MOVE_BLOCKED,
     rngCounter: 128,
+    rngDraws: 0,
     payload: { entityId: 'player', attempted: { x: 2, y: 0 }, reason: 'wall' },
   });
 
@@ -133,6 +141,7 @@ describe('apply TURN_ADVANCED', () => {
       type: 'TURN_ADVANCED',
       schemaVersion: SCHEMA_VERSIONS.TURN_ADVANCED,
       rngCounter: 128,
+      rngDraws: 0,
       payload: { activeEntityId: 'player', turn: 2 },
     });
     expect(advanced.turn).toBe(2);
@@ -152,6 +161,7 @@ describe('apply with an event it cannot reduce', () => {
       type: 'STRIKE',
       schemaVersion: 1,
       rngCounter: 0,
+      rngDraws: 0,
       payload: { attacker: 'player', target: 'goblin', damage: 3 },
     } as unknown as GameEvent;
 

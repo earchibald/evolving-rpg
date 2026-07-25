@@ -1,6 +1,6 @@
 import { emptyLog, append, chain, fold, verifyChain } from '../log/chain.js';
 import { emptyRefs, createRef, getRef, setHead, fork, reset, listRefs } from '../log/refs.js';
-import { createWorld, attemptMove, advanceTurn } from '../core/commands.js';
+import { createWorld, attemptMove, advanceTurn, endsTurn } from '../core/commands.js';
 import { WALL, idx } from '../core/grid.js';
 import type { EventLog } from '../log/chain.js';
 import type { Refs } from '../log/refs.js';
@@ -88,16 +88,22 @@ function render(): void {
 
 function step(dx: number, dy: number): void {
   const head = getRef(refs, active).head;
-  const moved = append(log, head, attemptMove(fold(log, head), 'player', dx, dy));
+  const draft = attemptMove(fold(log, head), 'player', dx, dy);
+  const moved = append(log, head, draft);
   log = moved.log;
   refs = setHead(refs, active, moved.event.id);
 
-  const turned = append(log, moved.event.id, advanceTurn(fold(log, moved.event.id)));
-  log = turned.log;
-  refs = setHead(refs, active, turned.event.id);
+  // A refused action costs no turn. The attempt is still recorded — bumping a
+  // wall says something real about whether the map reads legibly — but the
+  // clock does not move for something that did not happen.
+  if (endsTurn(draft)) {
+    const turned = append(log, moved.event.id, advanceTurn(fold(log, moved.event.id)));
+    log = turned.log;
+    refs = setHead(refs, active, turned.event.id);
+  }
 
   say(moved.event.type === 'MOVE_BLOCKED'
-    ? `blocked: ${moved.event.payload.reason}`
+    ? `blocked: ${moved.event.payload.reason} — no turn spent`
     : '');
   render();
 }

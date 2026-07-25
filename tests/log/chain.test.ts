@@ -195,6 +195,7 @@ describe('verifyChain', () => {
       type: 'STRIKE',
       schemaVersion: 1,
       rngCounter: 0,
+      rngDraws: 0,
       payload: { attacker: 'player', target: 'goblin', damage: 3 },
     } as unknown as DraftEvent;
 
@@ -210,6 +211,7 @@ describe('verifyChain', () => {
       type: 'MOVE',
       schemaVersion: 99,
       rngCounter: 0,
+      rngDraws: 0,
       payload: { entityId: 'player', from: { x: 0, y: 0 }, to: { x: 1, y: 0 } },
     } as unknown as DraftEvent;
 
@@ -249,6 +251,7 @@ describe('verifyChain', () => {
       type: 'MOVE',
       schemaVersion: SCHEMA_VERSIONS.MOVE,
       rngCounter: state.rngCounter + 999,
+      rngDraws: 0,
       payload: { entityId: 'player', from: { ...player.pos }, to: { ...player.pos } },
     });
 

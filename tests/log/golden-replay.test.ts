@@ -2,7 +2,7 @@ import { sha256 } from '@noble/hashes/sha256';
 import { bytesToHex } from '@noble/hashes/utils';
 import fixture from '../fixtures/golden-run.json';
 import { emptyLog, append, chain, fold, verifyChain } from '../../src/log/chain.js';
-import { createWorld, attemptMove, advanceTurn } from '../../src/core/commands.js';
+import { createWorld, attemptMove, advanceTurn, endsTurn } from '../../src/core/commands.js';
 import { canonicalJson } from '../../src/log/canonical.js';
 import { hashEvent } from '../../src/log/hash.js';
 import type { EventLog } from '../../src/log/chain.js';
@@ -20,8 +20,19 @@ function logFromFixture(): EventLog {
 
 describe('golden replay', () => {
   it('has the expected shape', () => {
-    expect(fixture.events).toHaveLength(201);
     expect(fixture.script).toHaveLength(100);
+
+    // Encoded as the rule rather than a magic total: one world init, one event
+    // per script input, and a turn advance only for inputs that actually
+    // happened. A blocked move is recorded but costs no turn — so if that
+    // regressed, this fails, where a bare `toHaveLength(170)` would only say
+    // the number moved without saying why.
+    const count = (t: string): number =>
+      (fixture.events as ReadonlyArray<{ type: string }>).filter((e) => e.type === t).length;
+
+    expect(count('MOVE') + count('MOVE_BLOCKED')).toBe(100);
+    expect(count('TURN_ADVANCED')).toBe(count('MOVE'));
+    expect(fixture.events).toHaveLength(1 + 100 + count('MOVE'));
   });
 
   it('verifies: every hash recomputes and every rng counter lines up', () => {
@@ -45,15 +56,26 @@ describe('golden replay', () => {
     log = first.log;
     let head = first.event.id;
 
+    // This loop is deliberately a restatement of the generator's, not an import
+    // of it: sharing the code would make a bug in the loop invisible to the very
+    // test meant to catch it. The cost is that the two can drift — and they just
+    // did, when blocked moves stopped ending a turn and only the generator was
+    // updated. That drift is the test doing its job, so the fix is to restate
+    // the rule here rather than to collapse the duplication.
     for (const key of fixture.script) {
       const step = STEPS[key];
       if (step === undefined) throw new Error(`bad script character ${key}`);
-      const moved = append(log, head, attemptMove(fold(log, head), 'player', step[0], step[1]));
+
+      const draft = attemptMove(fold(log, head), 'player', step[0], step[1]);
+      const moved = append(log, head, draft);
       log = moved.log;
       head = moved.event.id;
-      const turned = append(log, head, advanceTurn(fold(log, head)));
-      log = turned.log;
-      head = turned.event.id;
+
+      if (endsTurn(draft)) {
+        const turned = append(log, head, advanceTurn(fold(log, head)));
+        log = turned.log;
+        head = turned.event.id;
+      }
     }
 
     expect(head).toBe(fixture.head);
@@ -85,6 +107,7 @@ describe('golden replay', () => {
           type: drifted.type,
           schemaVersion: drifted.schemaVersion,
           rngCounter: drifted.rngCounter,
+          rngDraws: 0,
           payload: drifted.payload,
         } as DraftEvent,
         drifted.parent,

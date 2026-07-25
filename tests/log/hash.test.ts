@@ -6,6 +6,7 @@ const draft: DraftEvent = {
   type: 'MOVE',
   schemaVersion: SCHEMA_VERSIONS.MOVE,
   rngCounter: 12,
+  rngDraws: 0,
   payload: { entityId: 'player', from: { x: 1, y: 1 }, to: { x: 2, y: 1 } },
 };
 
@@ -35,7 +36,7 @@ describe('hashEvent', () => {
   });
 
   it('changes when the schema version changes', () => {
-    expect(hashEvent(draft, null, 0)).not.toBe(hashEvent({ ...draft, schemaVersion: 2 }, null, 0));
+    expect(hashEvent(draft, null, 0)).not.toBe(hashEvent({ ...draft, schemaVersion: 99 }, null, 0));
   });
 
   it('changes when only the type changes', () => {
@@ -61,6 +62,7 @@ describe('hashEvent', () => {
     const reordered: DraftEvent = {
       payload: { to: { y: 1, x: 2 }, from: { y: 1, x: 1 }, entityId: 'player' },
       rngCounter: 12,
+      rngDraws: 0,
       schemaVersion: SCHEMA_VERSIONS.MOVE,
       type: 'MOVE',
     };

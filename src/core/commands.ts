@@ -20,12 +20,14 @@ export function createWorld(
     type: 'WORLD_INIT',
     schemaVersion: SCHEMA_VERSIONS.WORLD_INIT,
     rngCounter: 0,
+    // Generation started from counter 0, so the counter it finished on is
+    // exactly the number of draws it consumed.
+    rngDraws: generated.counterAfter,
     payload: {
       width,
       height,
       tiles: [...generated.grid.tiles],
       seed,
-      counterAfter: generated.counterAfter,
       player: {
         id: playerId,
         kind: 'you',
@@ -55,6 +57,7 @@ export function attemptMove(state: GameState, entityId: string, dx: number, dy: 
       type: 'MOVE_BLOCKED',
       schemaVersion: SCHEMA_VERSIONS.MOVE_BLOCKED,
       rngCounter: state.rngCounter,
+      rngDraws: 0,
       payload: { entityId, attempted: to, reason: 'out-of-bounds' },
     };
   }
@@ -63,6 +66,7 @@ export function attemptMove(state: GameState, entityId: string, dx: number, dy: 
       type: 'MOVE_BLOCKED',
       schemaVersion: SCHEMA_VERSIONS.MOVE_BLOCKED,
       rngCounter: state.rngCounter,
+      rngDraws: 0,
       payload: { entityId, attempted: to, reason: 'wall' },
     };
   }
@@ -74,6 +78,7 @@ export function attemptMove(state: GameState, entityId: string, dx: number, dy: 
       type: 'MOVE_BLOCKED',
       schemaVersion: SCHEMA_VERSIONS.MOVE_BLOCKED,
       rngCounter: state.rngCounter,
+      rngDraws: 0,
       payload: { entityId, attempted: to, reason: 'occupied' },
     };
   }
@@ -82,8 +87,23 @@ export function attemptMove(state: GameState, entityId: string, dx: number, dy: 
     type: 'MOVE',
     schemaVersion: SCHEMA_VERSIONS.MOVE,
     rngCounter: state.rngCounter,
+    rngDraws: 0,
     payload: { entityId, from: { x: mover.pos.x, y: mover.pos.y }, to },
   };
+}
+
+/**
+ * Whether an action ends the actor's turn.
+ *
+ * A refused action costs nothing: walking into a wall is a mispress, not a
+ * decision, and charging a turn for it hands a free hit to whatever is standing
+ * next to you. The rule lives here rather than in the view because the view is
+ * a throwaway harness and this is a rule of the game — the next caller would
+ * otherwise reproduce the bug, and this is exactly the kind of statement that
+ * later becomes a declarative rule rather than a function.
+ */
+export function endsTurn(draft: DraftEvent): boolean {
+  return draft.type !== 'MOVE_BLOCKED';
 }
 
 export function advanceTurn(state: GameState): Extract<DraftEvent, { type: 'TURN_ADVANCED' }> {
@@ -92,6 +112,7 @@ export function advanceTurn(state: GameState): Extract<DraftEvent, { type: 'TURN
     type: 'TURN_ADVANCED',
     schemaVersion: SCHEMA_VERSIONS.TURN_ADVANCED,
     rngCounter: state.rngCounter,
+    rngDraws: 0,
     payload: { activeEntityId, turn: wrapped ? state.turn + 1 : state.turn },
   };
 }

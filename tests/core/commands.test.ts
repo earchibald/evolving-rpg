@@ -1,4 +1,4 @@
-import { createWorld, attemptMove, advanceTurn } from '../../src/core/commands.js';
+import { createWorld, attemptMove, advanceTurn, endsTurn } from '../../src/core/commands.js';
 import { apply } from '../../src/core/apply.js';
 import { generateMap } from '../../src/core/mapgen.js';
 import { EMPTY_STATE } from '../../src/core/state.js';
@@ -22,7 +22,9 @@ describe('createWorld', () => {
     expect(draft.rngCounter).toBe(0);
     // Tied to the generator's real output rather than merely positive: a
     // hardcoded constant satisfies a > 0 check while silently breaking replay.
-    expect(draft.payload.counterAfter).toBe(generateMap(4242, 0, 24, 16, 60).counterAfter);
+    // Draws now live on the envelope, not in the payload. Generation begins at
+    // counter 0, so the counter it finished on is exactly the draw count.
+    expect(draft.rngDraws).toBe(generateMap(4242, 0, 24, 16, 60).counterAfter);
   });
 
   it('gives the player the four stats', () => {
@@ -137,5 +139,23 @@ describe('advanceTurn', () => {
   it('increments the turn when the order wraps', () => {
     const draft = advanceTurn(fixture());
     expect(draft.payload).toEqual({ activeEntityId: 'player', turn: 2 });
+  });
+});
+
+describe('endsTurn', () => {
+  it('charges a turn for an action that happened', () => {
+    const state = fixture();
+    expect(endsTurn(attemptMove(state, 'player', -1, 0))).toBe(true);
+    expect(endsTurn(advanceTurn(state))).toBe(true);
+  });
+
+  it('charges nothing for a refused one', () => {
+    // Walking into a wall is a mispress, not a decision. Charging a turn for it
+    // hands a free hit to whatever is standing next to you — which is why this
+    // is a rule of the game and not a detail of the view. Found by playing, not
+    // by testing.
+    const state = fixture();
+    expect(endsTurn(attemptMove(state, 'player', 1, 0))).toBe(false);
+    expect(endsTurn(attemptMove(state, 'player', 0, -1))).toBe(false);
   });
 });

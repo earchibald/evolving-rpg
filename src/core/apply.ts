@@ -3,18 +3,11 @@ import type { GameEvent } from './events.js';
 import type { GameState } from './state.js';
 
 /**
- * The only way state changes. Pure: no RNG, no clock, no network. Everything
- * random was resolved when the command ran and is recorded in the payload,
- * which is what makes a replay faithful rather than merely similar.
- *
- * Total over *validated* events. A WORLD_INIT payload that is internally
- * inconsistent with the grid it describes — a tile count disagreeing with the
- * declared size, or a non-positive width or height — throws out of makeGrid.
- * That is deliberate rather than a gap: it happens only to a corrupted log,
- * where failing loudly beats folding nonsense. Verify an untrusted log with
- * verifyChain before folding it.
+ * The shape change for one event, with the RNG counter deliberately left
+ * alone — `apply` below is the single authority on that, so no branch here
+ * can forget it or advance it twice.
  */
-export function apply(state: GameState, event: GameEvent): GameState {
+function reduce(state: GameState, event: GameEvent): GameState {
   switch (event.type) {
     case 'WORLD_INIT': {
       const p = event.payload;
@@ -30,7 +23,7 @@ export function apply(state: GameState, event: GameEvent): GameState {
         turn: 1,
         activeEntityId: p.player.id,
         seed: p.seed,
-        rngCounter: p.counterAfter,
+        rngCounter: 0,
       };
     }
 
@@ -62,4 +55,31 @@ export function apply(state: GameState, event: GameEvent): GameState {
       throw new Error(`apply: unknown event type ${String((unhandled as { type: unknown }).type)}`);
     }
   }
+}
+
+/**
+ * The only way state changes. Pure: no RNG, no clock, no network. Everything
+ * random was resolved when the command ran and is recorded in the event, which
+ * is what makes a replay faithful rather than merely similar.
+ *
+ * The counter advances by `rngCounter + rngDraws` for every event type without
+ * exception. Before v2 only WORLD_INIT moved it, reading a `counterAfter` field
+ * out of its payload — a special case that could not survive a second consumer
+ * of randomness. Handling it in one place here means a new event type cannot
+ * forget to account for its own draws.
+ *
+ * An event that changes nothing returns the very same state object, so a
+ * blocked move stays free of allocation as well as free of consequence.
+ *
+ * Total over *validated* events. A WORLD_INIT payload that is internally
+ * inconsistent with the grid it describes — a tile count disagreeing with the
+ * declared size, or a non-positive width or height — throws out of makeGrid.
+ * That is deliberate rather than a gap: it happens only to a corrupted log,
+ * where failing loudly beats folding nonsense. Verify an untrusted log with
+ * verifyChain before folding it.
+ */
+export function apply(state: GameState, event: GameEvent): GameState {
+  const next = reduce(state, event);
+  const rngCounter = event.rngCounter + event.rngDraws;
+  return next.rngCounter === rngCounter ? next : { ...next, rngCounter };
 }
