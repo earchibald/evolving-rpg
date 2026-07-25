@@ -668,7 +668,7 @@ git commit -m "feat: seeded map generation with a reachability floor"
 
 **Interfaces:**
 - Consumes: `Grid`, `makeGrid`, `WALL` (Task 2).
-- Produces: `interface Pos { x: number; y: number }`, `interface Stats { hp: number; might: number; wits: number; speed: number }`, `interface Entity { id: string; kind: string; pos: Pos; stats: Stats; tags: string[] }`, `findEntity(entities: readonly Entity[], id: string): Entity | undefined`, `isAlive(entity: Entity): boolean`, `interface GameState { grid: Grid; entities: Entity[]; turn: number; activeEntityId: string | null; seed: number; rngCounter: number }`, `EMPTY_STATE: GameState`.
+- Produces: `interface Pos { x: number; y: number }`, `interface Stats { hp: number; might: number; wits: number; speed: number }`, `interface Entity { id: string; kind: string; pos: Pos; stats: Stats; tags: string[] }`, `findEntity(entities: readonly Entity[], id: string): Entity | undefined`, `isAlive(entity: Entity): boolean`, `interface GameState { readonly grid: Grid; readonly entities: readonly Entity[]; readonly turn: number; readonly activeEntityId: string | null; readonly seed: number; readonly rngCounter: number }`, `EMPTY_STATE: GameState` (frozen).
 
 - [ ] **Step 1: Write the failing test**
 
