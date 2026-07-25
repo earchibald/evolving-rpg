@@ -505,7 +505,7 @@ git commit -m "feat: grid primitives and 4-directional reachability"
 - Test: `tests/core/mapgen.test.ts`
 
 **Interfaces:**
-- Consumes: `intBetween` (Task 1); `Grid`, `makeGrid`, `FLOOR`, `WALL` (Task 2); `reachableFrom`, `floorCount` (Task 2).
+- Consumes: `intBetween` (Task 1); `Grid`, `makeGrid`, `FLOOR`, `WALL` (Task 2); `reachableFrom` (Task 2). Not `floorCount` — the guard measures against the whole grid, so surviving-floor counts play no part.
 - Produces: `interface MapGenResult { grid: Grid; start: { x: number; y: number }; counterAfter: number }`, `generateMap(seed, counter, width, height, wallCount): MapGenResult`.
 
 The retry loop matters beyond map quality: a variable number of draws makes the
