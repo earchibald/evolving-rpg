@@ -7,10 +7,12 @@ import type { GameState } from './state.js';
  * random was resolved when the command ran and is recorded in the payload,
  * which is what makes a replay faithful rather than merely similar.
  *
- * Total over *validated* events. A WORLD_INIT payload whose tile count
- * disagrees with its declared size throws out of makeGrid, and that is
- * deliberate: it happens only to a corrupted log, where failing loudly beats
- * folding nonsense. Verify an untrusted log with verifyChain before folding it.
+ * Total over *validated* events. A WORLD_INIT payload that is internally
+ * inconsistent with the grid it describes — a tile count disagreeing with the
+ * declared size, or a non-positive width or height — throws out of makeGrid.
+ * That is deliberate rather than a gap: it happens only to a corrupted log,
+ * where failing loudly beats folding nonsense. Verify an untrusted log with
+ * verifyChain before folding it.
  */
 export function apply(state: GameState, event: GameEvent): GameState {
   switch (event.type) {
