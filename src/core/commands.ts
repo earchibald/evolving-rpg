@@ -43,6 +43,27 @@ export function isHostile(a: Entity, b: Entity): boolean {
  * head and decide whether a fight is worth taking, which is what makes avoiding
  * one a decision rather than a coin toss.
  */
+/**
+ * What `attacker` needs on a d20 to land a blow on `target`.
+ *
+ * Exported because a number you decide on has to be a number you can see. The
+ * stat block says `might 3`; it does not say "you hit on 10+ and deal 1 to 3",
+ * and the second is the one a player actually weighs. Playing found this: a +2
+ * might item raises damage per turn by about three quarters and read as having
+ * done nothing at all, because nothing ever said so.
+ */
+export function toHit(attacker: Entity, target: Entity): number {
+  return 10 + target.stats.speed - attacker.stats.might;
+}
+
+/** The chance, out of 20, that the blow lands. */
+export function hitChance(attacker: Entity, target: Entity): number {
+  const needed = toHit(attacker, target);
+  if (needed <= 1) return 20;
+  if (needed > 20) return 0;
+  return 21 - needed;
+}
+
 function resolveStrike(
   seed: number,
   counter: number,
@@ -50,7 +71,7 @@ function resolveStrike(
   target: Entity,
 ): { roll: number; needed: number; hit: boolean; damage: number } {
   const roll = intBetween(seed, counter, 1, 20);
-  const needed = 10 + target.stats.speed - attacker.stats.might;
+  const needed = toHit(attacker, target);
   const hit = roll >= needed;
   // Drawn either way, so the count does not depend on the outcome.
   const rolledDamage = intBetween(seed, counter + 1, 1, attacker.stats.might);

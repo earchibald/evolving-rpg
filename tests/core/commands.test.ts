@@ -1,6 +1,6 @@
 import {
   createWorld, attemptMove, advanceTurn, endsTurn,
-  OPPONENT_COUNT, OPPONENT_MIN_DISTANCE,
+  OPPONENT_COUNT, OPPONENT_MIN_DISTANCE, toHit, hitChance,
 } from '../../src/core/commands.js';
 import { apply } from '../../src/core/apply.js';
 import { generateMap, pickSpawnPoints } from '../../src/core/mapgen.js';
@@ -286,5 +286,46 @@ describe('striking', () => {
     const draft = attemptMove(dying, 'player', 1, 0);
     const after = apply(dying, { ...draft, id: 'x', parent: null, seq: 0 } as GameEvent);
     expect(after.entities[1]?.stats.hp).toBe(0);
+  });
+});
+
+describe('the numbers a player decides on', () => {
+  const you = (might: number): Entity =>
+    ({ id: 'player', kind: 'you', pos: { x: 0, y: 0 }, stats: { hp: 10, might, wits: 3, speed: 4 }, tags: [] });
+  const thing: Entity =
+    { id: 'thing-1', kind: 'thing', pos: { x: 1, y: 0 }, stats: { hp: 5, might: 4, wits: 1, speed: 3 }, tags: [] };
+
+  it('states what you need to roll, from both sides', () => {
+    expect(toHit(you(3), thing)).toBe(10);
+    expect(toHit(thing, you(3))).toBe(10);
+  });
+
+  it('turns that into odds out of twenty', () => {
+    expect(hitChance(you(3), thing)).toBe(11);
+  });
+
+  it('makes the keen edge worth taking, measurably', () => {
+    // The item read as doing nothing when played, which was a legibility
+    // failure rather than a balance one — so the effect is pinned here in the
+    // terms a player would notice, not as a stat delta.
+    const before = you(3);
+    const after = you(5);
+
+    expect(toHit(before, thing)).toBe(10);
+    expect(toHit(after, thing)).toBe(8);
+    expect(hitChance(before, thing)).toBe(11);
+    expect(hitChance(after, thing)).toBe(13);
+
+    // Damage per turn: odds times average damage. Roughly three quarters more.
+    const perTurn = (e: Entity): number =>
+      (hitChance(e, thing) / 20) * ((1 + e.stats.might) / 2);
+    expect(perTurn(after) / perTurn(before)).toBeGreaterThan(1.7);
+  });
+
+  it('cannot promise a certainty or an impossibility', () => {
+    const mighty = you(20);
+    const feeble = you(-20);
+    expect(hitChance(mighty, thing)).toBeLessThanOrEqual(20);
+    expect(hitChance(feeble, thing)).toBeGreaterThanOrEqual(0);
   });
 });

@@ -3,7 +3,7 @@ import { emptyRefs, createRef, getRef, setHead, fork, reset, listRefs } from '..
 import { createWorld } from '../core/commands.js';
 import { playerStep, playerWait, runWorldTurns } from '../play/session.js';
 import { isAlive } from '../core/entity.js';
-import { outcome } from '../core/commands.js';
+import { outcome, toHit, hitChance } from '../core/commands.js';
 import { itemAt } from '../core/item.js';
 import { save, load, clear, emptySession } from '../play/store.js';
 import { WALL, EXIT, idx, tileAt } from '../core/grid.js';
@@ -162,9 +162,19 @@ function render(): void {
     ['world', active],
     ['outcome', outcome(state)],
     ['turn', String(state.turn)],
+    ['way out', (() => {
+      if (player === undefined) return '—';
+      const at = state.grid.tiles.indexOf(EXIT);
+      if (at < 0) return 'none';
+      const ex = at % state.grid.width;
+      const ey = Math.floor(at / state.grid.width);
+      return `${Math.abs(ex - player.pos.x) + Math.abs(ey - player.pos.y)} away, at ${ex}, ${ey}`;
+    })()],
     ['position', player === undefined ? '—' : `${player.pos.x}, ${player.pos.y}`],
-    ['hp / might / wits / speed', player === undefined ? '—'
-      : `${player.stats.hp} / ${player.stats.might} / ${player.stats.wits} / ${player.stats.speed}`],
+    ['hit points', player === undefined ? '—' : `${player.stats.hp}`],
+    ['might / wits / speed', player === undefined ? '—'
+      : `${player.stats.might} / ${player.stats.wits} / ${player.stats.speed}`],
+    ['your damage', player === undefined ? '—' : `1–${player.stats.might}`],
     ['seed', String(state.seed)],
     ['rng counter', String(state.rngCounter)],
     ['events in chain', String(chain(log, head).length)],
@@ -175,11 +185,22 @@ function render(): void {
     rows.push([i.kind, `at ${i.pos.x}, ${i.pos.y}`]);
   }
 
+  // Every creature states the two numbers that decide whether to fight it: what
+  // you need to hit it, and what it needs to hit you. Without these, "is this
+  // fight worth taking" is a guess dressed up as a decision.
   for (const e of state.entities) {
-    rows.push([
-      `${e.id}${e.kind === 'you' ? '' : ' (' + e.kind + ')'}`,
-      isAlive(e) ? `hp ${e.stats.hp} at ${e.pos.x}, ${e.pos.y}` : `dead at ${e.pos.x}, ${e.pos.y}`,
-    ]);
+    if (e.kind === 'you') continue;
+    const label = e.id;
+    if (!isAlive(e)) {
+      rows.push([label, `dead at ${e.pos.x}, ${e.pos.y}`]);
+      continue;
+    }
+    const away = player === undefined
+      ? '?'
+      : String(Math.abs(e.pos.x - player.pos.x) + Math.abs(e.pos.y - player.pos.y));
+    const yours = player === undefined ? '' : `you hit on ${toHit(player, e)}+ (${hitChance(player, e)}/20)`;
+    const theirs = player === undefined ? '' : `it hits on ${toHit(e, player)}+ for 1–${e.stats.might}`;
+    rows.push([label, `hp ${e.stats.hp} · ${away} away · ${yours} · ${theirs}`]);
   }
   const readout = el('readout');
   readout.textContent = '';
@@ -218,7 +239,20 @@ function narrate(fresh: readonly GameEvent[]): string {
       continue;
     }
     if (event.type === 'WAIT') { lines.push('you hold still'); continue; }
-    if (event.type === 'ITEM_TAKEN') { lines.push(`you take ${event.payload.itemId}`); continue; }
+    if (event.type === 'ITEM_TAKEN') {
+      // Naming the change, not just the acquisition. A +2 might edge raises
+      // damage per turn by about three quarters and read as nothing at all,
+      // because the number moved in a corner of the readout and never spoke.
+      const g = event.payload.grants;
+      const deltas = [
+        g.might === 0 ? '' : `might +${g.might}`,
+        g.hp === 0 ? '' : `hp +${g.hp}`,
+        g.wits === 0 ? '' : `wits +${g.wits}`,
+        g.speed === 0 ? '' : `speed +${g.speed}`,
+      ].filter((d) => d !== '');
+      lines.push(`you take ${event.payload.itemId} — ${deltas.join(', ')}`);
+      continue;
+    }
     if (event.type !== 'STRIKE') continue;
 
     const p = event.payload;
