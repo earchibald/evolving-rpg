@@ -2,12 +2,16 @@ import { chain } from './chain.js';
 import type { EventLog } from './chain.js';
 import { ENGINE_VERSION } from '../version.js';
 
+/** `readonly` throughout: `createRef` and `setHead` copy the Map but share every
+ *  Ref they are not touching, so an in-place write would silently corrupt every
+ *  other snapshot holding that same object. Fields are all primitives, so
+ *  readonly closes it completely — no freeze traversal needed. */
 export interface Ref {
-  name: string;
-  head: string | null;
-  engineVersion: string;
-  createdAtSeq: number;
-  note: string;
+  readonly name: string;
+  readonly head: string | null;
+  readonly engineVersion: string;
+  readonly createdAtSeq: number;
+  readonly note: string;
 }
 
 export interface Refs {

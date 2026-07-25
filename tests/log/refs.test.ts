@@ -1,6 +1,7 @@
 import { emptyLog, append, chain, fold } from '../../src/log/chain.js';
 import { createWorld, attemptMove, advanceTurn } from '../../src/core/commands.js';
 import { emptyRefs, createRef, getRef, setHead, fork, reset, listRefs, isAncestor } from '../../src/log/refs.js';
+import { EMPTY_STATE } from '../../src/core/state.js';
 import { ENGINE_VERSION } from '../../src/version.js';
 import type { EventLog } from '../../src/log/chain.js';
 
@@ -82,6 +83,28 @@ describe('fork', () => {
     let refs = createRef(emptyRefs(), 'Ashfall', head, 8, '');
     refs = fork(log, refs, 'Ashfall', 'Ashfall-b', null, '');
     expect(getRef(refs, 'Ashfall-b').head).toBe(head);
+  });
+
+  it('records the fork point sequence, not the source head sequence', () => {
+    // Every other fork test checks only .head, so dropping the `- 1` from the
+    // seq arithmetic would ship silently.
+    const { log, head } = build();
+    const at = chain(log, head)[4];
+    if (at === undefined) throw new Error('fixture problem: no event at index 4');
+
+    let refs = createRef(emptyRefs(), 'Ashfall', head, 8, '');
+    refs = fork(log, refs, 'Ashfall', 'Ashfall-b', at.id, '');
+
+    expect(at.seq).toBe(4);
+    expect(getRef(refs, 'Ashfall-b').createdAtSeq).toBe(4);
+  });
+
+  it('forks a ref whose head is null into another empty world', () => {
+    const { log } = build();
+    let refs = createRef(emptyRefs(), 'Unstarted', null, 0, '');
+    refs = fork(log, refs, 'Unstarted', 'Unstarted-b', null, '');
+    expect(getRef(refs, 'Unstarted-b').head).toBeNull();
+    expect(getRef(refs, 'Unstarted-b').createdAtSeq).toBe(0);
   });
 
   it('the two worlds then diverge independently', () => {
@@ -170,6 +193,18 @@ describe('reset', () => {
     const { log, head } = build();
     const refs = createRef(emptyRefs(), 'Ashfall', head, 8, '');
     expect(() => reset(log, refs, 'Ashfall', 'b'.repeat(64))).toThrow(/not on the chain/);
+  });
+
+  it('resets all the way back to nothing', () => {
+    // A null target skips ancestry validation, since there is no chain to be on.
+    // Folding the result returns the empty state, and the log keeps every event.
+    const { log, head } = build();
+    let refs = createRef(emptyRefs(), 'Ashfall', head, 8, '');
+    refs = reset(log, refs, 'Ashfall', null);
+
+    expect(getRef(refs, 'Ashfall').head).toBeNull();
+    expect(fold(log, getRef(refs, 'Ashfall').head)).toEqual(EMPTY_STATE);
+    expect(log.events.size).toBe(9);
   });
 });
 
