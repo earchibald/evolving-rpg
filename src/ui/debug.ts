@@ -14,7 +14,7 @@ import type { Refs } from '../log/refs.js';
 import type { Entity } from '../core/entity.js';
 import type { GameEvent } from '../core/events.js';
 
-const SEED = 20260724;
+const FIRST_SEED = 20260724;
 const WIDTH = 24;
 const HEIGHT = 16;
 const WALLS = 60;
@@ -28,10 +28,39 @@ let booted = '';
 
 function freshWorld(): void {
   const session = emptySession(MAIN);
-  const first = append(session.log, null, createWorld(SEED, WIDTH, HEIGHT, WALLS));
+  const first = append(session.log, null, createWorld(FIRST_SEED, WIDTH, HEIGHT, WALLS));
   log = first.log;
   refs = createRef(session.refs, MAIN, first.event.id, 0, 'opening run');
   active = MAIN;
+}
+
+/**
+ * Another world, alongside the ones already here.
+ *
+ * Two things this is not. It is not the same world again — the first version
+ * passed a fixed seed, so every "new world" was the identical map with the
+ * identical creatures standing in the identical places, new only in the sense
+ * of having an empty log. And it does not throw the old ones away: worlds are
+ * refs over one shared store, so adding another costs a name, and discarding
+ * your graves to make room would contradict the entire point of keeping them.
+ *
+ * The seed is chosen rather than derived, which is fine: it is an input, like a
+ * keypress. It is recorded in WORLD_INIT, so the world remains exactly as
+ * reproducible as every other — and it is on screen, so you can note one you
+ * liked.
+ */
+function anotherWorld(): string {
+  const seed = Math.floor(Math.random() * 2 ** 31);
+  const taken = new Set(listRefs(refs).map((r) => r.name));
+  let n = 2;
+  while (taken.has(`world-${n}`)) n += 1;
+  const name = `world-${n}`;
+
+  const born = append(log, null, createWorld(seed, WIDTH, HEIGHT, WALLS));
+  log = born.log;
+  refs = createRef(refs, name, born.event.id, 0, `seed ${seed}`);
+  active = name;
+  return name;
 }
 
 // Restore before anything else. A refused save is worth saying out loud rather
@@ -471,11 +500,22 @@ el('rewind').addEventListener('click', () => {
   render();
 });
 
-el('newrun').addEventListener('click', () => {
+// Wiping is a separate, deliberate act, and it says what it destroys. Folding
+// it into "new world" is how you lose a graveyard by accident.
+el('wipe').addEventListener('click', () => {
+  const worlds = listRefs(refs).length;
   clear();
   freshWorld();
+  lastSaved = '';
   persist();
-  say('new world — the old save is gone');
+  say(`wiped — ${worlds} world(s) discarded, back to one`);
+  render();
+});
+
+el('newrun').addEventListener('click', () => {
+  const name = anotherWorld();
+  persist();
+  say(`${name} — a different map, alongside the others, nothing discarded`);
   render();
 });
 
