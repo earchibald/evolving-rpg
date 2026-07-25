@@ -3,14 +3,14 @@ import { emptyRefs, createRef, getRef, setHead, fork, reset, listRefs } from '..
 import { createWorld } from '../core/commands.js';
 import { playerStep, playerWait, runWorldTurns, buryIfDead, isGrave } from '../play/session.js';
 import { isAlive } from '../core/entity.js';
-import { outcome, toHit, hitChance } from '../core/commands.js';
+import { outcome, hitChance } from '../core/commands.js';
 import { itemAt } from '../core/item.js';
 import { save, load, clear, emptySession } from '../play/store.js';
 import { Oracle, describeQuestion } from '../oracle/oracle.js';
 import { cliTransport } from '../oracle/transports.js';
 import { send } from '../channels/channels.js';
 import type { Channel, Note } from '../channels/channels.js';
-import { WALL, EXIT, idx, tileAt } from '../core/grid.js';
+import { WALL, EXIT, idx } from '../core/grid.js';
 import type { EventLog } from '../log/chain.js';
 import type { Refs } from '../log/refs.js';
 import type { Entity } from '../core/entity.js';
@@ -252,8 +252,25 @@ function el(id: string): HTMLElement {
   return node;
 }
 
-function say(message: string): void {
-  el('status').textContent = message;
+/**
+ * What just happened, one fact per line.
+ *
+ * These used to be joined with a separator into a single run-on string, which
+ * made the line's width a function of how eventful the turn was — and since the
+ * board is sized by its widest child, an eventful turn widened the board and
+ * shoved the panel beside it sideways. One line per fact, each clipped rather
+ * than wrapped, and the box is the same size no matter what happens.
+ */
+function say(message: string | string[]): void {
+  const lines = (typeof message === 'string' ? [message] : message).filter((l) => l !== '');
+  const box = el('status');
+  box.textContent = '';
+  for (const line of lines) {
+    const row = document.createElement('span');
+    row.className = 'line';
+    row.textContent = line;
+    box.appendChild(row);
+  }
 }
 
 function render(): void {
@@ -374,9 +391,13 @@ function render(): void {
       const away = player === undefined
         ? '?'
         : Math.abs(e.pos.x - player.pos.x) + Math.abs(e.pos.y - player.pos.y);
+      // Short enough to never reach the wrap point, and stated as the thing you
+      // actually decide on. "hit 10+ (11/20)" made you convert a die target into
+      // a chance in your head, every turn, for every creature.
+      const pct = (a: Entity, b: Entity): string => `${hitChance(a, b) * 5}%`;
       odds.textContent = player === undefined
         ? `hp ${e.stats.hp}`
-        : `hp ${e.stats.hp} · ${away} away · you hit ${toHit(player, e)}+ (${hitChance(player, e)}/20) · it hits ${toHit(e, player)}+ for 1–${e.stats.might}`;
+        : `hp ${e.stats.hp} · ${away} away · you ${pct(player, e)} 1–${player.stats.might} · it ${pct(e, player)} 1–${e.stats.might}`;
     }
     li.append(who, odds);
     threats.appendChild(li);
@@ -501,8 +522,15 @@ function render(): void {
   }
 }
 
-/** Turns the events one keypress produced into a line a person can read. */
-function narrate(fresh: readonly GameEvent[]): string {
+/**
+ * Turns the events one keypress produced into lines a person can read.
+ *
+ * `state` is the world as it stood *before* this turn, deliberately. An item is
+ * removed from the world the moment you pick it up, so the state afterwards can
+ * no longer say what kind of thing it was — and "you take item-0" is exactly the
+ * naming failure this is meant to fix.
+ */
+function narrate(fresh: readonly GameEvent[], state: ReturnType<typeof fold>): string[] {
   const lines: string[] = [];
 
   for (const event of fresh) {
@@ -522,23 +550,45 @@ function narrate(fresh: readonly GameEvent[]): string {
         g.wits === 0 ? '' : `wits +${g.wits}`,
         g.speed === 0 ? '' : `speed +${g.speed}`,
       ].filter((d) => d !== '');
-      lines.push(`you take ${event.payload.itemId} — ${deltas.join(', ')}`);
+      lines.push(`you take ${calledItem(event.payload.itemId, state)} — ${deltas.join(', ')}`);
       continue;
     }
     if (event.type !== 'STRIKE') continue;
 
+    // The world gave these things names; the blow-by-blow was still printing
+    // entity ids at them. "thing-3 hits you" undoes the naming entirely — the
+    // one moment you are paying closest attention is the one that forgets.
     const p = event.payload;
     const mine = p.attackerId === 'player';
-    const who = mine ? `you hit ${p.targetId}` : `${p.attackerId} hits you`;
-    const missed = mine ? `you miss ${p.targetId}` : `${p.attackerId} misses you`;
-    lines.push(p.hit ? `${who} for ${p.damage} (${p.roll} vs ${p.needed})` : `${missed} (${p.roll} vs ${p.needed})`);
+    const them = named(state, mine ? p.targetId : p.attackerId);
+    const roll = `(${p.roll} vs ${p.needed})`;
+    lines.push(mine
+      ? (p.hit ? `you hit ${them} for ${p.damage} ${roll}` : `you miss ${them} ${roll}`)
+      : (p.hit ? `${them} hits you for ${p.damage} ${roll}` : `${them} misses you ${roll}`));
   }
 
-  return lines.join('  ·  ');
+  return lines;
+}
+
+/** What the world calls the thing with this id, falling back to the id itself
+ *  for anything it has never heard of. */
+function named(state: ReturnType<typeof fold>, id: string): string {
+  const e = state.entities.find((x) => x.id === id);
+  if (e === undefined) return id;
+  return e.kind === 'you' ? 'you' : calledCreature(e.kind, e);
+}
+
+function calledItem(id: string, state: ReturnType<typeof fold>): string {
+  const i = state.items.find((x) => x.id === id);
+  if (i === undefined) return id;
+  return oracle.ask(describeQuestion('item', i.kind, { grants: i.grants })).name;
 }
 
 function finish(before: number, head: string): void {
-  const told = narrate(chain(log, head).slice(before));
+  const events = chain(log, head);
+  const priorEvent = events[before - 1];
+  const priorState = priorEvent === undefined ? fold(log, head) : fold(log, priorEvent.id);
+  const told = narrate(events.slice(before), priorState);
 
   // Death is handled here rather than inside the step, because it is not a move
   // — it is what the world does about a move that went badly.
@@ -546,9 +596,10 @@ function finish(before: number, head: string): void {
   refs = burial.refs;
 
   persist();
-  say(burial.grave === null
-    ? told
-    : `${told}${told === '' ? '' : '  ·  '}you die. your body stays in ${burial.grave}; the world begins again`);
+  if (burial.grave !== null) {
+    told.push(`you die. your body stays in ${burial.grave}; the world begins again`);
+  }
+  say(told);
   render();
 }
 

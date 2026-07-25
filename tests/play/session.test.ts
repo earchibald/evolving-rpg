@@ -2,7 +2,7 @@ import { emptyLog, append, chain, fold } from '../../src/log/chain.js';
 import { playerStep, playerWait, runWorldTurns } from '../../src/play/session.js';
 import { createWorld, outcome, OPPONENT_COUNT } from '../../src/core/commands.js';
 import { farthestFrom } from '../../src/core/mapgen.js';
-import { EXIT, tileAt, makeGrid, FLOOR } from '../../src/core/grid.js';
+import { EXIT, FLOOR } from '../../src/core/grid.js';
 import { reachableFrom } from '../../src/core/reachability.js';
 import type { GameEvent } from '../../src/core/events.js';
 
