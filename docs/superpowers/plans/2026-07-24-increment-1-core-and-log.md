@@ -518,8 +518,8 @@ Create `tests/core/mapgen.test.ts`:
 
 ```ts
 import { generateMap } from '../../src/core/mapgen.js';
-import { isPassable, FLOOR } from '../../src/core/grid.js';
-import { reachableFrom, floorCount } from '../../src/core/reachability.js';
+import { isPassable } from '../../src/core/grid.js';
+import { reachableFrom } from '../../src/core/reachability.js';
 
 describe('generateMap', () => {
   it('is deterministic for the same seed and counter', () => {
@@ -543,11 +543,13 @@ describe('generateMap', () => {
     }
   });
 
-  it('keeps most of the floor reachable from the start', () => {
+  it('keeps most of the whole grid walkable and connected', () => {
     for (let seed = 0; seed < 50; seed++) {
       const { grid, start } = generateMap(seed, 0, 24, 16, 60);
       const reachable = reachableFrom(grid, start.x, start.y);
-      expect(reachable.size).toBeGreaterThanOrEqual(floorCount(grid) * 0.6);
+      // Measured against every tile, not against surviving floor: a fraction of
+      // floor is trivially satisfied by a map that is almost entirely wall.
+      expect(reachable.size).toBeGreaterThanOrEqual(24 * 16 * 0.6);
     }
   });
 
@@ -571,7 +573,9 @@ describe('generateMap', () => {
   });
 
   it('gives up loudly rather than returning a map you cannot walk in', () => {
-    // Every tile a wall request: no layout can satisfy the reachability bar.
+    // Enough wall requests to bury a 6x6 grid. Only the forced start survives as
+    // floor, so one reachable tile against a bar of 36 * 0.6 — every attempt is
+    // rejected and the generator must say so rather than hand back a cell.
     expect(() => generateMap(3, 0, 6, 6, 100000)).toThrow(/no acceptable layout/);
   });
 });
@@ -588,7 +592,7 @@ Expected: FAIL — cannot resolve `../../src/core/mapgen.js`.
 import { FLOOR, WALL, makeGrid } from './grid.js';
 import type { Grid } from './grid.js';
 import { intBetween } from './rng.js';
-import { reachableFrom, floorCount } from './reachability.js';
+import { reachableFrom } from './reachability.js';
 
 export interface MapGenResult {
   grid: Grid;
@@ -596,11 +600,15 @@ export interface MapGenResult {
   counterAfter: number;
 }
 
+/** Share of the WHOLE grid that must be walkable and connected to the start.
+ *  Measured against every tile rather than against surviving floor, because a
+ *  fraction of floor is trivially satisfied by a map that is nearly all wall —
+ *  one floor tile is 100% connected to itself and tells you nothing. */
 const MIN_REACHABLE_FRACTION = 0.6;
 const MAX_ATTEMPTS = 20;
 
 /**
- * Scatters walls at random, then keeps the layout only if most of the floor can
+ * Scatters walls at random, then keeps the layout only if most of the grid can
  * be walked to from the start. Deliberately crude — better generation is a
  * later increment. Retries consume extra counters, which is wanted.
  */
@@ -627,7 +635,7 @@ export function generateMap(
     tiles[sy * width + sx] = FLOOR;
 
     const grid = makeGrid(width, height, tiles);
-    if (reachableFrom(grid, sx, sy).size >= floorCount(grid) * MIN_REACHABLE_FRACTION) {
+    if (reachableFrom(grid, sx, sy).size >= width * height * MIN_REACHABLE_FRACTION) {
       return { grid, start: { x: sx, y: sy }, counterAfter: c };
     }
   }

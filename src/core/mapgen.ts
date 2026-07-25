@@ -1,7 +1,7 @@
 import { FLOOR, WALL, makeGrid } from './grid.js';
 import type { Grid } from './grid.js';
 import { intBetween } from './rng.js';
-import { reachableFrom, floorCount } from './reachability.js';
+import { reachableFrom } from './reachability.js';
 
 export interface MapGenResult {
   grid: Grid;
@@ -9,11 +9,15 @@ export interface MapGenResult {
   counterAfter: number;
 }
 
+/** Share of the WHOLE grid that must be walkable and connected to the start.
+ *  Measured against every tile rather than against surviving floor, because a
+ *  fraction of floor is trivially satisfied by a map that is nearly all wall —
+ *  one floor tile is 100% connected to itself and tells you nothing. */
 const MIN_REACHABLE_FRACTION = 0.6;
 const MAX_ATTEMPTS = 20;
 
 /**
- * Scatters walls at random, then keeps the layout only if most of the floor can
+ * Scatters walls at random, then keeps the layout only if most of the grid can
  * be walked to from the start. Deliberately crude — better generation is a
  * later increment. Retries consume extra counters, which is wanted.
  */
@@ -40,7 +44,7 @@ export function generateMap(
     tiles[sy * width + sx] = FLOOR;
 
     const grid = makeGrid(width, height, tiles);
-    if (reachableFrom(grid, sx, sy).size >= floorCount(grid) * MIN_REACHABLE_FRACTION) {
+    if (reachableFrom(grid, sx, sy).size >= width * height * MIN_REACHABLE_FRACTION) {
       return { grid, start: { x: sx, y: sy }, counterAfter: c };
     }
   }
