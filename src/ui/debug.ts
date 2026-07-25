@@ -315,7 +315,11 @@ function render(): void {
   const hurt = player !== undefined && player.stats.hp <= 3;
   const done = outcome(state);
 
+  // Always the same rows in the same order. A row that appears only sometimes —
+  // "this run" used to be added on death — shifts every row beneath it, which
+  // is the map jumping at the exact moment you most want it still.
   const vitals: Array<[string, string, string]> = [
+    ['this run', done, done === 'dead' ? 'urgent' : done === 'escaped' ? 'good' : ''],
     ['hit points', player === undefined ? '—' : String(player.stats.hp), hurt ? 'urgent' : ''],
     ['you deal', player === undefined ? '—' : `1–${player.stats.might}`, ''],
     ['the way out', toExit, done === 'escaped' ? 'good' : ''],
@@ -323,7 +327,6 @@ function render(): void {
     ['turn', String(state.turn), ''],
     ['world', active, ''],
   ];
-  if (done !== 'playing') vitals.unshift(['this run', done, done === 'dead' ? 'urgent' : 'good']);
 
   const vitalsEl = el('vitals');
   vitalsEl.textContent = '';
@@ -641,6 +644,9 @@ el('rewind').addEventListener('click', () => {
 
 // Wiping is a separate, deliberate act, and it says what it destroys. Folding
 // it into "new world" is how you lose a graveyard by accident.
+const sheet = el('worlds-dialog') as HTMLDialogElement;
+el('open-worlds').addEventListener('click', () => { sheet.showModal(); });
+
 el('wipe').addEventListener('click', () => {
   const worlds = listRefs(refs).length;
   clear(CANON_KEY);
@@ -648,6 +654,7 @@ el('wipe').addEventListener('click', () => {
   lastSaved = '';
   persist();
   say(`wiped — ${worlds} world(s) and every name discarded, back to one`);
+  sheet.close();
   render();
 });
 
@@ -655,6 +662,7 @@ el('newrun').addEventListener('click', () => {
   const name = anotherWorld();
   persist();
   say(`${name} — a different map, alongside the others, nothing discarded`);
+  sheet.close();
   render();
 });
 

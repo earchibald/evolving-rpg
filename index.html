@@ -18,6 +18,12 @@
         <div class="board">
           <div id="grid" class="grid" role="img" aria-label="the world"></div>
           <p id="status" class="status" role="status"></p>
+          <div class="turn-controls">
+            <button id="verify" type="button" class="ghost">verify chain</button>
+            <button id="fork" type="button" class="ghost">fork here</button>
+            <button id="rewind" type="button" class="ghost">back 10</button>
+            <button id="open-worlds" type="button" class="ghost">worlds&hellip;</button>
+          </div>
         </div>
 
         <aside class="panel">
@@ -27,7 +33,7 @@
           </section>
           <section>
             <h2>what is here</h2>
-            <ul id="threats" class="threats"></ul>
+            <ul id="threats" class="threats scrolls"></ul>
           </section>
         </aside>
       </main>
@@ -43,33 +49,24 @@
             <input id="gm-said" type="text" autocomplete="off" placeholder="what does the ash smell like?" />
           </form>
         </div>
-        <ul id="notes" class="notes"></ul>
+        <ul id="notes" class="notes scrolls"></ul>
       </section>
 
-      <details class="more">
-        <summary>the rest of it</summary>
-
-        <div class="more-grid">
+      <section class="rest">
+        <div class="rest-grid">
           <section>
             <h2>what the world calls things</h2>
-            <ul id="names" class="names"></ul>
+            <ul id="names" class="names scrolls"></ul>
           </section>
 
           <section>
             <h2>the world is thinking</h2>
-            <ul id="oracle" class="oracle"></ul>
+            <ul id="oracle" class="oracle scrolls"></ul>
           </section>
 
           <section>
             <h2>worlds</h2>
-            <ul id="refs" class="refs"></ul>
-            <div class="controls">
-              <button id="verify" type="button">Verify chain</button>
-              <button id="fork" type="button">Fork here</button>
-              <button id="rewind" type="button">Reset back 10</button>
-              <button id="newrun" type="button">Another world</button>
-              <button id="wipe" type="button">Wipe everything</button>
-            </div>
+            <ul id="refs" class="refs scrolls"></ul>
           </section>
 
           <section>
@@ -77,8 +74,28 @@
             <dl id="detail" class="vitals"></dl>
           </section>
         </div>
-      </details>
+      </section>
     </div>
+
+    <dialog id="worlds-dialog" class="sheet">
+      <form method="dialog">
+        <h2>worlds</h2>
+        <p class="sheet-line">
+          Another world adds one alongside the ones you already have, sharing the
+          same store. Nothing you have played is discarded.
+        </p>
+        <button id="newrun" type="button">another world</button>
+        <p class="sheet-line danger">
+          Wiping throws away every world, every grave, and every name the world
+          has ever given you. There is no undo.
+        </p>
+        <button id="wipe" type="button" class="danger">wipe everything</button>
+        <menu>
+          <button value="cancel" class="ghost">close</button>
+        </menu>
+      </form>
+    </dialog>
+
     <script type="module" src="/src/ui/debug.ts"></script>
   </body>
 </html>
