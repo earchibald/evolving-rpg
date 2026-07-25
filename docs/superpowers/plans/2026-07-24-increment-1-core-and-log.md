@@ -55,6 +55,7 @@
     "@noble/hashes": "1.4.0"
   },
   "devDependencies": {
+    "@types/node": "^26.1.1",
     "tsx": "^4.19.0",
     "typescript": "^5.6.0",
     "vite": "^5.4.0",
@@ -2517,6 +2518,10 @@ git commit -m "feat: named refs with free forking and undoable reset"
 **Files:**
 - Create: `scripts/generate-golden.ts`, `tests/fixtures/golden-run.json` (generated, then committed), `tests/log/golden-replay.test.ts`
 - Test: `tests/log/golden-replay.test.ts`
+
+This script is the repo's first use of Node builtins (`node:fs`, `node:path`,
+`node:url`), so it needs `@types/node` — already in Task 1's devDependencies for
+that reason. Without it `tsc --noEmit` fails on the imports.
 
 **Interfaces:**
 - Consumes: everything from Tasks 1–10.
