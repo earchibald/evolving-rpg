@@ -10,7 +10,8 @@
 
 ## Global Constraints
 
-- `apply()` must be pure and total: no RNG, no clock, no network, no I/O, no throwing on well-formed input. Copied from spec: *"State changes exactly one way: `apply(state, event) → state`."*
+- `apply()` must be pure: no RNG, no clock, no network, no I/O. Copied from spec: *"State changes exactly one way: `apply(state, event) → state`."*
+- `apply()` is total over **validated** events — those whose hash verifies and whose payload the command layer produced. A payload that is type-valid but internally inconsistent (a tile count disagreeing with the declared width and height) throws, and that is intended: a corrupted log must fail loudly rather than fold into a nonsense state. `verifyChain` is the gate for an untrusted log; `fold` alone does not validate, so do not fold a log you have not verified.
 - All randomness resolves at command time and is recorded in the event payload. Events carry `rngCounter` = the counter value **before** the event ran.
 - Every event type carries a `schemaVersion`. Changing an existing type's meaning requires bumping it and writing an upcaster — never edit in place.
 - No test may touch the network.
@@ -1059,9 +1060,20 @@ describe('apply WORLD_INIT', () => {
   });
 
   it('copies the player, so mutating the event payload cannot reach into state', () => {
+    // Every nested part, not just position: stats and tags are separate objects
+    // in the payload too, and aliasing any of them would let a later event
+    // rewrite history that has already been folded.
     worldInit.payload.player.pos.x = 999;
+    worldInit.payload.player.stats.hp = 999;
+    worldInit.payload.player.tags.push('injected');
+
     expect(started.entities[0]?.pos.x).toBe(0);
+    expect(started.entities[0]?.stats.hp).toBe(10);
+    expect(started.entities[0]?.tags).toEqual([]);
+
     worldInit.payload.player.pos.x = 0;
+    worldInit.payload.player.stats.hp = 10;
+    worldInit.payload.player.tags.length = 0;
   });
 });
 
@@ -1085,19 +1097,53 @@ describe('apply MOVE', () => {
   it('does not advance the rng counter, because a move draws nothing', () => {
     expect(moved.rngCounter).toBe(128);
   });
+
+  it('ignores the event own rngCounter, so only WORLD_INIT can move it', () => {
+    // A deliberately mismatched counter. verifyChain would reject this event,
+    // but apply must not read the field at all: if it copied the counter from
+    // the event, the replay check that compares them would be circular and
+    // would pass while proving nothing.
+    const bogus = apply(started, {
+      id: 'e1', parent: 'e0', seq: 1,
+      type: 'MOVE',
+      schemaVersion: SCHEMA_VERSIONS.MOVE,
+      rngCounter: 999999,
+      payload: { entityId: 'player', from: { x: 0, y: 0 }, to: { x: 1, y: 0 } },
+    });
+    expect(bogus.rngCounter).toBe(128);
+  });
+
+  it('leaves every entity alone when the id matches nobody', () => {
+    const nobody = apply(started, {
+      id: 'e1', parent: 'e0', seq: 1,
+      type: 'MOVE',
+      schemaVersion: SCHEMA_VERSIONS.MOVE,
+      rngCounter: 128,
+      payload: { entityId: 'ghost', from: { x: 0, y: 0 }, to: { x: 1, y: 0 } },
+    });
+    expect(nobody.entities).toEqual(started.entities);
+    expect(nobody.rngCounter).toBe(started.rngCounter);
+  });
 });
 
 describe('apply MOVE_BLOCKED', () => {
+  const blocked = apply(started, {
+    id: 'e1', parent: 'e0', seq: 1,
+    type: 'MOVE_BLOCKED',
+    schemaVersion: SCHEMA_VERSIONS.MOVE_BLOCKED,
+    rngCounter: 128,
+    payload: { entityId: 'player', attempted: { x: 2, y: 0 }, reason: 'wall' },
+  });
+
   it('changes nothing but is still recorded as something that happened', () => {
-    const blocked = apply(started, {
-      id: 'e1', parent: 'e0', seq: 1,
-      type: 'MOVE_BLOCKED',
-      schemaVersion: SCHEMA_VERSIONS.MOVE_BLOCKED,
-      rngCounter: 128,
-      payload: { entityId: 'player', attempted: { x: 2, y: 0 }, reason: 'wall' },
-    });
     expect(blocked.entities[0]?.pos).toEqual({ x: 0, y: 0 });
     expect(blocked.turn).toBe(started.turn);
+  });
+
+  it('returns the very same state object, not a copy of it', () => {
+    // Identity, not equality: a rewrite that returned {...state} would still
+    // pass a value check while quietly making every blocked move allocate.
+    expect(blocked).toBe(started);
   });
 });
 
@@ -1137,10 +1183,14 @@ import type { GameEvent } from './events.js';
 import type { GameState } from './state.js';
 
 /**
- * The only way state changes. Pure and total: no RNG, no clock, no network, no
- * throwing on well-formed input. Everything random was resolved when the
- * command ran and is recorded in the payload, which is what makes a replay
- * faithful rather than merely similar.
+ * The only way state changes. Pure: no RNG, no clock, no network. Everything
+ * random was resolved when the command ran and is recorded in the payload,
+ * which is what makes a replay faithful rather than merely similar.
+ *
+ * Total over *validated* events. A WORLD_INIT payload whose tile count
+ * disagrees with its declared size throws out of makeGrid, and that is
+ * deliberate: it happens only to a corrupted log, where failing loudly beats
+ * folding nonsense. Verify an untrusted log with verifyChain before folding it.
  */
 export function apply(state: GameState, event: GameEvent): GameState {
   switch (event.type) {
