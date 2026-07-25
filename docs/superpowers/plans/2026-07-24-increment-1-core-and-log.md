@@ -1683,6 +1683,14 @@ describe('hashEvent', () => {
     expect(hashEvent(draft, null, 0)).not.toBe(hashEvent({ ...draft, schemaVersion: 2 }, null, 0));
   });
 
+  it('changes when only the rng counter changes', () => {
+    // Guards against rngCounter being left out of the hashed material. Without
+    // this test, dropping the field entirely still passes every other case here
+    // — and then a counter could be altered without altering the event id,
+    // costing verifyChain half its teeth.
+    expect(hashEvent(draft, null, 0)).not.toBe(hashEvent({ ...draft, rngCounter: 13 }, null, 0));
+  });
+
   it('does not depend on the key order of the payload object', () => {
     const reordered: DraftEvent = {
       payload: { to: { y: 1, x: 2 }, from: { y: 1, x: 1 }, entityId: 'player' },
