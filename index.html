@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>evolving-rpg — debug view</title>
+    <link rel="stylesheet" href="/src/ui/debug.css" />
+  </head>
+  <body>
+    <main id="app">
+      <h1>debug view</h1>
+      <p class="hint">Arrow keys or WASD to move. Everything you do becomes an event.</p>
+      <div id="grid" class="grid" role="img" aria-label="game grid"></div>
+      <dl id="readout" class="readout"></dl>
+      <div class="controls">
+        <button id="verify" type="button">Verify chain</button>
+        <button id="fork" type="button">Fork here</button>
+        <button id="rewind" type="button">Reset back 10 events</button>
+      </div>
+      <p id="status" class="status" role="status"></p>
+      <ul id="refs" class="refs"></ul>
+    </main>
+    <script type="module" src="/src/ui/debug.ts"></script>
+  </body>
+</html>

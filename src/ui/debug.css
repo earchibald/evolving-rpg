@@ -1,0 +1,40 @@
+:root {
+  --ground: #14161a;
+  --ink: #e8e9ec;
+  --soft: #9aa2b2;
+  --wall: #2c3038;
+  --floor: #1b1e24;
+  --player: #f0ad3c;
+  --rule: #333842;
+}
+
+body {
+  margin: 0;
+  padding: 2rem 1.5rem;
+  background: var(--ground);
+  color: var(--ink);
+  font: 14px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+main { max-width: 60rem; margin: 0 auto; display: flex; flex-direction: column; gap: 1.25rem; }
+h1 { font-size: 1rem; letter-spacing: .12em; text-transform: uppercase; color: var(--soft); margin: 0; }
+.hint { margin: 0; color: var(--soft); }
+
+.grid { display: grid; gap: 1px; width: max-content; overflow-x: auto; }
+.cell { width: 20px; height: 20px; background: var(--floor); }
+.cell.wall { background: var(--wall); }
+.cell.player { background: var(--player); }
+
+.readout { display: grid; grid-template-columns: max-content 1fr; gap: .2rem 1rem; margin: 0; }
+.readout dt { color: var(--soft); }
+.readout dd { margin: 0; font-variant-numeric: tabular-nums; }
+
+.controls { display: flex; gap: .5rem; flex-wrap: wrap; }
+button {
+  font: inherit; color: var(--ground); background: var(--ink);
+  border: 1px solid var(--ink); border-radius: 3px; padding: .35rem .8rem; cursor: pointer;
+}
+button:focus-visible { outline: 2px solid var(--player); outline-offset: 2px; }
+
+.status { margin: 0; min-height: 1.5em; color: var(--player); }
+.refs { margin: 0; padding-left: 1.2rem; color: var(--soft); }
