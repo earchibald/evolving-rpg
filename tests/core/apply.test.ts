@@ -140,6 +140,25 @@ describe('apply TURN_ADVANCED', () => {
   });
 });
 
+describe('apply with an event it cannot reduce', () => {
+  it('throws rather than falling off the switch and returning undefined', () => {
+    // This is the only test that pins the default arm. verifyChain rejects
+    // unknown types before apply ever sees them, so every other test passes
+    // with the arm deleted — and then fold() silently returns undefined while
+    // still typed GameState. Confirmed: with the arm removed, all 142 other
+    // tests stay green.
+    const alien = {
+      id: 'x', parent: null, seq: 0,
+      type: 'STRIKE',
+      schemaVersion: 1,
+      rngCounter: 0,
+      payload: { attacker: 'player', target: 'goblin', damage: 3 },
+    } as unknown as GameEvent;
+
+    expect(() => apply(EMPTY_STATE, alien)).toThrow(/unknown event type STRIKE/);
+  });
+});
+
 describe('apply', () => {
   it('is deterministic — same state and event give an identical result', () => {
     const a = apply(EMPTY_STATE, worldInit);
