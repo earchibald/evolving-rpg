@@ -3001,7 +3001,10 @@ Then open the printed URL and check, in order:
 
 1. A grid draws with dark walls and one amber cell for the player.
 2. Arrow keys move the player; walls refuse and the status line says `blocked: wall`.
-3. `turn`, `rng counter`, and `events in chain` all update as you move.
+3. `turn` and `events in chain` climb as you move. **`rng counter` must stay put** —
+   only world creation draws from the generator, and a move consuming no
+   randomness is exactly what makes a replay verifiable. If that number moves
+   while you walk, the bug is in `apply`, not in the readout.
 4. **Verify chain** reports the chain verified.
 5. **Fork here** adds a second world to the list; the event count in the log does
    not jump, because forking copies nothing.
