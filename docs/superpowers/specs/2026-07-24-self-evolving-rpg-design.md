@@ -224,6 +224,18 @@ artifact publishing. The artifact is a deploy target, not the source.
 
 ## Testing
 
+**Mutation proof is required, not encouraged.** Increment 1 produced 19 defects, and the dominant
+category was *tests that cannot fail*: a hash function whose `type` and `rngCounter` fields could
+be deleted with a green suite, a `verifyChain` branch that never once fired, a fork-ancestry test
+satisfied by a different guard than the one under test, and — inside the fix for that last one — a
+new guard nothing failed without. A passing suite established none of these. Breaking the
+implementation and watching the test notice established all of them.
+
+So every guard ships with evidence that its test fails when the guard is removed. A plan states
+the *property* and the *required mutation*; it does not hand down the assertions. Prescribed test
+code was itself the single largest defect source in increment 1, and writing it more carefully is
+not the remedy — not writing it is.
+
 - `core` and `log` carry the test weight; they must never regress.
 - **Golden replay** is the single most important test: a recorded log must fold to an identical
   state, byte for byte.
@@ -234,18 +246,45 @@ artifact publishing. The artifact is a deploy target, not the source.
 ## Increments
 
 This spec covers a program, not a single plan. Each increment gets its own `writing-plans` pass
-before any code, matching the practice in `~/Code/agent-adventures`. Each one ends playable.
+before any code.
 
-| # | Delivers |
+**The original ordering was wrong and has been revised.** It sequenced increments by dependency —
+core, log, canon, oracle, critic, forge — which is correct engineering and the wrong shape for
+this project. A system whose premise is co-evolution with play must reach a play signal as fast
+as possible; the first ordering put the first interesting moment four increments away from any
+feedback. Increment 1 shipped verified, tested, and correctly described by its player as *"graph
+paper with an audit trail"*. Increments 2 and 3 are therefore merged, and the feedback mechanism
+moves forward to sit alongside the first real stakes.
+
+| # | Delivers | Status |
+|---|---|---|
+| 1 | `core` + `log` + golden replay. A grid you can walk. | done — playable, not a game |
+| 2 | A loop worth ten minutes: exit, opponents, combat, one item, death-as-rewind, the world naming itself, and a flag button. | next |
+| 3 | Computed Critic tier + lens registry, driven by real logged play and real flags. | |
+| 4 | Forge: R1 → R2 drafts, ratification, the rule interpreter. | |
+| 5 | Artifact build target. Judged Critic tier. | |
+
+Later increments are deliberately left thin. They should be written from what play reveals, not
+guessed at now — that is the whole thesis, and the first ordering failed to apply it to itself.
+
+### Death, and why forking is a mechanic
+
+Death does not end a run: it **rewinds** the world to an earlier point, and the branch where you
+died persists in the log permanently — visitable, readable by the Critic, and available for canon
+to reference.
+
+This is what gives forking a meaning a player can act on. Before it, forking was infrastructure
+the engine appreciated and nobody could feel. The rewind must cost something or it defangs the
+stakes it exists to make survivable; the dead branch keeps what you were carrying.
+
+### Oracle transports, as actually available
+
+| Transport | Status |
 |---|---|
-| 1 | `core` + `log` + golden replay test. Move on a grid. |
-| 2 | Stats, opponent, strike, turn order, death. A real loop. |
-| 3 | `canon` + Oracle on stub transport + fallbacks. Fiction appears, no network. |
-| 4 | SDK transport, automatic R0 → R1, chronicle UI. |
-| 5 | Refs: fork and reset in the UI. |
-| 6 | Lens registry extraction + computed Critic tier. |
-| 7 | Forge: R1 → R2 drafts, ratification, rule interpreter. |
-| 8 | Artifact build target. Judged Critic tier. |
+| `stub` | deterministic, offline, used by every test |
+| `cli` | dev server shells out to the `claude` CLI on PATH — **the development default**, needs no API key |
+| `artifact` | `window.claude.complete`, still unconfirmed for Code-published pages |
+| `sdk` | needs `ANTHROPIC_API_KEY`, not currently set on this machine |
 
 ## Success criteria
 
