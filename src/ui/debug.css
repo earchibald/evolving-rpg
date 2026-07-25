@@ -44,3 +44,8 @@ button:focus-visible { outline: 2px solid var(--player); outline-offset: 2px; }
 
 .cell.exit { background: #2f6f5e; }
 .cell.item { background: #6b5a2e; }
+
+/* Something is standing on the prize. Ringed rather than filled, so the
+   creature stays the colour it is while the square still reads as worth
+   taking. */
+.cell.guarding { box-shadow: inset 0 0 0 2px #b39237; }

@@ -62,15 +62,27 @@ function render(): void {
       const cell = document.createElement('div');
       cell.className = 'cell';
       const tile = state.grid.tiles[idx(state.grid, x, y)];
-      if (tile === WALL) cell.classList.add('wall');
-      if (tile === EXIT) cell.classList.add('exit');
-      if (itemAt(state.items, x, y) !== undefined) cell.classList.add('item');
-
       const here = occupant.get(idx(state.grid, x, y));
+
+      // Whoever is standing there wins the square. The item sits on a guard by
+      // design, so painting the item over the creature hid the guard every
+      // single time — and a risk you cannot see is not a decision you can weigh.
       if (here !== undefined) {
         if (!isAlive(here)) cell.classList.add('dead');
         else if (here.kind === 'you') cell.classList.add('player');
         else cell.classList.add('foe');
+      } else if (tile === WALL) {
+        cell.classList.add('wall');
+      } else if (tile === EXIT) {
+        cell.classList.add('exit');
+      } else if (itemAt(state.items, x, y) !== undefined) {
+        cell.classList.add('item');
+      }
+
+      // A guarded prize still needs to read as a prize, so mark the square even
+      // when something is standing on it.
+      if (here !== undefined && itemAt(state.items, x, y) !== undefined) {
+        cell.classList.add('guarding');
       }
       grid.appendChild(cell);
     }
@@ -88,10 +100,6 @@ function render(): void {
     ['events in chain', String(chain(log, head).length)],
     ['events in log', String(log.events.size)],
   ];
-
-  for (const i of state.items) {
-    rows.push([i.kind, `at ${i.pos.x}, ${i.pos.y}`]);
-  }
 
   for (const i of state.items) {
     rows.push([i.kind, `at ${i.pos.x}, ${i.pos.y}`]);
