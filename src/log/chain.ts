@@ -12,6 +12,24 @@ export function emptyLog(): EventLog {
   return { events: new Map() };
 }
 
+/**
+ * Freezes an event and everything reachable inside it.
+ *
+ * A log copy shares its event objects by reference — `new Map(log.events)`
+ * duplicates the structure, not the values. Without this, one holder could
+ * write `chain(log, head)[2].payload.to.x = 999` with no cast and silently
+ * rewrite history for every fork sharing that event. `fold` performs no hash
+ * check, so the result would be a different, plausible, wrong state rather
+ * than an error, and `verifyChain` would only catch it if someone re-ran it.
+ */
+function deepFreeze<T>(value: T): T {
+  if (value === null || typeof value !== 'object') return value;
+  for (const key of Object.getOwnPropertyNames(value)) {
+    deepFreeze((value as Record<string, unknown>)[key]);
+  }
+  return Object.freeze(value);
+}
+
 /** Appends without mutating: returns a new log alongside the sealed event. */
 export function append(
   log: EventLog,
@@ -28,7 +46,7 @@ export function append(
   const id = hashEvent(draft, head, seq);
   if (log.events.has(id)) throw new Error(`append: duplicate event id ${id}`);
 
-  const event = { ...draft, id, parent: head, seq } as GameEvent;
+  const event = deepFreeze({ ...draft, id, parent: head, seq } as GameEvent);
   const events = new Map(log.events);
   events.set(id, event);
   return { log: { events }, event };

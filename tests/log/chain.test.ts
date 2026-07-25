@@ -42,13 +42,45 @@ describe('append', () => {
   });
 
   it('does not mutate the log it was given', () => {
-    const log = emptyLog();
-    append(log, null, createWorld(1, 12, 8, 10));
-    expect(log.events.size).toBe(0);
+    // Starts from a log that already holds an event, so the assertion has
+    // something to detect: against an empty log, a mutating append would look
+    // identical to a copying one.
+    const first = append(emptyLog(), null, createWorld(1, 12, 8, 10));
+    const sizeBefore = first.log.events.size;
+    append(first.log, first.event.id, attemptMove(fold(first.log, first.event.id), 'player', 1, 0));
+    expect(first.log.events.size).toBe(sizeBefore);
+  });
+
+  it('freezes the event it seals, so no holder can rewrite shared history', () => {
+    // Log copies share event objects by reference, and fold does no hash check,
+    // so an unfrozen event would let one holder silently derive a wrong state
+    // for every fork descending from it.
+    const { event } = append(emptyLog(), null, createWorld(1, 12, 8, 10));
+    if (event.type !== 'WORLD_INIT') throw new Error('fixture problem: expected WORLD_INIT');
+
+    expect(Object.isFrozen(event)).toBe(true);
+    expect(Object.isFrozen(event.payload)).toBe(true);
+    expect(Object.isFrozen(event.payload.player.pos)).toBe(true);
+    expect(Object.isFrozen(event.payload.tiles)).toBe(true);
+
+    // No cast: the payload's fields are not declared readonly, so the type
+    // system permits this write and only the freeze refuses it. That is the
+    // hazard being closed — a plain typed assignment, no cast required.
+    expect(() => {
+      event.payload.seed = 999;
+    }).toThrow(TypeError);
   });
 
   it('rejects a head it has never seen', () => {
     expect(() => append(emptyLog(), 'nope', createWorld(1, 12, 8, 10))).toThrow(/unknown head/);
+  });
+
+  it('refuses the same draft twice at the same head', () => {
+    // Same content plus same position means the same id, so this is a
+    // double-append rather than a legitimate new event.
+    const draft = createWorld(1, 12, 8, 10);
+    const first = append(emptyLog(), null, draft);
+    expect(() => append(first.log, null, draft)).toThrow(/duplicate event id/);
   });
 });
 
