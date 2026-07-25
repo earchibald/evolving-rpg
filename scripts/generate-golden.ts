@@ -8,6 +8,22 @@ import { createWorld, attemptMove, advanceTurn } from '../src/core/commands.js';
 import { canonicalJson } from '../src/log/canonical.js';
 import { ENGINE_VERSION } from '../src/version.js';
 
+// A red golden-replay test means a real regression, or a deliberate behaviour
+// change needing a schemaVersion bump and an upcaster. It does not mean the
+// fixture is stale. Regenerating is the one action that silently destroys the
+// guarantee this whole project rests on, and it was previously a single
+// frictionless command — so it now requires saying so out loud.
+if (process.env.ALLOW_GOLDEN_REGEN !== '1') {
+  console.error(
+    'Refusing to regenerate tests/fixtures/golden-run.json.\n\n' +
+      'If the golden test is failing, diagnose the regression — do not replace\n' +
+      'the fixture. If you genuinely intend to replace it, and have bumped the\n' +
+      'affected schemaVersion and written any upcaster needed:\n\n' +
+      '  ALLOW_GOLDEN_REGEN=1 npm run golden\n',
+  );
+  process.exit(1);
+}
+
 const SEED = 12345;
 const WIDTH = 24;
 const HEIGHT = 16;

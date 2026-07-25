@@ -4,8 +4,9 @@ import fixture from '../fixtures/golden-run.json';
 import { emptyLog, append, chain, fold, verifyChain } from '../../src/log/chain.js';
 import { createWorld, attemptMove, advanceTurn } from '../../src/core/commands.js';
 import { canonicalJson } from '../../src/log/canonical.js';
+import { hashEvent } from '../../src/log/hash.js';
 import type { EventLog } from '../../src/log/chain.js';
-import type { GameEvent } from '../../src/core/events.js';
+import type { DraftEvent, GameEvent } from '../../src/core/events.js';
 
 const STEPS: Record<string, readonly [number, number]> = {
   N: [0, -1], S: [0, 1], E: [1, 0], W: [-1, 0],
@@ -62,6 +63,40 @@ describe('golden replay', () => {
     rebuilt.forEach((event, i) => {
       expect(canonicalJson(event)).toBe(canonicalJson(recorded[i]));
     });
+  });
+
+  it('detects a counter that disagrees with the state, even when the event hashes correctly', () => {
+    // The flipped-tile case below can only ever fire the hash check, because
+    // rngCounter is itself hashed — so no payload tamper can reach the counter
+    // comparison, and deleting that whole branch would break nothing. This
+    // forges the case the counter check actually exists for: an event that is
+    // internally self-consistent but disagrees with the state the events before
+    // it produce. A spliced or regrafted event looks exactly like this.
+    const log = logFromFixture();
+    const events = chain(log, fixture.head);
+    const last = events[events.length - 1];
+    if (last === undefined) throw new Error('fixture problem: empty chain');
+
+    const drifted = { ...last, rngCounter: last.rngCounter + 1 };
+    const reHashed = {
+      ...drifted,
+      id: hashEvent(
+        {
+          type: drifted.type,
+          schemaVersion: drifted.schemaVersion,
+          rngCounter: drifted.rngCounter,
+          payload: drifted.payload,
+        } as DraftEvent,
+        drifted.parent,
+        drifted.seq,
+      ),
+    } as GameEvent;
+    log.events.set(reHashed.id, reHashed);
+
+    const divergence = verifyChain(log, reHashed.id);
+    expect(divergence).not.toBeNull();
+    expect(divergence?.reason).toMatch(/rng counter/);
+    expect(divergence?.seq).toBe(last.seq);
   });
 
   it('detects a single flipped tile in the recorded world', () => {
