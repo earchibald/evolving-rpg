@@ -3,10 +3,14 @@ import type { GameEvent } from './events.js';
 import type { GameState } from './state.js';
 
 /**
- * The only way state changes. Pure and total: no RNG, no clock, no network, no
- * throwing on well-formed input. Everything random was resolved when the
- * command ran and is recorded in the payload, which is what makes a replay
- * faithful rather than merely similar.
+ * The only way state changes. Pure: no RNG, no clock, no network. Everything
+ * random was resolved when the command ran and is recorded in the payload,
+ * which is what makes a replay faithful rather than merely similar.
+ *
+ * Total over *validated* events. A WORLD_INIT payload whose tile count
+ * disagrees with its declared size throws out of makeGrid, and that is
+ * deliberate: it happens only to a corrupted log, where failing loudly beats
+ * folding nonsense. Verify an untrusted log with verifyChain before folding it.
  */
 export function apply(state: GameState, event: GameEvent): GameState {
   switch (event.type) {
