@@ -21,6 +21,11 @@ export function emptyLog(): EventLog {
  * rewrite history for every fork sharing that event. `fold` performs no hash
  * check, so the result would be a different, plausible, wrong state rather
  * than an error, and `verifyChain` would only catch it if someone re-ran it.
+ *
+ * Note this reaches the caller's draft as well: `{ ...draft }` is a shallow
+ * spread, so `event.payload` and `draft.payload` are one object. A caller that
+ * keeps a draft and edits it after appending gets a TypeError thrown far from
+ * its cause. Build a fresh draft per append instead of reusing one.
  */
 function deepFreeze<T>(value: T): T {
   if (value === null || typeof value !== 'object') return value;
