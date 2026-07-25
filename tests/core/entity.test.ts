@@ -37,4 +37,9 @@ describe('EMPTY_STATE', () => {
   it('is a solid one-tile grid, so nothing is walkable before a world exists', () => {
     expect(isPassable(EMPTY_STATE.grid, 0, 0)).toBe(false);
   });
+
+  it('is frozen, so a reducer mutating its accumulator fails loudly instead of corrupting every later replay', () => {
+    expect(Object.isFrozen(EMPTY_STATE)).toBe(true);
+    expect(Object.isFrozen(EMPTY_STATE.entities)).toBe(true);
+  });
 });
