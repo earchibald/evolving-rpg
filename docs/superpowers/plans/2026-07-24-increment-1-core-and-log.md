@@ -1271,6 +1271,7 @@ Create `tests/core/commands.test.ts`:
 ```ts
 import { createWorld, attemptMove, advanceTurn } from '../../src/core/commands.js';
 import { apply } from '../../src/core/apply.js';
+import { generateMap } from '../../src/core/mapgen.js';
 import { EMPTY_STATE } from '../../src/core/state.js';
 import { FLOOR, WALL, makeGrid } from '../../src/core/grid.js';
 import type { GameEvent } from '../../src/core/events.js';
@@ -1287,10 +1288,12 @@ describe('createWorld', () => {
       .toBe(JSON.stringify(createWorld(4242, 24, 16, 60)));
   });
 
-  it('starts from counter zero and records where the generator finished', () => {
+  it('starts from counter zero and records the counter generation actually reached', () => {
     const draft = createWorld(4242, 24, 16, 60);
     expect(draft.rngCounter).toBe(0);
-    expect(draft.payload.counterAfter).toBeGreaterThan(0);
+    // Tied to the generator's real output rather than merely positive: a
+    // hardcoded constant satisfies a > 0 check while silently breaking replay.
+    expect(draft.payload.counterAfter).toBe(generateMap(4242, 0, 24, 16, 60).counterAfter);
   });
 
   it('gives the player the four stats', () => {
@@ -1362,9 +1365,30 @@ describe('attemptMove', () => {
   });
 
   it('rejects anything but a single orthogonal step', () => {
-    expect(() => attemptMove(fixture(), 'player', 1, 1)).toThrow(/single step/);
-    expect(() => attemptMove(fixture(), 'player', 2, 0)).toThrow(/single step/);
-    expect(() => attemptMove(fixture(), 'player', 0, 0)).toThrow(/single step/);
+    expect(() => attemptMove(fixture(), 'player', 1, 1)).toThrow(/single orthogonal step/);
+    expect(() => attemptMove(fixture(), 'player', 2, 0)).toThrow(/single orthogonal step/);
+    expect(() => attemptMove(fixture(), 'player', 0, 0)).toThrow(/single orthogonal step/);
+  });
+
+  it('rejects a fractional half-step that happens to sum to one', () => {
+    // Both of these pass a magnitude-only check: 0.5 + 0.5 and 0.25 + 0.75 are
+    // each exactly 1. Without an integer guard the player ends up between tiles.
+    expect(() => attemptMove(fixture(), 'player', 0.5, 0.5)).toThrow(/single orthogonal step/);
+    expect(() => attemptMove(fixture(), 'player', 0.25, -0.75)).toThrow(/single orthogonal step/);
+  });
+
+  it('carries the counter unchanged on every branch, not just the successful one', () => {
+    // The fixture sits at counter 40. A hardcoded 0 in any one blocked branch
+    // would otherwise pass unnoticed, and replay verification would then fail
+    // far from the cause.
+    const occupied = fixture([
+      { id: 'other', kind: 'thing', pos: { x: 0, y: 0 }, stats: { hp: 4, might: 1, wits: 1, speed: 1 }, tags: [] },
+    ]);
+    expect(attemptMove(fixture(), 'player', -1, 0).rngCounter).toBe(40);
+    expect(attemptMove(fixture(), 'player', 1, 0).rngCounter).toBe(40);
+    expect(attemptMove(fixture(), 'player', 0, -1).rngCounter).toBe(40);
+    expect(attemptMove(occupied, 'player', -1, 0).rngCounter).toBe(40);
+    expect(advanceTurn(fixture()).rngCounter).toBe(40);
   });
 
   it('rejects an unknown entity', () => {
@@ -1436,8 +1460,12 @@ export function createWorld(
 }
 
 export function attemptMove(state: GameState, entityId: string, dx: number, dy: number): DraftEvent {
-  if (Math.abs(dx) + Math.abs(dy) !== 1) {
-    throw new Error(`attemptMove: expected a single step, got (${dx}, ${dy})`);
+  // Integers as well as magnitude: (0.5, 0.5) sums to exactly 1, so a
+  // magnitude-only guard would land the player between tiles — and from a
+  // fractional position every later move reads as blocked, because a
+  // non-integer array index resolves to undefined.
+  if (!Number.isInteger(dx) || !Number.isInteger(dy) || Math.abs(dx) + Math.abs(dy) !== 1) {
+    throw new Error(`attemptMove: expected a single orthogonal step, got (${dx}, ${dy})`);
   }
   const mover = findEntity(state.entities, entityId);
   if (mover === undefined) throw new Error(`attemptMove: no entity ${entityId}`);
