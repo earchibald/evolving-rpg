@@ -211,3 +211,117 @@ describe('what the world remembers', () => {
     expect(asked).toBe(0);
   });
 });
+
+describe('when the world cannot answer', () => {
+  /** Fails a stated number of times, then succeeds. */
+  function flaky(failures: number): Transport & { asked: () => number } {
+    let asked = 0;
+    return {
+      name: 'flaky',
+      asked: () => asked,
+      ask() {
+        asked += 1;
+        return asked <= failures
+          ? Promise.reject(new Error('dropped'))
+          : Promise.resolve({ name: 'ash-crawler', line: 'it is here', model: 'm', costUsd: 0 });
+      },
+    };
+  }
+
+  it('does not turn one dropped call into a permanent name', async () => {
+    // The bug this exists for: the fallback used to be written into canon
+    // immediately, so a failed call was indistinguishable from a settled name.
+    // The next ask found it cached, returned it as final, and never tried
+    // again — a thing kept its placeholder for the life of the save.
+    const transport = flaky(1);
+    const oracle = new Oracle({ transport });
+
+    expect(oracle.ask(CREATURE).name).toBe('thing');
+    await tick();
+
+    // Still a placeholder, but crucially not remembered as one.
+    expect(oracle.ask(CREATURE).name).toBe('thing');
+    await tick();
+
+    expect(transport.asked()).toBe(2);
+    expect(oracle.ask(CREATURE).name).toBe('ash-crawler');
+  });
+
+  it('never writes a placeholder into canon', async () => {
+    const oracle = new Oracle({ transport: brokenTransport('gone') });
+    oracle.ask(CREATURE);
+    await tick();
+
+    // Nothing to save, because the world never said anything.
+    expect(Object.keys(oracle.known())).toHaveLength(0);
+  });
+
+  it('gives up after a few tries rather than billing you once per frame', async () => {
+    const transport = flaky(99);
+    const oracle = new Oracle({ transport });
+
+    for (let i = 0; i < 30; i += 1) {
+      oracle.ask(CREATURE);
+      await tick();
+    }
+    expect(transport.asked()).toBeLessThanOrEqual(3);
+    expect(oracle.unanswered()).toBe(1);
+  });
+
+  it('tries afresh when asked to', async () => {
+    const transport = flaky(3);
+    const oracle = new Oracle({ transport });
+
+    for (let i = 0; i < 6; i += 1) { oracle.ask(CREATURE); await tick(); }
+    expect(oracle.unanswered()).toBe(1);
+
+    oracle.askAgain();
+    oracle.ask(CREATURE);
+    await tick();
+
+    expect(oracle.ask(CREATURE).name).toBe('ash-crawler');
+    expect(oracle.unanswered()).toBe(0);
+  });
+
+  it('heals a save that already holds a placeholder', async () => {
+    // Older builds persisted fallbacks. Loading one should not inherit the
+    // poisoning — it should ask properly and get a real answer.
+    const poisoned = {
+      '{"intent":"describe","subject":"creature:thing"}': {
+        name: 'thing', line: '', source: 'fallback' as const, model: null, ms: 0, costUsd: 0,
+      },
+    };
+    const oracle = new Oracle({ transport: stubTransport(), known: poisoned });
+
+    expect(oracle.ask(CREATURE).name).toBe('thing');
+    await tick();
+    expect(oracle.ask(CREATURE).name).toBe('the thing');
+  });
+});
+
+describe('what makes two questions the same question', () => {
+  it('ignores context, because a wounded thing is the same thing', async () => {
+    // Keying on context meant a creature at five hit points and the same
+    // creature at three were different questions: a fresh paid call every time
+    // anything took damage, and a name that could change mid-fight.
+    let asked = 0;
+    const counting: Transport = {
+      name: 'counting',
+      ask() {
+        asked += 1;
+        return Promise.resolve({ name: 'ash-crawler', line: 'x', model: 'm', costUsd: 0 });
+      },
+    };
+    const oracle = new Oracle({ transport: counting });
+
+    oracle.ask(describeQuestion('creature', 'thing', { hitPoints: 5 }));
+    await tick();
+    const hurt = oracle.ask(describeQuestion('creature', 'thing', { hitPoints: 3 }));
+    const dead = oracle.ask(describeQuestion('creature', 'thing', { hitPoints: 0 }));
+    await tick();
+
+    expect(asked).toBe(1);
+    expect(hurt.name).toBe('ash-crawler');
+    expect(dead.name).toBe('ash-crawler');
+  });
+});

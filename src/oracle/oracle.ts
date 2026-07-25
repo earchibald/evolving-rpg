@@ -25,12 +25,22 @@ import type { Answer, Call, Intent, Question, Transport } from './types.js';
  * than magical — you can see what is being asked and what is waiting.
  */
 
+/**
+ * What identifies a question, which is not the same as what the model needs to
+ * know in order to answer it.
+ *
+ * Only intent and subject. `context` is prompt material — a creature's current
+ * hit points help the world describe it, but they do not make it a different
+ * creature. Keying on context meant a thing at five hit points and the same
+ * thing at three were separate questions: a fresh paid call every time anything
+ * took damage, and a name that could change in the middle of a fight.
+ */
+/** Enough attempts to ride out a hiccup, few enough that a broken transport
+ *  does not bill you once per frame. */
+const MAX_TRIES = 3;
+
 function keyOf(question: Question): string {
-  return canonicalJson({
-    intent: question.intent,
-    subject: question.subject,
-    context: question.context,
-  });
+  return canonicalJson({ intent: question.intent, subject: question.subject });
 }
 
 /**
@@ -71,6 +81,11 @@ export class Oracle {
   private readonly canon = new Map<string, Answer>();
   private readonly calls = new Map<string, Call>();
   private readonly raisedAt = new Map<string, number>();
+  /** Keys with a question currently out, so a re-render does not ask again. */
+  private readonly inFlight = new Set<string>();
+  /** How many times each key has been tried, so a broken transport cannot
+   *  become a storm of identical failing calls on every frame. */
+  private readonly tries = new Map<string, number>();
   private nextId = 1;
 
   constructor(options: OracleOptions) {
@@ -78,6 +93,11 @@ export class Oracle {
     this.onChange = options.onChange ?? ((): void => {});
     this.now = options.now ?? ((): number => Date.now());
     for (const [key, answer] of Object.entries(options.known ?? {})) {
+      // Placeholders are never canon. An older build stored them, and a failed
+      // call then looked exactly like a settled name — permanently, because a
+      // cache hit meant it was never asked again. Dropping them on load lets an
+      // already-poisoned save heal itself.
+      if (answer.source === 'fallback') continue;
       this.canon.set(key, answer);
     }
   }
@@ -111,14 +131,58 @@ export class Oracle {
     const remembered = this.canon.get(key);
     if (remembered !== undefined) return { ...remembered, source: 'cache' };
 
-    // Commit the fallback immediately so the world is never nameless, and so a
-    // second ask for the same subject does not raise a second call.
-    const fallback = fallbackFor(question);
-    this.canon.set(key, fallback);
+    // The fallback is returned but NOT remembered. Storing it made a failed
+    // call permanent: the next ask found it in canon, returned it as settled,
+    // and never tried again — so one dropped call meant a thing kept its
+    // placeholder name for the life of the save. Canon holds only what the
+    // world actually said.
+    const attempted = this.tries.get(key) ?? 0;
+    if (this.transport !== null && !this.inFlight.has(key) && attempted < MAX_TRIES) {
+      this.inFlight.add(key);
+      this.tries.set(key, attempted + 1);
+      void this.raise(key, question);
+    }
 
-    if (this.transport !== null) void this.raise(key, question);
+    return fallbackFor(question);
+  }
 
-    return fallback;
+  /** Anything still wearing a placeholder, so a view can offer to try again. */
+  unanswered(): number {
+    let waiting = 0;
+    for (const [key, count] of this.tries) {
+      if (!this.canon.has(key) && !this.inFlight.has(key) && count >= MAX_TRIES) waiting += 1;
+    }
+    return waiting;
+  }
+
+  /**
+   * Refuses a name the world gave.
+   *
+   * Canon is permanent by design, which is exactly why there has to be a way to
+   * say no. The world offered "small iron want" for a blade — atmospheric, and
+   * useless, because a player cannot tell what it is. Rejecting drops it and
+   * lets the next ask try again.
+   *
+   * This is the veto the design always called for, arriving at the first moment
+   * it was actually needed.
+   */
+  reject(name: string): boolean {
+    for (const [key, answer] of this.canon) {
+      if (answer.name !== name) continue;
+      this.canon.delete(key);
+      this.tries.delete(key);
+      this.onChange();
+      return true;
+    }
+    return false;
+  }
+
+  /** Forgets past failures so the next ask tries afresh. */
+  askAgain(): void {
+    for (const key of [...this.tries.keys()]) {
+      if (!this.canon.has(key)) this.tries.delete(key);
+    }
+    this.onChange();
   }
 
   private async raise(key: string, question: Question): Promise<void> {
@@ -163,6 +227,8 @@ export class Oracle {
       // The fallback already committed, so the world keeps its name and play
       // continues. Only the queue records that the world tried and could not.
       this.calls.set(id, { ...call, state: 'failed', detail: String(error).slice(0, 80) });
+    } finally {
+      this.inFlight.delete(key);
     }
     this.onChange();
   }

@@ -37,16 +37,30 @@ function gamemasterPrompt(context: Record<string, unknown>): string {
 }
 
 function prompt(subject: string, context: unknown): string {
+  const [kind] = subject.split(':');
   return [
     'You are naming one thing in a cold, quiet, attentive world.',
-    'The world is under-specified on purpose: it has no established genre yet,',
-    'and what you say becomes permanent canon that cannot later be contradicted.',
+    'The world has no established genre yet, and what you say becomes permanent.',
+    '',
+    'THE NAME MUST NAME THE THING.',
+    'A player reads it in a list and must know what they are looking at.',
+    kind === 'creature'
+      ? 'It is a creature: the name must read as something alive that can hurt you.'
+      : 'It is an object you can pick up and use: the name must read as a thing you could hold.',
+    'Concrete noun as the head word, at most one modifier before it.',
+    // Only counter-examples. Naming a good one gets it used verbatim: the first
+    // version of this offered "salt hound" as an illustration and the world
+    // promptly called its creature a salt hound.
+    'Do NOT produce a mood in place of a thing. "small iron want", "the quiet',
+    'below", "a held breath" all fail — a player cannot point at them.',
+    'The head word must be something that exists, not something that is felt.',
+    'No abstract nouns as the head word. Lowercase, no article, two or three words.',
     '',
     `Subject: ${subject}`,
     `What is known: ${JSON.stringify(context)}`,
     '',
     'Reply with ONLY a JSON object, no prose around it, no code fence:',
-    '{"name": "<two or three words, lowercase, no article>",',
+    '{"name": "<the name>",',
     ' "line": "<one sentence, second person, under twenty words>"}',
   ].join('\n');
 }

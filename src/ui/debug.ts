@@ -439,7 +439,19 @@ function render(): void {
       const strong = document.createElement('span');
       strong.className = 'name';
       strong.textContent = a.name;
-      li.append(strong, document.createTextNode(` — ${a.line}`));
+
+      // Canon is permanent, which is precisely why refusing has to be possible.
+      const no = document.createElement('button');
+      no.type = 'button';
+      no.className = 'reject';
+      no.textContent = 'no';
+      no.title = `forget "${a.name}" and ask again`;
+      no.addEventListener('click', () => {
+        oracle.reject(a.name);
+        say(`“${a.name}” refused — the world will think of something else`);
+      });
+
+      li.append(strong, document.createTextNode(` — ${a.line} `), no);
       spoken.appendChild(li);
     }
   }
@@ -631,11 +643,11 @@ el('rewind').addEventListener('click', () => {
 // it into "new world" is how you lose a graveyard by accident.
 el('wipe').addEventListener('click', () => {
   const worlds = listRefs(refs).length;
-  clear();
+  clear(CANON_KEY);
   freshWorld();
   lastSaved = '';
   persist();
-  say(`wiped — ${worlds} world(s) discarded, back to one`);
+  say(`wiped — ${worlds} world(s) and every name discarded, back to one`);
   render();
 });
 

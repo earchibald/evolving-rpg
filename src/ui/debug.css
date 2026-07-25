@@ -167,3 +167,11 @@ button:focus-visible { outline: 2px solid var(--player); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
 }
+
+/* Refusing a name. Small, and always there — canon is permanent, so saying no
+   has to be as easy as reading. */
+.reject {
+  font-size: .7rem; padding: 0 .35rem; margin-left: .2rem;
+  background: transparent; color: var(--faint); border-color: var(--rule);
+}
+.reject:hover { background: var(--foe); border-color: var(--foe); color: var(--ground); }

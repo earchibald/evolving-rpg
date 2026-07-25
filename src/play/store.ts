@@ -109,8 +109,14 @@ export function load(): Restored | null {
   return deserialise(JSON.parse(raw) as Saved);
 }
 
-export function clear(): void {
-  storage()?.removeItem(KEY);
+/** Everything this game has ever kept in the browser. "Wipe everything" that
+ *  leaves the world's names behind is not a wipe, and it was how a poisoned
+ *  name survived the one action meant to clear it. */
+export function clear(...alsoClear: string[]): void {
+  const store = storage();
+  if (store === null) return;
+  store.removeItem(KEY);
+  for (const key of alsoClear) store.removeItem(key);
 }
 
 export function emptySession(active: string): Restored {
