@@ -89,7 +89,24 @@ function flushChronicle(): void {
     });
 }
 
+/** What the session is, compressed to a line. Cheap to compare, and it changes
+ *  whenever anything worth saving has. */
+function signature(): string {
+  const worlds = [...refs.byName.values()].map((r) => `${r.name}:${String(r.head)}`).join(',');
+  return `${log.events.size}|${active}|${worlds}`;
+}
+
+let lastSaved = '';
+
 function persist(): void {
+  // A finished run still accepts keypresses that produce no events, and the
+  // first version wrote 27 identical snapshots in a row because of it. Saving
+  // the same thing repeatedly is not harmful, but a chronicle whose history is
+  // mostly noise is harder to read — and reading it is the whole point.
+  const now = signature();
+  if (now === lastSaved) return;
+  lastSaved = now;
+
   const snapshot = save(log, refs, active, new Date().toISOString());
   if (snapshot === null) return;
   pendingSnapshot = snapshot;
