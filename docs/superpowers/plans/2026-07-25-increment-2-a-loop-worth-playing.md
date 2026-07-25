@@ -147,6 +147,13 @@ Everything from increment 1 still binds. Re-read that plan's Global Constraints 
 - Remove a fallback so a failed call throws. A test must fail.
 - Let a second call fire for something already named. A test must fail.
 
+**Measured cost, which shapes this task.** A `claude -p` probe returned in ~2.3 s and cost $0.15 for a sixteen-token reply — the price is startup, not the answer, because each invocation is a fresh session re-caching ~14k tokens of CLI system prompt. Two consequences:
+
+- **Batch first-contact namings.** One call naming several newly-seen things beats one call each. The queue makes this visible, which is half of why it exists.
+- **Cost must scale with novelty, not with playtime.** A thing is named once, ever, and cached forever. If a second call ever fires for something already named, that is the bug the third mutation proof above is there to catch — and it is now a bug with a dollar figure attached.
+
+Use `--output-format json` and read `is_error` rather than parsing prose for failure. The envelope also carries `duration_api_ms` and `total_cost_usd`; surface both in the queue so the cost of the world thinking is visible rather than discovered later on a bill.
+
 **Judgment call worth reporting:** if serialising the whole canon store to `localStorage` on every commit turns out to be too slow to do synchronously, say so rather than working around it silently.
 
 ---
