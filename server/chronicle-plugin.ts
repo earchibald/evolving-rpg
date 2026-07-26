@@ -1,4 +1,4 @@
-import { writeFileSync, mkdirSync, appendFileSync } from 'node:fs';
+import { writeFileSync, readFileSync, mkdirSync, appendFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import type { Plugin } from 'vite';
 
@@ -11,8 +11,10 @@ import type { Plugin } from 'vite';
  * it — one endpoint, no database, no ceremony.
  *
  * `runs/latest.json` is the whole session, overwritten each save.
- * `runs/history.jsonl` gets one line per save, so a trail survives even though
- * the full state does not.
+ * `runs/history.jsonl` gets one line per save — counts only, a trail rather
+ * than a record.
+ * `runs/archive/` holds the full session as it stood *before* anything shrank
+ * it, which is the only reason a wiped run is still readable afterwards.
  *
  * Development only. It is a Vite dev middleware and does not exist in a build.
  */
@@ -59,6 +61,46 @@ export function chroniclePlugin(): Plugin {
           try {
             const full = resolve(process.cwd(), 'runs/latest.json');
             mkdirSync(dirname(full), { recursive: true });
+
+            /*
+             * Archive before overwriting, when the new session is smaller.
+             *
+             * The chronicle exists so a round played here can be read back
+             * afterwards — and it could not survive the one action designed to
+             * destroy things. A wipe posted a one-event session straight over
+             * the top of a six-hundred-event run, and history.jsonl keeps only
+             * counts, so the run was simply gone. That is exactly how an agent
+             * verifying the wipe fix destroyed the play it was meant to be
+             * studying.
+             *
+             * Shrinking is the signal: any save with fewer events than the one
+             * on disk is either a wipe or a fresh start, and both are worth
+             * stepping around rather than through.
+             */
+            const shrinking = ((): number => {
+              try {
+                const was = JSON.parse(readFileSync(full, 'utf8')) as { events?: unknown[] };
+                return was.events?.length ?? 0;
+              } catch {
+                return 0;
+              }
+            })();
+
+            const incoming = ((): number => {
+              try {
+                return (JSON.parse(body) as { events?: unknown[] }).events?.length ?? 0;
+              } catch {
+                return 0;
+              }
+            })();
+
+            if (shrinking > incoming && shrinking > 1) {
+              const stamp = new Date().toISOString().replace(/[:.]/gu, '-');
+              const kept = resolve(process.cwd(), `runs/archive/${stamp}-${String(shrinking)}-events.json`);
+              mkdirSync(dirname(kept), { recursive: true });
+              writeFileSync(kept, readFileSync(full, 'utf8'), 'utf8');
+            }
+
             writeFileSync(full, body, 'utf8');
 
             // A one-line trail. Parsed here rather than trusted, so a malformed
