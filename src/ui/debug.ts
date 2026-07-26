@@ -21,7 +21,8 @@ import { cliTransport } from '../oracle/transports.js';
 import { send, loadNotes, saveNotes, NOTES_KEY } from '../channels/channels.js';
 import { CachedCritic } from '../critic/memo.js';
 import type { Channel, Note } from '../channels/channels.js';
-import { WALL, EXIT, idx } from '../core/grid.js';
+import { WALL, EXIT, idx, makeGrid } from '../core/grid.js';
+import { fogAt } from './fov.js';
 import type { EventLog } from '../log/chain.js';
 import type { Refs } from '../log/refs.js';
 import type { Entity } from '../core/entity.js';
@@ -198,15 +199,21 @@ const oracle = new Oracle({
 });
 
 /**
- * Asks about everything on screen that has not been named yet.
+ * Asks about everything in sight that has not been named yet.
  *
  * Per kind rather than per creature: a name is a fact about the world, not
  * about one of its occupants, so every `thing` shares one — and that is also
  * why naming three creatures costs one question instead of three.
+ *
+ * Gated by the fog since the fog exists: "the world names what you touch"
+ * was always the premise, and asking the model to christen things three
+ * rooms away both spends money on the unmet and spoils what the panel may
+ * later reveal.
  */
-function nameWhatIsHere(state: ReturnType<typeof fold>): void {
+function nameWhatIsHere(state: ReturnType<typeof fold>, fog: { seen: ReadonlySet<number>; visible: ReadonlySet<number> }): void {
   for (const e of state.entities) {
     if (e.kind === 'you') continue;
+    if (!fog.visible.has(idx(state.grid, e.pos.x, e.pos.y))) continue;
     oracle.ask(describeQuestion('creature', e.kind, {
       hitPoints: e.stats.hp,
       might: e.stats.might,
@@ -214,6 +221,7 @@ function nameWhatIsHere(state: ReturnType<typeof fold>): void {
     }));
   }
   for (const i of state.items) {
+    if (!fog.seen.has(idx(state.grid, i.pos.x, i.pos.y))) continue;
     oracle.ask(describeQuestion('item', i.kind, { grants: i.grants }));
   }
 }
@@ -235,18 +243,24 @@ const critic = new CachedCritic();
 /** Last seen vitals values, and the turn until which a change stays lit. */
 const lastVitals = new Map<string, { value: string; until: number }>();
 
-/** What the player can currently see, so the gamemaster is not answering blind. */
+/** What the player can currently see, so the gamemaster is not answering
+ *  blind — and only what they can see, so it is not answering psychic. The
+ *  character in there knows what the fog has shown them, nothing more. */
 function scene(): Record<string, unknown> {
   const head = getRef(refs, active).head;
   const state = fold(log, head);
+  const fog = fogAt(log, head, (p) => makeGrid(p.width, p.height, p.tiles));
   const you = state.entities[0];
   return {
     turn: state.turn,
     you: you === undefined ? null : { at: you.pos, hitPoints: you.stats.hp, might: you.stats.might },
-    around: state.entities.filter((e) => e.kind !== 'you' && isAlive(e)).map((e) => ({
-      called: calledCreature(e.kind, e), at: e.pos, hitPoints: e.stats.hp,
-    })),
-    underfoot: state.items.map((i) => ({ at: i.pos })),
+    around: state.entities
+      .filter((e) => e.kind !== 'you' && isAlive(e)
+        && fog.visible.has(idx(state.grid, e.pos.x, e.pos.y)))
+      .map((e) => ({ called: calledCreature(e.kind, e), at: e.pos, hitPoints: e.stats.hp })),
+    underfoot: state.items
+      .filter((i) => fog.seen.has(idx(state.grid, i.pos.x, i.pos.y)))
+      .map((i) => ({ at: i.pos })),
     named: Object.values(oracle.known()).filter((a) => a.line !== '').map((a) => a.name),
   };
 }
@@ -332,6 +346,10 @@ function render(): void {
   const state = fold(log, head);
   const player = state.entities[0];
 
+  // The fog: what this timeline's player has seen, and sees. Derived from
+  // the chain, so a rewind un-sees and a descent starts dark.
+  const fog = fogAt(log, head, (p) => makeGrid(p.width, p.height, p.tiles));
+
   // Living creatures win the tile over corpses, so a body never hides a threat.
   const occupant = new Map<number, Entity>();
   for (const e of state.entities) {
@@ -347,13 +365,26 @@ function render(): void {
     for (let x = 0; x < state.grid.width; x += 1) {
       const cell = document.createElement('div');
       cell.className = 'cell';
-      const tile = state.grid.tiles[idx(state.grid, x, y)];
-      const here = occupant.get(idx(state.grid, x, y));
+      const at = idx(state.grid, x, y);
+      const tile = state.grid.tiles[at];
+      const here = occupant.get(at);
+
+      // Three kinds of knowledge, three renders. Never seen: nothing at all —
+      // not even the wall, because a mapped silhouette is knowledge too.
+      // Seen but out of sight: the geometry and what lies on the floor,
+      // dimmed — places and things hold still; creatures do not, so they
+      // vanish from memory the moment they leave your sight.
+      if (!fog.seen.has(at)) {
+        cell.classList.add('veil');
+        grid.appendChild(cell);
+        continue;
+      }
+      const inView = fog.visible.has(at);
 
       // Whoever is standing there wins the square. The item sits on a guard by
       // design, so painting the item over the creature hid the guard every
       // single time — and a risk you cannot see is not a decision you can weigh.
-      if (here !== undefined) {
+      if (here !== undefined && inView) {
         if (!isAlive(here)) cell.classList.add(here.kind === 'you' ? 'you-dead' : 'dead');
         else if (here.kind === 'you') cell.classList.add('player');
         else cell.classList.add('foe');
@@ -366,22 +397,26 @@ function render(): void {
       }
 
       // A guarded prize still needs to read as a prize, so mark the square even
-      // when something is standing on it.
-      if (here !== undefined && itemAt(state.items, x, y) !== undefined) {
+      // when something is standing on it — but only while you can see them.
+      if (inView && here !== undefined && itemAt(state.items, x, y) !== undefined) {
         cell.classList.add('guarding');
       }
+      if (!inView) cell.classList.add('dim');
       grid.appendChild(cell);
     }
   }
 
-  nameWhatIsHere(state);
+  nameWhatIsHere(state, fog);
 
   // ── what you decide on, beside the map ─────────────────────────────────
   const exitAt = state.grid.tiles.indexOf(EXIT);
   const exitPos = exitAt < 0 ? null : { x: exitAt % state.grid.width, y: Math.floor(exitAt / state.grid.width) };
+  // A compass to a place you have not found is knowledge you do not have.
   const toExit = player === undefined || exitPos === null
     ? '—'
-    : `${Math.abs(exitPos.x - player.pos.x) + Math.abs(exitPos.y - player.pos.y)} away`;
+    : fog.seen.has(exitAt)
+      ? `${Math.abs(exitPos.x - player.pos.x) + Math.abs(exitPos.y - player.pos.y)} away`
+      : 'not yet found';
 
   const hurt = player !== undefined && player.stats.hp <= 3;
   const done = outcome(state);
@@ -473,10 +508,13 @@ function render(): void {
   }
 
   // ── what is here, and what it costs ────────────────────────────────────
+  // The play panel knows what the fog knows: items once seen (they hold
+  // still), creatures only while in sight (they do not).
   const threats = el('threats');
   threats.textContent = '';
 
   for (const i of state.items) {
+    if (!fog.seen.has(idx(state.grid, i.pos.x, i.pos.y))) continue;
     const called = oracle.ask(describeQuestion('item', i.kind, { grants: i.grants })).name;
     const li = document.createElement('li');
     li.style.borderLeftColor = 'var(--item)';
@@ -501,6 +539,10 @@ function render(): void {
 
   for (const e of state.entities) {
     if (e.kind === 'you') continue;
+    const standing = idx(state.grid, e.pos.x, e.pos.y);
+    // A living creature is knowledge only while watched; a corpse stays
+    // where it fell, so a seen tile is enough.
+    if (isAlive(e) ? !fog.visible.has(standing) : !fog.seen.has(standing)) continue;
     const li = document.createElement('li');
     const who = document.createElement('span');
     who.className = 'who';
@@ -586,6 +628,36 @@ function render(): void {
     const dd = document.createElement('dd');
     dd.textContent = value;
     detail.append(dt, dd);
+  }
+
+  // ── through the fog: the developer's eyes ──────────────────────────────
+  // The play surfaces above honour the fog; this list does not, on purpose.
+  // Someone building the game needs to see what the player cannot yet — and
+  // needs it labelled, so a bug in the fog is visible as a disagreement
+  // between this list and the map.
+  const omni = el('omniscient');
+  omni.textContent = '';
+  for (const e of state.entities) {
+    if (e.kind === 'you') continue;
+    const li = document.createElement('li');
+    const known = fog.visible.has(idx(state.grid, e.pos.x, e.pos.y));
+    li.textContent = `${e.kind} at ${e.pos.x},${e.pos.y} · hp ${e.stats.hp}${known ? '' : ' · unseen by the player'}`;
+    if (!known) li.className = 'idle';
+    omni.appendChild(li);
+  }
+  for (const i of state.items) {
+    const li = document.createElement('li');
+    const known = fog.seen.has(idx(state.grid, i.pos.x, i.pos.y));
+    li.textContent = `${i.kind} at ${i.pos.x},${i.pos.y}${known ? '' : ' · unseen by the player'}`;
+    if (!known) li.className = 'idle';
+    omni.appendChild(li);
+  }
+  if (exitPos !== null) {
+    const li = document.createElement('li');
+    const known = fog.seen.has(exitAt);
+    li.textContent = `the way out at ${exitPos.x},${exitPos.y}${known ? '' : ' · unseen by the player'}`;
+    if (!known) li.className = 'idle';
+    omni.appendChild(li);
   }
 
   // ── the world's own thinking, never hidden ─────────────────────────────
@@ -1300,3 +1372,51 @@ el('reject').addEventListener('click', () => {
   say('rejected — nothing was written');
   renderForge();
 });
+
+/* ── the agent's hatch ────────────────────────────────────────────────────
+ *
+ * A driving agent (or a curious human in the console) gets the same levers a
+ * player has, through the same gates. `ratify` passes finalise — validator,
+ * assay trials, duplicate check — exactly as the Forge's accept button does;
+ * there is no side door through the Covenant. `note` speaks on the designer
+ * channel and returns the note's timestamp so a rule can cite it. This
+ * exists because the standing goal is that ANY agent can play the game
+ * end-to-end: keys already work synthetically, and now so do the loop's
+ * other two verbs.
+ */
+declare global {
+  interface Window {
+    evolve: {
+      note: (said: string) => Promise<string>;
+      ratify: (draft: Record<string, unknown>) => string;
+      state: () => { turn: number; depth: number; rules: number; outcome: string };
+    };
+  }
+}
+
+window.evolve = {
+  note: async (said: string): Promise<string> => {
+    await speak('designer', said);
+    const last = notes[notes.length - 1];
+    return last === undefined ? '' : last.at;
+  },
+  ratify: (draft: Record<string, unknown>): string => {
+    const settled = finalise(draft, rulesInForce(), new Date().toISOString());
+    if (isRejected(settled)) {
+      say(`refused — ${settled.rejected}`);
+      return `refused — ${settled.rejected}`;
+    }
+    const head = getRef(refs, active).head;
+    const done = append(log, head, ratifyRule(fold(log, head), settled));
+    log = done.log;
+    refs = setHead(refs, active, done.event.id);
+    persist();
+    say(`ratified — ${readRule(settled)}`);
+    render();
+    return `ratified — ${readRule(settled)}`;
+  },
+  state: () => {
+    const s = fold(log, getRef(refs, active).head);
+    return { turn: s.turn, depth: s.depth, rules: s.rules.length, outcome: outcome(s) };
+  },
+};

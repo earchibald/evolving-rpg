@@ -100,10 +100,20 @@ async function propose(baseline: Position): Promise<unknown> {
 const report: string[] = [];
 const say = (line: string): void => { report.push(line); console.log(line); };
 
+/** The proposed rule, kept beside the report as JSON. The report renders the
+ *  rule in English and drops the machine shape — which meant a ratify-worthy
+ *  proposal could not be ratified later without re-asking the model. Found
+ *  when the designer approved the dead-air rule from its report and the JSON
+ *  had to be reassembled by hand. */
+let ruleJson: unknown = null;
+
 function finish(code: number): never {
   mkdirSync('runs/loops', { recursive: true });
   const path = `runs/loops/${stamp}.md`;
   writeFileSync(path, `${report.join('\n')}\n`, 'utf8');
+  if (ruleJson !== null) {
+    writeFileSync(`runs/loops/${stamp}.rule.json`, `${JSON.stringify(ruleJson, null, 2)}\n`, 'utf8');
+  }
   console.log(`\nreport: ${path}`);
   process.exit(code);
 }
@@ -128,6 +138,7 @@ if (rulePath !== '') {
 }
 
 // ── 3. the trial ─────────────────────────────────────────────────────────
+ruleJson = rawRule;
 const stamped = { id: 'rule-1', ratifiedAt: new Date().toISOString(), ...(rawRule as Record<string, unknown>) };
 const checked = validateRule(stamped);
 if (isRejected(checked)) {

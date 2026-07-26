@@ -324,3 +324,51 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > **Try it:** wipe to a fresh world — corridors, loops, a bigger dark. Check
 > `this floor` under the floorboards, then go find the stairs and see who's
 > standing there.
+
+> [!NOTE]
+> **11:2x — Your review, answered; and the first rule is law**
+> 1. **The save bug is dead.** "diverges at seq 120" was the verifier
+>    demanding rng continuity across the stairs — every saved run that had
+>    descended was refused on reload. Fixed, and pinned by a save/load round
+>    trip that crosses a floor.
+> 2. **The journal.** The two-line status box is now a scrolling, kept
+>    history with turn stamps — fresh lines lit, old lines dim, wheel or
+>    PageUp/PageDown to read back. Nothing is clipped mid-sentence.
+> 3. **Stats glow one number at a time** (a +2 edge no longer lights speed
+>    and wits). **wielding** and **wearing** are separate rows and show what
+>    each piece grants ("keen edge +2 might"). A refused prize explains
+>    itself in the journal: "no better than your keen edge — it stays where
+>    it lies." Item rows in *what is here* say their real grants (an iron
+>    charm no longer reads "+0 might"). Loot is violet.
+> 4. **The dead-air rule is ratified** — the first ratified rule in the
+>    game's history. Your approval condition ("only down to half health")
+>    is the rule's own require: it fires only above 50%. Your sentence went
+>    in as a designer note and the rule cites it. It is live in your world:
+>    clear a floor, dawdle 10 turns, feel the air tighten.
+> 5. **The agent's hatch**: `window.evolve` — `note()`, `ratify()` (through
+>    the full finalise gate; no side door), `state()`. Any agent driving a
+>    browser can now play the whole loop. Loops also save their proposal as
+>    `.rule.json` beside the report, so a ratify-worthy rule never needs
+>    hand-reassembly again.
+> 6. `npm run balance` reports progress to stderr while it grinds (~90s).
+> 7. Noted: **forever dungeon is fine for now** — victory floors wait for
+>    stories.
+
+> [!IMPORTANT]
+> **11:3x — Fog of war**
+> The map went dark. You see 9 tiles of *walking* sight (shadowcast — walls
+> block, corridors are tunnels, rooms light as you enter). What you have
+> seen stays as dim geometry and still things; **creatures vanish from
+> memory the moment they leave your sight**, because they move and your map
+> of them would be a lie. Derived from the chain, not stored: **a rewind
+> un-sees, a fork knows only its own path, and every new floor arrives
+> dark.** The panels honour it — *what is here* lists only what the fog
+> knows, "the way out" reads *not yet found* until found, and the
+> gamemaster now answers from your character's knowledge, not the map's.
+> Naming, too: the world christens only what you have actually met, which
+> also stops spending model calls on strangers.
+> **Developer eyes stay open**: the new *through the fog* panel lists every
+> creature, prize and exit with positions, each marked "unseen by the
+> player" until met — a fog bug shows as a disagreement between that list
+> and the map. Shadowcasting, floor-reset and shove-following are all
+> mutation-proofed (x-ray, pre-mapped descents, blind shoves: caught).
