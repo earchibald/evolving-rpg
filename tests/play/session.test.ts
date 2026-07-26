@@ -221,3 +221,34 @@ describe('taking what is underfoot', () => {
     expect(after.turn).toBe(before.turn + 1);
   });
 });
+
+describe('a pocketed creature cannot freeze the world', () => {
+  it('keeps the turn counter moving when a creature is walled in', () => {
+    // Found by the rule assay, not by play: a TURN_PASSED rule read as
+    // unexploitable because the round never wrapped. A creature stuck behind a
+    // wall kept walking into it, its blocked move earned no turn, and the
+    // round-robin hung on it for the rest of the run.
+    const world: GameEvent = {
+      id: 'w', parent: null, seq: 0,
+      type: 'WORLD_INIT', schemaVersion: 4, rngCounter: 0, rngDraws: 0,
+      payload: {
+        width: 5, height: 1,
+        tiles: [FLOOR, FLOOR, 1, FLOOR, FLOOR], seed: 3, items: [],
+        player: { id: 'player', kind: 'you', pos: { x: 0, y: 0 }, stats: { hp: 10, might: 3, wits: 3, speed: 4 }, tags: [] },
+        // Within awareness, behind the wall: it will approach, and be blocked.
+        opponents: [{ id: 'thing-1', kind: 'thing', pos: { x: 3, y: 0 }, stats: { hp: 5, might: 4, wits: 1, speed: 3 }, tags: [] }],
+      },
+    };
+    const seeded = append(emptyLog(), null, world);
+    let position = { log: seeded.log, head: seeded.event.id };
+
+    for (let i = 0; i < 5; i += 1) {
+      position = playerWait(position, 'player').position;
+      position = runWorldTurns(position, 'player');
+    }
+
+    const state = fold(position.log, position.head);
+    expect(state.turn).toBeGreaterThanOrEqual(5);
+    expect(state.activeEntityId).toBe('player');
+  });
+});

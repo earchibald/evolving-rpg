@@ -108,14 +108,19 @@ function commit(position: Position, draft: DraftEvent, actorId: string, playerId
   }
 
   if (!endsTurn(draft)) return current;
+  return passTurn(current, playerId);
+}
 
-  const before = fold(current.log, current.head);
-  const turned = append(current.log, current.head, advanceTurn(before));
-  current = { log: turned.log, head: turned.event.id };
+/**
+ * Hands the turn on, and fires TURN_PASSED when the round wraps — once per
+ * round, not once per creature. Shared by every path that advances the turn,
+ * so a round completed by a forced advance still counts as a round.
+ */
+function passTurn(position: Position, playerId: string): Position {
+  const before = fold(position.log, position.head);
+  const turned = append(position.log, position.head, advanceTurn(before));
+  let current: Position = { log: turned.log, head: turned.event.id };
 
-  // A full round going by, fired once — not once per creature's turn. A rule
-  // reading "when a turn goes by" that fired four times a round because three
-  // things were alive would be indefensible.
   const after = fold(current.log, current.head);
   if (after.turn !== before.turn) {
     for (const event of fireRules(after, 'TURN_PASSED', playerId)) {
@@ -123,7 +128,6 @@ function commit(position: Position, draft: DraftEvent, actorId: string, playerId
       current = { log: done.log, head: done.event.id };
     }
   }
-
   return current;
 }
 
@@ -212,13 +216,22 @@ export function runWorldTurns(position: Position, playerId: string, maxSteps = 6
     const draft = draftFor(state, active, decide(state, active));
     if (draft === null) {
       // Waiting still passes the turn, or the order never moves on.
-      const turned = append(current.log, current.head, advanceTurn(state));
-      current = { log: turned.log, head: turned.event.id };
+      current = passTurn(current, playerId);
       continue;
     }
     // The creature acts, but the triggers are read from the player's side —
     // its swing at you is your STRUCK, its swing at something else is nothing.
     current = commit(current, draft, active, playerId);
+
+    // A creature whose action earned no turn — a blocked move, walking into a
+    // wall it cannot see past — must still yield. The *player's* blocked move
+    // costing nothing is fairness; a creature's blocked move costing nothing
+    // hangs the round-robin on the first pocketed creature, and the turn
+    // counter freezes for the rest of the run. Found by the rule assay: a
+    // TURN_PASSED rule read as unexploitable because the turn never passed.
+    if (fold(current.log, current.head).activeEntityId === active) {
+      current = passTurn(current, playerId);
+    }
   }
 
   return current;

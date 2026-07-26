@@ -13,6 +13,7 @@ import {
 } from '../canon/rule.js';
 import type { Rule } from '../canon/rule.js';
 import { summariseRun, proposeRule, finalise } from '../canon/rulesmith.js';
+import { assayRule } from '../assay/ruleAssay.js';
 import type { RunSummary } from '../canon/rulesmith.js';
 import { Oracle, describeQuestion } from '../oracle/oracle.js';
 import { cliTransport } from '../oracle/transports.js';
@@ -880,6 +881,13 @@ function renderForge(): void {
     : ` · citing lens${cites.lenses.length === 1 ? '' : 'es'} ${cites.lenses.map((n) => `#${n}`).join(', ')}`;
   el('proposal-cites').textContent =
     `answering ${cites.events.length} event(s) and ${cites.notes.length} of your note(s)${lensBit}`;
+
+  // The trial's cautions, shown beside the proposal. Refusals never get this
+  // far — finalise already turned them into a failed ask.
+  const tried = assayRule(pending);
+  el('proposal-assay').textContent = tried.findings.length === 0
+    ? 'assay: sound — exploited for 240 actions without breaking anything'
+    : `assay: ${tried.findings.join(' · ')}`;
 }
 
 /** One row of the editor: a kind, and whatever that kind needs. */
@@ -1024,7 +1032,7 @@ function renderEditor(): void {
   // is not editing anything.
   const preview = document.createElement('p');
   preview.className = 'preview';
-  const trial = finalise({ ...edited }, [], 'preview');
+  const trial = finalise({ ...edited }, [], 'preview', undefined, { trial: false });
   preview.textContent = isRejected(trial) ? `not yet a rule — ${trial.rejected}` : readRule(trial);
   preview.classList.toggle('bad', isRejected(trial));
   host.appendChild(preview);

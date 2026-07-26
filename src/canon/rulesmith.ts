@@ -1,5 +1,6 @@
 import { validateRule, isRejected, readRule, MAX_RULES } from './rule.js';
 import { notesFor } from '../channels/channels.js';
+import { assayRule } from '../assay/ruleAssay.js';
 import { outcome } from '../core/commands.js';
 import { isAlive } from '../core/entity.js';
 import type { Rule, Rejected } from './rule.js';
@@ -155,6 +156,7 @@ export function finalise(
   existing: readonly Rule[],
   at: string,
   run?: RunSummary,
+  opts: { trial?: boolean } = {},
 ): Rule | Rejected {
   if (existing.length >= MAX_RULES) {
     return { rejected: `this world already holds the limit of ${MAX_RULES} rules` };
@@ -178,6 +180,16 @@ export function finalise(
 
   if (duplicates(checked, existing)) {
     return { rejected: `this world already plays under that rule: ${readRule(checked)}` };
+  }
+
+  // The trial: an exploiter plays the rule before anyone is asked to ratify
+  // it. Skippable only for previews — everything that could enter the log
+  // passes through it.
+  if (opts.trial !== false) {
+    const tried = assayRule(checked);
+    if (tried.verdict === 'refused') {
+      return { rejected: `the assay refused it — ${tried.findings.filter((f) => !f.startsWith('caution')).join('; ')}` };
+    }
   }
   return checked;
 }
