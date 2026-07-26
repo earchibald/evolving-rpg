@@ -264,6 +264,26 @@ export const ARMORY: readonly Relic[] = Object.freeze([
   Object.freeze({ kind: 'grey lens', grants: 'wits' as const, base: 1, per: 2, weight: 2 }),
 ]);
 
+/**
+ * Which slot a relic occupies, by the stat it grants. One slot, one item:
+ * a second keen edge REPLACES the first rather than stacking — two swords do
+ * not make you twice as strong, they make you a person holding two swords.
+ */
+export const SLOTS = ['weapon', 'armor', 'boots', 'trinket'] as const;
+export type Slot = (typeof SLOTS)[number];
+
+export function slotOf(grants: Stats): Slot {
+  if (grants.might >= Math.max(grants.hp, grants.speed, grants.wits)) return 'weapon';
+  if (grants.hp >= Math.max(grants.speed, grants.wits)) return 'armor';
+  if (grants.speed >= grants.wits) return 'boots';
+  return 'trinket';
+}
+
+/** One number for "how much item": what replacement compares. */
+export function grantValue(grants: Stats): number {
+  return grants.hp + grants.might + grants.wits + grants.speed;
+}
+
 /** The grant a relic gives at a depth. Never zero: a prize that does nothing
  *  is a lie with a guard on it. */
 export function relicGrant(relic: Relic, depth: number): Stats {

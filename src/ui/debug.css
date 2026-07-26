@@ -153,6 +153,8 @@ h2 {
 .vitals dt { color: var(--soft); }
 .vitals dd { margin: 0; font-variant-numeric: tabular-nums; }
 .vitals dd.urgent { color: var(--foe); }
+/* A number that just moved. Lit for a few turns, then ordinary again. */
+.vitals dd.changed { color: var(--player); background: rgba(240, 173, 60, .12); border-radius: 2px; padding: 0 .25rem; }
 .vitals dd.good { color: var(--exit); }
 
 .threats {

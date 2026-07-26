@@ -2,7 +2,7 @@ import { generateMap, pickSpawnPoints, farthestFrom, withExit } from './mapgen.j
 import { inBounds, isPassable } from './grid.js';
 import { findEntity, isAlive } from './entity.js';
 import { intBetween } from './rng.js';
-import { neededToHit, chanceIn20, damageDice, critFloor, WHIFF, BESTIARY, creatureStats, threatOf, spawnBudget, depthBands, wardenAt, ARMORY, relicGrant } from './tables.js';
+import { neededToHit, chanceIn20, damageDice, critFloor, WHIFF, BESTIARY, creatureStats, threatOf, spawnBudget, depthBands, wardenAt, ARMORY, relicGrant, slotOf, grantValue } from './tables.js';
 import type { Relic } from './tables.js';
 import type { Entity, Stats } from './entity.js';
 import { itemAt } from './item.js';
@@ -94,6 +94,7 @@ export interface CarriedPlayer {
   maxHp: number;
   xp: number;
   level: number;
+  gear?: Record<string, { kind: string; grants: Stats }>;
 }
 
 /**
@@ -239,6 +240,7 @@ export function createWorld(
       xp: carried?.xp ?? 0,
       level: carried?.level ?? 1,
       ...(carried === undefined ? {} : { playerMaxHp: carried.maxHp }),
+      ...(carried?.gear === undefined ? {} : { playerGear: carried.gear }),
       items: relics.map((r, i) => ({
         id: `relic-${String(i + 1)}`,
         kind: r.kind,
@@ -373,6 +375,12 @@ export function takeUnderfoot(
 
   const item = itemAt(state.items, taker.pos.x, taker.pos.y);
   if (item === undefined) return null;
+
+  // Only an upgrade leaves the floor. A relic no better than what is worn in
+  // its slot stays where it lies — visible, ignorable, and still there if a
+  // rule ever drains what you carry.
+  const worn = taker.gear?.[slotOf(item.grants)];
+  if (worn !== undefined && grantValue(item.grants) <= grantValue(worn.grants)) return null;
 
   return {
     type: 'ITEM_TAKEN',

@@ -95,6 +95,20 @@ export function upcastEvent(raw: unknown): DraftEvent {
     } as unknown as DraftEvent;
   }
 
+  if (type === 'ITEM_TAKEN') {
+    // v1 → v2: same shape, different meaning — items stack in v1 and equip
+    // into slots in v2. The shape passes through; the version records that a
+    // v1 log's folded stats may differ under this engine, which is the honest
+    // limit of a semantic migration.
+    return {
+      type: 'ITEM_TAKEN',
+      schemaVersion: current,
+      rngCounter: event.rngCounter,
+      rngDraws: typeof event.rngDraws === 'number' ? event.rngDraws : 0,
+      payload: event.payload,
+    } as unknown as DraftEvent;
+  }
+
   if (type === 'STRIKE') {
     // v1 → v2: blows learned to be critical. Nothing recorded before crits
     // existed was one, and saying `false` outright is the honest migration —

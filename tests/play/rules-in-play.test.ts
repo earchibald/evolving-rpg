@@ -440,3 +440,38 @@ describe('down the stairs', () => {
     expect(getRef(a!.refs, 'main').head).toBe(getRef(b!.refs, 'main').head);
   });
 });
+
+describe('gear crosses the stairs', () => {
+  it('keeps what you wear, so the next floor\'s twin relic cannot stack', () => {
+    // Found live: descend showed "wearing: nothing" while the might stayed —
+    // the gear map reset each floor, and every descent re-opened the exact
+    // stacking bug slots exist to prevent.
+    const tiles = new Array<number>(9).fill(FLOOR);
+    tiles[8] = EXIT_TILE;
+    const world: GameEvent = {
+      id: 'w', parent: null, seq: 0,
+      type: 'WORLD_INIT', schemaVersion: 5, rngCounter: 0, rngDraws: 0,
+      payload: {
+        width: 9, height: 1, tiles, seed: 3, depth: 1,
+        items: [{ id: 'edge', kind: 'keen edge', pos: { x: 2, y: 0 }, grants: { hp: 0, might: 2, wits: 0, speed: 0 } }],
+        player: { id: 'player', kind: 'you', pos: { x: 0, y: 0 }, stats: { hp: 10, might: 3, wits: 3, speed: 4 }, tags: [] },
+        opponents: [],
+      },
+    } as GameEvent;
+
+    let p = playable(world, []);
+    for (let i = 0; i < 10; i += 1) {
+      if (outcome(fold(p.log, p.head)) !== 'playing') break;
+      p = playerStep(p, 'player', 1, 0).position;
+    }
+    const above = fold(p.log, p.head);
+    expect(above.entities[0]!.gear?.['weapon']?.kind).toBe('keen edge');
+
+    const refs = createRef(emptyRefs(), 'main', p.head, 0, 'opening');
+    const down = descend(p.log, refs, 'main', { width: 12, height: 8, walls: 10 });
+    const below = fold(down!.log, getRef(down!.refs, 'main').head!);
+
+    expect(below.entities[0]!.gear?.['weapon']?.kind).toBe('keen edge');
+    expect(below.entities[0]!.stats.might).toBe(5);
+  });
+});

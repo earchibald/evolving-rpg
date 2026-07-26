@@ -17,7 +17,7 @@ export const SCHEMA_VERSIONS = {
   TURN_ADVANCED: 2,
   STRIKE: 2,
   WAIT: 1,
-  ITEM_TAKEN: 1,
+  ITEM_TAKEN: 2,
   RULE_RATIFIED: 1,
   RULE_FIRED: 1,
 } as const;
@@ -43,6 +43,10 @@ export interface WorldInitPayload {
   /** The carried health ceiling. Without it a wounded player descends with
    *  their maximum collapsed to their wound — the seed's hp is all a seed has. */
   playerMaxHp?: number;
+  /** What the player wears, carried across the stairs. Without it the gear
+   *  map resets each floor and the next identical relic stacks — the exact
+   *  bug slots exist to prevent, reborn on every descent. */
+  playerGear?: Record<string, { kind: string; grants: { hp: number; might: number; wits: number; speed: number } }>;
   width: number;
   height: number;
   tiles: number[];

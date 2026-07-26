@@ -18,6 +18,12 @@ export interface Entity {
   stats: Stats;
   tags: string[];
   /**
+   * What is worn, by slot. Optional so the many hand-built fixtures that
+   * predate equipment stay valid; absent means bare. Replacement arithmetic
+   * lives in apply's ITEM_TAKEN — the only writer.
+   */
+  gear?: Readonly<Partial<Record<string, { kind: string; grants: Stats }>>>;
+  /**
    * The most hit points this entity can hold.
    *
    * Derived, never carried in an event: it is `stats.hp` at WORLD_INIT, raised

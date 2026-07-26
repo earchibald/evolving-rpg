@@ -4,7 +4,7 @@ import { createWorld, ratifyRule } from '../core/commands.js';
 import { playerStep, playerWait, runWorldTurns, buryIfDead, beginAgain, descend, isGrave } from '../play/session.js';
 import { isAlive } from '../core/entity.js';
 import { outcome, hitChance } from '../core/commands.js';
-import { damageDice, XP_TO_REACH } from '../core/tables.js';
+import { damageDice, XP_TO_REACH, slotOf } from '../core/tables.js';
 import { itemAt } from '../core/item.js';
 import { save, load, clear, emptySession } from '../play/store.js';
 import {
@@ -233,6 +233,9 @@ const notes: Note[] = loadNotes();
 /** The lenses, memoised by head — same history, same reading, no recompute. */
 const critic = new CachedCritic();
 
+/** Last seen vitals values, and the turn until which a change stays lit. */
+const lastVitals = new Map<string, { value: string; until: number }>();
+
 /** What the player can currently see, so the gamemaster is not answering blind. */
 function scene(): Record<string, unknown> {
   const head = getRef(refs, active).head;
@@ -372,6 +375,11 @@ function render(): void {
       return next === undefined ? `${state.level} · ${state.xp} xp` : `${state.level} · ${state.xp}/${next} xp`;
     })(), ''],
     ['you deal', player === undefined ? '—' : (() => { const d = damageDice(player.stats.might); return `${1 + d.flat}–${d.die + d.flat}`; })(), ''],
+    ['might · speed · wits', player === undefined ? '—' : `${player.stats.might} · ${player.stats.speed} · ${player.stats.wits}`, ''],
+    ['wearing', player === undefined ? '—' : (() => {
+      const worn = Object.values(player.gear ?? {}).map((g) => g?.kind).filter(Boolean);
+      return worn.length === 0 ? 'nothing' : worn.join(' · ');
+    })(), ''],
     ['the way out', toExit, done === 'escaped' ? 'good' : ''],
     ['standing at', player === undefined ? '—' : `${player.pos.x}, ${player.pos.y}`, ''],
     ['turn', String(state.turn), ''],
@@ -386,7 +394,26 @@ function render(): void {
     dt.textContent = label;
     const dd = document.createElement('dd');
     dd.textContent = value;
+    // A changed number glows for a few turns — but only the rows that change
+    // rarely. Position and the turn counter change every step; a glow that is
+    // always on is a glow that means nothing.
+    const NOTABLE = ['hit points', 'level', 'you deal', 'might · speed · wits', 'wearing', 'depth'];
+    if (!NOTABLE.includes(label)) {
+      if (tone !== '') dd.className = tone;
+      vitalsEl.append(dt, dd);
+      continue;
+    }
+    const was = lastVitals.get(label);
+    if (was !== undefined && was.value !== value) {
+      lastVitals.set(label, { value, until: state.turn + 3 });
+    } else if (was === undefined) {
+      lastVitals.set(label, { value, until: 0 });
+    }
+    const mark = lastVitals.get(label);
     if (tone !== '') dd.className = tone;
+    if (mark !== undefined && mark.until >= state.turn && mark.until > 0) {
+      dd.className = `${dd.className} changed`.trim();
+    }
     vitalsEl.append(dt, dd);
   }
 
@@ -440,8 +467,6 @@ function render(): void {
     li.append(who, odds);
     threats.appendChild(li);
   }
-
-  (el('descend') as HTMLButtonElement).disabled = done !== 'escaped';
 
   // ── what the lenses see ───────────────────────────────────────────────
   const scorecardEl = el('scorecard');
@@ -628,7 +653,13 @@ function narrate(fresh: readonly GameEvent[], state: ReturnType<typeof fold>): s
         g.wits === 0 ? '' : `wits +${g.wits}`,
         g.speed === 0 ? '' : `speed +${g.speed}`,
       ].filter((d) => d !== '');
-      lines.push(`you take ${calledItem(event.payload.itemId, state)} — ${deltas.join(', ')}`);
+      // Say the swap when there is one: what came off matters as much as what
+      // went on.
+      const takerBefore = state.entities.find((x) => x.id === event.payload.entityId);
+      const slotName = slotOf(event.payload.grants);
+      const replaced = takerBefore?.gear?.[slotName]?.kind;
+      const swap = replaced === undefined ? '' : ` · your ${replaced} is set down`;
+      lines.push(`you take up ${calledItem(event.payload.itemId, state)} — ${deltas.join(', ')}${swap}`);
       continue;
     }
     if (event.type === 'RULE_FIRED') {
@@ -685,6 +716,25 @@ function finish(before: number, head: string): void {
   const priorEvent = events[before - 1];
   const priorState = priorEvent === undefined ? fold(log, head) : fold(log, priorEvent.id);
   const told = narrate(events.slice(before), priorState);
+
+  // Stairs are stairs: stepping onto the way out goes down, no button, no
+  // pause. The rules re-ratify and the player crosses whole inside descend().
+  const here = fold(log, head);
+  if (outcome(here) === 'escaped') {
+    const down = descend(log, refs, active, { width: WIDTH, height: HEIGHT, walls: WALLS });
+    if (down !== null) {
+      log = down.log;
+      refs = down.refs;
+      const cleared = !here.entities.some((e) => e.kind !== 'you' && e.stats.hp > 0);
+      told.push(cleared
+        ? `down. depth ${down.depth} — the floor was yours, and your wounds close on the stairs`
+        : `down. depth ${down.depth} — it is colder here`);
+      persist();
+      say(told);
+      render();
+      return;
+    }
+  }
 
   // The ease tooth, said out loud: growth and the full heal arrive together,
   // and a level a player does not notice buys no relief at all.
@@ -1083,18 +1133,6 @@ function watchTheClock(): void {
 }
 
 el('open-forge').addEventListener('click', () => { renderForge(); forge.showModal(); });
-
-// The stairs down. Present always so the layout never moves; live only when
-// you are standing on the way out.
-el('descend').addEventListener('click', () => {
-  const down = descend(log, refs, active, { width: WIDTH, height: HEIGHT, walls: WALLS });
-  if (down === null) { say('the way down is not open — reach the way out first'); return; }
-  log = down.log;
-  refs = down.refs;
-  persist();
-  say(`down. depth ${down.depth} — it is colder here`);
-  render();
-});
 
 // Beginning again without having to die for it. The rules stay; everything
 // else goes back to the start.

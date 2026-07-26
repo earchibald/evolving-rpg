@@ -273,3 +273,21 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > remains the artifact to act on. Naming verified live and Covenant-clean:
 > *ash-jaw stalker*, *hewing axe*.
 
+> [!NOTE]
+> **03:1x — Your three morning fixes: stairs, stats, slots**
+> 1. **Stairs are stairs.** Step onto the way out and you descend — no button.
+>    A cleared floor still heals you on the way down and says so.
+> 2. **Stats are visible again**: `might · speed · wits` row plus a `wearing`
+>    row, alongside the effect rows. Notable changes (hp, level, damage,
+>    stats, gear, depth) **glow for 3 turns**; position and turn don't glow,
+>    because a glow that is always on means nothing.
+> 3. **Equipment, not accumulation.** Relics occupy slots — weapon / armor /
+>    boots / trinket. A better item replaces (the swap is narrated: "your keen
+>    edge is set down"); a lesser or equal one **stays on the floor**. Armor
+>    swaps move max-hp correctly. Found live and fixed: **gear now crosses the
+>    stairs** — it used to reset each floor, reopening the stacking bug on
+>    every descent. Inventory beyond auto-upgrade: deferred, as you said.
+>
+> **Try it:** wipe, grab the guarded relic, walk onto the green square.
+> Watch `wearing`, the glow, and the descent happen on their own.
+

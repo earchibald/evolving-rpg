@@ -347,7 +347,10 @@ export function descend(
   const nextSeed = u32(state.seed, 1_000_003 + state.depth);
   const born = append(log, ref.head, createWorld(
     nextSeed, dims.width, dims.height, dims.walls, playerId, nextDepth,
-    { stats: { ...you.stats, hp }, maxHp: you.maxHp, xp: state.xp, level: state.level },
+    {
+      stats: { ...you.stats, hp }, maxHp: you.maxHp, xp: state.xp, level: state.level,
+      ...(you.gear === undefined ? {} : { gear: { ...you.gear } as Record<string, { kind: string; grants: typeof you.stats }> }),
+    },
   ));
 
   let current: Position = { log: born.log, head: born.event.id };

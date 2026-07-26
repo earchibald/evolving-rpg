@@ -1,7 +1,6 @@
 import { makeGrid } from './grid.js';
-import { granted } from './item.js';
 import { applyResolved } from '../canon/interpret.js';
-import { threatOf, levelForXp, growthAt } from './tables.js';
+import { threatOf, levelForXp, growthAt, slotOf } from './tables.js';
 import type { GameEvent } from './events.js';
 import type { GameState } from './state.js';
 
@@ -76,6 +75,7 @@ function reduce(state: GameState, event: GameEvent): GameState {
         // A creature's ceiling is its birth hp; the player's crossed a floor
         // and may arrive wounded, so the ceiling rides in the payload.
         maxHp: s.id === p.player.id ? (p.playerMaxHp ?? s.stats.hp) : s.stats.hp,
+        ...(s.id === p.player.id && p.playerGear !== undefined ? { gear: p.playerGear } : {}),
       }));
       return {
         grid: makeGrid(p.width, p.height, p.tiles),
@@ -137,14 +137,34 @@ function reduce(state: GameState, event: GameEvent): GameState {
       return state;
 
     case 'ITEM_TAKEN': {
+      // Equipment, not accumulation. The item goes into its slot; whatever was
+      // worn there comes off, its grants subtracted, before the new grants
+      // apply. Derived from state rather than recorded in the payload, so the
+      // event's shape never changed — replay just re-derives the same swap.
       const p = event.payload;
+      const item = state.items.find((i) => i.id === p.itemId);
+      const slot = slotOf(p.grants);
+
       return {
         ...state,
-        entities: state.entities.map((e) =>
-          e.id === p.entityId
-            ? { ...e, stats: granted(e.stats, p.grants), maxHp: e.maxHp + p.grants.hp }
-            : e,
-        ),
+        entities: state.entities.map((e) => {
+          if (e.id !== p.entityId) return e;
+          const worn = e.gear?.[slot];
+          const off = worn?.grants ?? { hp: 0, might: 0, wits: 0, speed: 0 };
+          const maxHp = e.maxHp - off.hp + p.grants.hp;
+          return {
+            ...e,
+            stats: {
+              // hp never exceeds the (possibly lowered) ceiling.
+              hp: Math.min(e.stats.hp, maxHp),
+              might: e.stats.might - off.might + p.grants.might,
+              wits: e.stats.wits - off.wits + p.grants.wits,
+              speed: e.stats.speed - off.speed + p.grants.speed,
+            },
+            maxHp,
+            gear: { ...e.gear, [slot]: { kind: item?.kind ?? 'worn', grants: { ...p.grants } } },
+          };
+        }),
         items: state.items.filter((i) => i.id !== p.itemId),
       };
     }
