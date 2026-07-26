@@ -50,7 +50,7 @@ describe('asking', () => {
     await tick();
 
     const settled = oracle.ask(CREATURE);
-    expect(settled.name).toBe('the thing');
+    expect(settled.name).toBe('pale thing');
     expect(settled.source).toBe('cache');
     expect(settled.model).toBe('stub');
   });
@@ -175,7 +175,7 @@ describe('the queue a player can see', () => {
     oracle.forget();
 
     expect(oracle.queue()).toHaveLength(0);
-    expect(oracle.ask(CREATURE).name).toBe('the thing');
+    expect(oracle.ask(CREATURE).name).toBe('pale thing');
   });
 });
 
@@ -188,7 +188,7 @@ describe('what the world remembers', () => {
     // A second session, no transport at all, restored from the first.
     const second = new Oracle({ transport: null, known: first.known() });
     const answer = second.ask(CREATURE);
-    expect(answer.name).toBe('the thing');
+    expect(answer.name).toBe('pale thing');
     expect(answer.source).toBe('cache');
   });
 
@@ -295,7 +295,7 @@ describe('when the world cannot answer', () => {
 
     expect(oracle.ask(CREATURE).name).toBe('thing');
     await tick();
-    expect(oracle.ask(CREATURE).name).toBe('the thing');
+    expect(oracle.ask(CREATURE).name).toBe('pale thing');
   });
 });
 
@@ -353,7 +353,7 @@ describe('unlearning', () => {
 
     oracle.ask(CREATURE);
     await tick();
-    expect(oracle.ask(CREATURE).name).toBe('the thing');
+    expect(oracle.ask(CREATURE).name).toBe('pale thing');
   });
 
   it('does not let an answer from before the wipe land after it', async () => {
@@ -394,5 +394,61 @@ describe('unlearning', () => {
     await tick();
     oracle.forget();
     expect(Object.keys(oracle.known())).toHaveLength(1);
+  });
+});
+
+describe('the covenant guards the canon, live', () => {
+  it('refuses a mood posing as a name, and leaves room to try again', async () => {
+    // "small iron want" got into permanent canon once. Now the register assay
+    // sits inside the ask path: a refused name is a failed call — visible in
+    // the queue, retried later — never a fact.
+    let calls = 0;
+    const moody: Transport = {
+      name: 'moody',
+      ask() {
+        calls += 1;
+        return Promise.resolve({
+          name: calls === 1 ? 'small iron want' : 'salt-knuckle crawler',
+          line: 'x', model: 'm', costUsd: 0,
+        });
+      },
+    };
+    const oracle = new Oracle({ transport: moody });
+
+    oracle.ask(CREATURE);
+    await tick();
+    expect(Object.keys(oracle.known())).toHaveLength(0);
+    expect(oracle.queue().some((c) => c.state === 'failed' && c.detail.includes('covenant'))).toBe(true);
+
+    // The second try lands a real name.
+    oracle.ask(CREATURE);
+    await tick();
+    expect(oracle.ask(CREATURE).name).toBe('salt-knuckle crawler');
+  });
+
+  it('refuses a name already spent on another kind', async () => {
+    const same: Transport = {
+      name: 'same',
+      ask() { return Promise.resolve({ name: 'chalk-hound', line: 'x', model: 'm', costUsd: 0 }); },
+    };
+    const oracle = new Oracle({ transport: same });
+    oracle.ask(describeQuestion('creature', 'thing', {}));
+    await tick();
+    oracle.ask(describeQuestion('item', 'edge', {}));
+    await tick();
+    // One of the two got the name; the other was refused rather than doubled.
+    const names = Object.values(oracle.known()).map((a) => a.name);
+    expect(names.filter((n) => n === 'chalk-hound')).toHaveLength(1);
+  });
+
+  it('does not police the gamemaster\'s conversation', async () => {
+    // Register checks are for canon. A chat reply is not a name.
+    const chatty: Transport = {
+      name: 'chatty',
+      ask() { return Promise.resolve({ name: 'the quiet below!', line: 'a reply', model: 'm', costUsd: 0 }); },
+    };
+    const oracle = new Oracle({ transport: chatty });
+    const answered = await oracle.consult({ intent: 'gamemaster', subject: 'x', context: {} });
+    expect(answered.line).toBe('a reply');
   });
 });

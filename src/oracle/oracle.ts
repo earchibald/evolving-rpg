@@ -1,4 +1,5 @@
 import { canonicalJson } from '../log/canonical.js';
+import { assayName } from '../assay/register.js';
 import type { Answer, Call, Intent, Question, Transport } from './types.js';
 
 /**
@@ -216,6 +217,19 @@ export class Oracle {
     const started = this.now();
     try {
       const said = await this.transport.ask(question);
+
+      // The register guard, live. A name outside the Covenant's shape — a mood
+      // for a head word, an article, shouting, a name already spent — is
+      // treated as a failed call rather than written into permanent canon.
+      // The retry machinery already exists; the world simply tries again.
+      if (question.intent === 'describe') {
+        const taken = [...this.canon.values()].map((a) => a.name);
+        const judged = assayName(said.name, taken);
+        if (!judged.sound) {
+          throw new Error(`the covenant refuses "${said.name}" — ${judged.findings.join('; ')}`);
+        }
+      }
+
       const answer: Answer = {
         name: said.name,
         line: said.line,

@@ -13,7 +13,9 @@ export function stubTransport(): Transport {
     ask(question: Question) {
       const bare = question.subject.slice(question.subject.indexOf(':') + 1);
       return Promise.resolve({
-        name: `the ${bare}`,
+        // Article-free on purpose: the stub's names pass the same register
+        // assay real ones do, or every offline test fails the Covenant.
+        name: `pale ${bare}`,
         line: `It is a ${bare}, and the stub has nothing further to say.`,
         model: 'stub',
         costUsd: 0,
