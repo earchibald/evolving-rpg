@@ -391,3 +391,15 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 >    loops, the walk, the spawn budget and what it bought, **who watches the
 >    stairs**, what lies guarded. Old floors honestly show the shorter story
 >    they were born with.
+
+> [!NOTE]
+> **11:5x — Gestalt worldgen, documented**
+> `docs/design/GESTALT.md`: the world decided whole at birth — a recorded
+> **world bible** (anchor, lexicon, roster, warden identity, promises) that
+> constrains flavor over the untouched mechanical skeleton. Assayed whole at
+> birth (which finally gives the canon-consistency judge a home), stored as
+> an event so forks inherit identity, with a five-level ladder from
+> names-only (buildable now, makes haiku sufficient for naming) to full
+> campaign arcs ("later we will have stories"). Recommendation inside:
+> build L1 when naming coherence next bothers play; nothing mechanical
+> moves except through tables.
