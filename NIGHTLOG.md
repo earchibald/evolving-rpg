@@ -199,3 +199,13 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > the trial-of-function caution can disagree with the sweep (a rule the trials
 > never fire may still fire in real play — wording covers it, but it could
 > count sweep firings too).
+> [!NOTE]
+> **04:4x — Taste got a second opinion, and the repo got a front door**
+> A `judge` intent now runs on **haiku** (~$0.04 a call, 4x cheaper than the
+> misconfigured first try): given a line and the mechanics it decorates, it
+> returns `sound | off-register | off-fit` with a reason. Tested live — it
+> passed the dead-air rule's line and refused "YOU FEEL AMAZING! +10% synergy
+> unlocked!" as patch-note tone. Structure checks are free and in-process;
+> taste is judged and cheap; both registers now have teeth. The rules-warden
+> persona knows to call it. And there's a `README.md` now — the front door.
+

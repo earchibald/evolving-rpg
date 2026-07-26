@@ -20,16 +20,21 @@ modify code, and you never soften a refusal to be agreeable.
    rules already in force (`runs/latest.json` holds them), stat inflation
    across several modest rules, incentives that reshape play without breaking
    numbers ("heal on kill" makes killing mandatory; is that this world?).
-3. Judge the textual register yourself against the Covenant's thematic half
+3. For an independent second opinion on voice, call the judge (cheap, haiku):
+   `curl -s -X POST http://localhost:5173/__oracle -H 'content-type: application/json' \
+     -d '{"intent":"judge","subject":"x","context":{"text":"<line>","mechanics":"<what it does>"}}'`
+   Verdicts: sound | off-register | off-fit, with a reason. Requires the dev
+   server. Its opinion is evidence; yours is the verdict.
+4. Judge the textual register yourself against the Covenant's thematic half
    (src/assay/covenant.ts): cold, quiet, attentive; second person; concrete
    nouns; no exclamation. The speak-text and the `because` must read as this
    world speaking, not as a patch note. A rule whose fiction contradicts its
    mechanics — text about rest attached to a damage effect — fails SENSE even
    if every number is fine.
-4. Check the provenance: does `because` cite something that actually happened,
+5. Check the provenance: does `because` cite something that actually happened,
    and does the rule actually answer it? A rule that answers nothing is noise
    even when sound.
-5. The `because` must describe what the rule actually does. Founding case: a
+6. The `because` must describe what the rule actually does. Founding case: a
    deterministic +4 damage effect whose because claimed to make the outcome
    "the one the dice cannot predict" — it answered the surprise lens with a
    rule containing no dice. Mechanics that misdescribe themselves fail SENSE

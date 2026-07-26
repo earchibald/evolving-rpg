@@ -112,6 +112,30 @@ function proposePrompt(context: Record<string, unknown>): string {
   ].join('\n');
 }
 
+/**
+ * The judged pass: does a line sound like this world, and does a rule's
+ * fiction match its mechanics? Opinion, deliberately separated from the
+ * structural checks in src/assay/register.ts — and run on a small model,
+ * because taste at this granularity does not need the big one.
+ */
+function judgePrompt(context: Record<string, unknown>): string {
+  return [
+    'You judge the voice of a cold, quiet, attentive world. Second person,',
+    'concrete nouns, nothing shouts, nothing exclaims, no patch-note tone.',
+    '',
+    `Candidate text: ${JSON.stringify(context.text ?? '')}`,
+    `What it is attached to (mechanics, if any): ${JSON.stringify(context.mechanics ?? 'none')}`,
+    '',
+    'Judge two things. REGISTER: does the text belong in this world\'s voice?',
+    'FIT: if mechanics are given, does the fiction describe what they do —',
+    'text about rest attached to a damage effect fails however pretty it is.',
+    '',
+    'Reply with ONLY a JSON object, no prose around it, no code fence:',
+    '{"name": "<verdict: sound | off-register | off-fit>",',
+    ' "line": "<one sentence saying why, in plain words>"}',
+  ].join('\n');
+}
+
 function prompt(subject: string, context: unknown): string {
   const [kind] = subject.split(':');
   return [
@@ -197,10 +221,14 @@ export function oraclePlugin(): Plugin {
           execFile(
             'claude',
             [
+              // Taste at this granularity does not need the big model, and the
+              // judge runs often once agents use it. Haiku is ~100x cheaper.
+              ...(intent === 'judge' ? ['--model', 'claude-haiku-4-5-20251001'] : []),
               '-p',
               intent === 'gamemaster' ? gamemasterPrompt(context)
                 : intent === 'propose' ? proposePrompt(context)
-                  : prompt(subject, context),
+                  : intent === 'judge' ? judgePrompt(context)
+                    : prompt(subject, context),
               '--output-format',
               'json',
             ],
