@@ -26,7 +26,7 @@ export interface Lens {
   readonly title: string;
   /** What this codebase computes for it. Our words, not the book's. */
   readonly measures: string;
-  readonly state: 'computed' | 'deferred';
+  readonly state: 'computed' | 'ensemble' | 'deferred';
   /** Why it is not measured yet. Empty for the ones that are. */
   readonly why: string;
 }
@@ -44,12 +44,11 @@ export const LENSES: readonly Lens[] = Object.freeze([
   Object.freeze({
     id: 33,
     title: 'The Lens of Triangularity',
-    measures: 'Distinct approaches to the same encounter that are all worth taking.',
-    state: 'deferred' as const,
-    why:
-      'Needs several viable approaches observed across forks of the same situation. '
-      + 'There is one grave in the whole chronicle, so anything computed now would be '
-      + 'a number about a single path rather than about choice.',
+    measures:
+      'How many archetypal approaches — the fighter, the runner, the coward — win '
+      + 'often enough across harness runs to be genuinely worth taking.',
+    state: 'ensemble' as const,
+    why: '',
   }),
   Object.freeze({
     id: 61,
@@ -63,12 +62,11 @@ export const LENSES: readonly Lens[] = Object.freeze([
   Object.freeze({
     id: 71,
     title: 'The Lens of Freedom',
-    measures: 'How many of the choices on offer lead anywhere meaningfully different.',
-    state: 'deferred' as const,
-    why:
-      'Needs options whose outcome distributions can be compared across many runs, and '
-      + 'is the one lens the spec flags as trivially gamed by adding meaningless doors. '
-      + 'Not worth building against three data points.',
+    measures:
+      'How many meaningfully different places the approaches lead, by clustering '
+      + 'their observed outcome distributions — never by counting options off the map.',
+    state: 'ensemble' as const,
+    why: '',
   }),
 ]);
 
@@ -82,4 +80,9 @@ export function computedLenses(): readonly Lens[] {
 
 export function deferredLenses(): readonly Lens[] {
   return LENSES.filter((l) => l.state === 'deferred');
+}
+
+/** Measured across many runs by the balance harness, not per chain. */
+export function ensembleLenses(): readonly Lens[] {
+  return LENSES.filter((l) => l.state === 'ensemble');
 }

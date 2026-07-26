@@ -335,11 +335,19 @@ export function descend(
   const you = findEntity(state.entities, playerId);
   if (you === undefined) return null;
 
+  // Rest at the stairs: descend a *cleared* floor and you descend healed.
+  // The full-clear fighter earns the breath; the runner leaves bleeding, past
+  // things still alive. This is the sawtooth's ease tooth for floors, as the
+  // level-up heal is for levels — and it is the differential that makes
+  // clearing pay beyond XP.
+  const cleared = !state.entities.some((e) => e.id !== playerId && isAlive(e));
+  const hp = cleared ? you.maxHp : you.stats.hp;
+
   const nextDepth = state.depth + 1;
   const nextSeed = u32(state.seed, 1_000_003 + state.depth);
   const born = append(log, ref.head, createWorld(
     nextSeed, dims.width, dims.height, dims.walls, playerId, nextDepth,
-    { stats: { ...you.stats }, maxHp: you.maxHp, xp: state.xp, level: state.level },
+    { stats: { ...you.stats, hp }, maxHp: you.maxHp, xp: state.xp, level: state.level },
   ));
 
   let current: Position = { log: born.log, head: born.event.id };

@@ -224,3 +224,28 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > **Try it:** find the floor's relic (gold square, guarded). At wits 4+ watch
 > for "— clean through" arriving a little more often.
 
+> [!IMPORTANT]
+> **06:1x — All four lenses measure now, and they caught me within the hour**
+> Lenses #33 (Triangularity) and #71 (Freedom) stopped being deferred: the
+> harness plays ensembles, approaches are policies, and the figures come from
+> **measured outcome distributions, never counted options** — a
+> brawler-with-a-hat that ends like the brawler adds nothing, which is the
+> spec's own guard against gaming Freedom with doors. `npm run balance` prints
+> the report; the in-game scorecard points there honestly (`∴`).
+>
+> Current reading: **2 viable approaches** (fight, run) · **3 meaningfully
+> different fates** (win-or-die fighting · win-or-die running · decline to
+> play). And the new lenses immediately earned their keep: they caught the
+> armory quietly flattening the depth-3 inversion to a coin flip — inside the
+> band, passing the suite by one seed, and wrong.
+>
+> Repairs, each measured: floor one always leaves a weapon; the teaching floor
+> rolls level-1 only; **rest at the stairs** (descend a *cleared* floor and
+> you descend healed — clearing pays beyond XP). Floor one is back to ~85–95%.
+> The inversion now lives at depth 5 (5v3); at depth 3 it is a genuine tie,
+> re-pinned as non-domination, and **left as your top tuning question** in
+> BALANCE.md rather than knob-chased at dawn.
+>
+> **Try it:** `npm run balance` — the whole game's shape, two lenses included,
+> in one deterministic command.
+

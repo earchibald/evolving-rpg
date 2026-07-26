@@ -1,4 +1,4 @@
-import { LENSES, lensById, computedLenses, deferredLenses, LENS_SOURCE } from '../../src/critic/lenses.js';
+import { LENSES, lensById, computedLenses, deferredLenses, ensembleLenses, LENS_SOURCE } from '../../src/critic/lenses.js';
 
 /**
  * The registry is what lets the Critic cite a real lens rather than a vibe.
@@ -17,14 +17,16 @@ describe('what is in the registry', () => {
     expect(lensById(71)?.title).toBe('The Lens of Freedom');
   });
 
-  it('says which two are measured and which two are not', () => {
+  it('says how each lens is measured: per chain, per ensemble, or not yet', () => {
     expect(computedLenses().map((l) => l.id).sort((a, b) => a - b)).toEqual([2, 61]);
-    expect(deferredLenses().map((l) => l.id).sort((a, b) => a - b)).toEqual([33, 71]);
+    expect(ensembleLenses().map((l) => l.id).sort((a, b) => a - b)).toEqual([33, 71]);
+    expect(deferredLenses()).toHaveLength(0);
   });
 
   it('gives every deferred lens a reason, so it is not merely missing', () => {
     // A lens absent from the scorecard and a lens that passed look identical.
-    // Only one of them is honest.
+    // Only one of them is honest. (Empty today — all four lenses measure —
+    // but the next lens added starts deferred, and this holds it to a reason.)
     for (const lens of deferredLenses()) {
       expect(lens.why.length).toBeGreaterThan(20);
     }

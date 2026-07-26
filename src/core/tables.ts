@@ -221,8 +221,14 @@ export function spawnBudget(depth: number): number {
 export function depthBands(depth: number): readonly { level: number; weight: number }[] {
   const d = Math.max(1, Math.floor(depth));
   const bands = [{ level: d, weight: 6 }];
-  if (d > 1) bands.push({ level: d - 1, weight: 3 });
-  bands.push({ level: d + 1, weight: 1 });
+  if (d > 1) {
+    bands.push({ level: d - 1, weight: 3 });
+    // The out-of-depth scare starts once the player has a floor behind them.
+    // On the teaching floor a level-2 bruiser is not a scare, it is an
+    // execution: one world in seven rolled one, and floor-one deaths ran 20%
+    // against a stated band of "the door is gentle".
+    bands.push({ level: d + 1, weight: 1 });
+  }
   return bands;
 }
 
@@ -252,7 +258,7 @@ export interface Relic {
 }
 
 export const ARMORY: readonly Relic[] = Object.freeze([
-  Object.freeze({ kind: 'keen edge', grants: 'might' as const, base: 1, per: 3, weight: 3 }),
+  Object.freeze({ kind: 'keen edge', grants: 'might' as const, base: 2, per: 3, weight: 3 }),
   Object.freeze({ kind: 'iron charm', grants: 'hp' as const, base: 3, per: 1, weight: 3 }),
   Object.freeze({ kind: 'fleet boots', grants: 'speed' as const, base: 1, per: 3, weight: 2 }),
   Object.freeze({ kind: 'grey lens', grants: 'wits' as const, base: 1, per: 2, weight: 2 }),

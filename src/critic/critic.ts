@@ -1,5 +1,6 @@
 import { chain } from '../log/chain.js';
 import { LENSES } from './lenses.js';
+import { ensemblePointer } from './ensemble.js';
 import { surpriseOf } from './surprise.js';
 import { interestOf } from './interest.js';
 import type { EventLog } from '../log/chain.js';
@@ -127,6 +128,18 @@ export function readTheGame(log: EventLog, head: string | null): Report {
   }
 
   const readings: Reading[] = LENSES.map((lens) => {
+    if (lens.state === 'ensemble') {
+      // A single chain cannot answer these. Saying where the answer lives is
+      // honest; a zero would be a lie and silence would be a pass.
+      return {
+        lens: lens.id,
+        title: lens.title,
+        figure: '∴',
+        verdict: ensemblePointer(lens),
+        confidence: 'a many-runs reading — see npm run balance',
+        measured: false,
+      };
+    }
     if (lens.state === 'deferred') {
       return {
         lens: lens.id,

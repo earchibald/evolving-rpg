@@ -355,16 +355,21 @@ describe('a rule outlives the run that earned it', () => {
 
 describe('down the stairs', () => {
   /** The shared corridor has no way out on purpose; this one ends in stairs. */
-  const stairs = (rules: Rule[] = []): Position => {
-    const tiles = new Array<number>(9).fill(FLOOR);
+  const stairs = (rules: Rule[] = [], leaveAlive = false): Position => {
+    const tiles = new Array<number>(18).fill(FLOOR);
     tiles[8] = EXIT_TILE;
     const world: GameEvent = {
       id: 'w', parent: null, seq: 0,
       type: 'WORLD_INIT', schemaVersion: 5, rngCounter: 0, rngDraws: 0,
       payload: {
-        width: 9, height: 1, tiles, seed: 3, depth: 1, items: [],
+        width: 18, height: 1, tiles, seed: 3, depth: 1, items: [],
         player: { id: 'player', kind: 'you', pos: { x: 0, y: 0 }, stats: { hp: 10, might: 3, wits: 3, speed: 4 }, tags: [] },
-        opponents: [],
+        // Out past the exit and out of awareness: it never engages, but the
+        // floor counts as uncleared — which matters, because descending a
+        // cleared floor heals, and a dented-crossing test needs the dent kept.
+        opponents: leaveAlive
+          ? [{ id: 'left-behind', kind: 'skirmisher', pos: { x: 17, y: 0 }, stats: { hp: 4, might: 2, wits: 1, speed: 2 }, tags: [] }]
+          : [],
       },
     } as GameEvent;
     return playable(world, rules);
@@ -398,7 +403,7 @@ describe('down the stairs', () => {
   });
 
   it('keeps the rules across the crossing, and the dented ceiling with them', () => {
-    const start = stairs([rule({ when: 'WAIT', then: [{ kind: 'harm', n: 1 }] })]);
+    const start = stairs([rule({ when: 'WAIT', then: [{ kind: 'harm', n: 1 }] })], true);
     let p = start;
     // Wait once so the harm rule dents hp below the ceiling before escaping.
     p = playerWait(p, 'player').position;

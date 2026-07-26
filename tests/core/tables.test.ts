@@ -145,8 +145,8 @@ describe('threat and budget — the sawtooth\'s teeth', () => {
     const at = (l: number): number => bands.find((b) => b.level === l)?.weight ?? 0;
     expect(at(3)).toBeGreaterThan(at(2));
     expect(at(2)).toBeGreaterThan(at(4));
-    // Depth 1 has no shallower band and never rolls level 0.
-    expect(depthBands(1).every((b) => b.level >= 1)).toBe(true);
+    // Depth 1 is the teaching floor: level-1 only. The blur begins at 2.
+    expect(depthBands(1)).toEqual([{ level: 1, weight: 6 }]);
   });
 
   it('guards every third floor', () => {

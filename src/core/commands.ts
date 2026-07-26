@@ -3,6 +3,7 @@ import { inBounds, isPassable } from './grid.js';
 import { findEntity, isAlive } from './entity.js';
 import { intBetween } from './rng.js';
 import { neededToHit, chanceIn20, damageDice, critFloor, WHIFF, BESTIARY, creatureStats, threatOf, spawnBudget, depthBands, wardenAt, ARMORY, relicGrant } from './tables.js';
+import type { Relic } from './tables.js';
 import type { Entity, Stats } from './entity.js';
 import { itemAt } from './item.js';
 import { EXIT, tileAt } from './grid.js';
@@ -178,28 +179,49 @@ export function createWorld(
 
   const population = chooseSpawns(seed, generated.counterAfter, depth);
 
-  // The floor's prize, drawn from the armory by weight — a counted draw like
-  // every other choice generation makes.
-  const armoryTotal = ARMORY.reduce((n, r) => n + r.weight, 0);
-  let relicRoll = intBetween(seed, population.counterAfter, 1, armoryTotal);
-  let relic = ARMORY[0]!;
-  for (const r of ARMORY) {
-    relicRoll -= r.weight;
-    if (relicRoll <= 0) { relic = r; break; }
+  // The floor's prizes, drawn from the armory by weight — counted draws like
+  // every other choice generation makes. One relic on the first floor; two
+  // from depth 2, drawn without replacement so a floor never doubles up.
+  //
+  // Two is a tuning consequence, not generosity: when the armory replaced the
+  // guaranteed +2-might edge with a weighted draw, the fighter's expected
+  // power dropped and the depth-3 inversion collapsed to a coin flip
+  // (13 vs 14 on 40 seeds). Deeper floors owing two relics restores the
+  // expected growth the sawtooth was tuned against, and buys a real choice —
+  // which prize to fight toward first — at the same time.
+  // The first floor always leaves a weapon. The fighter's early curve keys on
+  // the might band-jump the edge buys, and when the armory made that a
+  // weighted maybe, floor-one deaths quadrupled and the depth-3 inversion
+  // collapsed. Variety starts at depth 2, where the floors owe two relics.
+  const relicCount = depth >= 2 ? 2 : 1;
+  const pool = depth === 1 ? [ARMORY.find((r) => r.grants === 'might')!] : [...ARMORY];
+  const relics: Relic[] = [];
+  let c = population.counterAfter;
+  for (let i = 0; i < relicCount && pool.length > 0; i += 1) {
+    const totalWeight = pool.reduce((n, r) => n + r.weight, 0);
+    let roll = intBetween(seed, c, 1, totalWeight); c += 1;
+    let picked = pool[0]!;
+    for (const r of pool) {
+      roll -= r.weight;
+      if (roll <= 0) { picked = r; break; }
+    }
+    relics.push(picked);
+    pool.splice(pool.indexOf(picked), 1);
   }
 
   const spawned = pickSpawnPoints(
     seed,
-    population.counterAfter + 1,
+    c,
     grid,
     generated.start,
     population.chosen.length,
     OPPONENT_MIN_DISTANCE,
   );
 
-  // Placed on the last creature's tile: the edge is guarded, so taking it means
-  // going through something. An item you can pick up for free is not a choice.
-  const guarded = spawned.points[spawned.points.length - 1] ?? exit;
+  // Placed on creatures' tiles: a prize is guarded, so taking it means going
+  // through something. An item you can pick up for free is not a choice.
+  const guardPosts = relics.map((_r, i) =>
+    spawned.points[spawned.points.length - 1 - i] ?? exit);
 
   return {
     type: 'WORLD_INIT',
@@ -217,12 +239,12 @@ export function createWorld(
       xp: carried?.xp ?? 0,
       level: carried?.level ?? 1,
       ...(carried === undefined ? {} : { playerMaxHp: carried.maxHp }),
-      items: [{
-        id: 'relic-1',
-        kind: relic.kind,
-        pos: { x: guarded.x, y: guarded.y },
-        grants: relicGrant(relic, depth),
-      }],
+      items: relics.map((r, i) => ({
+        id: `relic-${String(i + 1)}`,
+        kind: r.kind,
+        pos: { x: guardPosts[i]!.x, y: guardPosts[i]!.y },
+        grants: relicGrant(r, depth),
+      })),
       player: {
         id: playerId,
         kind: 'you',

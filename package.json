@@ -12,7 +12,8 @@
     "golden": "tsx scripts/generate-golden.ts",
     "play": "tsx scripts/play.ts",
     "trial": "tsx scripts/trial.ts",
-    "loop": "tsx scripts/loop.ts"
+    "loop": "tsx scripts/loop.ts",
+    "balance": "tsx scripts/balance.ts"
   },
   "dependencies": {
     "@noble/hashes": "1.4.0"

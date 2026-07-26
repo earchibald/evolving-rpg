@@ -29,6 +29,7 @@ proves wrong, amend it there, visibly.
 | `npm run play -- --world runs/latest.json --policy all` | Play the real world, rules in force |
 | `npm run trial -- rule.json` | Assay one rule. Exit 0 sound / 2 refused / 1 malformed |
 | `npm run loop -- --seed 7 [--rule r.json]` | Baseline → propose → trial → ratify → replay → deltas. Report to `runs/loops/` |
+| `npm run balance` | The ensemble report: per-approach outcomes + lenses #33/#71 |
 | `npx vitest run` | The suite. Mutation proofs are the local verification idiom |
 
 The propose step of `loop` needs the dev server (`npm run dev`) for a real
@@ -62,8 +63,10 @@ evidence, not a decision.
 to full; floors descend by threat budget with Brogue-style overlap; the warden
 guards every third floor and pays half its threat out of the floor's budget.
 Measured on 20 fixed seeds (pinned in tests/balance/sawtooth.test.ts):
-depth-1 brawler survival 95%; two floors 80%; past the boss floor 60% (rusher
-40% — the inversion); floor five ~17%. Crits exist (nat 20 doubles, nat 1
-whiffs), so lens #2 finally counts real events. The old shape — brawler 90%
-dead, rusher dominant — is history; if these numbers drift outside their
-bands, that is a defect, not a mood.
+depth-1 brawler survival 85–95% (floor one always leaves a weapon, and rolls
+level-1 creatures only); depth 3 is a dead heat between fighter and runner
+(open tuning question — BALANCE.md); depth 5 pays the fighter (5v3), where XP,
+two-relic floors and rest-at-the-stairs compound. All four lenses measure now:
+#2/#61 per chain, #33/#71 per ensemble via `npm run balance` (currently:
+2 viable approaches, 3 meaningfully different fates). The old shape — brawler
+90% dead, rusher dominant — is history; band breaches are defects, not moods.

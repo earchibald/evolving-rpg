@@ -131,3 +131,21 @@ depth 1 nearly unchanged).
 **Pass 3.** Pass 2 overshot the deep end: five-floor survival fell 83% → 17%
 with deaths at depth ~3.5. One knob back — slope 20+18d → 24+15d, floor 1
 untouched, depth 5 about ten points of budget gentler.
+
+**Passes 5–8 (the armory aftermath).** The armory's extra draw reshuffled the
+whole generation stream, and the ensemble lenses caught the fallout: the
+depth-3 inversion collapsed to a coin flip, and floor-one deaths ran 20%
+because the fighter's guaranteed might band-jump had become a one-in-three
+draw and one world in seven opened with a level-2 bruiser. Three design
+repairs, each argued in its own commit: **floor one always leaves a weapon**
+(variety starts at depth 2, where floors owe two relics); **the teaching
+floor rolls level-1 only** (the out-of-depth scare starts once you have a
+floor behind you); **rest at the stairs** (descend a cleared floor and you
+descend healed — clearing pays beyond XP). Floor one is back to 85–95%.
+
+**Open question for the designer**, measured and left honest: at depth 3 the
+fighter and the runner now tie (8v8 on the pinned seeds, 16v15 on forty); the
+fighter's margin shows at depth 5 (5v3), where XP, relics and the stairs-rest
+compound. The band test pins non-domination at 3 and strict inversion at 5.
+If the inversion should live at depth 3 again, the honest knobs are the XP
+curve or creature growth rows — not another relic.
