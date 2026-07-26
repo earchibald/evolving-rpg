@@ -203,3 +203,84 @@ describe('conditions decide at the moment of acting', () => {
     expect(hp(p)).toBe(10);
   });
 });
+
+describe('the triggers the widening added', () => {
+  it('fires when something strikes you, on somebody else\'s turn', () => {
+    // Impossible before: only your own actions could trigger anything, so
+    // "when something hits you" — thorns, rage, retaliation — could not exist.
+    const start = playable(corridor({ beastAt: 1 }), [
+      rule({ id: 'thorns', when: 'STRUCK', then: [{ kind: 'harmOther', n: 2 }] }),
+    ]);
+    const mine = playerWait(start, 'player').position;
+    expect(fired(mine)).toHaveLength(0);
+
+    const theirs = runWorldTurns(mine, 'player');
+    const firings = fired(theirs);
+    expect(firings.length).toBeGreaterThan(0);
+    expect(firings[0]?.payload.ruleId).toBe('thorns');
+    // It hurt the beast, not the player.
+    expect(firings[0]?.payload.outcomes[0]).toMatchObject({ kind: 'health', entityId: 'thing-1' });
+  });
+
+  it('fires on taking a step', () => {
+    const start = playable(corridor(), [rule({ when: 'MOVE', then: [{ kind: 'harm', n: 1 }] })]);
+    const after = playerStep(start, 'player', 1, 0).position;
+    expect(fired(after)).toHaveLength(1);
+    expect(hp(after)).toBe(9);
+  });
+
+  it('fires once when a full round goes by, not once per creature', () => {
+    // Three creatures alive. A rule reading "when a turn goes by" that fired
+    // four times a round would be indefensible.
+    const start = playable(corridor({ beastAt: 8 }), [
+      rule({ when: 'TURN_PASSED', then: [{ kind: 'harm', n: 1 }] }),
+    ]);
+    let p = playerWait(start, 'player').position;
+    p = runWorldTurns(p, 'player');
+    const roundsSoFar = fold(p.log, p.head).turn - 1;
+    expect(fired(p)).toHaveLength(roundsSoFar);
+  });
+
+  it('separates a killing blow from an ordinary one', () => {
+    // A blow that finishes something is KILLED and only KILLED — firing both
+    // would double every on-strike effect on the turn it mattered most.
+    const start = playable(corridor({ beastAt: 1 }), [
+      rule({ id: 'on-hit', when: 'STRIKE', then: [{ kind: 'speak', text: 'contact' }] }),
+      rule({ id: 'on-kill', when: 'KILLED', then: [{ kind: 'grant', stat: 'might', n: 1 }] }),
+    ]);
+
+    let p = start;
+    for (let i = 0; i < 40 && fold(p.log, p.head).entities[1]!.stats.hp > 0; i += 1) {
+      p = playerStep(p, 'player', 1, 0).position;
+      p = runWorldTurns(p, 'player');
+      if (fold(p.log, p.head).entities[0]!.stats.hp <= 0) break;
+    }
+
+    const byRule = fired(p).map((e) => e.payload.ruleId);
+    const kills = byRule.filter((r) => r === 'on-kill').length;
+    if (fold(p.log, p.head).entities[1]!.stats.hp === 0) {
+      expect(kills).toBe(1);
+      // Every landed blow before the last was an ordinary strike.
+      expect(byRule.filter((r) => r === 'on-hit').length).toBeGreaterThan(0);
+      // And the killing blow did not also count as a strike.
+      expect(byRule[byRule.length - 1]).toBe('on-kill');
+    }
+  });
+
+  it('lets a rule read whether the blow landed', () => {
+    const start = playable(corridor({ beastAt: 1 }), [
+      rule({ id: 'on-miss', when: 'STRIKE', require: [{ kind: 'blowMissed' }], then: [{ kind: 'harm', n: 1 }] }),
+    ]);
+    let p = start;
+    let sawMiss = false;
+    for (let i = 0; i < 30; i += 1) {
+      p = playerStep(p, 'player', 1, 0).position;
+      const strikes = chain(p.log, p.head).filter((e) => e.type === 'STRIKE' && e.payload.attackerId === 'player');
+      const last = strikes[strikes.length - 1];
+      if (last !== undefined && last.type === 'STRIKE' && !last.payload.hit) { sawMiss = true; break; }
+      p = runWorldTurns(p, 'player');
+      if (fold(p.log, p.head).entities[0]!.stats.hp <= 0) break;
+    }
+    if (sawMiss) expect(fired(p).some((e) => e.payload.ruleId === 'on-miss')).toBe(true);
+  });
+});

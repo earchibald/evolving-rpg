@@ -5,6 +5,7 @@ import { attemptMove, advanceTurn, endsTurn, wait, takeUnderfoot, outcome } from
 import { decide } from '../core/ai.js';
 import { fireRules } from '../canon/interpret.js';
 import type { Trigger } from '../canon/rule.js';
+import type { Blow } from '../canon/interpret.js';
 import { findEntity, isAlive } from '../core/entity.js';
 import type { Action } from '../core/ai.js';
 import type { EventLog } from '../log/chain.js';
@@ -25,13 +26,51 @@ export interface Position {
   head: string;
 }
 
-/** Which R2 trigger an action counts as, or null for actions no rule can see. */
-function triggerFor(draft: DraftEvent): Trigger | null {
+/**
+ * What a rule sees when an action happens: which trigger, whose rules, and what
+ * the blow was.
+ *
+ * Triggers are named from the *player's* side. A creature swinging at you is
+ * STRUCK, not STRIKE — a rule reading "when something strikes you" has to fire
+ * on somebody else's action, and it is still a rule about you.
+ */
+interface Firing {
+  trigger: Trigger;
+  actorId: string;
+  blow: Blow;
+}
+
+function firingFor(draft: DraftEvent, actorId: string, playerId: string, state: GameState): Firing | null {
   switch (draft.type) {
-    case 'WAIT': return 'WAIT';
-    case 'STRIKE': return 'STRIKE';
-    case 'MOVE_BLOCKED': return 'MOVE_BLOCKED';
-    case 'ITEM_TAKEN': return 'ITEM_TAKEN';
+    case 'WAIT':
+      return actorId === playerId ? { trigger: 'WAIT', actorId, blow: {} } : null;
+    case 'MOVE':
+      return actorId === playerId ? { trigger: 'MOVE', actorId, blow: {} } : null;
+    case 'MOVE_BLOCKED':
+      return actorId === playerId ? { trigger: 'MOVE_BLOCKED', actorId, blow: {} } : null;
+    case 'ITEM_TAKEN':
+      return actorId === playerId ? { trigger: 'ITEM_TAKEN', actorId, blow: {} } : null;
+
+    case 'STRIKE': {
+      const p = draft.payload;
+      const blow = { hit: p.hit };
+
+      if (p.attackerId === playerId) {
+        // A blow that finished something is a kill, and only a kill: firing
+        // both would double every on-strike effect on the turn it mattered
+        // most.
+        const target = findEntity(state.entities, p.targetId);
+        const finished = p.hit && target !== undefined && !isAlive(target);
+        return { trigger: finished ? 'KILLED' : 'STRIKE', actorId: playerId, blow: { ...blow, otherId: p.targetId } };
+      }
+
+      // Somebody else swinging. Only your own skin is your business.
+      if (p.targetId === playerId) {
+        return { trigger: 'STRUCK', actorId: playerId, blow: { ...blow, otherId: p.attackerId } };
+      }
+      return null;
+    }
+
     default: return null;
   }
 }
@@ -53,22 +92,39 @@ function triggerFor(draft: DraftEvent): Trigger | null {
  * firing it for everything on the map would both make that sentence false and
  * heal the things hunting them.
  */
-function commit(position: Position, draft: DraftEvent, rulesFor: string | null): Position {
+function commit(position: Position, draft: DraftEvent, actorId: string, playerId: string): Position {
   const acted = append(position.log, position.head, draft);
   let current: Position = { log: acted.log, head: acted.event.id };
 
-  const trigger = triggerFor(draft);
-  if (rulesFor !== null && trigger !== null) {
-    for (const firing of fireRules(fold(current.log, current.head), trigger, rulesFor)) {
-      const done = append(current.log, current.head, firing);
+  // Read *after* the action, so a rule sees the world its trigger produced —
+  // notably whether the thing you hit is still standing.
+  const afterAction = fold(current.log, current.head);
+  const firing = firingFor(draft, actorId, playerId, afterAction);
+  if (firing !== null) {
+    for (const event of fireRules(afterAction, firing.trigger, firing.actorId, firing.blow)) {
+      const done = append(current.log, current.head, event);
       current = { log: done.log, head: done.event.id };
     }
   }
 
   if (!endsTurn(draft)) return current;
 
-  const turned = append(current.log, current.head, advanceTurn(fold(current.log, current.head)));
-  return { log: turned.log, head: turned.event.id };
+  const before = fold(current.log, current.head);
+  const turned = append(current.log, current.head, advanceTurn(before));
+  current = { log: turned.log, head: turned.event.id };
+
+  // A full round going by, fired once — not once per creature's turn. A rule
+  // reading "when a turn goes by" that fired four times a round because three
+  // things were alive would be indefensible.
+  const after = fold(current.log, current.head);
+  if (after.turn !== before.turn) {
+    for (const event of fireRules(after, 'TURN_PASSED', playerId)) {
+      const done = append(current.log, current.head, event);
+      current = { log: done.log, head: done.event.id };
+    }
+  }
+
+  return current;
 }
 
 /**
@@ -102,7 +158,7 @@ function draftFor(state: GameState, entityId: string, action: Action): DraftEven
  *  decision, walking there was. */
 function collect(position: Position, entityId: string): Position {
   const taken = takeUnderfoot(fold(position.log, position.head), entityId);
-  return taken === null ? position : commit(position, taken, entityId);
+  return taken === null ? position : commit(position, taken, entityId, entityId);
 }
 
 export function playerStep(position: Position, playerId: string, dx: number, dy: number): {
@@ -116,7 +172,7 @@ export function playerStep(position: Position, playerId: string, dx: number, dy:
   if (outcome(state, playerId) !== 'playing') return { position, draft: null };
 
   const draft = attemptMove(state, playerId, dx, dy);
-  return { position: collect(commit(position, draft, playerId), playerId), draft };
+  return { position: collect(commit(position, draft, playerId, playerId), playerId), draft };
 }
 
 /** Hold position and let the world come to you. */
@@ -128,7 +184,7 @@ export function playerWait(position: Position, playerId: string): {
   if (outcome(state, playerId) !== 'playing') return { position, draft: null };
 
   const draft = wait(state, playerId);
-  return { position: commit(position, draft, playerId), draft };
+  return { position: commit(position, draft, playerId, playerId), draft };
 }
 
 /**
@@ -160,8 +216,9 @@ export function runWorldTurns(position: Position, playerId: string, maxSteps = 6
       current = { log: turned.log, head: turned.event.id };
       continue;
     }
-    // null: a creature's action never fires the player's rules.
-    current = commit(current, draft, null);
+    // The creature acts, but the triggers are read from the player's side —
+    // its swing at you is your STRUCK, its swing at something else is nothing.
+    current = commit(current, draft, active, playerId);
   }
 
   return current;

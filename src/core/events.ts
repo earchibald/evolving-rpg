@@ -1,4 +1,5 @@
-import type { Rule, Effect } from '../canon/rule.js';
+import type { Rule } from '../canon/rule.js';
+import type { Resolved } from '../canon/interpret.js';
 import type { Pos, Stats } from './entity.js';
 import type { Item } from './item.js';
 
@@ -93,7 +94,16 @@ export interface RuleRatifiedPayload {
 export interface RuleFiredPayload {
   ruleId: string;
   actorId: string;
-  effects: Effect[];
+  /**
+   * What the rule actually did, with every "who" and "where" already worked
+   * out — "thing-1's health to 2", not "harm the other party by 3".
+   *
+   * Resolved rather than authored so the reducer never has to re-derive who
+   * "the other party" was or where the walls are. Replay applies outcomes; it
+   * never re-decides them, which is what keeps folded history stable as the
+   * vocabulary grows.
+   */
+  outcomes: Resolved[];
 }
 
 export interface StrikePayload {

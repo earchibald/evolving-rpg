@@ -20,13 +20,29 @@ If a property here is wrong, contradicts another, or cannot be tested as stated 
 - **Not R3.** Nothing generates code. Promotion to code happens in a Claude Code session, never at runtime.
 - **Not the canon consistency guard.** The "hoarfrost hound from the treeline, inside a dungeon" complaint is real and logged, and it is a naming problem, not a rules problem. Next increment.
 - **No fog of war, and therefore no `reveal` effect.** A `revealCreatures` effect was designed and then cut: nothing in this game is hidden, so revealing is a no-op. Building it would have produced a rule the player could ratify that did visibly nothing. If hidden information ever arrives, the effect arrives with it.
+- **No spawning and no teleporting.** Both need randomness to choose a square, and R2 effects are drawless. A deterministic variant is possible later; guessing at one now is not.
+
+## Amendment: the vocabulary was widened after task 4
+
+The first cut — 4 triggers, 4 conditions, 3 effects — was sized on the theory that play should reveal what was needed. It was below the floor rather than minimal. Two absences were missing furniture, not restraint:
+
+- **Nothing could react to being hit.** Only the player's own actions triggered anything, so thorns, retaliation, and rage-at-low-health were all inexpressible. Fixed by splitting `STRIKE` (you swing) from `STRUCK` (something swings at you), which required firing player rules on another entity's action for the first time.
+- **Health could only be tested absolutely.** "When you are at exactly 3" was expressible; "when you are badly hurt" was not.
+
+Also added: `MOVE`, `KILLED` and `TURN_PASSED` triggers; conditions for creature counts, distance to the exit, turn number, and stat gates (which finally gives `wits` a job); and `harmOther`, `grant`, `drain` and `push` effects.
+
+**One architectural change came with it.** Effects now *resolve at fire time* into concrete outcomes — `{health, thing-1, to: 2}` rather than `{harmOther, 3}` — and the reducer replays those. Without this, `push` and `harmOther` would need the reducer to re-derive who "the other party" was and where the walls are, which is exactly the re-deciding the design forbids. It also means the vocabulary can grow again without any risk of old history re-interpreting itself.
+
+Bounds are now per kind rather than one global 1–9, which was wrong the moment distances ran to 40 and percentages to 99.
+
+Two shapes are refused as *incoherent* rather than malformed, because they would otherwise ratify cleanly, read sensibly, and silently do nothing forever: a blow condition on a trigger with no blow, and an "other party" effect on a trigger with no other party.
 
 ## Global Constraints
 
 Everything from increments 1 and 2 still binds. Additions:
 
 - **Rules are data, never code.** A rule is a validated object in a closed vocabulary. Nothing generated is ever `eval`'d, compiled, or otherwise executed as code. This is the guard on letting a model author rules at all.
-- **The vocabulary is total and bounded.** Every trigger, condition and effect is a member of a closed union. Numbers are clamped to 1–9, `require` to at most 3 entries, `then` to at most 2, `speak` text to 120 characters, and a world to 16 rules. A rule outside any bound is refused at validation and never stored. A generated rule must not be able to crash or hang the engine.
+- **The vocabulary is total and bounded.** Every trigger, condition and effect is a member of a closed union. Numbers are clamped to a range chosen per kind (see the amendment above — heal/harm 1–20, stat grants 1–5, push 1–3, distances 1–40, percentages 1–99, turn counts 1–999), `require` to at most 4 entries, `then` to at most 3, `speak` text to 120 characters, and a world to 16 rules. A rule outside any bound is refused at validation and never stored. A generated rule must not be able to crash or hang the engine.
 - **R2 effects are drawless.** No effect consumes randomness. `RULE_FIRED` always carries `rngDraws: 0`. Randomness in rules would mean a ratified rule could shift every subsequent draw, and the draw protocol is the thing that makes replay exact.
 - **Rules live in the log.** A rule enters play as a `RULE_RATIFIED` event and nowhere else. It is therefore forkable, replayable, and scoped to a world. There is no separate rules store, no localStorage rules key, no global ruleset.
 - **Rule firing is recorded, not recomputed.** Rules resolve in the command layer and emit `RULE_FIRED`. `apply` records the effect; it never re-evaluates conditions. Folding a log must never consult the rule interpreter — otherwise old history would silently re-interpret itself under rules ratified later.

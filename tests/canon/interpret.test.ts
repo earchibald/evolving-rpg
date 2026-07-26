@@ -83,7 +83,7 @@ describe('what fires', () => {
   it('carries the recorded effects, not a reference to the rule', () => {
     const s = stateWith([rule({ id: 'a', then: [{ kind: 'heal', n: 2 }] })]);
     const [fired] = fireRules(s, 'WAIT', 'player');
-    expect(fired?.payload.effects).toEqual([{ kind: 'heal', n: 2 }]);
+    expect(fired?.payload.outcomes).toEqual([{ kind: 'health', entityId: 'player', to: 7 }]);
   });
 });
 
@@ -136,10 +136,10 @@ describe('conditions', () => {
 });
 
 describe('applying what fired', () => {
-  it('heals, without exceeding the ceiling', () => {
+  it('resolves a heal to an absolute figure, clamped at the ceiling', () => {
     const s = stateWith([], [entity('player', 0, 0, 9, 10)]);
     const draft = { type: 'RULE_FIRED' as const, schemaVersion: 1, rngCounter: 0, rngDraws: 0,
-      payload: { ruleId: 'r', actorId: 'player', effects: [{ kind: 'heal' as const, n: 5 }] } };
+      payload: { ruleId: 'r', actorId: 'player', outcomes: [{ kind: 'health' as const, entityId: 'player', to: 10 }] } };
     const after = apply(s, asEvent(draft));
     expect(after.entities[0]?.stats.hp).toBe(10);
   });
@@ -147,14 +147,14 @@ describe('applying what fired', () => {
   it('harms, without going below zero', () => {
     const s = stateWith([], [entity('player', 0, 0, 2, 10)]);
     const draft = { type: 'RULE_FIRED' as const, schemaVersion: 1, rngCounter: 0, rngDraws: 0,
-      payload: { ruleId: 'r', actorId: 'player', effects: [{ kind: 'harm' as const, n: 9 }] } };
+      payload: { ruleId: 'r', actorId: 'player', outcomes: [{ kind: 'health' as const, entityId: 'player', to: 0 }] } };
     expect(apply(s, asEvent(draft)).entities[0]?.stats.hp).toBe(0);
   });
 
   it('kills by the same path as a blow — dead is dead', () => {
     const s = stateWith([], [entity('player', 0, 0, 1, 10)]);
     const draft = { type: 'RULE_FIRED' as const, schemaVersion: 1, rngCounter: 0, rngDraws: 0,
-      payload: { ruleId: 'r', actorId: 'player', effects: [{ kind: 'harm' as const, n: 4 }] } };
+      payload: { ruleId: 'r', actorId: 'player', outcomes: [{ kind: 'health' as const, entityId: 'player', to: 0 }] } };
     const after = apply(s, asEvent(draft));
     expect(after.entities[0]!.stats.hp).toBe(0);
   });
@@ -162,14 +162,14 @@ describe('applying what fired', () => {
   it('leaves state alone for a spoken line', () => {
     const s = stateWith([], [entity('player', 0, 0, 5, 10)]);
     const draft = { type: 'RULE_FIRED' as const, schemaVersion: 1, rngCounter: 0, rngDraws: 0,
-      payload: { ruleId: 'r', actorId: 'player', effects: [{ kind: 'speak' as const, text: 'the stone is cold' }] } };
+      payload: { ruleId: 'r', actorId: 'player', outcomes: [{ kind: 'said' as const, text: 'the stone is cold' }] } };
     expect(apply(s, asEvent(draft)).entities[0]?.stats.hp).toBe(5);
   });
 
   it('does not mutate the state it was given', () => {
     const s = stateWith([], [entity('player', 0, 0, 5, 10)]);
     const draft = { type: 'RULE_FIRED' as const, schemaVersion: 1, rngCounter: 0, rngDraws: 0,
-      payload: { ruleId: 'r', actorId: 'player', effects: [{ kind: 'heal' as const, n: 3 }] } };
+      payload: { ruleId: 'r', actorId: 'player', outcomes: [{ kind: 'health' as const, entityId: 'player', to: 5 }] } };
     apply(s, asEvent(draft));
     expect(s.entities[0]?.stats.hp).toBe(5);
   });
@@ -185,7 +185,7 @@ describe('the past does not change', () => {
       [entity('player', 0, 0, 2, 10)],   // hp 2 — the condition is false now
     );
     const recorded = { type: 'RULE_FIRED' as const, schemaVersion: 1, rngCounter: 0, rngDraws: 0,
-      payload: { ruleId: 'r', actorId: 'player', effects: [{ kind: 'heal' as const, n: 3 }] } };
+      payload: { ruleId: 'r', actorId: 'player', outcomes: [{ kind: 'health' as const, entityId: 'player', to: 5 }] } };
 
     expect(apply(wouldNotMatchNow, asEvent(recorded)).entities[0]?.stats.hp).toBe(5);
   });
@@ -193,7 +193,7 @@ describe('the past does not change', () => {
   it('applies an effect for a rule the world no longer holds at all', () => {
     const noRules = stateWith([], [entity('player', 0, 0, 2, 10)]);
     const recorded = { type: 'RULE_FIRED' as const, schemaVersion: 1, rngCounter: 0, rngDraws: 0,
-      payload: { ruleId: 'long-gone', actorId: 'player', effects: [{ kind: 'heal' as const, n: 3 }] } };
+      payload: { ruleId: 'long-gone', actorId: 'player', outcomes: [{ kind: 'health' as const, entityId: 'player', to: 5 }] } };
     expect(apply(noRules, asEvent(recorded)).entities[0]?.stats.hp).toBe(5);
   });
 

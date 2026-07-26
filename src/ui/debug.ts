@@ -578,12 +578,16 @@ function narrate(fresh: readonly GameEvent[], state: ReturnType<typeof fold>): s
     if (event.type === 'RULE_FIRED') {
       // Named by what it did, not by which rule did it. "rule-3 fired" tells a
       // player nothing; "the world gives back 2" is the thing they can feel.
-      const p = event.payload;
-      const who = named(state, p.actorId);
-      for (const eff of p.effects) {
-        if (eff.kind === 'speak') lines.push(`“${eff.text}”`);
-        else if (eff.kind === 'heal') lines.push(`${who === 'you' ? 'you recover' : `${who} recovers`} ${eff.n}`);
-        else lines.push(`${who === 'you' ? 'you lose' : `${who} loses`} ${eff.n}`);
+      // Outcomes are absolute — "health to 7" — so the readout says where a
+      // thing ended up rather than by how much it moved. Less arithmetic for a
+      // player mid-turn, and it cannot disagree with the sheet beside it.
+      for (const o of event.payload.outcomes) {
+        if (o.kind === 'said') { lines.push(`“${o.text}”`); continue; }
+        const who = named(state, o.entityId);
+        const subject = who === 'you' ? 'your' : `${who}'s`;
+        if (o.kind === 'health') lines.push(`${subject} hit points now ${o.to}`);
+        else if (o.kind === 'stat') lines.push(`${subject} ${o.stat} now ${o.to}`);
+        else lines.push(`${who} is shoved to ${o.to.x}, ${o.to.y}`);
       }
       continue;
     }

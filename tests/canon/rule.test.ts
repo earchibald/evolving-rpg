@@ -96,24 +96,26 @@ describe('being total', () => {
 });
 
 describe('the bounds, which are what make a generated rule safe', () => {
-  it('refuses a number outside 1–9, naming the field', () => {
-    for (const n of [0, -1, 10, 9999, 1.5, NaN, Infinity]) {
+  it('refuses a number outside its kind\'s range, naming the field', () => {
+    // heal runs 1–20; distances run further and stat grants stop much sooner.
+    // The range is per kind, because one number for all of them was wrong.
+    for (const n of [0, -1, 21, 9999, 1.5, NaN, Infinity]) {
       const r = validateRule(withField('then', [{ kind: 'heal', n }]));
       expect(isRejected(r)).toBe(true);
       if (isRejected(r)) expect(r.rejected).toMatch(/n\b/);
     }
   });
 
-  it('refuses more than three conditions', () => {
-    const four = Array.from({ length: 4 }, () => ({ kind: 'hpAtMost', n: 5 }));
-    const r = validateRule(withField('require', four));
+  it('refuses more than four conditions', () => {
+    const five = Array.from({ length: 5 }, () => ({ kind: 'hpAtMost', n: 5 }));
+    const r = validateRule(withField('require', five));
     expect(isRejected(r)).toBe(true);
     if (isRejected(r)) expect(r.rejected).toMatch(/require/);
   });
 
-  it('refuses more than two effects', () => {
-    const three = Array.from({ length: 3 }, () => ({ kind: 'heal', n: 1 }));
-    const r = validateRule(withField('then', three));
+  it('refuses more than three effects', () => {
+    const four = Array.from({ length: 4 }, () => ({ kind: 'heal', n: 1 }));
+    const r = validateRule(withField('then', four));
     expect(isRejected(r)).toBe(true);
     if (isRejected(r)) expect(r.rejected).toMatch(/then/);
   });
