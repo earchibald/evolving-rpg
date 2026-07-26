@@ -1,5 +1,6 @@
 import { makeGrid } from './grid.js';
 import { granted } from './item.js';
+import { healthAfter } from '../canon/interpret.js';
 import type { GameEvent } from './events.js';
 import type { GameState } from './state.js';
 
@@ -21,6 +22,7 @@ function reduce(state: GameState, event: GameEvent): GameState {
         pos: { x: s.pos.x, y: s.pos.y },
         stats: { ...s.stats },
         tags: [...s.tags],
+        maxHp: s.stats.hp,
       }));
       return {
         grid: makeGrid(p.width, p.height, p.tiles),
@@ -38,6 +40,21 @@ function reduce(state: GameState, event: GameEvent): GameState {
         // A new world plays under no rules, whatever stood before it on the
         // log. WORLD_INIT replaces state wholesale, and rules are state.
         rules: [],
+      };
+    }
+
+    case 'RULE_FIRED': {
+      // Replays the recorded effects. It does not look at `state.rules`, does
+      // not re-read the rule, and does not re-evaluate a single condition —
+      // that is what keeps folded history stable as rules accumulate.
+      const p = event.payload;
+      return {
+        ...state,
+        entities: state.entities.map((e) =>
+          e.id === p.actorId
+            ? { ...e, stats: { ...e.stats, hp: healthAfter(e.stats.hp, e.maxHp, p.effects) } }
+            : e,
+        ),
       };
     }
 
@@ -72,7 +89,9 @@ function reduce(state: GameState, event: GameEvent): GameState {
       return {
         ...state,
         entities: state.entities.map((e) =>
-          e.id === p.entityId ? { ...e, stats: granted(e.stats, p.grants) } : e,
+          e.id === p.entityId
+            ? { ...e, stats: granted(e.stats, p.grants), maxHp: e.maxHp + p.grants.hp }
+            : e,
         ),
         items: state.items.filter((i) => i.id !== p.itemId),
       };

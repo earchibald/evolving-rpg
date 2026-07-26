@@ -23,7 +23,7 @@ function room(entities: Entity[], walls: Array<[number, number]> = []): GameStat
 }
 
 function being(id: string, kind: string, x: number, y: number, hp = 5): Entity {
-  return { id, kind, pos: { x, y }, stats: { hp, might: 4, wits: 1, speed: 3 }, tags: [] };
+  return { id, kind, pos: { x, y }, stats: { hp, might: 4, wits: 1, speed: 3 }, tags: [], maxHp: hp };
 }
 
 const you = (x: number, y: number, hp = 10): Entity => being('player', 'you', x, y, hp);

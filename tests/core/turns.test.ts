@@ -2,7 +2,7 @@ import { initiativeOrder, nextActive } from '../../src/core/turns.js';
 import type { Entity } from '../../src/core/entity.js';
 
 function entity(id: string, speed: number, hp = 5): Entity {
-  return { id, kind: 'test', pos: { x: 0, y: 0 }, stats: { hp, might: 1, wits: 1, speed }, tags: [] };
+  return { id, kind: 'test', pos: { x: 0, y: 0 }, stats: { hp, might: 1, wits: 1, speed }, tags: [], maxHp: hp };
 }
 
 describe('initiativeOrder', () => {

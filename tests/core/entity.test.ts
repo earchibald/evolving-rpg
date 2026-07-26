@@ -4,7 +4,7 @@ import { EMPTY_STATE } from '../../src/core/state.js';
 import { isPassable } from '../../src/core/grid.js';
 
 function entity(id: string, hp: number): Entity {
-  return { id, kind: 'test', pos: { x: 0, y: 0 }, stats: { hp, might: 1, wits: 1, speed: 1 }, tags: [] };
+  return { id, kind: 'test', pos: { x: 0, y: 0 }, stats: { hp, might: 1, wits: 1, speed: 1 }, tags: [], maxHp: hp };
 }
 
 describe('findEntity', () => {

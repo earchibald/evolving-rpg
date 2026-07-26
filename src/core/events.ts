@@ -1,4 +1,4 @@
-import type { Rule } from '../canon/rule.js';
+import type { Rule, Effect } from '../canon/rule.js';
 import type { Pos, Stats } from './entity.js';
 import type { Item } from './item.js';
 
@@ -18,6 +18,7 @@ export const SCHEMA_VERSIONS = {
   WAIT: 1,
   ITEM_TAKEN: 1,
   RULE_RATIFIED: 1,
+  RULE_FIRED: 1,
 } as const;
 
 export type EventType = keyof typeof SCHEMA_VERSIONS;
@@ -82,6 +83,19 @@ export interface RuleRatifiedPayload {
   rule: Rule;
 }
 
+/**
+ * A rule that fired, and what it did.
+ *
+ * The effects are recorded rather than the conditions, deliberately. Replay
+ * applies what happened; it never re-decides it. A reducer that re-evaluated
+ * `require` would let a rule ratified today rewrite what a run did last week.
+ */
+export interface RuleFiredPayload {
+  ruleId: string;
+  actorId: string;
+  effects: Effect[];
+}
+
 export interface StrikePayload {
   attackerId: string;
   targetId: string;
@@ -105,6 +119,7 @@ export type DraftEvent =
   | { type: 'STRIKE'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: StrikePayload }
   | { type: 'WAIT'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: WaitPayload }
   | { type: 'ITEM_TAKEN'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: ItemTakenPayload }
-  | { type: 'RULE_RATIFIED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: RuleRatifiedPayload };
+  | { type: 'RULE_RATIFIED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: RuleRatifiedPayload }
+  | { type: 'RULE_FIRED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: RuleFiredPayload };
 
 export type GameEvent = DraftEvent & { id: string; parent: string | null; seq: number };

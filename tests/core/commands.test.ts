@@ -72,7 +72,7 @@ function fixture(extra: Entity[] = []): GameState {
   return {
     grid: makeGrid(3, 2, [FLOOR, FLOOR, WALL, FLOOR, FLOOR, FLOOR]),
     entities: [
-      { id: 'player', kind: 'you', pos: { x: 1, y: 0 }, stats: { hp: 10, might: 3, wits: 3, speed: 4 }, tags: [] },
+      { id: 'player', kind: 'you', pos: { x: 1, y: 0 }, stats: { hp: 10, might: 3, wits: 3, speed: 4 }, tags: [], maxHp: 10 },
       ...extra,
     ],
     items: [],
@@ -107,7 +107,7 @@ describe('attemptMove', () => {
     // Bump to attack: walking into something hostile is the attack, which keeps
     // the entire game on four inputs.
     const state = fixture([
-      { id: 'other', kind: 'thing', pos: { x: 0, y: 0 }, stats: { hp: 4, might: 1, wits: 1, speed: 1 }, tags: [] },
+      { id: 'other', kind: 'thing', pos: { x: 0, y: 0 }, stats: { hp: 4, might: 1, wits: 1, speed: 1 }, tags: [], maxHp: 4 },
     ]);
     const draft = attemptMove(state, 'player', -1, 0);
     expect(draft.type).toBe('STRIKE');
@@ -122,7 +122,7 @@ describe('attemptMove', () => {
     // Alike kinds do not fight. Without this, a crowd of creatures would brawl
     // with each other on the way to you instead of arriving.
     const state = fixture([
-      { id: 'twin', kind: 'you', pos: { x: 0, y: 0 }, stats: { hp: 4, might: 1, wits: 1, speed: 1 }, tags: [] },
+      { id: 'twin', kind: 'you', pos: { x: 0, y: 0 }, stats: { hp: 4, might: 1, wits: 1, speed: 1 }, tags: [], maxHp: 4 },
     ]);
     const draft = attemptMove(state, 'player', -1, 0);
     expect(draft.type).toBe('MOVE_BLOCKED');
@@ -131,7 +131,7 @@ describe('attemptMove', () => {
 
   it('walks through the dead', () => {
     const state = fixture([
-      { id: 'corpse', kind: 'thing', pos: { x: 0, y: 0 }, stats: { hp: 0, might: 1, wits: 1, speed: 1 }, tags: [] },
+      { id: 'corpse', kind: 'thing', pos: { x: 0, y: 0 }, stats: { hp: 0, might: 1, wits: 1, speed: 1 }, tags: [], maxHp: 0 },
     ]);
     expect(attemptMove(state, 'player', -1, 0).type).toBe('MOVE');
   });
@@ -158,7 +158,7 @@ describe('attemptMove', () => {
     // would otherwise pass unnoticed, and replay verification would then fail
     // far from the cause.
     const occupied = fixture([
-      { id: 'other', kind: 'thing', pos: { x: 0, y: 0 }, stats: { hp: 4, might: 1, wits: 1, speed: 1 }, tags: [] },
+      { id: 'other', kind: 'thing', pos: { x: 0, y: 0 }, stats: { hp: 4, might: 1, wits: 1, speed: 1 }, tags: [], maxHp: 4 },
     ]);
     expect(attemptMove(fixture(), 'player', -1, 0).rngCounter).toBe(40);
     expect(attemptMove(fixture(), 'player', 1, 0).rngCounter).toBe(40);
@@ -175,7 +175,7 @@ describe('attemptMove', () => {
 describe('advanceTurn', () => {
   it('keeps the turn number when the round has not wrapped', () => {
     const state = fixture([
-      { id: 'zzz', kind: 'thing', pos: { x: 2, y: 1 }, stats: { hp: 4, might: 1, wits: 1, speed: 1 }, tags: [] },
+      { id: 'zzz', kind: 'thing', pos: { x: 2, y: 1 }, stats: { hp: 4, might: 1, wits: 1, speed: 1 }, tags: [], maxHp: 4 },
     ]);
     const draft = advanceTurn(state);
     expect(draft.payload).toEqual({ activeEntityId: 'zzz', turn: 1 });
@@ -211,8 +211,8 @@ describe('striking', () => {
     return {
       grid: makeGrid(3, 1, [FLOOR, FLOOR, FLOOR]),
       entities: [
-        { id: 'player', kind: 'you', pos: { x: 0, y: 0 }, stats: { hp: 10, might: 3, wits: 3, speed: 4 }, tags: [] },
-        { id: 'thing-1', kind: 'thing', pos: { x: 1, y: 0 }, stats: { hp: 5, might: 4, wits: 1, speed: 3 }, tags: [] },
+        { id: 'player', kind: 'you', pos: { x: 0, y: 0 }, stats: { hp: 10, might: 3, wits: 3, speed: 4 }, tags: [], maxHp: 10 },
+        { id: 'thing-1', kind: 'thing', pos: { x: 1, y: 0 }, stats: { hp: 5, might: 4, wits: 1, speed: 3 }, tags: [], maxHp: 5 },
       ],
       items: [],
       turn: 1,
@@ -293,9 +293,9 @@ describe('striking', () => {
 
 describe('the numbers a player decides on', () => {
   const you = (might: number): Entity =>
-    ({ id: 'player', kind: 'you', pos: { x: 0, y: 0 }, stats: { hp: 10, might, wits: 3, speed: 4 }, tags: [] });
+    ({ id: 'player', kind: 'you', pos: { x: 0, y: 0 }, stats: { hp: 10, might, wits: 3, speed: 4 }, tags: [], maxHp: 10 });
   const thing: Entity =
-    { id: 'thing-1', kind: 'thing', pos: { x: 1, y: 0 }, stats: { hp: 5, might: 4, wits: 1, speed: 3 }, tags: [] };
+    { id: 'thing-1', kind: 'thing', pos: { x: 1, y: 0 }, stats: { hp: 5, might: 4, wits: 1, speed: 3 }, tags: [], maxHp: 5 };
 
   it('states what you need to roll, from both sides', () => {
     expect(toHit(you(3), thing)).toBe(10);
