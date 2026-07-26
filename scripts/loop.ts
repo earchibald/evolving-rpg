@@ -132,6 +132,8 @@ const stamped = { id: 'rule-1', ratifiedAt: new Date().toISOString(), ...(rawRul
 const checked = validateRule(stamped);
 if (isRejected(checked)) {
   say(`\n## Refused before trial\n${checked.rejected}`);
+  // The raw reply, so a reader can tell a flaky model from a broken plugin.
+  say(`raw: ${JSON.stringify(rawRule).slice(0, 300)}`);
   finish(2);
 }
 const rule: Rule = checked;

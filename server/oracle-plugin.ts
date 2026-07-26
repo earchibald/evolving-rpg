@@ -178,14 +178,28 @@ function extract(text: string): { name: string; line: string; data?: unknown } {
   const end = text.lastIndexOf('}');
   if (start < 0 || end <= start) throw new Error(`no object in reply: ${text.slice(0, 120)}`);
 
-  const parsed = JSON.parse(text.slice(start, end + 1)) as { name?: unknown; line?: unknown; rule?: unknown };
+  const parsed = JSON.parse(text.slice(start, end + 1)) as {
+    name?: unknown; line?: unknown; rule?: unknown; provenance?: unknown;
+  };
   if (typeof parsed.name !== 'string') throw new Error('reply had no name');
+
+  // Models sometimes lift provenance out of the rule to sit beside it — two
+  // of three live proposals tonight failed exactly this way. Reattaching a
+  // sibling provenance is transport tolerance, not trust: the validator in
+  // canon/ still judges everything.
+  let rule = parsed.rule;
+  if (typeof rule === 'object' && rule !== null
+      && (rule as { provenance?: unknown }).provenance === undefined
+      && parsed.provenance !== undefined) {
+    rule = { ...rule, provenance: parsed.provenance };
+  }
+
   return {
     name: parsed.name,
     line: typeof parsed.line === 'string' ? parsed.line : '',
-    // Handed on unvalidated, deliberately: this is a dev server, and the one
+    // Otherwise unvalidated, deliberately: this is a dev server, and the one
     // place that decides whether a rule is a rule is the validator in canon/.
-    data: parsed.rule,
+    data: rule,
   };
 }
 
