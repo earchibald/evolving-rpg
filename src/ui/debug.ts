@@ -4,7 +4,7 @@ import { createWorld, ratifyRule } from '../core/commands.js';
 import { playerStep, playerWait, runWorldTurns, buryIfDead, beginAgain, descend, isGrave } from '../play/session.js';
 import { isAlive } from '../core/entity.js';
 import { outcome, hitChance } from '../core/commands.js';
-import { damageDice, XP_TO_REACH, slotOf } from '../core/tables.js';
+import { damageDice, XP_TO_REACH, slotOf, critFloor } from '../core/tables.js';
 import { itemAt } from '../core/item.js';
 import { save, load, clear, emptySession } from '../play/store.js';
 import {
@@ -495,13 +495,61 @@ function render(): void {
     into.append(old, document.createTextNode(' → '), fresh);
   };
 
+  // What each number IS, on hover — the derivation with today's values in it,
+  // not a rulebook reference. Covenant L1 at the row level: a stat you cannot
+  // interrogate is a stat you take on faith.
+  const tips = new Map<string, string>();
+  if (player !== undefined) {
+    const p = player.stats;
+    const d = damageDice(p.might);
+    // The next damage band, found by asking the table rather than copying it.
+    let nextAt = 0;
+    for (let m = p.might + 1; m <= p.might + 8; m += 1) {
+      const n = damageDice(m);
+      if (n.die !== d.die || n.flat !== d.flat) { nextAt = m; break; }
+    }
+    const next = nextAt === 0 ? '' : (() => {
+      const n = damageDice(nextAt);
+      return ` might ${nextAt} reaches the next band: ${1 + n.flat}–${n.die + n.flat}.`;
+    })();
+    const gearHp = Object.values(player.gear ?? {}).reduce((n, g) => n + (g?.grants.hp ?? 0), 0);
+    const levelHp = 2 * (state.level - 1);
+    const born = player.maxHp - levelHp - gearHp;
+
+    tips.set('might', `how hard you hit. sets your damage dice — now ${1 + d.flat}–${d.die + d.flat} — and what a blow of yours needs: 10 + their speed − ${p.might}, on a d20.`);
+    tips.set('speed', `how hard you are to hit. a creature needs 10 + ${p.speed} − its might on a d20 to land a blow on you.`);
+    tips.set('wits', `how wide your crit window is: you crit on ${critFloor(p.wits)}–20. a crit always lands and doubles its damage. the window widens one step per 4 wits.`);
+    tips.set('hit points', `${p.hp} of a ceiling of ${player.maxHp}: ${born} at birth + ${levelHp} from levels + ${gearHp} from what you wear. wounds close whole at each level, and on the stairs of a cleared floor.`);
+    tips.set('you deal', `1d${d.die}+${d.flat} each blow that lands — the band your might ${p.might} sits in.${next} a crit doubles the roll.`);
+  }
+  const tipped = (node: HTMLElement, key: string): void => {
+    const text = tips.get(key);
+    if (text === undefined) return;
+    node.dataset['tip'] = text;
+    node.title = text;
+  };
+
   const vitalsEl = el('vitals');
   vitalsEl.textContent = '';
   for (const [label, value, tone] of vitals) {
     const dt = document.createElement('dt');
-    dt.textContent = label;
+    if (label === 'might · speed · wits') {
+      // Three words, three tooltips — the row is one label but the stats are
+      // not one stat.
+      (['might', 'speed', 'wits'] as const).forEach((word, i) => {
+        if (i > 0) dt.append(document.createTextNode(' · '));
+        const span = document.createElement('span');
+        span.textContent = word;
+        tipped(span, word);
+        dt.append(span);
+      });
+    } else {
+      dt.textContent = label;
+      tipped(dt, label);
+    }
     const dd = document.createElement('dd');
     if (tone !== '') dd.className = tone;
+    tipped(dd, label);
 
     if (typeof value === 'string') {
       if (NOTABLE.includes(label)) {
@@ -526,6 +574,7 @@ function render(): void {
         } else {
           span.textContent = seg.text;
         }
+        tipped(span, seg.key);
         dd.append(span);
       });
     }
@@ -1032,6 +1081,8 @@ const KEYMAP: ReadonlyArray<{ shown: string; what: string; button?: string }> = 
   { shown: 'PgUp · PgDn', what: 'read back through the journal' },
   { shown: 'n', what: 'world… — begin again / another / wipe', button: 'open-worlds' },
   { shown: 'g', what: 'the forge — ask the world for a rule', button: 'open-forge' },
+  { shown: 'm', what: 'the gamemaster’s screen — channels, lenses, rules, names, the ledger', button: 'open-screen' },
+  { shown: '1 · 2', what: 'in the screen: write to the designer · to the gamemaster' },
   { shown: 'r', what: 'begin this world again, straight away', button: 'again' },
   { shown: 'v', what: 'verify every hash and counter in the chain', button: 'verify' },
   { shown: 'f', what: 'fork a new timeline from this moment', button: 'fork' },
@@ -1047,17 +1098,30 @@ const BUTTON_KEYS: Readonly<Record<string, string>> = Object.fromEntries(
 
 window.addEventListener('keydown', (event) => {
   // Typing into a channel is not playing. Without this, writing "search the
-  // wall" walks you four squares west. Escape steps back out of the box.
+  // wall" walks you four squares west. Escape steps back out of the box —
+  // and only out of the box: inside a sheet it must not also close the
+  // sheet, or one keypress destroys the draft and the room it was typed in.
   const target = event.target;
   if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
-    if (event.key === 'Escape') target.blur();
+    if (event.key === 'Escape') {
+      if (document.querySelector('dialog[open]') !== null) event.preventDefault();
+      target.blur();
+    }
     return;
   }
 
   // An open sheet owns the keyboard: Escape closes and Enter presses its
   // focused button natively. Game keys through a dialog would be play you
-  // cannot see.
-  if (document.querySelector('dialog[open]') !== null) return;
+  // cannot see. The gamemaster's screen adds two of its own: a number picks
+  // up a pen.
+  if (document.querySelector('dialog[open]') !== null) {
+    const screen = el('gm-screen') as HTMLDialogElement;
+    if (screen.open && (event.key === '1' || event.key === '2')) {
+      event.preventDefault();
+      el(event.key === '1' ? 'designer-said' : 'gm-said').focus();
+    }
+    return;
+  }
 
   if (event.metaKey || event.ctrlKey || event.altKey) return;
 
@@ -1413,6 +1477,14 @@ function watchTheClock(): void {
 }
 
 el('open-forge').addEventListener('click', () => { renderForge(); forge.showModal(); });
+
+// The gamemaster's screen: everything behind the game — the two channels,
+// the lenses, rules, names, the ask queue, worlds, the ledger, the
+// floorboards, the fog's other side — one sheet, one key. The play surface
+// keeps the map, the journal and you; the machinery waits behind m.
+el('open-screen').addEventListener('click', () => {
+  (el('gm-screen') as HTMLDialogElement).showModal();
+});
 
 // Beginning again without having to die for it. The rules stay; everything
 // else goes back to the start. Lives in the world sheet, but the `r` key

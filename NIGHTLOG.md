@@ -420,3 +420,23 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > Verified by an agent playing through the browser: BFS-walked to the
 > guarded blade, killed two wolves on the way, leveled mid-fight, equipped —
 > every row told its story.
+
+> [!NOTE]
+> **16:0x — Numbers you can interrogate, and the gamemaster's screen**
+> 1. **Hover any dotted-underlined number for its derivation, with today's
+>    values in it**: *might* explains your dice and your to-hit; *speed* what
+>    it costs a creature to touch you; *wits* your crit window; *hit points*
+>    the full ceiling arithmetic (birth + levels + gear); *you deal* names
+>    your band and what might reaches the next one. Separate tooltips per
+>    stat — covenant L1 at the row level.
+> 2. **The gamemaster's screen** (<kbd>m</kbd>): the two channels and every
+>    machinery panel — lenses, rules, names, the ask queue, worlds, the
+>    ledger, floorboards, through-the-fog — one wide modal. Inside it:
+>    <kbd>1</kbd> writes to the designer, <kbd>2</kbd> the gamemaster,
+>    <kbd>esc</kbd> steps out of a writing box *without* closing the sheet
+>    (your draft survives), <kbd>esc</kbd> again returns to play. The play
+>    surface is now just the map, the journal and you.
+> 3. Two layout bugs found by playing: the sheet width cap squeezed the
+>    screen to one column (CSS order — the cap came later in the file), and
+>    the rail's overflow guard clipped tooltips to a sliver at its edge.
+>    Both fixed; the whole pane verified by hover, key and screenshot.

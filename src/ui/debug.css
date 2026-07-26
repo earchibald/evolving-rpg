@@ -170,8 +170,9 @@ kbd {
   display: flex; flex-direction: column; gap: 1rem;
   grid-column: 2; grid-row: 2 / span 9;
   position: sticky; top: .5rem; align-self: start;
-  max-height: calc(100vh - 1rem);
-  overflow-y: auto; scrollbar-gutter: stable; overscroll-behavior: contain;
+  /* No overflow guard: an auto overflow on either axis clips the stat
+     tooltips to a sliver at the rail's edge. The rail is shorter than any
+     window this is played in; if it ever is not, the page scrolls. */
 }
 .panel section, .rest-grid section { display: flex; flex-direction: column; gap: .4rem; }
 
@@ -192,6 +193,28 @@ h2 {
 .vitals .changed { background: rgba(240, 173, 60, .1); border-radius: 2px; padding: 0 .25rem; }
 .vitals .was { color: var(--player); }
 .vitals .now { color: var(--exit); }
+
+/* What a number IS, on hover: the derivation, with today's values in it.
+   Instant — the native title's second of hesitation reads as "no tooltip
+   here" — and anchored by its right edge so it opens toward the map, never
+   off the page. The dotted underline is the only standing hint. */
+.vitals [data-tip] { cursor: help; text-decoration: underline dotted rgba(153, 161, 176, .45); text-underline-offset: 3px; position: relative; }
+.vitals [data-tip]:hover::after {
+  content: attr(data-tip);
+  position: absolute; right: 0; top: calc(100% + .35rem); z-index: 6;
+  width: 19rem; padding: .5rem .65rem;
+  background: var(--ground); border: 1px solid var(--rule); border-radius: 3px;
+  color: var(--soft); font-size: .75rem; line-height: 1.5;
+  white-space: normal; text-decoration: none;
+}
+
+/* The gamemaster's screen: wide, tall, scrolls inside itself. The rest-grid
+   keeps its own layout; it just lives behind a key now. The compound
+   selector out-ranks .sheet's 34rem cap — these rules sit earlier in the
+   file, and at equal specificity the cap was winning. */
+.sheet.screen { width: calc(100vw - 2.5rem); max-width: 74rem; max-height: 88vh; overflow-y: auto; scrollbar-gutter: stable; }
+.sheet.screen .rest { border-top: 1px solid var(--rule); padding-top: 1rem; margin-top: 1rem; }
+.sheet.screen > h2 { margin-bottom: .4rem; }
 .vitals dd.good { color: var(--exit); }
 
 .threats {

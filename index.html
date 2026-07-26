@@ -29,6 +29,7 @@
         <div class="turn-controls">
           <button id="open-worlds" type="button" class="ghost">world&hellip; <kbd>n</kbd></button>
           <button id="open-forge" type="button" class="ghost">the forge&hellip; <kbd>g</kbd></button>
+          <button id="open-screen" type="button" class="ghost">the screen&hellip; <kbd>m</kbd></button>
           <button id="verify" type="button" class="ghost">verify chain <kbd>v</kbd></button>
           <button id="fork" type="button" class="ghost">fork here <kbd>f</kbd></button>
           <button id="rewind" type="button" class="ghost">back 10 <kbd>b</kbd></button>
@@ -39,6 +40,11 @@
           <ul id="threats" class="threats scrolls"></ul>
         </section>
       </aside>
+    </div>
+
+    <dialog id="gm-screen" class="sheet screen">
+      <h2>the gamemaster&rsquo;s screen</h2>
+      <p class="sheet-line">everything behind the game &middot; <kbd>1</kbd> write to the designer &middot; <kbd>2</kbd> the gamemaster &middot; <kbd>esc</kbd> back to play</p>
 
       <section class="channels-wrap">
         <div class="channels">
@@ -97,7 +103,11 @@
           </section>
         </div>
       </section>
-    </div>
+
+      <form method="dialog">
+        <menu><button value="cancel" class="ghost">close <kbd>esc</kbd></button></menu>
+      </form>
+    </dialog>
 
     <dialog id="worlds-dialog" class="sheet">
       <form method="dialog">
