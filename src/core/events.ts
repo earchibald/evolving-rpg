@@ -11,7 +11,7 @@ import type { Item } from './item.js';
  *  payload — a special case that could not survive any second consumer of
  *  randomness, and combat is one. */
 export const SCHEMA_VERSIONS = {
-  WORLD_INIT: 5,
+  WORLD_INIT: 6,
   MOVE: 2,
   MOVE_BLOCKED: 2,
   TURN_ADVANCED: 2,
@@ -51,6 +51,10 @@ export interface WorldInitPayload {
   height: number;
   tiles: number[];
   seed: number;
+  /** v6. The generator's account of what it built, in plain words — covenant
+   *  L1. Recorded rather than derived, because "what generation decided" is a
+   *  fact about this world's birth and the log is where facts live. */
+  story?: string;
   player: EntitySeed;
   /** v4. What is worth a detour. The way out is not here — it is a tile, and
    *  recording a place twice gives two things that can disagree. */

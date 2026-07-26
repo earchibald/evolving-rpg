@@ -85,8 +85,53 @@ export function chain(log: EventLog, head: string | null): GameEvent[] {
   return out.reverse();
 }
 
+/**
+ * Folded states, memoised by event id — for the whole process, across logs.
+ *
+ * Sound because identity is content *plus position*: an event's id commits to
+ * its entire ancestry through the parent hashes, so the state at a given id is
+ * the same state in every log that contains it, forever. Apply is pure and
+ * events are deep-frozen, so a cached state can never drift from a recomputed
+ * one. This is the content-addressed design paying its way: without the memo,
+ * every keypress refolds from the root and an autoplayed run is quadratic in
+ * its own length — the 48x32 boards made that a minute per sweep.
+ *
+ * Cleared wholesale at the cap rather than evicted piecewise: correctness
+ * never depends on an entry being present, so the worst case of clearing is
+ * one refold from the root per chain.
+ */
+const FOLDED = new Map<string, GameState>();
+const FOLD_CACHE_LIMIT = 200_000;
+
 export function fold(log: EventLog, head: string | null): GameState {
-  return chain(log, head).reduce(apply, EMPTY_STATE);
+  if (head === null) return EMPTY_STATE;
+  const hit = FOLDED.get(head);
+  if (hit !== undefined) return hit;
+
+  // Walk back to the nearest already-folded ancestor, then apply forward from
+  // it, caching every intermediate state on the way — so the next fold of any
+  // prefix, sibling or extension of this chain starts warm.
+  const pending: GameEvent[] = [];
+  const seen = new Set<string>();
+  let cursor: string | null = head;
+  let state = EMPTY_STATE;
+  while (cursor !== null) {
+    if (seen.has(cursor)) throw new Error(`fold: cycle at ${cursor}`);
+    seen.add(cursor);
+    const cached = FOLDED.get(cursor);
+    if (cached !== undefined) { state = cached; break; }
+    const event = log.events.get(cursor);
+    if (event === undefined) throw new Error(`fold: missing event ${cursor}`);
+    pending.push(event);
+    cursor = event.parent;
+  }
+
+  if (FOLDED.size + pending.length > FOLD_CACHE_LIMIT) FOLDED.clear();
+  for (let i = pending.length - 1; i >= 0; i -= 1) {
+    state = apply(state, pending[i]!);
+    FOLDED.set(pending[i]!.id, state);
+  }
+  return state;
 }
 
 export interface Divergence {
@@ -139,7 +184,12 @@ export function verifyChain(log: EventLog, head: string | null): Divergence | nu
     }
     expectedSeq += 1;
 
-    if (state.rngCounter !== event.rngCounter) {
+    // WORLD_INIT opens a new counter epoch: a fresh floor draws from a fresh
+    // seed, addressed from zero, and both the generator and `apply` already
+    // treat it so. Demanding continuity across the stairs refused every saved
+    // run that had ever descended — found by a player losing a session to
+    // "diverges at seq 120", where seq 120 was floor 2 being born.
+    if (event.type !== 'WORLD_INIT' && state.rngCounter !== event.rngCounter) {
       return {
         seq: event.seq,
         eventId: event.id,

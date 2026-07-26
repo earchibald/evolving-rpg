@@ -1,7 +1,9 @@
 import { emptyLog, append, chain, fold } from '../../src/log/chain.js';
 import { emptyRefs, createRef, setHead, fork, getRef } from '../../src/log/refs.js';
 import { createWorld } from '../../src/core/commands.js';
-import { playerStep, runWorldTurns } from '../../src/play/session.js';
+import { playerStep, runWorldTurns, descend } from '../../src/play/session.js';
+import { outcome } from '../../src/core/commands.js';
+import { firstStepToward } from '../../src/play/policies.js';
 import { serialise, deserialise } from '../../src/play/store.js';
 import { canonicalJson } from '../../src/log/canonical.js';
 import type { EventLog } from '../../src/log/chain.js';
@@ -13,7 +15,7 @@ const AT = '2026-07-25T00:00:00.000Z';
 /** A short played session with two worlds, so the round trip has something with
  *  shape to it rather than a single event. */
 function played(): { log: EventLog; refs: Refs } {
-  const first = append(emptyLog(), null, createWorld(20260724, 24, 16, 60));
+  const first = append(emptyLog(), null, createWorld(20260724, 24, 16));
   let log = first.log;
   let refs = createRef(emptyRefs(), 'main', first.event.id, 0, 'opening run');
 
@@ -126,5 +128,43 @@ describe('restoring', () => {
       ),
     };
     expect(() => deserialise(bent)).toThrow(/main|sidetrack/);
+  });
+});
+
+describe('a session that crossed the stairs', () => {
+  it('survives the save/load round trip', () => {
+    // The bug this pins: WORLD_INIT records rngCounter 0 (a new floor is a
+    // new counter epoch), and restore's verification demanded continuity —
+    // so every save made after a descent was refused on reload and the
+    // session silently started over. Auto-descend made that every session.
+    const first = append(emptyLog(), null, createWorld(31, 48, 32));
+    let log = first.log;
+    let refs = createRef(emptyRefs(), 'main', first.event.id, 0, 'opening');
+
+    // Walk until escaped (rusher-style straight drive is not needed — descend
+    // only requires standing on the exit; walk the exit's way via session).
+    let position = { log, head: first.event.id };
+    for (let i = 0; i < 400; i += 1) {
+      const state = fold(position.log, position.head);
+      if (outcome(state) !== 'playing') break;
+      const me = state.entities[0]!;
+      const exitAt = state.grid.tiles.indexOf(2);
+      const ex = { x: exitAt % state.grid.width, y: Math.floor(exitAt / state.grid.width) };
+      const wish = firstStepToward(state, me.pos, (p) => p.x === ex.x && p.y === ex.y);
+      if (wish === null) break;
+      const acted = playerStep(position, 'player', wish.dx, wish.dy);
+      position = runWorldTurns(acted.position, 'player');
+    }
+    expect(outcome(fold(position.log, position.head))).toBe('escaped');
+    log = position.log;
+    refs = setHead(refs, 'main', position.head);
+
+    const down = descend(log, refs, 'main', { width: 48, height: 32 });
+    expect(down).not.toBeNull();
+
+    const saved = serialise(down!.log, down!.refs, 'main', AT);
+    expect(saved).not.toBeNull();
+    const restored = deserialise(saved!);
+    expect(fold(restored.log, getRef(restored.refs, 'main').head!).depth).toBe(2);
   });
 });

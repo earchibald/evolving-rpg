@@ -5,7 +5,8 @@ import { sha256 } from '@noble/hashes/sha256';
 import { bytesToHex } from '@noble/hashes/utils';
 import { emptyLog, append, chain, fold } from '../src/log/chain.js';
 import { createWorld, outcome } from '../src/core/commands.js';
-import { playerStep, runWorldTurns } from '../src/play/session.js';
+import { autoplay } from '../src/play/autoplay.js';
+import { POLICIES } from '../src/play/policies.js';
 import { canonicalJson } from '../src/log/canonical.js';
 import { ENGINE_VERSION } from '../src/version.js';
 
@@ -25,47 +26,29 @@ if (process.env.ALLOW_GOLDEN_REGEN !== '1') {
   process.exit(1);
 }
 
-// Hand-picked so the scripted walk actually meets combat: 16 strikes under
-// the current tables. A golden fixture that never fights leaves the newest and
-// riskiest code untouched by the strongest test in the repo.
-const SEED = 30;
-const WIDTH = 24;
-const HEIGHT = 16;
-const WALLS = 60;
+// Driven by a policy rather than a fixed key script. Rooms-and-corridors
+// killed the scripted walker: a fixed pattern grinds the walls of its first
+// room and never finds a door — probed across 140 seed/script pairs, not one
+// produced a fight. The brawler tours the map, fights everything, takes
+// prizes and leaves: every subsystem in one recorded run. The policy's code
+// is part of the input now, which is wanted — a behaviour change in pathing
+// or combat turns the golden red, and regenerating past it is the ceremony
+// above.
+//
+// Seed hand-picked from that probe: 14 strikes, a crit, an item equipped,
+// escapes. A golden fixture that never fights leaves the newest and riskiest
+// code untouched by the strongest test in the repo.
+const SEED = 25;
+const WIDTH = 48;
+const HEIGHT = 32;
+const POLICY = 'brawler';
+const MAX_ACTIONS = 220;
 
-/** Fixed, hand-written input script — 100 steps. Not generated, so it never drifts. */
-const SCRIPT = 'NNEESSWWNESWNNWWSSEE'.repeat(5);
+const first = append(emptyLog(), null, createWorld(SEED, WIDTH, HEIGHT));
 
-const STEPS: Record<string, readonly [number, number]> = {
-  N: [0, -1], S: [0, 1], E: [1, 0], W: [-1, 0],
-};
-
-let log = emptyLog();
-const first = append(log, null, createWorld(SEED, WIDTH, HEIGHT, WALLS));
-log = first.log;
-let head = first.event.id;
-
-let played = 0;
-for (const key of SCRIPT) {
-  const step = STEPS[key];
-  if (step === undefined) throw new Error(`bad script character ${key}`);
-
-  // The run can end before the script does — under real combat the scripted
-  // walker sometimes dies, and a fixture that dies is a fixture that exercised
-  // the sharpest code. `played` records how far the input got.
-  if (outcome(fold(log, head)) !== 'playing') break;
-  played += 1;
-
-  // A real playthrough, not just a walk: the world takes its turns too, so the
-  // recorded run exercises the AI, combat, and a draw count that actually
-  // varies. A golden fixture that never fights would leave the newest and
-  // riskiest code untouched by the strongest test in the repo.
-  const acted = playerStep({ log, head }, 'player', step[0], step[1]);
-  void acted.draft;
-  const after = runWorldTurns(acted.position, 'player');
-  log = after.log;
-  head = after.head;
-}
+const done = autoplay({ log: first.log, head: first.event.id }, POLICIES[POLICY]!, MAX_ACTIONS);
+const head = done.position.head;
+const log = done.position.log;
 
 const finalState = fold(log, head);
 const ended = outcome(finalState);
@@ -75,9 +58,9 @@ const fixture = {
   seed: SEED,
   width: WIDTH,
   height: HEIGHT,
-  walls: WALLS,
-  script: SCRIPT,
-  played,
+  policy: POLICY,
+  maxActions: MAX_ACTIONS,
+  actions: done.actions,
   outcome: ended,
   head,
   finalStateHash: bytesToHex(sha256(new TextEncoder().encode(canonicalJson(finalState)))),
@@ -91,5 +74,6 @@ writeFileSync(out, `${JSON.stringify(fixture, null, 2)}\n`, 'utf8');
 
 console.log(`wrote ${out}`);
 console.log(`events: ${fixture.events.length}`);
+console.log(`actions: ${fixture.actions}, outcome: ${ended}`);
 console.log(`head: ${head}`);
 console.log(`finalStateHash: ${fixture.finalStateHash}`);

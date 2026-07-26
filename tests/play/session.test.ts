@@ -4,12 +4,13 @@ import { createWorld, outcome } from '../../src/core/commands.js';
 import { farthestFrom } from '../../src/core/mapgen.js';
 import { EXIT, FLOOR } from '../../src/core/grid.js';
 import { reachableFrom } from '../../src/core/reachability.js';
+import { SCHEMA_VERSIONS } from '../../src/core/events.js';
 import type { GameEvent } from '../../src/core/events.js';
 
 const SEED = 20260724;
 
 function opening(): { log: ReturnType<typeof emptyLog>; head: string } {
-  const first = append(emptyLog(), null, createWorld(SEED, 24, 16, 60));
+  const first = append(emptyLog(), null, createWorld(SEED, 24, 16));
   return { log: first.log, head: first.event.id };
 }
 
@@ -31,8 +32,8 @@ describe('the world a run starts in', () => {
     // exactly what happened when the placement was mutated to a fixed corner.
     for (let seed = 0; seed < 30; seed += 1) {
       const built = fold(
-        append(emptyLog(), null, createWorld(seed, 24, 16, 60)).log,
-        append(emptyLog(), null, createWorld(seed, 24, 16, 60)).event.id,
+        append(emptyLog(), null, createWorld(seed, 24, 16)).log,
+        append(emptyLog(), null, createWorld(seed, 24, 16)).event.id,
       );
       const you = built.entities[0];
       if (you === undefined) throw new Error(`no player for seed ${seed}`);
@@ -93,7 +94,7 @@ describe('holding position', () => {
     // That is correct, and worth knowing.
     const world: GameEvent = {
       id: 'w', parent: null, seq: 0,
-      type: 'WORLD_INIT', schemaVersion: 5, rngCounter: 0, rngDraws: 0,
+      type: 'WORLD_INIT', schemaVersion: SCHEMA_VERSIONS.WORLD_INIT, rngCounter: 0, rngDraws: 0,
       payload: {
         width: 9, height: 1, tiles: new Array<number>(9).fill(FLOOR), seed: 3, items: [],
         player: { id: 'player', kind: 'you', pos: { x: 0, y: 0 }, stats: { hp: 10, might: 3, wits: 3, speed: 4 }, tags: [] },
@@ -126,7 +127,7 @@ describe('a finished run', () => {
   function corridor(): { log: ReturnType<typeof emptyLog>; head: string } {
     const world: GameEvent = {
       id: 'w', parent: null, seq: 0,
-      type: 'WORLD_INIT', schemaVersion: 5, rngCounter: 0, rngDraws: 0,
+      type: 'WORLD_INIT', schemaVersion: SCHEMA_VERSIONS.WORLD_INIT, rngCounter: 0, rngDraws: 0,
       payload: {
         width: 3, height: 1, tiles: [FLOOR, FLOOR, EXIT], seed: 1, items: [],
         player: { id: 'player', kind: 'you', pos: { x: 0, y: 0 }, stats: { hp: 10, might: 3, wits: 3, speed: 4 }, tags: [] },
@@ -171,7 +172,7 @@ describe('a finished run', () => {
   it('is dead, not playing, at no hit points', () => {
     const world: GameEvent = {
       id: 'w', parent: null, seq: 0,
-      type: 'WORLD_INIT', schemaVersion: 5, rngCounter: 0, rngDraws: 0,
+      type: 'WORLD_INIT', schemaVersion: SCHEMA_VERSIONS.WORLD_INIT, rngCounter: 0, rngDraws: 0,
       payload: {
         width: 3, height: 1, tiles: [FLOOR, FLOOR, EXIT], seed: 1, items: [],
         player: { id: 'player', kind: 'you', pos: { x: 0, y: 0 }, stats: { hp: 0, might: 3, wits: 3, speed: 4 }, tags: [] },
@@ -191,7 +192,7 @@ describe('taking what is underfoot', () => {
     const world: GameEvent = {
       id: 'w', parent: null, seq: 0,
       type: 'WORLD_INIT',
-      schemaVersion: 5,
+      schemaVersion: SCHEMA_VERSIONS.WORLD_INIT,
       rngCounter: 0,
       rngDraws: 0,
       payload: {
@@ -231,7 +232,7 @@ describe('a pocketed creature cannot freeze the world', () => {
     // round-robin hung on it for the rest of the run.
     const world: GameEvent = {
       id: 'w', parent: null, seq: 0,
-      type: 'WORLD_INIT', schemaVersion: 5, rngCounter: 0, rngDraws: 0,
+      type: 'WORLD_INIT', schemaVersion: SCHEMA_VERSIONS.WORLD_INIT, rngCounter: 0, rngDraws: 0,
       payload: {
         width: 5, height: 1,
         tiles: [FLOOR, FLOOR, 1, FLOOR, FLOOR], seed: 3, items: [],

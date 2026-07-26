@@ -28,6 +28,9 @@ export interface GameState {
   readonly level: number;
   /** How deep this floor lies. The first is 1. */
   readonly depth: number;
+  /** The generator's plain-words account of this floor's shape — covenant L1.
+   *  Empty for logs that predate the telling. */
+  readonly story: string;
 }
 
 const NO_ENTITIES: readonly Entity[] = Object.freeze([]);
@@ -50,4 +53,5 @@ export const EMPTY_STATE: GameState = Object.freeze({
   xp: 0,
   level: 1,
   depth: 1,
+  story: '',
 });

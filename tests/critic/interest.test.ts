@@ -1,3 +1,4 @@
+import { SCHEMA_VERSIONS } from '../../src/core/events.js';
 import { interestOf, HURT_WEIGHT, NEAR_WEIGHT } from '../../src/critic/interest.js';
 import { emptyLog, append } from '../../src/log/chain.js';
 import { FLOOR } from '../../src/core/grid.js';
@@ -18,7 +19,7 @@ const WIDE = 12;
 
 function world(beastAt: number, hp = 10): DraftEvent {
   return {
-    type: 'WORLD_INIT', schemaVersion: 5, rngCounter: 0, rngDraws: 0,
+    type: 'WORLD_INIT', schemaVersion: SCHEMA_VERSIONS.WORLD_INIT, rngCounter: 0, rngDraws: 0,
     payload: {
       width: WIDE, height: 1, tiles: new Array<number>(WIDE).fill(FLOOR), seed: 1, items: [],
       player: { id: 'player', kind: 'you', pos: { x: 0, y: 0 }, stats: { hp, might: 3, wits: 1, speed: 3 }, tags: [] },
@@ -165,7 +166,7 @@ describe('the awkward chains', () => {
 
   it('handles a world with nothing alive in it', () => {
     const alone: DraftEvent = {
-      type: 'WORLD_INIT', schemaVersion: 5, rngCounter: 0, rngDraws: 0,
+      type: 'WORLD_INIT', schemaVersion: SCHEMA_VERSIONS.WORLD_INIT, rngCounter: 0, rngDraws: 0,
       payload: {
         width: WIDE, height: 1, tiles: new Array<number>(WIDE).fill(FLOOR), seed: 1, items: [],
         player: { id: 'player', kind: 'you', pos: { x: 0, y: 0 }, stats: { hp: 10, might: 3, wits: 1, speed: 3 }, tags: [] },
@@ -191,7 +192,7 @@ describe('the stairs cut the curve', () => {
     const first: DraftEvent[] = [world(11)];
     for (let n = 2; n <= 8; n += 1) first.push(turn(n));
     const descentWorld: DraftEvent = {
-      type: 'WORLD_INIT', schemaVersion: 5, rngCounter: 0, rngDraws: 0,
+      type: 'WORLD_INIT', schemaVersion: SCHEMA_VERSIONS.WORLD_INIT, rngCounter: 0, rngDraws: 0,
       payload: {
         width: WIDE, height: 1, tiles: new Array<number>(WIDE).fill(FLOOR), seed: 2, depth: 2, items: [],
         player: { id: 'player', kind: 'you', pos: { x: 0, y: 0 }, stats: { hp: 10, might: 3, wits: 1, speed: 3 }, tags: [] },

@@ -149,3 +149,40 @@ fighter's margin shows at depth 5 (5v3), where XP, relics and the stairs-rest
 compound. The band test pins non-domination at 3 and strict inversion at 5.
 If the inversion should live at depth 3 again, the honest knobs are the XP
 curve or creature growth rows — not another relic.
+
+**Pass 9 (10:4x — rooms, corridors, and the watched stairs).** The 48x32
+rooms-and-corridors boards (MAPS.md) invalidated the old numbers two ways.
+First: corridors made every fight avoidable, and the runner out-survived the
+fighter 11–9 at depth 3 — the exact domination the Covenant forbids. The
+repair is placement, not arithmetic: **the strongest thing on the floor now
+stands beside the way out** (the warden, on its floors, with no special case
+— it out-threatens everything by construction; and the keeper is never a
+relic guard, found the hard way on a floor with two prizes and two
+creatures). Second: a linear budget on a 4x floor left depth 5 fielding four
+creatures the snowballed fighter dueled one at a time — 13-in-20 survived a
+band that says "rare". Budget gains a quadratic term anchored at depth 3
+(`24 + 15d + 4(d−2)²`); anchoring it at depth 2 crushed the depth-3 runner
+to 2-in-20 and lens #33 called the mid-game a corridor, so it was moved out
+a floor.
+
+Where the pinned seeds now stand (20 seeds, brawler/rusher):
+
+| depth | fighter | runner | reading |
+|---|---|---|---|
+| 1 | 19 | 17 | the door is gentle |
+| 3 | 13 | 3 | fighting pays, decisively — the old open question is closed |
+| 5 | 9 | 1 | the deep is earned; lens #33 reads depth 5 as brawler-only |
+
+The depth-3 tie from pass 8 is **resolved** — by the keeper, not by the XP
+knobs the note proposed. New honest observation, left for the designer: at
+depth 5 lens #33 reads "one viable path" (nobody runs past what they refused
+to fight). That is the snowball thesis stated back as a critique; if the deep
+should keep a runner's line open, the knob is keeper strength or corridor
+loop count, not budget.
+
+Creature behaviour on these boards: awareness is now **8 steps of walking**
+(BFS through standable tiles, deterministic, drawless) — a wall you cannot
+walk through is a wall you cannot hunt through, and a corridor fills
+single-file. The bumper policy learned to walk to a wall before bumping it;
+the golden fixture is policy-driven (brawler, seed 25) because no fixed key
+script survives a maze.

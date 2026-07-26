@@ -291,3 +291,36 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > **Try it:** wipe, grab the guarded relic, walk onto the green square.
 > Watch `wearing`, the glow, and the descent happen on their own.
 
+
+> [!IMPORTANT]
+> **10:4x — The world got rooms. And a covenant of legibility.**
+> Your morning list, first two landings:
+> 1. **L1, the legibility invariant** (your mid-morning addition): *every
+>    system exposes its mechanics human-readably* is now in the Covenant
+>    beside M1–M5/T1–T3, register `legible`. First enforcement: every floor
+>    records its own **story** in WORLD_INIT ("7 rooms, 2 loops · the way out
+>    is 41 steps of walking") — shown under the floorboards as `this floor`.
+> 2. **Rooms and corridors, 48x32** (4x area). Genre survey in
+>    `docs/design/MAPS.md` (Rogue / NetHack / Brogue / TinyKeep — with two
+>    myths corrected); ours is rejection-placed rooms, nearest-neighbour
+>    spanning corridors, extra loops (a tree makes every wrong turn a walk
+>    back). Connectivity is total and mutation-proofed: no sealed room, ever.
+> 3. **Creatures hunt by walking-distance** (8 steps, BFS): a wall you can't
+>    walk through is a wall they can't smell through. Corridors fill
+>    single-file. Deterministic, drawless, replay-exact.
+> 4. **The stairs are watched.** Corridors made fights avoidable — the runner
+>    beat the fighter 11–9 at depth 3, the exact domination the Covenant
+>    forbids. Now the strongest thing on the floor posts beside the exit (the
+>    warden on its floors, no special case needed). Depth 3 is now **13–3
+>    fighter over runner**; the pass-8 open question is closed. BALANCE.md
+>    pass 9 has every number and one new honest lens finding.
+> 5. **The engine got fast.** Folding memoises by event id (sound because ids
+>    are content-addressed): the suite dropped 12s → 3.7s and a balance sweep
+>    that never finished now runs in ~90s. 580 tests green.
+> 6. The golden fixture is **policy-driven** now (brawler, seed 25 — 14
+>    strikes, a crit, an equip, an escape): no fixed key script survives a
+>    maze. The regen ceremony is unchanged.
+>
+> **Try it:** wipe to a fresh world — corridors, loops, a bigger dark. Check
+> `this floor` under the floorboards, then go find the stairs and see who's
+> standing there.

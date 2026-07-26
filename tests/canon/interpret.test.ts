@@ -46,6 +46,7 @@ function stateWith(rules: Rule[], entities = [entity('player', 0, 0, 5, 10)]): G
     xp: 0,
     level: 1,
     depth: 1,
+    story: '',
   };
 }
 

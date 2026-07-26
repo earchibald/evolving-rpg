@@ -22,6 +22,7 @@ function room(entities: Entity[], walls: Array<[number, number]> = []): GameStat
     xp: 0,
     level: 1,
     depth: 1,
+    story: '',
   };
 }
 
@@ -95,6 +96,27 @@ describe('decide', () => {
   it('ignores you from beyond its awareness', () => {
     const far = you(5 + AWARENESS + 1, 5);
     expect(decide(room([being('thing-1', 'thing', 5, 5), far]), 'thing-1')).toEqual({ kind: 'wait' });
+  });
+
+  it('cannot smell you through a wall', () => {
+    // Four tiles away in a straight line, but the line is bricked over and the
+    // way round is longer than awareness. Manhattan distance would say "close";
+    // walking distance says "no path", and walking distance is the rule — a
+    // wall you cannot walk through is a wall you cannot hunt through.
+    const bar: Array<[number, number]> = Array.from({ length: 12 }, (_v, y) => [7, y]);
+    const state = room([being('thing-1', 'thing', 5, 5), you(9, 5)], bar);
+    expect(decide(state, 'thing-1')).toEqual({ kind: 'wait' });
+  });
+
+  it('counts the detour, not the crow-flight, and takes it when it is short enough', () => {
+    // Four away in a line, wall in between with a gap two rows down: the walk
+    // is seven steps, inside awareness, so the creature sets off along it —
+    // stepping the detour's way, not into the brick.
+    const wall: Array<[number, number]> = [[7, 4], [7, 5], [7, 6]];
+    const state = room([being('thing-1', 'thing', 6, 5), you(9, 5)], wall);
+    const action = decide(state, 'thing-1');
+    expect(action.kind).toBe('step');
+    expect(action).not.toEqual({ kind: 'step', dx: 1, dy: 0 });
   });
 
   it('notices you at the very edge of it', () => {

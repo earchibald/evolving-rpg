@@ -135,7 +135,12 @@ export const shuffler: Policy = (state, playerId) => {
 };
 
 /** Walks into the nearest wall, forever. MOVE_BLOCKED costs no turn, which is
- *  exactly why a rule firing on it needs this policy pointed at it. */
+ *  exactly why a rule firing on it needs this policy pointed at it.
+ *
+ *  On a rooms-and-corridors map the middle of a room has no wall in reach, so
+ *  a bumper with nothing adjacent *seeks* one: it steps toward the nearest
+ *  wall first, then spends the rest of eternity walking into it. A policy
+ *  whose whole job is MOVE_BLOCKED must produce some on any board. */
 export const bumper: Policy = (state, playerId) => {
   const me = you(state, playerId);
   if (me === undefined) return WAIT;
@@ -144,7 +149,8 @@ export const bumper: Policy = (state, playerId) => {
     if (to.x < 0 || to.y < 0 || to.x >= state.grid.width || to.y >= state.grid.height) return step(dx, dy);
     if (tileAt(state.grid, to.x, to.y) === WALL) return step(dx, dy);
   }
-  return WAIT;
+  const found = firstStepToward(state, me.pos, (p) => tileAt(state.grid, p.x, p.y) === WALL);
+  return found ?? WAIT;
 };
 
 /** Holds still, whatever happens. WAIT and TURN_PASSED, spammed. */

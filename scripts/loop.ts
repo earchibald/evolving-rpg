@@ -37,7 +37,7 @@ const rulePath = arg('rule', '');
 const stamp = new Date().toISOString().replace(/[:.]/gu, '-');
 
 function world(rules: Rule[]): Position {
-  const born = append(emptyLog(), null, createWorld(seed, 24, 16, 60));
+  const born = append(emptyLog(), null, createWorld(seed, 48, 32));
   let position: Position = { log: born.log, head: born.event.id };
   for (const rule of rules) {
     const done = append(position.log, position.head, ratifyRule(fold(position.log, position.head), rule));
@@ -59,7 +59,7 @@ interface Sweep {
 function sweep(rules: Rule[]): Sweep[] {
   const rows: Sweep[] = [];
   for (const [name, policy] of Object.entries(POLICIES)) {
-    const done = autoplay(world(rules), policy, 600);
+    const done = autoplay(world(rules), policy, 1500);
     const report = readTheGame(done.position.log, done.position.head);
     const interest = report.readings.find((r) => r.lens === 61);
     const flattest = /flattest run (\d+)/u.exec(interest?.confidence ?? '');
@@ -120,7 +120,7 @@ if (rulePath !== '') {
   rawRule = JSON.parse(readFileSync(rulePath, 'utf8'));
 } else {
   try {
-    rawRule = await propose(autoplay(world([]), POLICIES['brawler']!, 600).position);
+    rawRule = await propose(autoplay(world([]), POLICIES['brawler']!, 1500).position);
   } catch (error) {
     say(`\nproposal failed: ${String(error).slice(0, 120)} — is the dev server up?`);
     finish(1);

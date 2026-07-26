@@ -207,12 +207,22 @@ export function threatOf(stats: Stats): number {
   return Math.round(offence + defence);
 }
 
-/** The spawn budget a floor may spend on creatures. Linear and steep enough
- *  that depth 2 visibly bites. First cut (14+12d) let one unlucky bruiser roll
- *  eat floor 1 whole — a single-creature floor teaches nothing — so the base
- *  covers two or three modest creatures outright. */
+/** The spawn budget a floor may spend on creatures. The linear part is steep
+ *  enough that depth 2 visibly bites; first cut (14+12d) let one unlucky
+ *  bruiser roll eat floor 1 whole — a single-creature floor teaches nothing —
+ *  so the base covers two or three modest creatures outright.
+ *
+ *  The quadratic term arrived with the 48x32 boards: a linear budget on a 4x
+ *  floor left depth 5 fielding four creatures the snowballed fighter could
+ *  duel one at a time, and the deep ran 13-in-20 survivable against a stated
+ *  band of "rare". It starts at depth 3 — anchored at (d−2) — because
+ *  anchoring it one floor earlier crushed the depth-3 runner to 2-in-20 and
+ *  lens #33 read the mid-game as a corridor: one viable approach is not a
+ *  choice. The teaching floor never feels it at all. */
 export function spawnBudget(depth: number): number {
-  return 24 + 15 * Math.max(1, Math.floor(depth));
+  const d = Math.max(1, Math.floor(depth));
+  const deep = Math.max(0, d - 2);
+  return 24 + 15 * d + 4 * deep * deep;
 }
 
 /** Out-of-depth overlap: which creature-levels a floor may draw, with weights.

@@ -1,3 +1,4 @@
+import { SCHEMA_VERSIONS } from '../../src/core/events.js';
 import { emptyLog, append, fold } from '../../src/log/chain.js';
 import { threatOf, XP_TO_REACH, growthAt, creatureStats } from '../../src/core/tables.js';
 import { FLOOR } from '../../src/core/grid.js';
@@ -15,7 +16,7 @@ const skirmisher = creatureStats('skirmisher', 1)!;
 
 function world(opponents: { id: string; hp?: number }[]): DraftEvent {
   return {
-    type: 'WORLD_INIT', schemaVersion: 5, rngCounter: 0, rngDraws: 0,
+    type: 'WORLD_INIT', schemaVersion: SCHEMA_VERSIONS.WORLD_INIT, rngCounter: 0, rngDraws: 0,
     payload: {
       width: 10, height: 1, tiles: new Array<number>(10).fill(FLOOR), seed: 1, items: [],
       player: { id: 'player', kind: 'you', pos: { x: 0, y: 0 }, stats: { hp: 10, might: 3, wits: 1, speed: 3 }, tags: [] },

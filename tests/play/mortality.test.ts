@@ -1,3 +1,4 @@
+import { SCHEMA_VERSIONS } from '../../src/core/events.js';
 import { emptyLog, append, chain, fold } from '../../src/log/chain.js';
 import { emptyRefs, createRef, getRef, listRefs } from '../../src/log/refs.js';
 import { buryIfDead, beginAgain, isGrave, playerStep, playerWait, runWorldTurns } from '../../src/play/session.js';
@@ -15,7 +16,7 @@ import type { GameEvent } from '../../src/core/events.js';
 function doomed(playerHp = 1): { log: EventLog; refs: Refs } {
   const world: GameEvent = {
     id: 'w', parent: null, seq: 0,
-    type: 'WORLD_INIT', schemaVersion: 5, rngCounter: 0, rngDraws: 0,
+    type: 'WORLD_INIT', schemaVersion: SCHEMA_VERSIONS.WORLD_INIT, rngCounter: 0, rngDraws: 0,
     payload: {
       width: 5, height: 1, tiles: new Array<number>(5).fill(FLOOR), seed: 11,
       items: [{

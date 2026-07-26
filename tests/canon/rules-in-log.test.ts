@@ -32,7 +32,7 @@ function rule(id: string, over: Partial<Record<string, unknown>> = {}): Rule {
 
 /** A world with nothing in it but its opening event. */
 function world(): { log: EventLog; head: string } {
-  const { log, event } = append(emptyLog(), null, createWorld(1234, 12, 8, 10));
+  const { log, event } = append(emptyLog(), null, createWorld(1234, 12, 8));
   return { log, head: event.id };
 }
 
@@ -118,7 +118,7 @@ describe('not corrupting what came before', () => {
     const w = world();
     const ratified = append(w.log, w.head, ratifyRule(fold(w.log, w.head), rule('rule-1')));
     // A second world init on the same log replaces state wholesale.
-    const second = append(ratified.log, ratified.event.id, createWorld(99, 12, 8, 10));
+    const second = append(ratified.log, ratified.event.id, createWorld(99, 12, 8));
     expect(fold(second.log, second.event.id).rules).toHaveLength(0);
   });
 });

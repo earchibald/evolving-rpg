@@ -1,3 +1,4 @@
+import { SCHEMA_VERSIONS } from '../../src/core/events.js';
 import { autoplay } from '../../src/play/autoplay.js';
 import { POLICIES, rusher, brawler, sitter, bumper } from '../../src/play/policies.js';
 import { emptyLog, append, chain } from '../../src/log/chain.js';
@@ -13,7 +14,7 @@ import type { Position } from '../../src/play/session.js';
  */
 
 function world(seed: number): Position {
-  const born = append(emptyLog(), null, createWorld(seed, 24, 16, 60));
+  const born = append(emptyLog(), null, createWorld(seed, 24, 16));
   return { log: born.log, head: born.event.id };
 }
 
@@ -26,7 +27,7 @@ function emptyWorld(): Position {
   const tiles = new Array<number>(10).fill(FLOOR);
   tiles[9] = EXIT;
   const born = append(emptyLog(), null, {
-    type: 'WORLD_INIT', schemaVersion: 5, rngCounter: 0, rngDraws: 0,
+    type: 'WORLD_INIT', schemaVersion: SCHEMA_VERSIONS.WORLD_INIT, rngCounter: 0, rngDraws: 0,
     payload: {
       width: 10, height: 1, tiles, seed: 1, items: [],
       player: { id: 'player', kind: 'you', pos: { x: 0, y: 0 }, stats: { hp: 10, might: 3, wits: 1, speed: 3 }, tags: [] },
@@ -87,10 +88,19 @@ describe('driving the real game', () => {
     expect(a.ended).toBe(b.ended);
   });
 
-  it('bumper generates blocked moves without the world ever acting', () => {
+  it('bumper reaches a wall and then bumps it without the world ever acting again', () => {
+    // The seek is allowed to spend real turns — a room's middle has no wall in
+    // reach — but from the first bump onward, every action is a blocked move
+    // and none of them hands the world a turn. That is the property the assay
+    // leans on: MOVE_BLOCKED spam is free, forever.
     const done = autoplay(world(3), bumper, 30);
     const events = chain(done.position.log, done.position.head);
-    expect(events.filter((e) => e.type === 'MOVE_BLOCKED').length).toBeGreaterThan(0);
-    expect(events.filter((e) => e.type === 'TURN_ADVANCED').length).toBe(0);
+    const blocked = events.filter((e) => e.type === 'MOVE_BLOCKED');
+    expect(blocked.length).toBeGreaterThan(10);
+    const lastAdvance = events.map((e) => e.type).lastIndexOf('TURN_ADVANCED');
+    for (const e of events.slice(lastAdvance + 1)) {
+      expect(e.type).toBe('MOVE_BLOCKED');
+    }
+    expect(events.slice(lastAdvance + 1).length).toBeGreaterThan(10);
   });
 });

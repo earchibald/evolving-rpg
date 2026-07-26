@@ -8,7 +8,7 @@ import type { DraftEvent, GameEvent } from '../../src/core/events.js';
 /** Builds a short but real run: a world, then a few steps. */
 function build(): { log: EventLog; head: string } {
   let log = emptyLog();
-  const first = append(log, null, createWorld(2026, 16, 12, 30));
+  const first = append(log, null, createWorld(2026, 16, 12));
   log = first.log;
   let head = first.event.id;
 
@@ -27,14 +27,14 @@ function build(): { log: EventLog; head: string } {
 
 describe('append', () => {
   it('links the first event to no parent at sequence zero', () => {
-    const { event } = append(emptyLog(), null, createWorld(1, 12, 8, 10));
+    const { event } = append(emptyLog(), null, createWorld(1, 12, 8));
     expect(event.parent).toBeNull();
     expect(event.seq).toBe(0);
     expect(event.id).toMatch(/^[0-9a-f]{64}$/);
   });
 
   it('increments the sequence and points at the previous head', () => {
-    const first = append(emptyLog(), null, createWorld(1, 12, 8, 10));
+    const first = append(emptyLog(), null, createWorld(1, 12, 8));
     const state = fold(first.log, first.event.id);
     const second = append(first.log, first.event.id, attemptMove(state, 'player', 1, 0));
     expect(second.event.seq).toBe(1);
@@ -45,7 +45,7 @@ describe('append', () => {
     // Starts from a log that already holds an event, so the assertion has
     // something to detect: against an empty log, a mutating append would look
     // identical to a copying one.
-    const first = append(emptyLog(), null, createWorld(1, 12, 8, 10));
+    const first = append(emptyLog(), null, createWorld(1, 12, 8));
     const sizeBefore = first.log.events.size;
     append(first.log, first.event.id, attemptMove(fold(first.log, first.event.id), 'player', 1, 0));
     expect(first.log.events.size).toBe(sizeBefore);
@@ -55,7 +55,7 @@ describe('append', () => {
     // Log copies share event objects by reference, and fold does no hash check,
     // so an unfrozen event would let one holder silently derive a wrong state
     // for every fork descending from it.
-    const { event } = append(emptyLog(), null, createWorld(1, 12, 8, 10));
+    const { event } = append(emptyLog(), null, createWorld(1, 12, 8));
     if (event.type !== 'WORLD_INIT') throw new Error('fixture problem: expected WORLD_INIT');
 
     expect(Object.isFrozen(event)).toBe(true);
@@ -72,14 +72,14 @@ describe('append', () => {
   });
 
   it('rejects a head it has never seen', () => {
-    expect(() => append(emptyLog(), 'nope', createWorld(1, 12, 8, 10))).toThrow(/unknown head/);
+    expect(() => append(emptyLog(), 'nope', createWorld(1, 12, 8))).toThrow(/unknown head/);
   });
 
   it('returns the existing event and an unchanged log for a repeat append', () => {
     // Same content plus same position is the same event, not corruption.
     // Convergent history is ordinary once refs exist — undo a move and redo it,
     // or make the same move in two forks — so this must be idempotent.
-    const draft = createWorld(1, 12, 8, 10);
+    const draft = createWorld(1, 12, 8);
     const first = append(emptyLog(), null, draft);
     const again = append(first.log, null, draft);
 
@@ -92,7 +92,7 @@ describe('append', () => {
     // The regression that shipped: reset moves a head back, and the next press
     // of the same key reproduces an id already in the log. This threw, and the
     // debug view has no try/catch, so that key silently stopped working.
-    const first = append(emptyLog(), null, createWorld(20260724, 24, 16, 60));
+    const first = append(emptyLog(), null, createWorld(20260724, 24, 16));
     let log = first.log;
 
     const moveOnce = (head: string): string => {
@@ -243,7 +243,7 @@ describe('verifyChain', () => {
   it('catches an rng counter that does not line up with the state', () => {
     // Built honestly, so every hash is valid and the counter check is the only
     // thing that can fire. The move claims a counter the state never reached.
-    const first = append(emptyLog(), null, createWorld(555, 12, 8, 10));
+    const first = append(emptyLog(), null, createWorld(555, 12, 8));
     const state = fold(first.log, first.event.id);
     const player = state.entities[0];
     if (player === undefined) throw new Error('fixture problem: no player');

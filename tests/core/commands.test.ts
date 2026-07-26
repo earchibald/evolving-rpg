@@ -6,7 +6,8 @@ import { apply } from '../../src/core/apply.js';
 import { generateMap } from '../../src/core/mapgen.js';
 import { intBetween } from '../../src/core/rng.js';
 import { EMPTY_STATE } from '../../src/core/state.js';
-import { FLOOR, WALL, makeGrid } from '../../src/core/grid.js';
+import { FLOOR, WALL, EXIT, makeGrid } from '../../src/core/grid.js';
+import { threatOf } from '../../src/core/tables.js';
 import type { GameEvent } from '../../src/core/events.js';
 import type { GameState } from '../../src/core/state.js';
 import type { Entity } from '../../src/core/entity.js';
@@ -17,8 +18,8 @@ function seal(draft: ReturnType<typeof createWorld>): GameEvent {
 
 describe('createWorld', () => {
   it('is deterministic for a seed', () => {
-    expect(JSON.stringify(createWorld(4242, 24, 16, 60)))
-      .toBe(JSON.stringify(createWorld(4242, 24, 16, 60)));
+    expect(JSON.stringify(createWorld(4242, 24, 16)))
+      .toBe(JSON.stringify(createWorld(4242, 24, 16)));
   });
 
   it('records every draw generation made, the map and its inhabitants alike', () => {
@@ -26,9 +27,9 @@ describe('createWorld', () => {
     // the envelope owns every draw. Same seed, same world, same declared
     // draws — and strictly more than the bare map needed, because choosing
     // and placing a population costs draws too.
-    const draft = createWorld(4242, 24, 16, 60);
-    const again = createWorld(4242, 24, 16, 60);
-    const map = generateMap(4242, 0, 24, 16, 60);
+    const draft = createWorld(4242, 24, 16);
+    const again = createWorld(4242, 24, 16);
+    const map = generateMap(4242, 0, 24, 16);
 
     expect(again.rngDraws).toBe(draft.rngDraws);
     expect(draft.rngDraws).toBeGreaterThan(map.counterAfter);
@@ -38,7 +39,7 @@ describe('createWorld', () => {
     // The head-count belongs to the budget tables and the balance suite; what
     // this test owns is placement. Population must exist, stand on distinct
     // tiles, and give the player room to breathe.
-    const draft = createWorld(4242, 24, 16, 60);
+    const draft = createWorld(4242, 24, 16);
     const { player, opponents } = draft.payload;
     expect(opponents.length).toBeGreaterThanOrEqual(2);
 
@@ -53,13 +54,49 @@ describe('createWorld', () => {
     expect(seen.size).toBe(opponents.length);
   });
 
+  it('posts a keeper beside the way out, and nothing free-roaming out-threatens it', () => {
+    // Rooms and corridors made every fight avoidable, and the measurement was
+    // the exact domination the Covenant forbids: the runner out-survived the
+    // fighter 11 to 9 at depth 3. The stairs cost something now. Relic guards
+    // are exempt from selection — a guard's post is its prize.
+    for (const seed of [1, 7, 25, 4242]) {
+      const { payload } = createWorld(seed, 48, 32);
+      const exitAt = payload.tiles.indexOf(EXIT);
+      const exit = { x: exitAt % payload.width, y: Math.floor(exitAt / payload.width) };
+
+      const beside = payload.opponents.filter((o) =>
+        Math.abs(o.pos.x - exit.x) + Math.abs(o.pos.y - exit.y) === 1);
+      expect(beside.length).toBeGreaterThanOrEqual(1);
+
+      const onRelic = (o: { pos: { x: number; y: number } }): boolean =>
+        payload.items.some((i) => i.pos.x === o.pos.x && i.pos.y === o.pos.y);
+      const roaming = payload.opponents.filter((o) => !onRelic(o) && !beside.includes(o));
+      const keeperThreat = Math.max(...beside.map((o) => threatOf(o.stats)));
+      for (const o of roaming) {
+        expect(threatOf(o.stats)).toBeLessThanOrEqual(keeperThreat);
+      }
+    }
+  });
+
+  it('sends the warden to the stairs on its floors', () => {
+    // A boss is the strongest thing on its floor by construction, so the
+    // keeper selection finds it with no special case — but the sentence a
+    // player learns is this one, so it is pinned in these words.
+    const { payload } = createWorld(9, 48, 32, 'player', 3);
+    const exitAt = payload.tiles.indexOf(EXIT);
+    const exit = { x: exitAt % payload.width, y: Math.floor(exitAt / payload.width) };
+    const warden = payload.opponents.find((o) => o.kind.startsWith('warden'));
+    expect(warden).toBeDefined();
+    expect(Math.abs(warden!.pos.x - exit.x) + Math.abs(warden!.pos.y - exit.y)).toBe(1);
+  });
+
   it('gives the player the four stats', () => {
-    const { player } = createWorld(1, 12, 8, 10).payload;
+    const { player } = createWorld(1, 12, 8).payload;
     expect(player.stats).toEqual({ hp: 10, might: 3, wits: 3, speed: 4 });
   });
 
   it('folds into a state whose player stands on the recorded start', () => {
-    const draft = createWorld(77, 24, 16, 60);
+    const draft = createWorld(77, 24, 16);
     const state = apply(EMPTY_STATE, seal(draft));
     expect(state.entities[0]?.pos).toEqual(draft.payload.player.pos);
   });
@@ -84,6 +121,7 @@ function fixture(extra: Entity[] = []): GameState {
     xp: 0,
     level: 1,
     depth: 1,
+    story: '',
   };
 }
 
@@ -226,6 +264,7 @@ describe('striking', () => {
       xp: 0,
       level: 1,
       depth: 1,
+    story: '',
     };
   }
 

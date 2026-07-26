@@ -1,4 +1,4 @@
-import { generateMap, pickSpawnPoints, farthestFrom, withExit } from './mapgen.js';
+import { generateMap, pickSpawnPoints, farthestFrom, withExit, walkDistance } from './mapgen.js';
 import { inBounds, isPassable } from './grid.js';
 import { findEntity, isAlive } from './entity.js';
 import { intBetween } from './rng.js';
@@ -166,17 +166,20 @@ export function createWorld(
   seed: number,
   width: number,
   height: number,
-  wallCount: number,
   playerId = 'player',
   depth = 1,
   carried?: CarriedPlayer,
 ): Extract<DraftEvent, { type: 'WORLD_INIT' }> {
-  const generated = generateMap(seed, 0, width, height, wallCount);
+  const generated = generateMap(seed, 0, width, height);
 
   // The way out sits at the far end of the map, so a run has a direction and
   // the journey is the longest one this world affords rather than an accident.
   const exit = farthestFrom(generated.grid, generated.start);
   const grid = withExit(generated.grid, exit);
+
+  // The account of what generation decided, covenant L1: shape, then journey.
+  const walk = walkDistance(grid, generated.start, exit);
+  const story = `${generated.story} · the way out is ${Number.isFinite(walk) ? walk : '?'} steps of walking`;
 
   const population = chooseSpawns(seed, generated.counterAfter, depth);
 
@@ -221,8 +224,46 @@ export function createWorld(
 
   // Placed on creatures' tiles: a prize is guarded, so taking it means going
   // through something. An item you can pick up for free is not a choice.
-  const guardPosts = relics.map((_r, i) =>
-    spawned.points[spawned.points.length - 1 - i] ?? exit);
+  const guardPosts = relics.map((_r, i) => spawned.points[i] ?? exit);
+
+  // The stairs are watched. Rooms and corridors made every fight avoidable —
+  // measured: the runner out-survived the fighter 11 to 9 at depth 3, the
+  // exact domination the Covenant forbids — so the way out costs something:
+  // the strongest thing on the floor stands beside it. On warden floors that
+  // is the warden, with no special case, because a boss out-threatens
+  // everything by construction (ties break to the later pick, where the
+  // warden stands). Chosen before guard duty is handed out: the keeper is
+  // never a relic guard, even on a floor with more prizes than creatures —
+  // found on exactly such a floor, where the warden had been drafted onto a
+  // relic and the stairs stood open. Deterministic and drawless, like every
+  // placement *decision*.
+  let keeper = -1;
+  let keeperThreat = -1;
+  population.chosen.forEach((ch, i) => {
+    const t = threatOf(ch.stats);
+    if (t >= keeperThreat) { keeperThreat = t; keeper = i; }
+  });
+
+  // Guards: the first creatures that are not the keeper, one per relic. A
+  // floor too poor in creatures leaves its later prizes lying unguarded —
+  // poverty is honest, an unwatched stair is not.
+  const guardOf = new Map<number, number>();
+  for (let i = 0; i < population.chosen.length && guardOf.size < relics.length; i += 1) {
+    if (i !== keeper) guardOf.set(i, guardOf.size);
+  }
+
+  // The post is the first standable tile beside the exit that is not a guard
+  // post; everyone unassigned takes the remaining drawn points in order.
+  const isGuardPost = (p: { x: number; y: number }): boolean =>
+    guardPosts.slice(0, guardOf.size).some((q) => q.x === p.x && q.y === p.y);
+  const keeperTile = ([[1, 0], [-1, 0], [0, 1], [0, -1]] as const)
+    .map(([dx, dy]) => ({ x: exit.x + dx, y: exit.y + dy }))
+    .find((p) => isPassable(grid, p.x, p.y)
+      && !(p.x === generated.start.x && p.y === generated.start.y)
+      && !isGuardPost(p));
+  const freePoints = spawned.points.filter((p, i) =>
+    i >= relics.length && !(keeperTile !== undefined && p.x === keeperTile.x && p.y === keeperTile.y));
+  let nextFree = 0;
 
   return {
     type: 'WORLD_INIT',
@@ -236,6 +277,7 @@ export function createWorld(
       height,
       tiles: [...grid.tiles],
       seed,
+      story,
       depth,
       xp: carried?.xp ?? 0,
       level: carried?.level ?? 1,
@@ -254,13 +296,21 @@ export function createWorld(
         stats: carried === undefined ? { ...STARTING_STATS } : { ...carried.stats },
         tags: [],
       },
-      opponents: population.chosen.map((c, i) => ({
-        id: `foe-${String(i + 1)}`,
-        kind: c.kind,
-        pos: { x: spawned.points[i]?.x ?? exit.x, y: spawned.points[i]?.y ?? exit.y },
-        stats: { ...c.stats },
-        tags: [],
-      })),
+      opponents: population.chosen.map((c, i) => {
+        const relicIndex = guardOf.get(i);
+        const post = relicIndex !== undefined
+          ? guardPosts[relicIndex]!
+          : i === keeper && keeperTile !== undefined
+            ? keeperTile
+            : freePoints[nextFree++] ?? exit;
+        return {
+          id: `foe-${String(i + 1)}`,
+          kind: c.kind,
+          pos: { x: post.x, y: post.y },
+          stats: { ...c.stats },
+          tags: [],
+        };
+      }),
     },
   };
 }

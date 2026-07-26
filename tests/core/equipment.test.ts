@@ -1,3 +1,4 @@
+import { SCHEMA_VERSIONS } from '../../src/core/events.js';
 import { emptyLog, append, fold } from '../../src/log/chain.js';
 import { takeUnderfoot } from '../../src/core/commands.js';
 import { FLOOR } from '../../src/core/grid.js';
@@ -13,7 +14,7 @@ import type { EventLog } from '../../src/log/chain.js';
 function world(items: { id: string; kind: string; x: number; grants: Partial<Record<'hp' | 'might' | 'wits' | 'speed', number>> }[]): GameEvent {
   return {
     id: 'w', parent: null, seq: 0,
-    type: 'WORLD_INIT', schemaVersion: 5, rngCounter: 0, rngDraws: 0,
+    type: 'WORLD_INIT', schemaVersion: SCHEMA_VERSIONS.WORLD_INIT, rngCounter: 0, rngDraws: 0,
     payload: {
       width: 10, height: 1, tiles: new Array<number>(10).fill(FLOOR), seed: 1, depth: 1,
       items: items.map((i) => ({

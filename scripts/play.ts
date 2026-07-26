@@ -46,7 +46,7 @@ function arg(name: string, fallback: string): string {
 const wantsJson = process.argv.includes('--json');
 
 function freshWorld(seed: number): Position {
-  const born = append(emptyLog(), null, createWorld(seed, 24, 16, 60));
+  const born = append(emptyLog(), null, createWorld(seed, 48, 32));
   return { log: born.log, head: born.event.id };
 }
 
@@ -65,14 +65,14 @@ function playOne(start: Position, policyName: string, seed: number | string, flo
 
   // Multi-floor runs: play to the exit, take the stairs, keep going. The run
   // ends at death, at the last requested floor's exit, or at the action cap.
-  let done = autoplay(start, policy, 600);
+  let done = autoplay(start, policy, 1500);
   for (let floor = 2; floor <= floors && done.ended === 'escaped'; floor += 1) {
     const refs = createRef(emptyRefs(), 'run', done.position.head, 0, 'playtest');
-    const down = descend(done.position.log, refs, 'run', { width: 24, height: 16, walls: 60 });
+    const down = descend(done.position.log, refs, 'run', { width: 48, height: 32 });
     if (down === null) break;
     const head = getRef(down.refs, 'run').head;
     if (head === null) break;
-    done = autoplay({ log: down.log, head }, policy, 600);
+    done = autoplay({ log: down.log, head }, policy, 1500);
   }
   const report = readTheGame(done.position.log, done.position.head);
   const surprise = report.readings.find((r) => r.lens === 2);

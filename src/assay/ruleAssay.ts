@@ -8,6 +8,7 @@ import { creatureStats } from '../core/tables.js';
 import type { Policy } from '../play/policies.js';
 import type { Position } from '../play/session.js';
 import type { Rule, StatName } from '../canon/rule.js';
+import { SCHEMA_VERSIONS } from '../core/events.js';
 import type { DraftEvent, EntitySeed } from '../core/events.js';
 import type { Item } from '../core/item.js';
 import type { GameState } from '../core/state.js';
@@ -67,7 +68,7 @@ const seed = (id: string, kind: string, x: number, y: number, hp: number, might:
 
 function born(width: number, tiles: number[], player: EntitySeed, opponents: EntitySeed[], items: Item[]): Position {
   const init = {
-    type: 'WORLD_INIT', schemaVersion: 5, rngCounter: 0, rngDraws: 0,
+    type: 'WORLD_INIT', schemaVersion: SCHEMA_VERSIONS.WORLD_INIT, rngCounter: 0, rngDraws: 0,
     payload: { width, height: 1, tiles, seed: 7, items, player, opponents },
   } as DraftEvent;
   const w = append(emptyLog(), null, init);

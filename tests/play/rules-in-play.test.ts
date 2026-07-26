@@ -5,6 +5,7 @@ import { ratifyRule, outcome } from '../../src/core/commands.js';
 import { validateRule, isRejected } from '../../src/canon/rule.js';
 import { FLOOR, WALL, EXIT as EXIT_TILE } from '../../src/core/grid.js';
 import type { Rule } from '../../src/canon/rule.js';
+import { SCHEMA_VERSIONS } from '../../src/core/events.js';
 import type { GameEvent } from '../../src/core/events.js';
 import type { Position } from '../../src/play/session.js';
 
@@ -45,7 +46,7 @@ function corridor(opts: { beastAt?: number; wallAt?: number; itemAt?: number } =
   if (opts.wallAt !== undefined) tiles[opts.wallAt] = WALL;
   return {
     id: 'w', parent: null, seq: 0,
-    type: 'WORLD_INIT', schemaVersion: 5, rngCounter: 0, rngDraws: 0,
+    type: 'WORLD_INIT', schemaVersion: SCHEMA_VERSIONS.WORLD_INIT, rngCounter: 0, rngDraws: 0,
     payload: {
       width: 9, height: 1, tiles, seed: 3,
       items: opts.itemAt === undefined ? [] : [
@@ -360,7 +361,7 @@ describe('down the stairs', () => {
     tiles[8] = EXIT_TILE;
     const world: GameEvent = {
       id: 'w', parent: null, seq: 0,
-      type: 'WORLD_INIT', schemaVersion: 5, rngCounter: 0, rngDraws: 0,
+      type: 'WORLD_INIT', schemaVersion: SCHEMA_VERSIONS.WORLD_INIT, rngCounter: 0, rngDraws: 0,
       payload: {
         width: 18, height: 1, tiles, seed: 3, depth: 1, items: [],
         player: { id: 'player', kind: 'you', pos: { x: 0, y: 0 }, stats: { hp: 10, might: 3, wits: 3, speed: 4 }, tags: [] },
@@ -387,7 +388,7 @@ describe('down the stairs', () => {
     expect(outcome(fold(p.log, p.head))).toBe('escaped');
 
     let refs = createRef(emptyRefs(), 'main', p.head, 0, 'opening');
-    const down = descend(p.log, refs, 'main', { width: 12, height: 8, walls: 10 });
+    const down = descend(p.log, refs, 'main', { width: 12, height: 8 });
     expect(down).not.toBeNull();
 
     const below = fold(down!.log, getRef(down!.refs, 'main').head!);
@@ -397,6 +398,11 @@ describe('down the stairs', () => {
     const you = below.entities.find((e) => e.id === 'player')!;
     expect(you.maxHp).toBeGreaterThanOrEqual(you.stats.hp);
     expect(below.turn).toBe(1);
+
+    // And the crossed chain still verifies. WORLD_INIT opens a new counter
+    // epoch; a verifier that demanded continuity across the stairs refused
+    // every saved run that had ever descended — a player lost a session to it.
+    expect(verifyChain(down!.log, getRef(down!.refs, 'main').head!)).toBeNull();
     expect(outcome(below)).toBe('playing');
     // The chain continues: floor 1's escape is this same log's history.
     expect(chain(down!.log, getRef(down!.refs, 'main').head!).some((e) => e.type === 'WORLD_INIT')).toBe(true);
@@ -412,7 +418,7 @@ describe('down the stairs', () => {
       p = playerStep(p, 'player', 1, 0).position;
     }
     const refs = createRef(emptyRefs(), 'main', p.head, 0, 'opening');
-    const down = descend(p.log, refs, 'main', { width: 12, height: 8, walls: 10 });
+    const down = descend(p.log, refs, 'main', { width: 12, height: 8 });
     expect(down).not.toBeNull();
     const below = fold(down!.log, getRef(down!.refs, 'main').head!);
     expect(below.rules).toHaveLength(1);
@@ -424,7 +430,7 @@ describe('down the stairs', () => {
   it('refuses the stairs to the living and the dead alike', () => {
     const mid = playable(corridor({ beastAt: 8 }), []);
     const refs = createRef(emptyRefs(), 'main', mid.head, 0, 'opening');
-    expect(descend(mid.log, refs, 'main', { width: 12, height: 8, walls: 10 })).toBeNull();
+    expect(descend(mid.log, refs, 'main', { width: 12, height: 8 })).toBeNull();
   });
 
   it('descends the same way every time — the next floor is part of the run', () => {
@@ -435,8 +441,8 @@ describe('down the stairs', () => {
       p = playerStep(p, 'player', 1, 0).position;
     }
     const refs = createRef(emptyRefs(), 'main', p.head, 0, 'opening');
-    const a = descend(p.log, refs, 'main', { width: 12, height: 8, walls: 10 });
-    const b = descend(p.log, refs, 'main', { width: 12, height: 8, walls: 10 });
+    const a = descend(p.log, refs, 'main', { width: 12, height: 8 });
+    const b = descend(p.log, refs, 'main', { width: 12, height: 8 });
     expect(getRef(a!.refs, 'main').head).toBe(getRef(b!.refs, 'main').head);
   });
 });
@@ -450,7 +456,7 @@ describe('gear crosses the stairs', () => {
     tiles[8] = EXIT_TILE;
     const world: GameEvent = {
       id: 'w', parent: null, seq: 0,
-      type: 'WORLD_INIT', schemaVersion: 5, rngCounter: 0, rngDraws: 0,
+      type: 'WORLD_INIT', schemaVersion: SCHEMA_VERSIONS.WORLD_INIT, rngCounter: 0, rngDraws: 0,
       payload: {
         width: 9, height: 1, tiles, seed: 3, depth: 1,
         items: [{ id: 'edge', kind: 'keen edge', pos: { x: 2, y: 0 }, grants: { hp: 0, might: 2, wits: 0, speed: 0 } }],
@@ -468,7 +474,7 @@ describe('gear crosses the stairs', () => {
     expect(above.entities[0]!.gear?.['weapon']?.kind).toBe('keen edge');
 
     const refs = createRef(emptyRefs(), 'main', p.head, 0, 'opening');
-    const down = descend(p.log, refs, 'main', { width: 12, height: 8, walls: 10 });
+    const down = descend(p.log, refs, 'main', { width: 12, height: 8 });
     const below = fold(down!.log, getRef(down!.refs, 'main').head!);
 
     expect(below.entities[0]!.gear?.['weapon']?.kind).toBe('keen edge');

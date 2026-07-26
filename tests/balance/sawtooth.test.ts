@@ -21,22 +21,22 @@ import type { Policy } from '../../src/play/policies.js';
  * hallway again.
  */
 
-const DIMS = { width: 24, height: 16, walls: 60 };
+const DIMS = { width: 48, height: 32 };
 
 function world(seed: number): Position {
-  const born = append(emptyLog(), null, createWorld(seed, DIMS.width, DIMS.height, DIMS.walls));
+  const born = append(emptyLog(), null, createWorld(seed, DIMS.width, DIMS.height));
   return { log: born.log, head: born.event.id };
 }
 
 function floors(seed: number, policy: Policy, count: number): 'escaped' | 'dead' | 'playing' {
-  let done = autoplay(world(seed), policy, 600);
+  let done = autoplay(world(seed), policy, 1500);
   for (let floor = 2; floor <= count && done.ended === 'escaped'; floor += 1) {
     const refs = createRef(emptyRefs(), 'run', done.position.head, 0, 'balance');
     const down = descend(done.position.log, refs, 'run', DIMS);
     if (down === null) break;
     const head = getRef(down.refs, 'run').head;
     if (head === null) break;
-    done = autoplay({ log: down.log, head }, policy, 600);
+    done = autoplay({ log: down.log, head }, policy, 1500);
   }
   return done.ended;
 }

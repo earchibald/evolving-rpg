@@ -99,6 +99,7 @@ function reduce(state: GameState, event: GameEvent): GameState {
         xp: p.xp ?? 0,
         level: p.level ?? 1,
         depth: p.depth ?? 1,
+        story: p.story ?? '',
       };
     }
 

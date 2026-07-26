@@ -7,7 +7,7 @@ import type { EventLog } from '../../src/log/chain.js';
 
 function build(): { log: EventLog; head: string } {
   let log = emptyLog();
-  const first = append(log, null, createWorld(31337, 16, 12, 30));
+  const first = append(log, null, createWorld(31337, 16, 12));
   log = first.log;
   let head = first.event.id;
   for (const [dx, dy] of [[1, 0], [0, 1], [1, 0], [0, 1]] as const) {

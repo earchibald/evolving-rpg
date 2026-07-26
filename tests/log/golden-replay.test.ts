@@ -2,16 +2,13 @@ import { sha256 } from '@noble/hashes/sha256';
 import { bytesToHex } from '@noble/hashes/utils';
 import fixture from '../fixtures/golden-run.json';
 import { emptyLog, append, chain, fold, verifyChain } from '../../src/log/chain.js';
-import { createWorld } from '../../src/core/commands.js';
-import { playerStep, runWorldTurns } from '../../src/play/session.js';
+import { createWorld, outcome } from '../../src/core/commands.js';
+import { playerStep, playerWait, runWorldTurns } from '../../src/play/session.js';
+import { POLICIES } from '../../src/play/policies.js';
 import { canonicalJson } from '../../src/log/canonical.js';
 import { hashEvent } from '../../src/log/hash.js';
 import type { EventLog } from '../../src/log/chain.js';
 import type { DraftEvent, GameEvent } from '../../src/core/events.js';
-
-const STEPS: Record<string, readonly [number, number]> = {
-  N: [0, -1], S: [0, 1], E: [1, 0], W: [-1, 0],
-};
 
 function logFromFixture(): EventLog {
   const events = new Map<string, GameEvent>();
@@ -21,24 +18,25 @@ function logFromFixture(): EventLog {
 
 describe('golden replay', () => {
   it('has the expected shape', () => {
-    expect(fixture.script).toHaveLength(100);
-    // The run may end before the input does — a scripted walker can die under
-    // real combat, and a fixture that died exercised the sharpest code.
-    expect(fixture.played).toBeGreaterThan(10);
+    expect(fixture.policy in POLICIES).toBe(true);
+    // The run may end before the action cap — a policy can die or escape
+    // under real combat, and a fixture that fought exercised the sharpest code.
+    expect(fixture.actions).toBeGreaterThan(10);
     expect(['dead', 'escaped', 'playing']).toContain(fixture.outcome);
 
     type Recorded = { type: string; rngDraws: number; payload: Record<string, unknown> };
     const events = fixture.events as unknown as ReadonlyArray<Recorded>;
     const count = (t: string): number => events.filter((e) => e.type === t).length;
 
-    // The run is a real playthrough, not a walk: the world takes its turns too,
-    // so the totals are not derivable from the script alone. What *is* fixed is
-    // that every script input produces exactly one player action — a move, a
-    // refusal, or a blow.
+    // The run is a real playthrough: the world takes its turns too, so the
+    // totals are not derivable from the policy alone. What *is* fixed is that
+    // every action produces exactly one player event — a move, a hold, a
+    // refusal, or a blow — plus a pickup for each item walked over, which
+    // rides along with the move that reached it.
     const byPlayer = events.filter(
       (e) => e.payload.entityId === 'player' || e.payload.attackerId === 'player',
     );
-    expect(byPlayer).toHaveLength(fixture.played);
+    expect(byPlayer).toHaveLength(fixture.actions + count('ITEM_TAKEN'));
 
     // Draw accounting, stated as the rule rather than as totals. This is the
     // assertion that makes verifyChain's counter check worth having: before
@@ -70,20 +68,26 @@ describe('golden replay', () => {
     expect(canonicalJson(fold(log, fixture.head))).toBe(canonicalJson(fold(log, fixture.head)));
   });
 
-  it('rebuilds byte-identically from the seed and the script, so the whole pipeline is reproducible', () => {
+  it('rebuilds byte-identically from the seed and the policy, so the whole pipeline is reproducible', () => {
     let log = emptyLog();
-    const first = append(log, null, createWorld(fixture.seed, fixture.width, fixture.height, fixture.walls));
+    const first = append(log, null, createWorld(fixture.seed, fixture.width, fixture.height));
     log = first.log;
     let head = first.event.id;
 
-    // Deliberately a restatement of the generator's drive loop, not an import
-    // of it — sharing the code would make a bug in the loop invisible to the
-    // very test meant to catch it. It has already drifted once, and the test
-    // caught it, which is the argument for keeping the duplication.
-    for (const key of fixture.script) {
-      const step = STEPS[key];
-      if (step === undefined) throw new Error(`bad script character ${key}`);
-      const acted = playerStep({ log, head }, 'player', step[0], step[1]);
+    // Deliberately a restatement of autoplay's drive loop, not an import of it
+    // — sharing the code would make a bug in the loop invisible to the very
+    // test meant to catch it. It has already drifted once, and the test
+    // caught it, which is the argument for keeping the duplication. The
+    // policy itself is imported: it is the fixture's *input*, as the key
+    // script used to be.
+    const policy = POLICIES[fixture.policy]!;
+    for (let action = 0; action < fixture.maxActions; action += 1) {
+      const state = fold(log, head);
+      if (outcome(state, 'player') !== 'playing') break;
+      const wish = policy(state, 'player');
+      const acted = wish.kind === 'wait'
+        ? playerWait({ log, head }, 'player')
+        : playerStep({ log, head }, 'player', wish.dx, wish.dy);
       const after = runWorldTurns(acted.position, 'player');
       log = after.log;
       head = after.head;

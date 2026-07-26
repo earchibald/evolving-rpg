@@ -86,6 +86,13 @@ export function upcastEvent(raw: unknown): DraftEvent {
       payload.depth = payload.depth ?? 1;
     }
 
+    if (version <= 5) {
+      // v5 → v6: worlds carry their generation story. Old worlds were scatter
+      // maps and never said so; an honest migration states that rather than
+      // inventing an account after the fact.
+      payload.story = payload.story ?? 'scattered walls (before rooms)';
+    }
+
     return {
       type: 'WORLD_INIT',
       schemaVersion: current,

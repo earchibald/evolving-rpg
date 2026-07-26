@@ -20,11 +20,17 @@
  * here are the structural half; judged passes (a model reading for register)
  * are the other half and are wired separately, because opinion must never
  * gate mechanics silently.
+ *
+ * **Legible** — properties of exposure. Every system must say what it decided
+ * and why, in human-readable form, as part of the system rather than as an
+ * afterthought. Stated by the player-owner directly: a game whose reasoning
+ * cannot be read cannot be checked, and this game's whole premise is a player
+ * ratifying what they understand.
  */
 
 export interface Invariant {
   readonly id: string;
-  readonly register: 'mechanical' | 'thematic';
+  readonly register: 'mechanical' | 'thematic' | 'legible';
   readonly statement: string;
   /** The function or practice that holds it. Named so a test can check the
    *  enforcer exists — an invariant with no enforcer is a wish. */
@@ -79,6 +85,12 @@ export const COVENANT: readonly Invariant[] = Object.freeze([
     register: 'thematic' as const,
     statement: 'Canon does not contradict itself: one kind, one name, never two kinds sharing one.',
     enforcedBy: 'assayName duplicate check (structural half); judged canon pass (deferred)',
+  }),
+  Object.freeze({
+    id: 'L1',
+    register: 'legible' as const,
+    statement: 'Every system exposes its mechanics human-readably: what it decided, with the real numbers, where a player will read it. A facility whose reasoning cannot be read cannot be checked, and ships unfinished.',
+    enforcedBy: 'WORLD_INIT carries its generation story; narrate() names every change; the ledger holds every decision chain; tables.ts is one legible file',
   }),
 ]);
 

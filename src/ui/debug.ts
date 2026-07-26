@@ -27,9 +27,8 @@ import type { Refs } from '../log/refs.js';
 import type { Entity } from '../core/entity.js';
 import type { GameEvent } from '../core/events.js';
 
-const WIDTH = 24;
-const HEIGHT = 16;
-const WALLS = 60;
+const WIDTH = 48;
+const HEIGHT = 32;
 const MAIN = 'main';
 
 let log: EventLog = emptyLog();
@@ -52,7 +51,7 @@ let booted = '';
 function freshWorld(): void {
   const seed = Math.floor(Math.random() * 2 ** 31);
   const session = emptySession(MAIN);
-  const first = append(session.log, null, createWorld(seed, WIDTH, HEIGHT, WALLS));
+  const first = append(session.log, null, createWorld(seed, WIDTH, HEIGHT));
   log = first.log;
   refs = createRef(session.refs, MAIN, first.event.id, 0, `opening run · seed ${seed}`);
   active = MAIN;
@@ -80,7 +79,7 @@ function anotherWorld(): string {
   while (taken.has(`world-${n}`)) n += 1;
   const name = `world-${n}`;
 
-  const born = append(log, null, createWorld(seed, WIDTH, HEIGHT, WALLS));
+  const born = append(log, null, createWorld(seed, WIDTH, HEIGHT));
   log = born.log;
   refs = createRef(refs, name, born.event.id, 0, `seed ${seed}`);
   active = name;
@@ -285,24 +284,47 @@ function el(id: string): HTMLElement {
 }
 
 /**
- * What just happened, one fact per line.
+ * The journal: what has happened, one fact per line, kept.
  *
- * These used to be joined with a separator into a single run-on string, which
- * made the line's width a function of how eventful the turn was — and since the
- * board is sized by its widest child, an eventful turn widened the board and
- * shoved the panel beside it sideways. One line per fact, each clipped rather
- * than wrapped, and the box is the same size no matter what happens.
+ * This used to be a two-line box that each turn overwrote — combat lines were
+ * clipped mid-sentence and history was gone the moment it happened, which the
+ * player called out directly. Now every line appends, stamped with its turn,
+ * into a fixed-height scroll (the box itself never resizes — the no-movement
+ * rule holds). Newest at the bottom, auto-followed unless you have scrolled
+ * up to read; PageUp/PageDown page through it from the keyboard.
  */
+const journal: { turn: number; line: string }[] = [];
+const JOURNAL_KEEP = 400;
+/** Index of the first line of the latest batch — lit; everything before, dim. */
+let freshFrom = 0;
+
 function say(message: string | string[]): void {
   const lines = (typeof message === 'string' ? [message] : message).filter((l) => l !== '');
-  const box = el('status');
-  box.textContent = '';
-  for (const line of lines) {
-    const row = document.createElement('span');
-    row.className = 'line';
-    row.textContent = line;
-    box.appendChild(row);
+  if (lines.length === 0) return;
+  const turn = fold(log, getRef(refs, active).head).turn;
+  freshFrom = journal.length;
+  for (const line of lines) journal.push({ turn, line });
+  if (journal.length > JOURNAL_KEEP) {
+    const dropped = journal.length - JOURNAL_KEEP;
+    journal.splice(0, dropped);
+    freshFrom = Math.max(0, freshFrom - dropped);
   }
+
+  const box = el('status');
+  // Follow the tail only if the reader was already at it — scrolling up to
+  // read must not be yanked back down by the next footstep.
+  const following = box.scrollTop + box.clientHeight >= box.scrollHeight - 4;
+  box.textContent = '';
+  journal.forEach((entry, i) => {
+    const row = document.createElement('span');
+    row.className = i >= freshFrom ? 'line fresh' : 'line';
+    const mark = document.createElement('span');
+    mark.className = 'turn-mark';
+    mark.textContent = `t${String(entry.turn)}`;
+    row.append(mark, document.createTextNode(` ${entry.line}`));
+    box.appendChild(row);
+  });
+  if (following) box.scrollTop = box.scrollHeight;
 }
 
 function render(): void {
@@ -319,7 +341,7 @@ function render(): void {
   }
 
   const grid = el('grid');
-  grid.style.gridTemplateColumns = `repeat(${state.grid.width}, 20px)`;
+  grid.style.gridTemplateColumns = `repeat(${state.grid.width}, 15px)`;
   grid.textContent = '';
   for (let y = 0; y < state.grid.height; y += 1) {
     for (let x = 0; x < state.grid.width; x += 1) {
@@ -364,10 +386,27 @@ function render(): void {
   const hurt = player !== undefined && player.stats.hp <= 3;
   const done = outcome(state);
 
-  // Always the same rows in the same order. A row that appears only sometimes —
-  // "this run" used to be added on death — shifts every row beneath it, which
-  // is the map jumping at the exact moment you most want it still.
-  const vitals: Array<[string, string, string]> = [
+  // What a piece of gear does, said with its numbers — "keen edge +2 might".
+  // The row exists because a prize refused ("why didn't I pick that up?") is
+  // only explicable when what you already hold shows its worth.
+  const wornIn = (slot: string): string => {
+    const g = player?.gear?.[slot];
+    if (g === undefined) return '—';
+    const parts = [
+      g.grants.might === 0 ? '' : `+${g.grants.might} might`,
+      g.grants.hp === 0 ? '' : `+${g.grants.hp} hp`,
+      g.grants.speed === 0 ? '' : `+${g.grants.speed} speed`,
+      g.grants.wits === 0 ? '' : `+${g.grants.wits} wits`,
+    ].filter((p) => p !== '');
+    return `${g.kind} ${parts.join(' ')}`;
+  };
+
+  // A row is either one value or independently-glowing segments. Segments
+  // exist because the stats row glowed whole when any one stat rose — a +2
+  // might edge lit speed and wits too, and a glow that lies is worse than no
+  // glow at all.
+  type Seg = { key: string; text: string };
+  const vitals: Array<[string, string | Seg[], string]> = [
     ['this run', done, done === 'dead' ? 'urgent' : done === 'escaped' ? 'good' : ''],
     ['hit points', player === undefined ? '—' : `${player.stats.hp} / ${player.maxHp}`, hurt ? 'urgent' : ''],
     ['level', (() => {
@@ -375,11 +414,17 @@ function render(): void {
       return next === undefined ? `${state.level} · ${state.xp} xp` : `${state.level} · ${state.xp}/${next} xp`;
     })(), ''],
     ['you deal', player === undefined ? '—' : (() => { const d = damageDice(player.stats.might); return `${1 + d.flat}–${d.die + d.flat}`; })(), ''],
-    ['might · speed · wits', player === undefined ? '—' : `${player.stats.might} · ${player.stats.speed} · ${player.stats.wits}`, ''],
-    ['wearing', player === undefined ? '—' : (() => {
-      const worn = Object.values(player.gear ?? {}).map((g) => g?.kind).filter(Boolean);
-      return worn.length === 0 ? 'nothing' : worn.join(' · ');
-    })(), ''],
+    ['might · speed · wits', player === undefined ? '—' : [
+      { key: 'might', text: String(player.stats.might) },
+      { key: 'speed', text: String(player.stats.speed) },
+      { key: 'wits', text: String(player.stats.wits) },
+    ], ''],
+    ['wielding', wornIn('weapon'), ''],
+    ['wearing', player === undefined ? '—' : [
+      { key: 'armor', text: wornIn('armor') },
+      { key: 'boots', text: wornIn('boots') },
+      { key: 'trinket', text: wornIn('trinket') },
+    ], ''],
     ['the way out', toExit, done === 'escaped' ? 'good' : ''],
     ['standing at', player === undefined ? '—' : `${player.pos.x}, ${player.pos.y}`, ''],
     ['turn', String(state.turn), ''],
@@ -387,32 +432,42 @@ function render(): void {
     ['depth', String(state.depth), ''],
   ];
 
+  // A changed value glows for a few turns — but only rows that change rarely.
+  // Position and the turn counter change every step; a glow that is always on
+  // is a glow that means nothing.
+  const NOTABLE = ['hit points', 'level', 'you deal', 'might · speed · wits', 'wielding', 'wearing', 'depth'];
+  const glowing = (key: string, value: string): boolean => {
+    const was = lastVitals.get(key);
+    if (was !== undefined && was.value !== value) {
+      lastVitals.set(key, { value, until: state.turn + 3 });
+    } else if (was === undefined) {
+      lastVitals.set(key, { value, until: 0 });
+    }
+    const mark = lastVitals.get(key);
+    return mark !== undefined && mark.until >= state.turn && mark.until > 0;
+  };
+
   const vitalsEl = el('vitals');
   vitalsEl.textContent = '';
   for (const [label, value, tone] of vitals) {
     const dt = document.createElement('dt');
     dt.textContent = label;
     const dd = document.createElement('dd');
-    dd.textContent = value;
-    // A changed number glows for a few turns — but only the rows that change
-    // rarely. Position and the turn counter change every step; a glow that is
-    // always on is a glow that means nothing.
-    const NOTABLE = ['hit points', 'level', 'you deal', 'might · speed · wits', 'wearing', 'depth'];
-    if (!NOTABLE.includes(label)) {
-      if (tone !== '') dd.className = tone;
-      vitalsEl.append(dt, dd);
-      continue;
-    }
-    const was = lastVitals.get(label);
-    if (was !== undefined && was.value !== value) {
-      lastVitals.set(label, { value, until: state.turn + 3 });
-    } else if (was === undefined) {
-      lastVitals.set(label, { value, until: 0 });
-    }
-    const mark = lastVitals.get(label);
     if (tone !== '') dd.className = tone;
-    if (mark !== undefined && mark.until >= state.turn && mark.until > 0) {
-      dd.className = `${dd.className} changed`.trim();
+
+    if (typeof value === 'string') {
+      dd.textContent = value;
+      if (NOTABLE.includes(label) && glowing(label, value)) {
+        dd.className = `${dd.className} changed`.trim();
+      }
+    } else {
+      value.forEach((seg, i) => {
+        if (i > 0) dd.append(document.createTextNode(' · '));
+        const span = document.createElement('span');
+        span.textContent = seg.text;
+        if (glowing(`${label}#${seg.key}`, seg.text)) span.className = 'changed';
+        dd.append(span);
+      });
     }
     vitalsEl.append(dt, dd);
   }
@@ -431,7 +486,15 @@ function render(): void {
     const odds = document.createElement('span');
     odds.className = 'odds';
     const reach = player === undefined ? '?' : Math.abs(i.pos.x - player.pos.x) + Math.abs(i.pos.y - player.pos.y);
-    odds.textContent = `${reach} away · +${i.grants.might} might`;
+    // Say what it actually grants — this row once printed "+0 might" on an
+    // iron charm, which is the opposite of an explanation.
+    const gives = [
+      i.grants.might === 0 ? '' : `+${i.grants.might} might`,
+      i.grants.hp === 0 ? '' : `+${i.grants.hp} hp`,
+      i.grants.speed === 0 ? '' : `+${i.grants.speed} speed`,
+      i.grants.wits === 0 ? '' : `+${i.grants.wits} wits`,
+    ].filter((g) => g !== '').join(' ');
+    odds.textContent = `${reach} away · ${gives}`;
     li.append(who, odds);
     threats.appendChild(li);
   }
@@ -510,6 +573,9 @@ function render(): void {
   const detail = el('detail');
   detail.textContent = '';
   for (const [label, value] of [
+    // The generator's own account of this floor — covenant L1. A map whose
+    // shape cannot be read cannot be checked.
+    ['this floor', state.story === '' ? '—' : state.story],
     ['seed', String(state.seed)],
     ['rng counter', String(state.rngCounter)],
     ['events in chain', String(chain(log, head).length)],
@@ -717,11 +783,28 @@ function finish(before: number, head: string): void {
   const priorState = priorEvent === undefined ? fold(log, head) : fold(log, priorEvent.id);
   const told = narrate(events.slice(before), priorState);
 
+  // A prize refused, explained. Stepping onto a relic no better than what you
+  // hold produces no event at all — the one case where the engine's silence
+  // reads as a bug ("why would I not pick this up?"), so the view says the
+  // comparison out loud, with what you hold and its numbers.
+  const nowHere = fold(log, head);
+  const me = nowHere.entities[0];
+  const fresh = events.slice(before);
+  if (me !== undefined
+    && fresh.some((e) => e.type === 'MOVE' && e.payload.entityId === 'player')
+    && !fresh.some((e) => e.type === 'ITEM_TAKEN')) {
+    const underfoot = itemAt(nowHere.items, me.pos.x, me.pos.y);
+    const worn = underfoot === undefined ? undefined : me.gear?.[slotOf(underfoot.grants)];
+    if (underfoot !== undefined && worn !== undefined) {
+      told.push(`the ${calledItem(underfoot.id, nowHere)} is no better than your ${worn.kind} — it stays where it lies`);
+    }
+  }
+
   // Stairs are stairs: stepping onto the way out goes down, no button, no
   // pause. The rules re-ratify and the player crosses whole inside descend().
   const here = fold(log, head);
   if (outcome(here) === 'escaped') {
-    const down = descend(log, refs, active, { width: WIDTH, height: HEIGHT, walls: WALLS });
+    const down = descend(log, refs, active, { width: WIDTH, height: HEIGHT });
     if (down !== null) {
       log = down.log;
       refs = down.refs;
@@ -811,6 +894,14 @@ window.addEventListener('keydown', (event) => {
   // wall" walks you four squares west.
   const target = event.target;
   if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) return;
+
+  // Paging the journal — the log is readable history, and history needs keys.
+  if (event.key === 'PageUp' || event.key === 'PageDown') {
+    event.preventDefault();
+    const box = el('status');
+    box.scrollBy({ top: (event.key === 'PageUp' ? -1 : 1) * box.clientHeight });
+    return;
+  }
 
   if (event.key === '.' || event.key === ' ') {
     event.preventDefault();

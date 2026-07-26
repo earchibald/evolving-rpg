@@ -325,7 +325,7 @@ export function descend(
   log: EventLog,
   refs: Refs,
   active: string,
-  dims: { width: number; height: number; walls: number },
+  dims: { width: number; height: number },
   playerId = 'player',
 ): { log: EventLog; refs: Refs; depth: number } | null {
   const ref = getRef(refs, active);
@@ -346,7 +346,7 @@ export function descend(
   const nextDepth = state.depth + 1;
   const nextSeed = u32(state.seed, 1_000_003 + state.depth);
   const born = append(log, ref.head, createWorld(
-    nextSeed, dims.width, dims.height, dims.walls, playerId, nextDepth,
+    nextSeed, dims.width, dims.height, playerId, nextDepth,
     {
       stats: { ...you.stats, hp }, maxHp: you.maxHp, xp: state.xp, level: state.level,
       ...(you.gear === undefined ? {} : { gear: { ...you.gear } as Record<string, { kind: string; grants: typeof you.stats }> }),
