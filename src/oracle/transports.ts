@@ -57,6 +57,7 @@ export function cliTransport(): Transport {
         line?: unknown;
         model?: unknown;
         costUsd?: unknown;
+        data?: unknown;
       };
 
       if (typeof said.name !== 'string' || said.name.trim() === '') {
@@ -68,6 +69,9 @@ export function cliTransport(): Transport {
         line: typeof said.line === 'string' ? said.line.trim() : '',
         model: typeof said.model === 'string' ? said.model : null,
         costUsd: typeof said.costUsd === 'number' ? said.costUsd : 0,
+        // Straight through, unexamined. Whether this is a rule is the
+        // validator's judgement, made in one place, not this one's.
+        data: said.data,
       };
     },
   };

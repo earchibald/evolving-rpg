@@ -36,6 +36,76 @@ function gamemasterPrompt(context: Record<string, unknown>): string {
   ].join('\n');
 }
 
+/**
+ * The Rulesmith's prompt.
+ *
+ * It states the vocabulary exhaustively rather than gesturing at it, because a
+ * rule outside the vocabulary is rejected on arrival and the round trip is
+ * wasted. And it asks for the *absence* the run revealed rather than a good
+ * idea — a rule that answers nothing in particular is how a game accumulates
+ * noise instead of shape.
+ */
+function proposePrompt(context: Record<string, unknown>): string {
+  const run = (context.run ?? {}) as Record<string, unknown>;
+  const list = (v: unknown): string => (Array.isArray(v) ? v.map((x) => `- ${String(x)}`).join('\n') : '(none)');
+
+  return [
+    'You are the Rulesmith of a small grid RPG that evolves through play.',
+    'A run just ended. Propose exactly ONE new rule, in the vocabulary below.',
+    '',
+    'WHAT HAPPENED',
+    list(run.happened),
+    '',
+    'WHAT THE PLAYER SAID',
+    list(run.said) || '(they said nothing)',
+    '',
+    'RULES ALREADY IN FORCE — do not propose these again',
+    list(run.inForce) || '(none)',
+    '',
+    'EVENT IDS YOU MAY CITE',
+    Array.isArray(run.citable) ? (run.citable as string[]).join(' ') : '(none)',
+    'NOTE TIMESTAMPS YOU MAY CITE',
+    Array.isArray(run.citableNotes) ? (run.citableNotes as string[]).join(' ') : '(none)',
+    '',
+    'THE VOCABULARY. Anything outside it is rejected unread.',
+    'when: WAIT | MOVE | MOVE_BLOCKED | STRIKE | STRUCK | KILLED | ITEM_TAKEN | TURN_PASSED',
+    '  STRIKE is you swinging. STRUCK is something swinging at you.',
+    '  KILLED is your blow finishing something.',
+    'require: up to 4 of',
+    '  {"kind":"hpAtMost"|"hpAtLeast","n":1-99}',
+    '  {"kind":"hpBelowPercent"|"hpAbovePercent","n":1-99}',
+    '  {"kind":"creatureWithin"|"noCreatureWithin","n":1-40}',
+    '  {"kind":"creaturesAtMost"|"creaturesAtLeast","n":0-20}',
+    '  {"kind":"exitWithin"|"exitBeyond","n":1-40}',
+    '  {"kind":"turnAtLeast","n":1-999}',
+    '  {"kind":"statAtLeast","stat":"might"|"speed"|"wits"|"maxHp","n":1-20}',
+    '  {"kind":"blowLanded"} or {"kind":"blowMissed"} — only with STRIKE or STRUCK',
+    'then: up to 3 of',
+    '  {"kind":"heal"|"harm","n":1-20}',
+    '  {"kind":"harmOther","n":1-20} — only with STRIKE, STRUCK or KILLED',
+    '  {"kind":"push","n":1-3} — only with STRIKE, STRUCK or KILLED',
+    '  {"kind":"grant"|"drain","stat":"might"|"speed"|"wits"|"maxHp","n":1-5}',
+    '  {"kind":"speak","text":"<under 120 characters>"}',
+    '',
+    'HOW TO CHOOSE.',
+    'Answer something the run actually revealed — most usefully an ABSENCE.',
+    'A thing the player did repeatedly for no result, a thing they reached for',
+    'in the fiction that the game cannot do, a complaint they made out of world.',
+    'Do not propose a rule that merely sounds good. Prefer a small rule that',
+    'makes one existing action worth taking to a large one that adds a system.',
+    'You must cite at least one event id or note timestamp from the lists above.',
+    'Cite nothing you were not given — invented ids are stripped and the rule',
+    'is then rejected for citing nothing.',
+    '',
+    'Reply with ONLY a JSON object, no prose around it, no code fence:',
+    '{"name":"<four words or fewer, a label for this rule>",',
+    ' "line":"<one sentence to the player on why this rule, second person>",',
+    ' "rule":{"when":"...","require":[...],"then":[...],',
+    '   "provenance":{"events":["..."],"notes":["..."],',
+    '     "because":"<one sentence on what in the run prompted this>"}}}',
+  ].join('\n');
+}
+
 function prompt(subject: string, context: unknown): string {
   const [kind] = subject.split(':');
   return [
@@ -73,16 +143,19 @@ interface CliResult {
 }
 
 /** Pulls a JSON object out of a reply that may have wandered around it. */
-function extract(text: string): { name: string; line: string } {
+function extract(text: string): { name: string; line: string; data?: unknown } {
   const start = text.indexOf('{');
   const end = text.lastIndexOf('}');
   if (start < 0 || end <= start) throw new Error(`no object in reply: ${text.slice(0, 120)}`);
 
-  const parsed = JSON.parse(text.slice(start, end + 1)) as { name?: unknown; line?: unknown };
+  const parsed = JSON.parse(text.slice(start, end + 1)) as { name?: unknown; line?: unknown; rule?: unknown };
   if (typeof parsed.name !== 'string') throw new Error('reply had no name');
   return {
     name: parsed.name,
     line: typeof parsed.line === 'string' ? parsed.line : '',
+    // Handed on unvalidated, deliberately: this is a dev server, and the one
+    // place that decides whether a rule is a rule is the validator in canon/.
+    data: parsed.rule,
   };
 }
 
@@ -119,7 +192,9 @@ export function oraclePlugin(): Plugin {
             'claude',
             [
               '-p',
-              intent === 'gamemaster' ? gamemasterPrompt(context) : prompt(subject, context),
+              intent === 'gamemaster' ? gamemasterPrompt(context)
+                : intent === 'propose' ? proposePrompt(context)
+                  : prompt(subject, context),
               '--output-format',
               'json',
             ],
@@ -144,6 +219,7 @@ export function oraclePlugin(): Plugin {
                 res.end(JSON.stringify({
                   name: said.name,
                   line: said.line,
+                  data: said.data,
                   model: ran,
                   costUsd: envelope.total_cost_usd ?? 0,
                 }));

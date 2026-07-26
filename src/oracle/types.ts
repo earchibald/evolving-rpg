@@ -5,9 +5,11 @@
  * and the rest are all questions asked through this single door, which is what
  * keeps their answers cacheable, replaceable and countable in one place.
  *
- * This increment needs exactly one of them.
+ * `propose` is the Rulesmith: it reads a finished run and drafts one R2 rule.
+ * Unlike `describe` it is never cached and never becomes canon — a proposal is
+ * a conversation, and asking twice may reasonably give two different answers.
  */
-export type Intent = 'describe' | 'gamemaster';
+export type Intent = 'describe' | 'gamemaster' | 'propose';
 
 /**
  * What is being asked about.
@@ -37,6 +39,10 @@ export interface Answer {
   model: string | null;
   ms: number;
   costUsd: number;
+  /** Structure, for the intents that answer with an object rather than prose.
+   *  Deliberately `unknown`: it is a model's output and has to be validated
+   *  before anything looks at it, so a type here would only be a lie. */
+  data?: unknown;
 }
 
 export type CallState = 'waiting' | 'asking' | 'answered' | 'failed';
@@ -55,5 +61,5 @@ export interface Call {
 
 export interface Transport {
   readonly name: string;
-  ask(question: Question): Promise<{ name: string; line: string; model: string | null; costUsd: number }>;
+  ask(question: Question): Promise<{ name: string; line: string; model: string | null; costUsd: number; data?: unknown }>;
 }

@@ -276,6 +276,7 @@ export class Oracle {
         model: said.model,
         ms: this.now() - started,
         costUsd: said.costUsd,
+        data: said.data,
       };
     } catch (error) {
       this.calls.set(id, { ...call, state: 'failed', detail: String(error).slice(0, 80) });
