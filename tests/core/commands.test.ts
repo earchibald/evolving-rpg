@@ -81,6 +81,8 @@ function fixture(extra: Entity[] = []): GameState {
     seed: 5,
     rngCounter: 40,
     rules: [],
+    xp: 0,
+    level: 1,
   };
 }
 
@@ -220,6 +222,8 @@ describe('striking', () => {
       seed: 5,
       rngCounter: counter,
       rules: [],
+      xp: 0,
+      level: 1,
     };
   }
 

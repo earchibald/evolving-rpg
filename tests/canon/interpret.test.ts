@@ -43,6 +43,8 @@ function stateWith(rules: Rule[], entities = [entity('player', 0, 0, 5, 10)]): G
     seed: 1,
     rngCounter: 7,
     rules,
+    xp: 0,
+    level: 1,
   };
 }
 

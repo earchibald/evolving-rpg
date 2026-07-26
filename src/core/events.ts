@@ -33,6 +33,10 @@ export interface EntitySeed {
 }
 
 export interface WorldInitPayload {
+  /** Carried progress, present on depth-crossing worlds (v5). A bare world
+   *  omits them and starts at nothing. */
+  xp?: number;
+  level?: number;
   width: number;
   height: number;
   tiles: number[];

@@ -48,6 +48,8 @@ function world(entities = [being('player', 0, 0, 5, 10)], opts: { exitAt?: numbe
     grid: makeGrid(8, 1, tiles), entities, items: [],
     turn: opts.turn ?? 1, activeEntityId: 'player', seed: 1, rngCounter: 0,
     rules: opts.rules ?? [],
+    xp: 0,
+    level: 1,
   };
 }
 

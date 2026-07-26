@@ -61,3 +61,21 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > **Try it:** walk into anything — the odds line under "what is here" shows the
 > new math. 526 tests; the golden fixture regenerated behind its guard.
 
+> [!NOTE]
+> **02:41 — Fighting pays: XP and levels, derived from the log**
+> Kills pay their victim's **threat value** as XP (risk in, reward out — one
+> number both ways). Crossing a threshold applies the growth table and **heals
+> to full** — the sawtooth's ease tooth, said out loud in the status line
+> ("you are level 2. your wounds close; something settles into place").
+> Leveling is *derived state*: computed from kill history inside `apply`, no
+> new event type, so the log and your level can never disagree and old saves
+> replay untouched. Rule-made kills (your thorns) credit you too.
+>
+> The assay had to get smarter to survive this: its greed trial now measures
+> **marginal** gain — same world, same exploiter, with and without the rule —
+> because a player who levels up mid-trial earns stats honestly, and billing a
+> candidate rule for a level-up would refuse every rule in a world where
+> fighting works.
+>
+> **Try it:** the "you" panel shows `level 1 · 0 xp`; kill something.
+

@@ -164,18 +164,22 @@ export function assayRule(rule: Rule): RuleAssay {
   const brokeRegister = findings.length > 0;
 
   // ── trial of greed (M2) ────────────────────────────────────────────────
-  const greedy = withRule(greedWorld(), rule);
-  const before = fold(greedy.log, greedy.head);
-  const greed = autoplay(greedy, exploiterFor(rule), TRIAL_ACTIONS);
-  fired += firings(greed.position, rule.id);
+  //
+  // Marginal, not absolute: the same world and the same exploiter run twice,
+  // with and without the rule, and the rule is billed only for the difference.
+  // The game now grows the player honestly — items grant might, kills pay XP
+  // and levels raise stats — and an assay that billed a rule for a level-up
+  // would refuse every rule in a world where fighting works.
+  const exploiter = exploiterFor(rule);
+  const greedy = autoplay(withRule(greedWorld(), rule), exploiter, TRIAL_ACTIONS);
+  const honest = autoplay(greedWorld(), exploiter, TRIAL_ACTIONS);
+  fired += firings(greedy.position, rule.id);
 
   for (const stat of STATS_TO_WATCH) {
-    const gain = statOf(greed.state, stat) - statOf(before, stat)
-      // An item grants might honestly; do not bill the rule for it.
-      - (stat === 'might' && chain(greed.position.log, greed.position.head).some((e) => e.type === 'ITEM_TAKEN') ? 1 : 0);
+    const gain = (statOf(greedy.state, stat) - statOf(honest.state, stat));
     if (gain >= MAX_RULE_GAIN) {
       findings.push(
-        `refused (M2): exploited for ${String(TRIAL_ACTIONS)} actions, ${stat} climbed by ${String(gain)} with no ceiling in sight — a repeatable action may not mint stats`,
+        `refused (M2): exploited for ${String(TRIAL_ACTIONS)} actions, ${stat} climbed ${String(gain)} past what the same play earns without the rule — a repeatable action may not mint stats`,
       );
     }
   }

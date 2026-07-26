@@ -366,7 +366,8 @@ function render(): void {
   // is the map jumping at the exact moment you most want it still.
   const vitals: Array<[string, string, string]> = [
     ['this run', done, done === 'dead' ? 'urgent' : done === 'escaped' ? 'good' : ''],
-    ['hit points', player === undefined ? '—' : String(player.stats.hp), hurt ? 'urgent' : ''],
+    ['hit points', player === undefined ? '—' : `${player.stats.hp} / ${player.maxHp}`, hurt ? 'urgent' : ''],
+    ['level', `${state.level} · ${state.xp} xp`, ''],
     ['you deal', player === undefined ? '—' : `1–${player.stats.might}`, ''],
     ['the way out', toExit, done === 'escaped' ? 'good' : ''],
     ['standing at', player === undefined ? '—' : `${player.pos.x}, ${player.pos.y}`, ''],
@@ -678,6 +679,13 @@ function finish(before: number, head: string): void {
   const priorEvent = events[before - 1];
   const priorState = priorEvent === undefined ? fold(log, head) : fold(log, priorEvent.id);
   const told = narrate(events.slice(before), priorState);
+
+  // The ease tooth, said out loud: growth and the full heal arrive together,
+  // and a level a player does not notice buys no relief at all.
+  const nowState = fold(log, head);
+  if (nowState.level > priorState.level) {
+    told.push(`you are level ${nowState.level}. your wounds close; something settles into place`);
+  }
 
   // Death is handled here rather than inside the step, because it is not a move
   // — it is what the world does about a move that went badly.

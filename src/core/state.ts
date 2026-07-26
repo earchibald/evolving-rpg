@@ -21,6 +21,11 @@ export interface GameState {
    *  entirely from RULE_RATIFIED events on this chain, which is what makes a
    *  fork's ruleset differ from its sibling's without anything copying it. */
   readonly rules: readonly Rule[];
+  /** The player's experience, derived from kill history — never evented, so
+   *  the log and the level cannot disagree. XP is the threat value of what
+   *  the player has finished. */
+  readonly xp: number;
+  readonly level: number;
 }
 
 const NO_ENTITIES: readonly Entity[] = Object.freeze([]);
@@ -40,4 +45,6 @@ export const EMPTY_STATE: GameState = Object.freeze({
   seed: 0,
   rngCounter: 0,
   rules: NO_RULES,
+  xp: 0,
+  level: 1,
 });

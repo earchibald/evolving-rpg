@@ -19,6 +19,8 @@ function room(entities: Entity[], walls: Array<[number, number]> = []): GameStat
     seed: 7,
     rngCounter: 0,
     rules: [],
+    xp: 0,
+    level: 1,
   };
 }
 

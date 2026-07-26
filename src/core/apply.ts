@@ -1,8 +1,59 @@
 import { makeGrid } from './grid.js';
 import { granted } from './item.js';
 import { applyResolved } from '../canon/interpret.js';
+import { threatOf, levelForXp, growthAt } from './tables.js';
 import type { GameEvent } from './events.js';
 import type { GameState } from './state.js';
+
+/**
+ * Experience, paid at the moment of the kill.
+ *
+ * Derived rather than evented: XP is a function of which creatures the player
+ * finished, so the log and the level can never disagree and there is nothing
+ * to upcast. `before` is the world as the blow found it — a creature counts
+ * exactly once, on the event that took it from alive to not.
+ *
+ * Crossing a threshold applies the growth table and heals to full: the
+ * sawtooth's ease tooth, one breath before the next floor bites.
+ */
+function creditKills(before: GameState, after: GameState, killerId: string, playerId = 'player'): GameState {
+  if (killerId !== playerId) return after;
+
+  let gained = 0;
+  for (const was of before.entities) {
+    if (was.id === playerId || was.stats.hp <= 0) continue;
+    const now = after.entities.find((e) => e.id === was.id);
+    if (now !== undefined && now.stats.hp <= 0) gained += threatOf(was.stats);
+  }
+  if (gained === 0) return after;
+
+  const xp = after.xp + gained;
+  let level = after.level;
+  let entities = after.entities;
+  const target = levelForXp(xp);
+
+  while (level < target) {
+    level += 1;
+    const g = growthAt(level);
+    entities = entities.map((e) => {
+      if (e.id !== playerId) return e;
+      const maxHp = e.maxHp + g.hp;
+      return {
+        ...e,
+        maxHp,
+        stats: {
+          // Full heal at the moment of leveling — the breath between teeth.
+          hp: maxHp,
+          might: e.stats.might + g.might,
+          wits: e.stats.wits + g.wits,
+          speed: e.stats.speed + g.speed,
+        },
+      };
+    });
+  }
+
+  return { ...after, xp, level, entities };
+}
 
 /**
  * The shape change for one event, with the RNG counter deliberately left
@@ -40,14 +91,20 @@ function reduce(state: GameState, event: GameEvent): GameState {
         // A new world plays under no rules, whatever stood before it on the
         // log. WORLD_INIT replaces state wholesale, and rules are state.
         rules: [],
+        // Depth-crossing worlds may carry the player's earned progress in the
+        // payload; a bare world starts at nothing. Read defensively — older
+        // events never wrote these.
+        xp: p.xp ?? 0,
+        level: p.level ?? 1,
       };
     }
 
     case 'RULE_FIRED': {
       // Replays the recorded effects. It does not look at `state.rules`, does
       // not re-read the rule, and does not re-evaluate a single condition —
-      // that is what keeps folded history stable as rules accumulate.
-      return applyResolved(state, event.payload.outcomes);
+      // that is what keeps folded history stable as rules accumulate. A kill
+      // the rule made belongs to whoever the rule fired for.
+      return creditKills(state, applyResolved(state, event.payload.outcomes), event.payload.actorId);
     }
 
     case 'RULE_RATIFIED': {
@@ -92,7 +149,7 @@ function reduce(state: GameState, event: GameEvent): GameState {
     case 'STRIKE': {
       const p = event.payload;
       if (!p.hit) return state;
-      return {
+      return creditKills(state, {
         ...state,
         entities: state.entities.map((e) =>
           e.id === p.targetId
@@ -102,7 +159,7 @@ function reduce(state: GameState, event: GameEvent): GameState {
             ? { ...e, stats: { ...e.stats, hp: Math.max(0, e.stats.hp - p.damage) } }
             : e,
         ),
-      };
+      }, p.attackerId);
     }
 
     case 'TURN_ADVANCED':
