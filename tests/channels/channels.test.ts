@@ -28,7 +28,7 @@ describe('speaking as the designer', () => {
     });
     const sink = recorder();
 
-    const note = await send(oracle, 'designer', 'the wall bump feels bad', WHERE, AT, sink.post);
+    const note = await send(oracle, 'designer', 'the wall bump feels bad', WHERE, AT, sink.post, 'player');
 
     expect(asked).toBe(0);
     expect(note.reply).toBeNull();
@@ -42,7 +42,7 @@ describe('speaking as the designer', () => {
     const oracle = new Oracle({ transport: null });
     const sink = recorder();
 
-    const note = await send(oracle, 'designer', 'more of this', WHERE, AT, sink.post);
+    const note = await send(oracle, 'designer', 'more of this', WHERE, AT, sink.post, 'player');
 
     expect(sink.written).toHaveLength(1);
     expect(note.said).toBe('more of this');
@@ -51,7 +51,7 @@ describe('speaking as the designer', () => {
 
   it('survives the sidecar itself failing', async () => {
     const oracle = new Oracle({ transport: null });
-    const note = await send(oracle, 'designer', 'kept anyway', WHERE, AT, () => Promise.reject(new Error('disk gone')));
+    const note = await send(oracle, 'designer', 'kept anyway', WHERE, AT, () => Promise.reject(new Error('disk gone')), 'player');
     expect(note.said).toBe('kept anyway');
   });
 });
@@ -61,7 +61,7 @@ describe('speaking to the gamemaster', () => {
     const oracle = new Oracle({ transport: stubTransport() });
     const sink = recorder();
 
-    const note = await send(oracle, 'gamemaster', 'what does the ash smell like?', WHERE, AT, sink.post);
+    const note = await send(oracle, 'gamemaster', 'what does the ash smell like?', WHERE, AT, sink.post, 'player');
 
     expect(note.reply).not.toBeNull();
     expect(sink.written[0]?.reply).toBe(note.reply);
@@ -69,7 +69,7 @@ describe('speaking to the gamemaster', () => {
 
   it('is queued where a player can see it', async () => {
     const oracle = new Oracle({ transport: stubTransport() });
-    await send(oracle, 'gamemaster', 'i search the wall', WHERE, AT, recorder().post);
+    await send(oracle, 'gamemaster', 'i search the wall', WHERE, AT, recorder().post, 'player');
 
     const call = oracle.queue().find((c) => c.intent === 'gamemaster');
     expect(call).toBeDefined();
@@ -80,7 +80,7 @@ describe('speaking to the gamemaster', () => {
     // Caching this would mean asking the same thing twice returns the same
     // words, which is the opposite of what a conversation is for.
     const oracle = new Oracle({ transport: stubTransport() });
-    await send(oracle, 'gamemaster', 'i search the wall', WHERE, AT, recorder().post);
+    await send(oracle, 'gamemaster', 'i search the wall', WHERE, AT, recorder().post, 'player');
     expect(Object.keys(oracle.known())).toHaveLength(0);
   });
 
@@ -88,7 +88,7 @@ describe('speaking to the gamemaster', () => {
     const oracle = new Oracle({ transport: brokenTransport('the world is silent') });
     const sink = recorder();
 
-    const note = await send(oracle, 'gamemaster', 'is anyone there?', WHERE, AT, sink.post);
+    const note = await send(oracle, 'gamemaster', 'is anyone there?', WHERE, AT, sink.post, 'player');
 
     expect(note.reply).toBeNull();
     expect(note.trouble).toContain('the world is silent');
@@ -102,7 +102,7 @@ describe('what a note carries', () => {
     // what was happening later — without ever having entered causal history.
     const oracle = new Oracle({ transport: null });
     const sink = recorder();
-    await send(oracle, 'designer', 'here', WHERE, AT, sink.post);
+    await send(oracle, 'designer', 'here', WHERE, AT, sink.post, 'player');
 
     const written = sink.written[0];
     expect(written?.world).toBe('main');
@@ -114,8 +114,8 @@ describe('what a note carries', () => {
   it('keeps the two channels apart', async () => {
     const oracle = new Oracle({ transport: stubTransport() });
     const sink = recorder();
-    await send(oracle, 'designer', 'out here', WHERE, AT, sink.post);
-    await send(oracle, 'gamemaster', 'in there', WHERE, AT, sink.post);
+    await send(oracle, 'designer', 'out here', WHERE, AT, sink.post, 'player');
+    await send(oracle, 'gamemaster', 'in there', WHERE, AT, sink.post, 'player');
 
     expect(sink.written.map((n) => n.channel)).toEqual(['designer', 'gamemaster']);
   });

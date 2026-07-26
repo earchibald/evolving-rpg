@@ -56,11 +56,16 @@ Actions are turned into draft events via `draftFor`:
 
 ### Event Commit Pipeline (`commit`)
 
-`commit(position, draft, rulesFor)` executes a 3-step pipeline:
+`commit(position, draft, actorId, playerId)` executes a multi-step pipeline:
 
-1. **Append Action**: Appends the primary action `draft` to the log.
-2. **Evaluate Rules**: If `rulesFor` is specified (player actions only), calls `fireRules` in `src/canon/interpret.ts` for the matching trigger (`WAIT`, `STRIKE`, `MOVE_BLOCKED`, or `ITEM_TAKEN`). Appends any fired rule events.
-3. **Advance Turn**: If `endsTurn(draft)` is true, appends a `TURN_ADVANCED` event to pass initiative to the next active entity according to speed stat order (`src/core/turns.ts`).
+1. **Append Action**: Appends the primary action `draft` to the log and folds state to inspect the resulting world (`afterAction`).
+2. **Evaluate Rules (`firingFor`)**: Maps the draft event and post-action state to a rule firing context (`trigger`, `actorId`, `blow`):
+   - **Player Actions (`WAIT`, `MOVE`, `MOVE_BLOCKED`, `ITEM_TAKEN`)**: Emits corresponding triggers for player-initiated non-combat actions.
+   - **Combat Attacks (`STRIKE`, `STRUCK`, `KILLED`)**:
+     - When the player swings, if the blow kills the target, it emits `KILLED` (and only `KILLED`, avoiding double-firing with `STRIKE`). Otherwise, it emits `STRIKE`.
+     - When an enemy swings at the player, it emits `STRUCK`, allowing reactive rules (such as thorns or retaliation) to fire on the player's behalf during enemy turns.
+   - **Rule Firing**: Calls `fireRules(afterAction, trigger, actorId, blow)` and appends any emitted `RULE_FIRED` events carrying resolved concrete outcomes (`health`, `stat`, `move`, `said`).
+3. **Advance Turn & Pass Round (`TURN_PASSED`)**: If `endsTurn(draft)` is true, appends a `TURN_ADVANCED` event to pass initiative according to speed order (`src/core/turns.ts`). If a full round completed (`after.turn !== before.turn`), evaluates `TURN_PASSED` rules once for the round.
 
 ---
 

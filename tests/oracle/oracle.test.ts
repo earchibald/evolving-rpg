@@ -325,3 +325,42 @@ describe('what makes two questions the same question', () => {
     expect(dead.name).toBe('ash-crawler');
   });
 });
+
+describe('unlearning', () => {
+  it('drops every name, so a wipe is actually a wipe', async () => {
+    // The bug this exists for: "wipe everything" cleared the *stored* canon and
+    // nothing else. The Oracle kept its names in memory, the next ask fired
+    // onChange, and onChange wrote the whole lot straight back to storage. The
+    // wipe looked like it had done nothing, because it had.
+    const oracle = new Oracle({ transport: stubTransport() });
+    oracle.ask(CREATURE);
+    await tick();
+    expect(Object.keys(oracle.known())).toHaveLength(1);
+
+    oracle.unlearn();
+
+    expect(Object.keys(oracle.known())).toHaveLength(0);
+    expect(oracle.queue()).toHaveLength(0);
+    // And the very next ask must be a stand-in again, not the old name.
+    expect(oracle.ask(CREATURE).source).toBe('fallback');
+  });
+
+  it('lets a name be learned afresh afterwards', async () => {
+    const oracle = new Oracle({ transport: stubTransport() });
+    oracle.ask(CREATURE);
+    await tick();
+    oracle.unlearn();
+
+    oracle.ask(CREATURE);
+    await tick();
+    expect(oracle.ask(CREATURE).name).toBe('the thing');
+  });
+
+  it('is not what forget does — finished work goes, canon stays', async () => {
+    const oracle = new Oracle({ transport: stubTransport() });
+    oracle.ask(CREATURE);
+    await tick();
+    oracle.forget();
+    expect(Object.keys(oracle.known())).toHaveLength(1);
+  });
+});

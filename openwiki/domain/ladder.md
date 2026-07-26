@@ -53,75 +53,128 @@ To prevent untrusted model-generated rules from crashing, hanging, or corrupting
 ### Closed Schema Union
 
 ```typescript
-export const TRIGGERS = ['WAIT', 'STRIKE', 'MOVE_BLOCKED', 'ITEM_TAKEN'] as const;
+export const TRIGGERS = [
+  'WAIT',          // you held still
+  'MOVE',          // you took a step
+  'MOVE_BLOCKED',  // you walked into something solid
+  'STRIKE',        // you struck something
+  'STRUCK',        // something struck you
+  'KILLED',        // something died by your hand
+  'ITEM_TAKEN',    // you picked something up
+  'TURN_PASSED',   // a full round went by
+] as const;
 export type Trigger = (typeof TRIGGERS)[number];
 
-export const CONDITION_KINDS = ['noCreatureWithin', 'creatureWithin', 'hpAtMost', 'hpAtLeast'] as const;
-export type ConditionKind = (typeof CONDITION_KINDS)[number];
+export const STATS = ['might', 'speed', 'wits', 'maxHp'] as const;
+export type StatName = (typeof STATS)[number];
 
-export const EFFECT_KINDS = ['heal', 'harm', 'speak'] as const;
-export type EffectKind = (typeof EFFECT_KINDS)[number];
+export type Condition =
+  | { readonly kind: 'hpAtMost'; readonly n: number }
+  | { readonly kind: 'hpAtLeast'; readonly n: number }
+  | { readonly kind: 'hpBelowPercent'; readonly n: number }
+  | { readonly kind: 'hpAbovePercent'; readonly n: number }
+  | { readonly kind: 'creatureWithin'; readonly n: number }
+  | { readonly kind: 'noCreatureWithin'; readonly n: number }
+  | { readonly kind: 'creaturesAtMost'; readonly n: number }
+  | { readonly kind: 'creaturesAtLeast'; readonly n: number }
+  | { readonly kind: 'exitWithin'; readonly n: number }
+  | { readonly kind: 'exitBeyond'; readonly n: number }
+  | { readonly kind: 'turnAtLeast'; readonly n: number }
+  | { readonly kind: 'statAtLeast'; readonly stat: StatName; readonly n: number }
+  | { readonly kind: 'blowLanded' }
+  | { readonly kind: 'blowMissed' };
+
+export type Effect =
+  | { readonly kind: 'heal'; readonly n: number }
+  | { readonly kind: 'harm'; readonly n: number }
+  | { readonly kind: 'harmOther'; readonly n: number }
+  | { readonly kind: 'grant'; readonly stat: StatName; readonly n: number }
+  | { readonly kind: 'drain'; readonly stat: StatName; readonly n: number }
+  | { readonly kind: 'push'; readonly n: number }
+  | { readonly kind: 'speak'; readonly text: string };
 ```
 
 An R2 `Rule` consists of:
 - `id`: Unique rule string identifier.
 - `when`: Single `Trigger` event type.
-- `require`: List of `Condition` records (`{ kind, n }`).
-- `then`: List of `Effect` records (`heal`, `harm`, or `speak`).
+- `require`: List of `Condition` records (up to 4 per rule).
+- `then`: List of `Effect` records (`heal`, `harm`, `harmOther`, `grant`, `drain`, `push`, `speak`, up to 3 per rule).
 - `provenance`: Historical justification (`events[]`, `notes[]`, `because`).
 - `ratifiedAt`: ISO timestamp string.
 
-### Strict Safety Bounds
+### Strict Safety Bounds & Shape Validation
 
-`src/canon/rule.ts` enforces hard numerical bounds during validation:
+`src/canon/rule.ts` enforces per-kind numerical bounds and structural integrity during validation:
 
 ```typescript
-export const MIN_N = 1;          // Minimum value for numeric parameters
-export const MAX_N = 9;          // Maximum value for numeric parameters
-export const MAX_CONDITIONS = 3; // Maximum conditions per rule
-export const MAX_EFFECTS = 2;    // Maximum effects per rule
+// Range limits per condition and effect kind
+const RANGES: Record<string, readonly [number, number]> = {
+  heal: [1, 20], harm: [1, 20], harmOther: [1, 20],
+  grant: [1, 5], drain: [1, 5],
+  push: [1, 3],
+  hpAtMost: [1, 99], hpAtLeast: [1, 99],
+  hpBelowPercent: [1, 99], hpAbovePercent: [1, 99],
+  creatureWithin: [1, 40], noCreatureWithin: [1, 40],
+  exitWithin: [1, 40], exitBeyond: [1, 40],
+  creaturesAtMost: [0, 20], creaturesAtLeast: [0, 20],
+  turnAtLeast: [1, 999],
+  statAtLeast: [1, 20],
+};
+
+export const MAX_CONDITIONS = 4; // Maximum conditions per rule
+export const MAX_EFFECTS = 3;    // Maximum effects per rule
 export const MAX_TEXT = 120;     // Maximum text length for speak effects
 export const MAX_BECAUSE = 240;  // Maximum provenance rationale length
 export const MAX_RULES = 16;     // Maximum active rules in game state
 ```
 
-Any rule proposal exceeding these bounds is rejected by `validateRule(input)` and converted to a `Rejected` payload (`{ rejected: string }`) without entering game state.
+In addition to range checks, `validateRule(input)` rejects incoherent rule shapes:
+- **Blow conditions on non-blow triggers**: `blowLanded` or `blowMissed` are refused unless the trigger is `STRIKE` or `STRUCK`.
+- **Target effects without an target**: `harmOther` and `push` require a trigger that has another party (e.g., `STRIKE` or `STRUCK`).
+
+Any invalid rule proposal is converted to a `Rejected` payload (`{ rejected: string }`) without entering game state.
 
 ---
 
 ## Rule Interpreter Execution Semantics
 
-The rule interpreter in `src/canon/interpret.ts` converts R2 rule data into active gameplay effects via `fireRules(state, trigger, actorId)`.
+The rule interpreter in `src/canon/interpret.ts` converts R2 rule data into active gameplay effects via `fireRules(state, trigger, actorId, blow)`.
 
 ### Core Interpreter Invariants
 
-1. **Decided at Firing, Replayed via Events**
-   `fireRules` evaluates conditions against `GameState` at the exact instant an action completes. When conditions pass, it emits a `RULE_FIRED` event carrying the exact effects (`heal`, `harm`, `speak`). During replay, the reducer `apply` in `src/core/apply.ts` executes the payload directly without re-evaluating conditions. This prevents new or modified rules from rewriting past history.
+1. **Effects Resolved at Fire Time, Replayed via Concrete Outcomes**
+   `fireRules` evaluates conditions and resolves target entities/positions at the exact instant of firing, producing concrete `Resolved` outcomes (`health`, `stat`, `move`, `said`) stored in the `outcomes` array of `RULE_FIRED` events. During replay, `applyResolved` in `src/canon/interpret.ts` (invoked by `apply` in `src/core/apply.ts`) executes concrete outcomes directly without re-evaluating conditions or re-deriving target positions or grid boundaries. This keeps past history stable as rules or map geometries evolve.
 
 2. **Zero Randomness (`rngDraws: 0`)**
-   Rule firing draws no random numbers. Ratifying a new rule never shifts future RNG sequences or combat rolls.
+   Rule firing draws no random numbers. Every effect is a pure function of state and recorded rule parameters, so ratifying a new rule never shifts future RNG sequences or combat rolls.
 
 3. **Strict Non-Cascading**
    `RULE_FIRED` is deliberately **not** a member of `Trigger`. A rule effect cannot trigger another rule, eliminating infinite execution loops by design.
 
-4. **Player Scope Protection**
-   In [Turn Execution Loop & Session Driver](/openwiki/workflows/turn-loop.md), `commit` evaluates rules solely for player actions (`rulesFor = player.id`). Creatures cannot trigger player-ratified rules.
+4. **Player Scope Protection & Reactive Triggers**
+   Triggers are defined relative to the player. `STRIKE` represents player attacks; `STRUCK` fires when an enemy attacks the player (allowing thorns, retaliation, or rage mechanics). Rules fire strictly on behalf of the player entity (`playerId`), avoiding accidental creature self-buffs or heals.
 
 ```typescript
 // Condition check execution in src/canon/interpret.ts
-export function holds(condition: Condition, state: GameState, actorId: string): boolean {
+export function holds(condition: Condition, state: GameState, actorId: string, blow: Blow = {}): boolean {
   const actor = findEntity(state.entities, actorId);
   if (actor === undefined) return false;
 
   switch (condition.kind) {
-    case 'noCreatureWithin':
-      return nearestCreature(state, actorId) > condition.n;
-    case 'creatureWithin':
-      return nearestCreature(state, actorId) <= condition.n;
-    case 'hpAtMost':
-      return actor.stats.hp <= condition.n;
-    case 'hpAtLeast':
-      return actor.stats.hp >= condition.n;
+    case 'hpAtMost': return actor.stats.hp <= condition.n;
+    case 'hpAtLeast': return actor.stats.hp >= condition.n;
+    case 'hpBelowPercent': return actor.maxHp > 0 && (actor.stats.hp / actor.maxHp) * 100 < condition.n;
+    case 'hpAbovePercent': return actor.maxHp > 0 && (actor.stats.hp / actor.maxHp) * 100 > condition.n;
+    case 'creatureWithin': return nearestCreature(state, actorId) <= condition.n;
+    case 'noCreatureWithin': return nearestCreature(state, actorId) > condition.n;
+    case 'creaturesAtMost': return livingOthers(state, actorId) <= condition.n;
+    case 'creaturesAtLeast': return livingOthers(state, actorId) >= condition.n;
+    case 'exitWithin': return stepsToExit(state, actor.pos) <= condition.n;
+    case 'exitBeyond': return stepsToExit(state, actor.pos) > condition.n;
+    case 'turnAtLeast': return state.turn >= condition.n;
+    case 'statAtLeast': return statOf(actor, condition.stat) >= condition.n;
+    case 'blowLanded': return blow.hit === true;
+    case 'blowMissed': return blow.hit === false;
   }
 }
 ```

@@ -284,6 +284,23 @@ export class Oracle {
     }
   }
 
+  /**
+   * Unlearns everything the world has ever said.
+   *
+   * Separate from `forget`, which deliberately keeps canon. This is what "wipe
+   * everything" needs, and clearing the stored copy is not enough on its own:
+   * the Oracle holds its names in memory, so the next `ask` fires `onChange`
+   * and writes the whole lot straight back to storage. The wipe then appears to
+   * have done nothing, which is exactly what it looked like.
+   */
+  unlearn(): void {
+    this.canon.clear();
+    this.tries.clear();
+    this.calls.clear();
+    this.raisedAt.clear();
+    this.onChange();
+  }
+
   /** Drops finished entries, so the queue shows work rather than history. */
   forget(): void {
     for (const [id, call] of this.calls) {

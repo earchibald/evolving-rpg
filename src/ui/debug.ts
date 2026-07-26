@@ -9,7 +9,7 @@ import { save, load, clear, emptySession } from '../play/store.js';
 import { readRule } from '../canon/rule.js';
 import { Oracle, describeQuestion } from '../oracle/oracle.js';
 import { cliTransport } from '../oracle/transports.js';
-import { send } from '../channels/channels.js';
+import { send, loadNotes, saveNotes, NOTES_KEY } from '../channels/channels.js';
 import type { Channel, Note } from '../channels/channels.js';
 import { WALL, EXIT, idx } from '../core/grid.js';
 import type { EventLog } from '../log/chain.js';
@@ -204,9 +204,9 @@ function calledCreature(kind: string, e: { stats: { hp: number; might: number; s
   })).name;
 }
 
-/** Everything said, newest last, kept in memory for the session and on disk
- *  for good. */
-const notes: Note[] = [];
+/** Everything said, newest last. Restored on load, so a note outlives the tab
+ *  it was typed into. */
+const notes: Note[] = loadNotes();
 
 /** What the player can currently see, so the gamemaster is not answering blind. */
 function scene(): Record<string, unknown> {
@@ -236,9 +236,12 @@ async function speak(channel: Channel, said: string): Promise<void> {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(n),
     });
-  });
+  }, 'player');
 
   notes.push(note);
+  // Kept beside the session rather than only in the sidecar, so the Rulesmith
+  // can read what you said after a reload — and so can you.
+  saveNotes(notes);
   render();
 }
 
@@ -738,7 +741,12 @@ el('open-worlds').addEventListener('click', () => { sheet.showModal(); });
 
 el('wipe').addEventListener('click', () => {
   const worlds = listRefs(refs).length;
-  clear(CANON_KEY);
+  // In memory first, then on disk. The other order does not work: the Oracle
+  // keeps its names in memory, so anything that clears only storage gets them
+  // written straight back by the next ask.
+  oracle.unlearn();
+  notes.length = 0;
+  clear(CANON_KEY, NOTES_KEY);
   freshWorld();
   lastSaved = '';
   persist();
