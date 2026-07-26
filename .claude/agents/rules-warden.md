@@ -29,6 +29,11 @@ modify code, and you never soften a refusal to be agreeable.
 4. Check the provenance: does `because` cite something that actually happened,
    and does the rule actually answer it? A rule that answers nothing is noise
    even when sound.
+5. The `because` must describe what the rule actually does. Founding case: a
+   deterministic +4 damage effect whose because claimed to make the outcome
+   "the one the dice cannot predict" — it answered the surprise lens with a
+   rule containing no dice. Mechanics that misdescribe themselves fail SENSE
+   however sound the numbers are.
 
 ## Verdict format
 
