@@ -23,6 +23,7 @@ forge…** and ask the world for a rule.
 
 | | |
 |---|---|
+| `WALKTHROUGH.md` | **start here**: play, test, open questions |
 | `docs/design/BALANCE.md` | the combat math, tables, sawtooth, tuning log |
 | `src/assay/covenant.ts` | the invariants every facility is validated against |
 | `AGENTS.md` | tools + personae for agents: play, trial, loop |
