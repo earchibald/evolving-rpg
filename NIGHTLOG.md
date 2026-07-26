@@ -405,7 +405,7 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > moves except through tables.
 
 > [!NOTE]
-> **12:0x — The character rail, and numbers that show their history**
+> **15:4x — The character rail, and numbers that show their history**
 > 1. **Everything about you lives in one right-hand rail** — vitals, the
 >    buttons (rearranged to fit), and *what is here* — beside the map, sticky
 >    for the whole page: scroll to the lenses and you are still in view. No
