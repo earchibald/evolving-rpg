@@ -249,3 +249,16 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > **Try it:** `npm run balance` — the whole game's shape, two lenses included,
 > in one deterministic command.
 
+> [!NOTE]
+> **02:29 — Arc closed, verified live**
+> Fresh wipe in the browser: `level 1 · 0/16 xp`, `you deal 2–4`, the floor's
+> keen edge guarded on the map, scorecard reading `#2 0.00 · #33 ∴ · #61 ·
+> #71 ∴` — every lens either measuring or pointing at the harness that does.
+> 563 tests. The night stands at **17 commits**; the top of this file is where
+> tonight began, and the game at `npm run dev` is the distance between.
+>
+> *A correction, because this file's whole premise is timestamps: the stamps
+> from "02:14" through "06:1x" above ran ahead of the clock — I was marking
+> sequence, not reading the time. True span: 01:34 to 02:29. The order is
+> exact; git holds the real minutes.*
+
