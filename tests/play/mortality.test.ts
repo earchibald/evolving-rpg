@@ -1,6 +1,6 @@
 import { emptyLog, append, chain, fold } from '../../src/log/chain.js';
 import { emptyRefs, createRef, getRef, listRefs } from '../../src/log/refs.js';
-import { buryIfDead, isGrave, playerStep, runWorldTurns } from '../../src/play/session.js';
+import { buryIfDead, beginAgain, isGrave, playerStep, playerWait, runWorldTurns } from '../../src/play/session.js';
 import { outcome } from '../../src/core/commands.js';
 import { FLOOR } from '../../src/core/grid.js';
 import type { EventLog } from '../../src/log/chain.js';
@@ -42,9 +42,19 @@ function doomed(playerHp = 1): { log: EventLog; refs: Refs } {
   };
 }
 
-/** Plays until the player dies, or gives up. */
-function untilDead(start: { log: EventLog; refs: Refs }): { log: EventLog; refs: Refs } {
+/** Plays until the player dies, or gives up. `dawdle` takes a different route
+ *  to the same end, which matters because an identical route is an identical
+ *  history — same events, same ids, same death. */
+function untilDead(start: { log: EventLog; refs: Refs }, dawdle = 0): { log: EventLog; refs: Refs } {
   let { log, refs } = start;
+
+  for (let i = 0; i < dawdle; i += 1) {
+    const head = getRef(refs, 'main').head;
+    if (head === null) break;
+    const after = runWorldTurns(playerWait({ log, head }, 'player').position, 'player');
+    log = after.log;
+    refs = { byName: new Map(refs.byName).set('main', { ...getRef(refs, 'main'), head: after.head }) };
+  }
 
   for (let i = 0; i < 40; i += 1) {
     const head = getRef(refs, 'main').head;
@@ -74,10 +84,29 @@ describe('dying', () => {
     expect(getRef(buried.refs, buried.grave ?? '').head).toBe(before.head);
   });
 
-  it('sends the living world back to the beginning', () => {
+  it('leaves you lying where you fell, rather than rewinding out from under you', () => {
+    // It used to rewind the instant you died, which made the most significant
+    // thing that can happen the one thing you could never look at: a line of
+    // text went by and the map was already a fresh run. The body stays until
+    // you choose to begin again.
     const head = getRef(buried.refs, 'main').head;
-    expect(chain(played.log, head)).toHaveLength(1);
-    expect(outcome(fold(played.log, head))).toBe('playing');
+    expect(head).toBe(before.head);
+    expect(outcome(fold(played.log, head))).toBe('dead');
+    expect(fold(played.log, head).entities[0]?.stats.hp).toBe(0);
+  });
+
+  it('does not dig a second grave for a death it has already buried', () => {
+    // The ref now stays on the dead state, so this runs again on every render.
+    const twice = buryIfDead(played.log, buried.refs, 'main');
+    expect(twice.grave).toBe(buried.grave);
+    expect(listRefs(twice.refs).filter((r) => isGrave(r.name))).toHaveLength(1);
+  });
+
+  it('sends the world back to the beginning when you ask it to', () => {
+    const begun = beginAgain(played.log, buried.refs, 'main');
+    const head = getRef(begun.refs, 'main').head;
+    expect(chain(begun.log, head)).toHaveLength(1);
+    expect(outcome(fold(begun.log, head))).toBe('playing');
   });
 
   it('deletes nothing — the log is exactly as long as it was', () => {
@@ -96,7 +125,8 @@ describe('dying', () => {
     // the edge is back on the floor and the only version of you that ever held
     // it is the one lying dead on the other branch. No inventory bookkeeping.
     const grave = fold(played.log, getRef(buried.refs, buried.grave ?? '').head);
-    const living = fold(played.log, getRef(buried.refs, 'main').head);
+    const begun = beginAgain(played.log, buried.refs, 'main');
+    const living = fold(begun.log, getRef(begun.refs, 'main').head);
 
     expect(grave.entities[0]?.stats.might).toBe(5);
     expect(grave.items).toHaveLength(0);
@@ -105,8 +135,11 @@ describe('dying', () => {
     expect(living.items).toHaveLength(1);
   });
 
-  it('numbers each grave, so dying twice leaves two of them', () => {
-    const again = untilDead({ log: played.log, refs: buried.refs });
+  it('numbers each grave, so dying two different deaths leaves two of them', () => {
+    // Begin again first: you cannot die a second time while still lying dead.
+    // And die *differently* — see below for why that is not a detail.
+    const restarted = beginAgain(played.log, buried.refs, 'main');
+    const again = untilDead({ log: restarted.log, refs: restarted.refs }, 2);
     const second = buryIfDead(again.log, again.refs, 'main');
 
     const graves = listRefs(second.refs).filter((r) => isGrave(r.name));
@@ -114,11 +147,23 @@ describe('dying', () => {
     expect(graves.map((g) => g.name).sort()).toEqual(['main†1', 'main†2']);
   });
 
+  it('treats an identical death as the death it already buried', () => {
+    // Events are content-addressed, so walking the same path to the same end
+    // produces the same ids and lands on the same head. There is only one such
+    // timeline, and giving it a second name would be two graves for one body.
+    const restarted = beginAgain(played.log, buried.refs, 'main');
+    const same = untilDead({ log: restarted.log, refs: restarted.refs });
+    const second = buryIfDead(same.log, same.refs, 'main');
+
+    expect(second.grave).toBe(buried.grave);
+    expect(listRefs(second.refs).filter((r) => isGrave(r.name))).toHaveLength(1);
+  });
+
   it('lets the rewound world walk the same path again without complaint', () => {
     // Convergent history: the reset world repeats moves whose ids already exist.
     // append is idempotent for exactly this, and this is the case that proves it
     // was worth making so.
-    const head = getRef(buried.refs, 'main').head;
+    const head = getRef(beginAgain(played.log, buried.refs, 'main').refs, 'main').head;
     expect(head).not.toBeNull();
     expect(() => playerStep({ log: played.log, head: head ?? '' }, 'player', 1, 0)).not.toThrow();
   });

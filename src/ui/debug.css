@@ -52,6 +52,12 @@
 
 * { box-sizing: border-box; }
 
+/* `hidden` is a UA `display: none`, so any author `display` rule beats it —
+   and three panels here set `display: flex`. The spinner, the proposal box and
+   the editor were all on screen from the moment the page loaded, announcing
+   work nobody had asked for yet. Anything hidden is hidden. */
+[hidden] { display: none !important; }
+
 body {
   margin: 0;
   background: var(--ground);
@@ -103,6 +109,10 @@ kbd {
 .cell.player { background: var(--player); }
 .cell.foe { background: var(--foe); }
 .cell.dead { background: #4a2e2a; }
+/* Your own body, which should not look like every other corpse on the floor.
+   Keeps the colour you had while alive, drained, and ringed so it reads at a
+   glance on a map you are scanning for what killed you. */
+.cell.you-dead { background: #6b4a1c; box-shadow: inset 0 0 0 2px var(--player); }
 .cell.exit { background: var(--exit); }
 .cell.item { background: var(--item); }
 /* Ringed rather than filled, so a creature standing on the prize stays visible
@@ -306,3 +316,19 @@ button.danger:hover { background: #c9564a; border-color: #c9564a; }
   background: var(--ground); color: var(--exit); font-size: .82rem;
 }
 .preview.bad { color: var(--foe); }
+
+/* Work in progress, where the eye already is. The status line under the map is
+   behind the dialog, which is why asking used to look like nothing happened. */
+.asking { display: flex; align-items: center; gap: .5rem; margin: 0; color: var(--player); font-size: .82rem; }
+.spinner {
+  width: .7rem; height: .7rem; flex: none; border-radius: 50%;
+  border: 2px solid var(--rule); border-top-color: var(--player);
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* The count of seconds carries this on its own when motion is unwelcome, so
+   the ring becomes a plain mark rather than disappearing. */
+@media (prefers-reduced-motion: reduce) {
+  .spinner { border-color: var(--player); }
+}

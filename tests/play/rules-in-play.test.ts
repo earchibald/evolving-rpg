@@ -330,7 +330,12 @@ describe('a rule outlives the run that earned it', () => {
     const burial = buryIfDead(p.log, refs, 'main');
     expect(burial.grave).not.toBeNull();
 
-    const fresh = fold(burial.log, getRef(burial.refs, 'main').head!);
+    // The body stays until you begin again — that is the point of dying.
+    const lying = fold(burial.log, getRef(burial.refs, 'main').head!);
+    expect(lying.entities[0]?.stats.hp).toBe(0);
+
+    const begun = beginAgain(burial.log, burial.refs, 'main');
+    const fresh = fold(begun.log, getRef(begun.refs, 'main').head!);
     expect(fresh.rules).toHaveLength(1);
     expect(fresh.entities[0]?.stats.hp).toBe(10);
 

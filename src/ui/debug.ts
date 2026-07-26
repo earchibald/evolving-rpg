@@ -180,6 +180,7 @@ const oracle = new Oracle({
       window.localStorage.setItem(CANON_KEY, JSON.stringify(oracle.known()));
     } catch { /* quota; the world keeps its names for this session at least */ }
     render();
+    watchTheClock();
   },
 });
 
@@ -311,7 +312,7 @@ function render(): void {
       // design, so painting the item over the creature hid the guard every
       // single time — and a risk you cannot see is not a decision you can weigh.
       if (here !== undefined) {
-        if (!isAlive(here)) cell.classList.add('dead');
+        if (!isAlive(here)) cell.classList.add(here.kind === 'you' ? 'you-dead' : 'dead');
         else if (here.kind === 'you') cell.classList.add('player');
         else cell.classList.add('foe');
       } else if (tile === WALL) {
@@ -646,7 +647,10 @@ function finish(before: number, head: string): void {
 
   persist();
   if (burial.grave !== null) {
-    told.push(`you die. your body stays in ${burial.grave}; the world begins again`);
+    // Says what is true now rather than what used to happen. The world no
+    // longer restarts out from under you — you are lying on the map, and
+    // beginning again is something you choose.
+    told.push(`you die, and stay where you fell. kept as ${burial.grave} — press “run again” when you are ready`);
   }
   say(told);
   render();
@@ -790,6 +794,16 @@ say(booted);
 
 const forge = el('forge') as HTMLDialogElement;
 let pending: Rule | null = null;
+/**
+ * In flight, and the moment it started.
+ *
+ * The guard is not politeness. Every ask is a real call costing real money and
+ * about forty seconds; a button that stays live through all of it invites the
+ * entirely reasonable second click, and gets you billed twice for two answers
+ * you did not want.
+ */
+let asking = false;
+let askingSince = 0;
 let lastRun: RunSummary | null = null;
 /** Set while the editor is open; what accept ratifies instead of `pending`. */
 let edited: Record<string, unknown> | null = null;
@@ -810,7 +824,18 @@ function renderForge(): void {
       : `This run ended: ${done}. The world can read it back and propose one rule — ${inForce} in force.`;
 
   const ask = el('ask-rule') as HTMLButtonElement;
-  ask.disabled = done === 'playing' || inForce >= MAX_RULES;
+  ask.disabled = asking || done === 'playing' || inForce >= MAX_RULES;
+  ask.textContent = asking ? 'asking…' : 'ask the world for a rule';
+
+  // Inside the dialog, because the status line under the map is behind it —
+  // which is why asking looked like it did nothing at all.
+  const spinner = el('asking');
+  spinner.hidden = !asking;
+  if (asking) {
+    const secs = Math.round((Date.now() - askingSince) / 1000);
+    el('asking-said').textContent =
+      `reading the run back — ${secs}s${secs > 25 ? ', it usually takes about forty' : ''}`;
+  }
 
   const box = el('proposal');
   if (pending === null) { box.hidden = true; return; }
@@ -971,6 +996,29 @@ function renderEditor(): void {
   host.appendChild(preview);
 }
 
+/**
+ * Keeps elapsed times honest while anything is in flight.
+ *
+ * `render` only runs when something changes, so a call that takes forty
+ * seconds displayed "0s" for all forty of them — the one number whose whole
+ * job is to change was the one that never did. This ticks once a second and
+ * only while there is something to tick for, so an idle page does no work.
+ */
+let ticker: number | null = null;
+
+function watchTheClock(): void {
+  const busy = oracle.queue().some((c) => c.state === 'asking' || c.state === 'waiting');
+  if (busy && ticker === null) {
+    ticker = window.setInterval(() => {
+      if (forge.open) renderForge();
+      render();
+    }, 1000);
+  } else if (!busy && ticker !== null) {
+    window.clearInterval(ticker);
+    ticker = null;
+  }
+}
+
 el('open-forge').addEventListener('click', () => { renderForge(); forge.showModal(); });
 
 // Beginning again without having to die for it. The rules stay; everything
@@ -988,6 +1036,11 @@ el('again').addEventListener('click', () => {
 });
 
 el('ask-rule').addEventListener('click', () => {
+  if (asking) return;
+  asking = true;
+  askingSince = Date.now();
+  renderForge();
+
   const head = getRef(refs, active).head;
   const state = fold(log, head);
   lastRun = summariseRun(chain(log, head), state, notes, active);
@@ -1002,6 +1055,7 @@ el('ask-rule').addEventListener('click', () => {
       edited = null;
       el('editor').hidden = true;
     }
+    asking = false;
     renderForge();
     render();
   });

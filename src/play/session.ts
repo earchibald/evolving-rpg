@@ -302,13 +302,20 @@ export function buryIfDead(
   const ref = getRef(refs, active);
   if (outcome(fold(log, ref.head), playerId) !== 'dead') return { log, refs, grave: null };
 
+  // Already buried at exactly this point. Without this the world would dig a
+  // fresh grave on every render, because the ref now stays on the dead state
+  // rather than moving off it.
+  const existing = listRefs(refs).find((r) => isGrave(r.name) && r.head === ref.head);
+  if (existing !== undefined) return { log, refs, grave: existing.name };
+
   const past = listRefs(refs).filter((r) => r.name.startsWith(`${active}${GRAVE_MARK}`)).length;
   const grave = `${active}${GRAVE_MARK}${past + 1}`;
 
-  const kept = fork(log, refs, active, grave, ref.head, 'died here');
-
-  // Back to the beginning, but not back to nothing: whatever this world agreed
-  // to, it still plays under.
-  const begun = beginAgain(log, kept, active);
-  return { log: begun.log, refs: begun.refs, grave };
+  // The dead timeline is kept, and the world *stays on it*.
+  //
+  // It used to rewind immediately, which meant the most significant thing that
+  // can happen to you was the one thing you could never look at: a line of text
+  // went by and the map was already a fresh run. Your body stays where it fell
+  // until you decide to begin again.
+  return { log, refs: fork(log, refs, active, grave, ref.head, 'died here'), grave };
 }

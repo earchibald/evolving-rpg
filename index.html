@@ -106,7 +106,13 @@
     <dialog id="forge" class="sheet forge">
       <h2>the forge</h2>
       <p class="sheet-line" id="forge-state"></p>
-      <p class="sheet-line"><button id="ask-rule" type="button">ask the world for a rule</button></p>
+      <p class="sheet-line">
+        <button id="ask-rule" type="button">ask the world for a rule</button>
+      </p>
+      <p id="asking" class="asking" hidden>
+        <span class="spinner" aria-hidden="true"></span>
+        <span id="asking-said">reading the run back</span>
+      </p>
 
       <section id="proposal" class="proposal" hidden>
         <h3 id="proposal-said" class="proposal-said"></h3>
