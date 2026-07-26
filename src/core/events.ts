@@ -1,4 +1,5 @@
 import type { Rule } from '../canon/rule.js';
+import type { Bible } from '../canon/bible.js';
 import type { Resolved } from '../canon/interpret.js';
 import type { Pos, Stats } from './entity.js';
 import type { Item } from './item.js';
@@ -12,6 +13,7 @@ import type { Item } from './item.js';
  *  randomness, and combat is one. */
 export const SCHEMA_VERSIONS = {
   WORLD_INIT: 6,
+  WORLD_BIBLE: 1,
   MOVE: 2,
   MOVE_BLOCKED: 2,
   TURN_ADVANCED: 2,
@@ -102,6 +104,13 @@ export interface RuleRatifiedPayload {
   rule: Rule;
 }
 
+/** The world's identity, decided whole (GESTALT.md). Carried whole for the
+ *  same reason a rule is: the log is the only store. Validated hard before
+ *  it is ever appended — this is model output headed for permanent history. */
+export interface WorldBiblePayload {
+  bible: Bible;
+}
+
 /**
  * A rule that fired, and what it did.
  *
@@ -144,6 +153,7 @@ export interface StrikePayload {
  *  that consumes nothing says so explicitly rather than by omission. */
 export type DraftEvent =
   | { type: 'WORLD_INIT'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: WorldInitPayload }
+  | { type: 'WORLD_BIBLE'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: WorldBiblePayload }
   | { type: 'MOVE'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: MovePayload }
   | { type: 'MOVE_BLOCKED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: MoveBlockedPayload }
   | { type: 'TURN_ADVANCED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: TurnAdvancedPayload }

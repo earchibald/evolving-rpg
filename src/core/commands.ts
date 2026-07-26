@@ -10,6 +10,7 @@ import { EXIT, tileAt } from './grid.js';
 import { nextActive } from './turns.js';
 import { MAX_RULES } from '../canon/rule.js';
 import type { Rule } from '../canon/rule.js';
+import type { Bible } from '../canon/bible.js';
 import { SCHEMA_VERSIONS } from './events.js';
 import type { DraftEvent } from './events.js';
 import type { GameState } from './state.js';
@@ -489,6 +490,22 @@ export function ratifyRule(state: GameState, rule: Rule): Extract<DraftEvent, { 
     // load-bearing guarantee rather than an accident.
     rngDraws: 0,
     payload: { rule },
+  };
+}
+
+/**
+ * Writes the world's identity into its history. The caller has already
+ * validated the bible (validateBible) — by this point a malformed one is a
+ * bug in whoever offered it, same contract as ratifyRule. Draws nothing:
+ * identity is chosen, not rolled.
+ */
+export function foundWorld(state: GameState, bible: Bible): Extract<DraftEvent, { type: 'WORLD_BIBLE' }> {
+  return {
+    type: 'WORLD_BIBLE',
+    schemaVersion: SCHEMA_VERSIONS.WORLD_BIBLE,
+    rngCounter: state.rngCounter,
+    rngDraws: 0,
+    payload: { bible },
   };
 }
 

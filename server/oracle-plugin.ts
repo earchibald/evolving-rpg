@@ -27,8 +27,19 @@ import type { Plugin } from 'vite';
 const TIMEOUT_MS = 120_000;
 
 function gamemasterPrompt(context: Record<string, unknown>): string {
+  const bible = (typeof context.bible === 'object' && context.bible !== null
+    ? context.bible
+    : null) as { anchor?: unknown; promises?: unknown; register?: unknown } | null;
   return [
     String(context.instruction ?? ''),
+    ...(bible === null ? [] : [
+      '',
+      `The world you speak for: ${String(bible.anchor ?? '')}`,
+      Array.isArray(bible.register) ? `Its tone: ${bible.register.join(', ')}` : '',
+      Array.isArray(bible.promises) && bible.promises.length > 0
+        ? `Promises the world has made and may keep, obliquely: ${bible.promises.join(' · ')}`
+        : '',
+    ]),
     '',
     `What is around you: ${JSON.stringify(context.scene ?? {})}`,
     `The player says: ${String(context.asked ?? '')}`,
@@ -140,6 +151,59 @@ function judgePrompt(context: Record<string, unknown>): string {
 }
 
 /**
+ * The Worldsmith: one call at a world's birth decides its identity whole —
+ * GESTALT.md L1–L2. Mechanics are already decided (the floor's shape and
+ * population ride in as facts); the bible constrains flavor over that
+ * skeleton. Everything it returns faces validateBible before it is allowed
+ * anywhere near the log.
+ */
+function worldsmithPrompt(context: Record<string, unknown>): string {
+  return [
+    'You are founding a small dungeon world: cold, quiet, attentive. What you',
+    'decide becomes the world\'s permanent identity — every name, every answer',
+    'given in it will be held to what you say here.',
+    '',
+    'FACTS ALREADY DECIDED BY THE MECHANICS (do not contradict them):',
+    `The first floor: ${String(context.story ?? 'unknown shape')}`,
+    `Kinds that dwell here: ${JSON.stringify(context.kinds ?? [])}`,
+    `Prizes that lie here: ${JSON.stringify(context.prizes ?? [])}`,
+    'Deeper floors exist. Every third floor a warden guards the stairs.',
+    '',
+    'DECIDE, in one voice:',
+    '- anchor: what this place IS, 1-3 short sentences. Concrete. No mood-only.',
+    '- lexicon: 8-20 single lowercase words the world speaks in — materials,',
+    '  animals, tools, weathers. These become the naming palette. No articles.',
+    '- warden: who the recurring boss is. Name: lowercase, 2-3 words, concrete',
+    '  head noun, no article. Line: one sentence of what it does, under 20 words.',
+    '- promises: 1-3 one-sentence foreshadowings the world will keep.',
+    '- register: 3-6 tone words for how the world speaks.',
+    'Nothing shouts. No exclamation marks anywhere.',
+    '',
+    'Reply with ONLY a JSON object, no prose around it, no code fence:',
+    '{"name": "<the region\'s name, two or three words>",',
+    ' "line": "<the anchor\'s first sentence>",',
+    ' "bible": {"anchor": "...", "lexicon": ["..."],',
+    '  "warden": {"name": "...", "line": "..."},',
+    '  "promises": ["..."], "register": ["..."]}}',
+  ].join('\n');
+}
+
+/** The world's palette, rendered into any naming prompt when a bible exists. */
+function paletteBlock(context: Record<string, unknown>): string[] {
+  const bible = context.bible;
+  if (typeof bible !== 'object' || bible === null) return [];
+  const b = bible as { anchor?: unknown; lexicon?: unknown; register?: unknown };
+  return [
+    '',
+    'THE WORLD THIS THING BELONGS TO:',
+    String(b.anchor ?? ''),
+    Array.isArray(b.lexicon) ? `Draw from its lexicon where it fits: ${b.lexicon.join(', ')}` : '',
+    Array.isArray(b.register) ? `Its tone: ${b.register.join(', ')}` : '',
+    'Stay inside this identity. A name from another world is a wrong name.',
+  ];
+}
+
+/**
  * One call, every unnamed thing on the floor. Naming ran one call per kind
  * and a fast player outpaced it — descending two floors quickly left whole
  * rooms of placeholders. The rules are the single-name prompt's rules; only
@@ -165,6 +229,8 @@ function batchPrompt(context: Record<string, unknown>): string {
     '',
     'THE THINGS',
     ...things.map((t) => JSON.stringify(t)),
+    '',
+    ...paletteBlock(context),
     '',
     'Reply with ONLY a JSON object, no prose around it, no code fence:',
     '{"name": "<how many you named, e.g. 3 named>",',
@@ -195,7 +261,8 @@ function prompt(subject: string, context: unknown): string {
     'No abstract nouns as the head word. Lowercase, no article, two or three words.',
     '',
     `Subject: ${subject}`,
-    `What is known: ${JSON.stringify(context)}`,
+    `What is known: ${JSON.stringify({ ...(context as Record<string, unknown>), bible: undefined })}`,
+    ...paletteBlock(context as Record<string, unknown>),
     '',
     'Reply with ONLY a JSON object, no prose around it, no code fence:',
     '{"name": "<the name>",',
@@ -217,7 +284,7 @@ function extract(text: string): { name: string; line: string; data?: unknown } {
   if (start < 0 || end <= start) throw new Error(`no object in reply: ${text.slice(0, 120)}`);
 
   const parsed = JSON.parse(text.slice(start, end + 1)) as {
-    name?: unknown; line?: unknown; rule?: unknown; provenance?: unknown; things?: unknown;
+    name?: unknown; line?: unknown; rule?: unknown; provenance?: unknown; things?: unknown; bible?: unknown;
   };
   if (typeof parsed.name !== 'string') throw new Error('reply had no name');
 
@@ -236,9 +303,10 @@ function extract(text: string): { name: string; line: string; data?: unknown } {
     name: parsed.name,
     line: typeof parsed.line === 'string' ? parsed.line : '',
     // Otherwise unvalidated, deliberately: this is a dev server, and the one
-    // place that decides whether a rule is a rule is the validator in canon/
-    // — and whether a batched name is a name is the Oracle's register guard.
-    data: rule ?? parsed.things,
+    // place that decides whether a rule is a rule is the validator in canon/,
+    // whether a batched name is a name is the Oracle's register guard, and
+    // whether a bible is a bible is validateBible.
+    data: rule ?? parsed.things ?? parsed.bible,
   };
 }
 
@@ -282,7 +350,8 @@ export function oraclePlugin(): Plugin {
                 : intent === 'propose' ? proposePrompt(context)
                   : intent === 'judge' ? judgePrompt(context)
                     : intent === 'describe-batch' ? batchPrompt(context)
-                      : prompt(subject, context),
+                      : intent === 'worldsmith' ? worldsmithPrompt(context)
+                        : prompt(subject, context),
               '--output-format',
               'json',
             ],

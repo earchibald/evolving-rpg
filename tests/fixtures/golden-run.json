@@ -9,7 +9,7 @@
   "actions": 69,
   "outcome": "escaped",
   "head": "833a4e8d5ccd14d15410b16e2a5e1fef5e71988ef48201292b4063fc025e9378",
-  "finalStateHash": "c96754734e2c6376e172f66cfb43a4d4a33932d2f5efbbe09215df3778274ded",
+  "finalStateHash": "230c14b522b75e9468c15cf5f738f0d71a43b0e64bc55b466300d830f6e93977",
   "events": [
     {
       "type": "WORLD_INIT",

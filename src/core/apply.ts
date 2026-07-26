@@ -100,6 +100,11 @@ function reduce(state: GameState, event: GameEvent): GameState {
         level: p.level ?? 1,
         depth: p.depth ?? 1,
         story: p.story ?? '',
+        // Identity resets with the floor; descend re-appends WORLD_BIBLE
+        // right after, the way it re-ratifies rules. Null, never undefined:
+        // the carry guards test `!== null`, and an undefined slipping through
+        // appended a bible-of-nothing to the chain.
+        bible: null,
       };
     }
 
@@ -116,6 +121,13 @@ function reduce(state: GameState, event: GameEvent): GameState {
       // observed this state, so pushing in place would rewrite history that
       // something else is already holding.
       return { ...state, rules: [...state.rules, event.payload.rule] };
+    }
+
+    case 'WORLD_BIBLE': {
+      // The world's identity, replacing whatever stood (WORLD_INIT resets it
+      // to null, and descend re-appends it — the rules pattern exactly: the
+      // world changes, what it has agreed to does not).
+      return { ...state, bible: event.payload.bible };
     }
 
     case 'MOVE': {

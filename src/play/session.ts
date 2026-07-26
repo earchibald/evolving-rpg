@@ -1,7 +1,7 @@
 import { append, fold, chain } from '../log/chain.js';
 import { getRef, fork, setHead, listRefs } from '../log/refs.js';
 import type { Refs } from '../log/refs.js';
-import { attemptMove, advanceTurn, endsTurn, wait, takeUnderfoot, outcome, ratifyRule, createWorld } from '../core/commands.js';
+import { attemptMove, advanceTurn, endsTurn, wait, takeUnderfoot, outcome, ratifyRule, foundWorld, createWorld } from '../core/commands.js';
 import { u32 } from '../core/rng.js';
 import { decide } from '../core/ai.js';
 import { fireRules } from '../canon/interpret.js';
@@ -292,13 +292,20 @@ export function beginAgain(
   active: string,
 ): { log: EventLog; refs: Refs } {
   const ref = getRef(refs, active);
-  const rules = fold(log, ref.head).rules;
+  const was = fold(log, ref.head);
   const root = chain(log, ref.head)[0];
   if (root === undefined) return { log, refs };
 
   let current = log;
   let head = root.id;
-  for (const rule of rules) {
+  // Identity first, then law: the world is still itself before it re-agrees
+  // to anything.
+  if (was.bible !== null) {
+    const done = append(current, head, foundWorld(fold(current, head), was.bible));
+    current = done.log;
+    head = done.event.id;
+  }
+  for (const rule of was.rules) {
     const done = append(current, head, ratifyRule(fold(current, head), rule));
     current = done.log;
     head = done.event.id;
@@ -354,6 +361,12 @@ export function descend(
   ));
 
   let current: Position = { log: born.log, head: born.event.id };
+  // The world's identity crosses the stairs before its law does — the rules
+  // pattern exactly: the floor changes, what the world is does not.
+  if (state.bible !== null) {
+    const done = append(current.log, current.head, foundWorld(fold(current.log, current.head), state.bible));
+    current = { log: done.log, head: done.event.id };
+  }
   for (const rule of state.rules) {
     const done = append(current.log, current.head, ratifyRule(fold(current.log, current.head), rule));
     current = { log: done.log, head: done.event.id };

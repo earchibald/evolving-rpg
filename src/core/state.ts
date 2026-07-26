@@ -3,6 +3,7 @@ import type { Grid } from './grid.js';
 import type { Entity } from './entity.js';
 import type { Item } from './item.js';
 import type { Rule } from '../canon/rule.js';
+import type { Bible } from '../canon/bible.js';
 
 /** `readonly` throughout, matching `Grid`'s convention, because `apply()` is
  *  required to be pure — the type should refuse in-place mutation rather than
@@ -31,6 +32,9 @@ export interface GameState {
   /** The generator's plain-words account of this floor's shape — covenant L1.
    *  Empty for logs that predate the telling. */
   readonly story: string;
+  /** The world's identity, decided whole at birth (GESTALT.md), or null for
+   *  a world playing without one — every consumer degrades to on-demand. */
+  readonly bible: Bible | null;
 }
 
 const NO_ENTITIES: readonly Entity[] = Object.freeze([]);
@@ -54,4 +58,5 @@ export const EMPTY_STATE: GameState = Object.freeze({
   level: 1,
   depth: 1,
   story: '',
+  bible: null,
 });

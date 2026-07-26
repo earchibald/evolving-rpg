@@ -1,6 +1,7 @@
 import { emptyLog, append, chain, fold, verifyChain } from '../log/chain.js';
 import { emptyRefs, createRef, getRef, setHead, fork, reset, listRefs } from '../log/refs.js';
-import { createWorld, ratifyRule } from '../core/commands.js';
+import { createWorld, ratifyRule, foundWorld } from '../core/commands.js';
+import { validateBible, isRefusedBible } from '../canon/bible.js';
 import { playerStep, playerWait, runWorldTurns, buryIfDead, beginAgain, descend, isGrave } from '../play/session.js';
 import { isAlive } from '../core/entity.js';
 import { outcome, hitChance } from '../core/commands.js';
@@ -220,6 +221,68 @@ const oracle = new Oracle({
  * rooms away both spends money on the unmet and spoils what the panel may
  * later reveal.
  */
+/** World roots the Worldsmith has already been asked about, so an unfounded
+ *  or refused world is asked once, not once per frame. */
+const foundingTried = new Set<string>();
+/** Roots with a founding call still in the air. Naming waits for these:
+ *  the first floor is the most-seen floor, and letting it improvise names
+ *  while the identity is being decided writes off-palette canon into the
+ *  one place the palette matters most. A failed founding clears the root
+ *  and the next render names bible-less — the world never blocks. */
+const foundingInFlight = new Set<string>();
+
+/**
+ * Founds an unfounded world: one Worldsmith call deciding its identity whole
+ * (GESTALT.md). Lazy and render-driven, so restored old worlds gain an
+ * identity too. The offer faces validateBible before it touches the log;
+ * a refusal is said out loud and the world simply keeps improvising.
+ */
+function foundThisWorld(state: ReturnType<typeof fold>, head: string): void {
+  if (state.bible !== null) return;
+  const root = chain(log, head)[0]?.id ?? head;
+  if (foundingTried.has(root)) return;
+  foundingTried.add(root);
+
+  const world = active;
+  foundingInFlight.add(root);
+  const kinds = [...new Set(state.entities.filter((e) => e.kind !== 'you').map((e) => e.kind))];
+  const prizes = [...new Set(state.items.map((i) => i.kind))];
+  oracle.consult({
+    intent: 'worldsmith',
+    subject: `world:${world}`,
+    context: { story: state.story, kinds, prizes },
+  }).then((said) => {
+    const offered = validateBible(said.data);
+    if (isRefusedBible(offered)) {
+      say(`the worldsmith's offer was refused — ${offered.refused}`);
+      return;
+    }
+    try {
+      // The world may have moved on, switched away, or been wiped while the
+      // call was out; append to where it stands NOW, or nowhere.
+      const ref = getRef(refs, world);
+      if (ref.head === null) return;
+      const here = fold(log, ref.head);
+      if (here.bible !== null) return;
+      const done = append(log, ref.head, foundWorld(here, offered));
+      log = done.log;
+      refs = setHead(refs, world, done.event.id);
+      persist();
+      say(`the world is founded — ${said.name}`);
+      render();
+    } catch {
+      // The world it was for no longer exists; the queue already shows the
+      // call, and canon was never touched.
+    }
+  }).catch(() => {
+    // Failed calls are visible in the queue; the world plays unfounded.
+  }).finally(() => {
+    foundingInFlight.delete(root);
+    // Whatever happened, naming may now proceed — with the palette or without.
+    render();
+  });
+}
+
 function nameWhatIsHere(state: ReturnType<typeof fold>): void {
   // The whole floor, fog or no fog, as ONE batched question. Naming used to
   // wait for line of sight and run one call per kind — and a fast player
@@ -229,6 +292,20 @@ function nameWhatIsHere(state: ReturnType<typeof fold>): void {
   // spoils nothing and means it is already named when it steps into view.
   // Runs before any panel renders, so the singles the panels would raise
   // find the batch already in flight and stand down.
+  // While this world's founding is in the air, hold the names: floor one is
+  // the most-seen floor, and improvising its canon while the identity is
+  // being decided puts off-palette names in the one place the palette
+  // matters most. A settled founding — either way — re-renders and releases.
+  const head = getRef(refs, active).head;
+  const root = head === null ? null : chain(log, head)[0]?.id ?? null;
+  if (state.bible === null && root !== null && foundingInFlight.has(root)) return;
+
+  // The bible rides in the context as prompt material — the cache key is
+  // intent+subject alone, so a palette-guided name and an improvised one are
+  // the same fact, asked once.
+  const palette = state.bible === null ? {} : {
+    bible: { anchor: state.bible.anchor, lexicon: state.bible.lexicon, register: state.bible.register },
+  };
   const questions = [];
   for (const e of state.entities) {
     if (e.kind === 'you') continue;
@@ -236,10 +313,11 @@ function nameWhatIsHere(state: ReturnType<typeof fold>): void {
       hitPoints: e.stats.hp,
       might: e.stats.might,
       speed: e.stats.speed,
+      ...palette,
     }));
   }
   for (const i of state.items) {
-    questions.push(describeQuestion('item', i.kind, { grants: i.grants }));
+    questions.push(describeQuestion('item', i.kind, { grants: i.grants, ...palette }));
   }
   oracle.askMany(questions);
 }
@@ -287,6 +365,8 @@ async function speak(channel: Channel, said: string): Promise<void> {
 
   const note = await send(oracle, channel, said, {
     world: active, head, turn: state.turn, scene: scene(),
+    // The gamemaster speaks FOR a world; the bible is which world.
+    ...(state.bible === null ? {} : { bible: state.bible }),
   }, new Date().toISOString(), async (n) => {
     await fetch('/__notes', {
       method: 'POST',
@@ -422,6 +502,7 @@ function render(): void {
     }
   }
 
+  if (head !== null) foundThisWorld(state, head);
   nameWhatIsHere(state);
 
   // ── what you decide on, beside the map ─────────────────────────────────
@@ -707,6 +788,26 @@ function render(): void {
   }
 
   // ── under the floorboards ──────────────────────────────────────────────
+  // ── this world, decided whole — the bible, on screen (covenant L1) ─────
+  const bibleEl = el('bible');
+  bibleEl.textContent = '';
+  const bibleRows: Array<[string, string]> = state.bible === null
+    ? [['identity', 'unfounded — the world improvises, name by name']]
+    : [
+      ['anchor', state.bible.anchor],
+      ['speaks in', state.bible.lexicon.join(' · ')],
+      ['the warden', `${state.bible.warden.name} — ${state.bible.warden.line}`],
+      ...(state.bible.promises.length === 0 ? [] : [['promises', state.bible.promises.join(' · ')] as [string, string]]),
+      ...(state.bible.register.length === 0 ? [] : [['tone', state.bible.register.join(' · ')] as [string, string]]),
+    ];
+  for (const [name, value] of bibleRows) {
+    const dt = document.createElement('dt');
+    dt.textContent = name;
+    const dd = document.createElement('dd');
+    dd.textContent = value;
+    bibleEl.append(dt, dd);
+  }
+
   const detail = el('detail');
   detail.textContent = '';
   for (const [label, value] of [

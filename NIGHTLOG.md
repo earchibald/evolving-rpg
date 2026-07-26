@@ -478,3 +478,32 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > dies at every world boundary — wipe, new world, world switch, begin-again
 > — and survives only the stairs, because descending is the same character's
 > same run. Reproduced live (3 rows glowing), wiped, verified silent (0).
+
+> [!IMPORTANT]
+> **16:5x — Increment 6 lands: the Worldsmith. Worlds are founded now.**
+> One structured call at a world's birth decides its identity whole
+> (GESTALT.md, levels L1–L2), and it is REAL — the first founded world came
+> back as **The Cold Larder**: *"A butchers' undercroft cut into the
+> permafrost beneath a town that no longer eats. Thirteen chambers of hooks
+> and meltwater, dug in loops so a carcass could be walked all the way round
+> without ever turning back."* Thirteen chambers, dug in loops — the model
+> wove the floor's REAL generated shape into the fiction unprompted.
+> 1. **The bible is an event** (WORLD_BIBLE) — content-addressed, forked,
+>    replayed; it crosses the stairs and survives begin-again ahead of the
+>    rules, exactly the rules pattern. Hard-shelled validator before the log
+>    (register-assayed prose, article-free lowercase lexicon, no duplicates).
+> 2. **Every voice speaks from it**: naming (single and batched) draws on
+>    the lexicon; the gamemaster receives the anchor, tone and promises;
+>    an unfounded or refused world simply improvises as before.
+> 3. **The warden is somebody before you meet it**: *"rime butcher — it
+>    walks the loops with a whetstone."* And the promises fold mechanics
+>    into foreshadowing: *"Every third floor down, the whetstone is heard
+>    long before its owner is seen"* — that is wardenAt(3) wearing fiction.
+> 4. **Naming waits for the founding** (floor one is the most-seen floor;
+>    improvising its canon mid-founding writes off-palette names where the
+>    palette matters most); a failed founding releases it, nothing blocks.
+> 5. **The bible is on screen** — "this world" atop the gamemaster's screen.
+> Known tension, said honestly: canon names are per-kind and GLOBAL, so a
+> second world can inherit the first world's creature names despite its own
+> bible. Per-world canon scoping is the open question this raises.
+> 615 tests; chain with a bible verifies end to end.
