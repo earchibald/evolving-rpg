@@ -209,3 +209,18 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > taste is judged and cheap; both registers now have teeth. The rules-warden
 > persona knows to call it. And there's a `README.md` now — the front door.
 
+> [!NOTE]
+> **05:0x — The armory, and wits finally has a job**
+> Items come from tables now: one relic per floor, guarded, drawn by counted
+> weight, grant scaled by depth — **keen edge** (might), **iron charm** (max
+> hp), **fleet boots** (speed), **grey lens** (wits). The eternal hardcoded
+> "a keen edge" is gone, and with it a three-increment-old Covenant breach in
+> our own data (the article). And **wits widens the crit band**: one step per
+> four wits, floored at 18 — the starting player is untouched (no retuning),
+> but the grey lens and every third level make sharpness a build. The stalker
+> line grows into it natively. The Surprise lens prices crits by the
+> attacker's actual band now.
+>
+> **Try it:** find the floor's relic (gold square, guarded). At wits 4+ watch
+> for "— clean through" arriving a little more often.
+

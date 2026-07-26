@@ -25,10 +25,10 @@ if (process.env.ALLOW_GOLDEN_REGEN !== '1') {
   process.exit(1);
 }
 
-// Hand-picked so the scripted walk actually meets combat: 13 strikes under
+// Hand-picked so the scripted walk actually meets combat: 16 strikes under
 // the current tables. A golden fixture that never fights leaves the newest and
 // riskiest code untouched by the strongest test in the repo.
-const SEED = 12;
+const SEED = 30;
 const WIDTH = 24;
 const HEIGHT = 16;
 const WALLS = 60;

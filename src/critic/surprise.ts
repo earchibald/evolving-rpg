@@ -2,6 +2,7 @@ import { chain } from '../log/chain.js';
 import { apply } from '../core/apply.js';
 import { EMPTY_STATE } from '../core/state.js';
 import { findEntity } from '../core/entity.js';
+import { critFloor } from '../core/tables.js';
 import type { EventLog } from '../log/chain.js';
 import type { GameState } from '../core/state.js';
 
@@ -75,21 +76,23 @@ export function surpriseOf(log: EventLog, head: string | null): Surprise {
     if (event.type === 'STRIKE') {
       const p = event.payload as Partial<{ attackerId: string; hit: boolean; crit: boolean; damage: number; needed: number }>;
 
+      // Read before applying. Nothing observable turns on it today — a STRIKE
+      // does not change the attacker's own stats — but the reading should be
+      // of the world that produced the roll, and an effect that alters them
+      // on a hit is one rule away from existing.
+      const attacker = typeof p.attackerId === 'string' ? findEntity(state.entities, p.attackerId) : undefined;
+
       if (isNumber(p.needed) && typeof p.hit === 'boolean') {
-        // A natural 20 is its own outcome with its own probability — 1 in 20,
-        // always under the threshold. This is the event the lens waited for:
-        // before crits existed, nothing the dice could do was unlikely.
+        // A crit is its own outcome with its own probability — the attacker's
+        // crit band, 1/20 for most things, wider for the keen-witted. This is
+        // the event the lens waited for: before crits existed, nothing the
+        // dice could do was unlikely.
         const landed = chanceToHit(p.needed);
-        const happened = p.crit === true ? 1 / 20 : p.hit ? landed : 1 - landed;
+        const band = attacker === undefined ? 1 / 20 : (21 - critFloor(attacker.stats.wits)) / 20;
+        const happened = p.crit === true ? band : p.hit ? landed : 1 - landed;
         modelled += 1;
         if (happened < SURPRISE_THRESHOLD) surprising += 1;
       }
-
-      // Read before applying. Nothing observable turns on it today — a STRIKE
-      // does not change the attacker's own might — but the reading should be
-      // of the world that produced the roll, and an effect that alters might
-      // on a hit is one rule away from existing.
-      const attacker = typeof p.attackerId === 'string' ? findEntity(state.entities, p.attackerId) : undefined;
       if (p.hit === true && isNumber(p.damage) && attacker !== undefined && attacker.stats.might > 0) {
         modelled += 1;
         if (1 / attacker.stats.might < SURPRISE_THRESHOLD) surprising += 1;

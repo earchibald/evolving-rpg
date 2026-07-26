@@ -64,6 +64,26 @@ choices are a thing the Forge may propose later.
 Kinds are mechanical bones; the Oracle names each kind as it is touched
 (`skirmisher-2` is a new kind and earns its own name).
 
+## The armory
+
+One relic per floor, guarded, drawn by weight; its grant scales with depth.
+Kinds are article-free — the Covenant's name rules bind the world's own data.
+
+| relic | grants | at depth 1 | scaling |
+|---|---|---|---|
+| keen edge | might | +1 | +1 per 3 depths (slowest — might compounds through the damage bands) |
+| iron charm | max hp | +3 | +1 per depth |
+| fleet boots | speed | +1 | +1 per 3 depths |
+| grey lens | wits | +1 | +1 per 2 depths |
+
+## Wits: the crit band
+
+`critFloor(wits) = max(18, 20 − ⌊wits/4⌋)` — a keen mind widens the opening.
+The starting player (wits 3) crits only on the natural 20, so this changed no
+tuning; the grey lens and every-third-level wits make it a build, and the
+stalker line grows into it natively. Floored at 18: crits stay rare for
+everyone, merely less rare for the sharp.
+
 ## Spawning: budgets and overlap
 
 ```

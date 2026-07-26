@@ -1,8 +1,10 @@
+import { assayName } from '../../src/assay/register.js';
 import {
   neededToHit, chanceIn20, damageDice, meanDamage,
   XP_TO_REACH, levelForXp, growthAt,
   BESTIARY, creatureStats, threatOf, spawnBudget, depthBands, wardenAt,
   NEEDED_FLOOR, NEEDED_CEILING, CRIT, WHIFF,
+  ARMORY, relicGrant, critFloor,
 } from '../../src/core/tables.js';
 
 /**
@@ -150,5 +152,68 @@ describe('threat and budget — the sawtooth\'s teeth', () => {
   it('guards every third floor', () => {
     expect([1, 2, 4, 5].map(wardenAt)).toEqual([false, false, false, false]);
     expect([3, 6, 9].map(wardenAt)).toEqual([true, true, true]);
+  });
+});
+
+describe('the armory', () => {
+  it('keeps every kind inside the covenant\'s name rules', () => {
+    // The world's own data obeys the register before any model does. 'a keen
+    // edge' — article and all — sat in createWorld for three increments.
+    for (const r of ARMORY) {
+      expect(assayName(r.kind).sound).toBe(true);
+    }
+  });
+
+  it('always grants something, at any depth', () => {
+    for (const r of ARMORY) {
+      for (const d of [1, 2, 5, 9]) {
+        const g = relicGrant(r, d);
+        expect(g.hp + g.might + g.wits + g.speed).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('scales with depth and never shrinks', () => {
+    for (const r of ARMORY) {
+      for (let d = 1; d < 8; d += 1) {
+        const now = relicGrant(r, d);
+        const deeper = relicGrant(r, d + 1);
+        const sum = (g: { hp: number; might: number; wits: number; speed: number }): number => g.hp + g.might + g.wits + g.speed;
+        expect(sum(deeper)).toBeGreaterThanOrEqual(sum(now));
+      }
+    }
+  });
+
+  it('grants exactly the stat it names', () => {
+    for (const r of ARMORY) {
+      const g = relicGrant(r, 4) as unknown as Record<string, number>;
+      for (const stat of ['hp', 'might', 'wits', 'speed']) {
+        if (stat === r.grants) expect(g[stat]).toBeGreaterThan(0);
+        else expect(g[stat]).toBe(0);
+      }
+    }
+  });
+
+  it('lets might compound slowest, because the damage bands compound it again', () => {
+    const edge = ARMORY.find((r) => r.grants === 'might')!;
+    const charm = ARMORY.find((r) => r.grants === 'hp')!;
+    expect(edge.per).toBeGreaterThan(charm.per);
+  });
+});
+
+describe('wits and the crit band', () => {
+  it('gives the starting player only the natural 20', () => {
+    expect(critFloor(3)).toBe(20);
+  });
+
+  it('widens one step per four wits, and no further than the floor', () => {
+    expect(critFloor(4)).toBe(19);
+    expect(critFloor(8)).toBe(18);
+    expect(critFloor(40)).toBe(18);
+  });
+
+  it('is total over nonsense', () => {
+    expect(critFloor(-3)).toBe(20);
+    expect(critFloor(0)).toBe(20);
   });
 });

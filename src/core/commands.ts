@@ -2,7 +2,7 @@ import { generateMap, pickSpawnPoints, farthestFrom, withExit } from './mapgen.j
 import { inBounds, isPassable } from './grid.js';
 import { findEntity, isAlive } from './entity.js';
 import { intBetween } from './rng.js';
-import { neededToHit, chanceIn20, damageDice, CRIT, WHIFF, BESTIARY, creatureStats, threatOf, spawnBudget, depthBands, wardenAt } from './tables.js';
+import { neededToHit, chanceIn20, damageDice, critFloor, WHIFF, BESTIARY, creatureStats, threatOf, spawnBudget, depthBands, wardenAt, ARMORY, relicGrant } from './tables.js';
 import type { Entity, Stats } from './entity.js';
 import { itemAt } from './item.js';
 import { EXIT, tileAt } from './grid.js';
@@ -73,10 +73,10 @@ function resolveStrike(
   const roll = intBetween(seed, counter, 1, 20);
   const needed = toHit(attacker, target);
 
-  // The naturals outrank the arithmetic: a 20 always lands and doubles, a 1
-  // always misses. Five percent of blows become stories in each direction,
-  // and the Surprise lens finally has events under its threshold.
-  const crit = roll === CRIT;
+  // The naturals outrank the arithmetic: the crit band always lands and
+  // doubles, a 1 always misses. Wits widens the band — the one mechanical job
+  // wits has, so a rule granting it grants something real.
+  const crit = roll >= critFloor(attacker.stats.wits);
   const hit = crit || (roll !== WHIFF && roll >= needed);
 
   // Drawn either way, so the draw count never depends on the outcome. The
@@ -177,9 +177,20 @@ export function createWorld(
   const grid = withExit(generated.grid, exit);
 
   const population = chooseSpawns(seed, generated.counterAfter, depth);
+
+  // The floor's prize, drawn from the armory by weight — a counted draw like
+  // every other choice generation makes.
+  const armoryTotal = ARMORY.reduce((n, r) => n + r.weight, 0);
+  let relicRoll = intBetween(seed, population.counterAfter, 1, armoryTotal);
+  let relic = ARMORY[0]!;
+  for (const r of ARMORY) {
+    relicRoll -= r.weight;
+    if (relicRoll <= 0) { relic = r; break; }
+  }
+
   const spawned = pickSpawnPoints(
     seed,
-    population.counterAfter,
+    population.counterAfter + 1,
     grid,
     generated.start,
     population.chosen.length,
@@ -207,10 +218,10 @@ export function createWorld(
       level: carried?.level ?? 1,
       ...(carried === undefined ? {} : { playerMaxHp: carried.maxHp }),
       items: [{
-        id: 'keen-edge',
-        kind: 'a keen edge',
+        id: 'relic-1',
+        kind: relic.kind,
         pos: { x: guarded.x, y: guarded.y },
-        grants: { hp: 0, might: 2, wits: 0, speed: 0 },
+        grants: relicGrant(relic, depth),
       }],
       player: {
         id: playerId,

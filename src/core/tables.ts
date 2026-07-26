@@ -26,6 +26,18 @@ import type { Stats } from './entity.js';
 
 /** Natural roll that always lands, and doubles the damage. */
 export const CRIT = 20;
+
+/**
+ * Wits' job: a keen mind widens the opening. The crit threshold drops one
+ * step per four points of wits, floored — so crits stay rare for everyone and
+ * merely less rare for the sharp. The starting player (wits 3) crits only on
+ * the natural 20, which is why adding this changed no tuning; the grey lens
+ * and every third level make it a build.
+ */
+export const CRIT_FLOOR_LIMIT = 18;
+export function critFloor(wits: number): number {
+  return Math.max(CRIT_FLOOR_LIMIT, CRIT - Math.floor(Math.max(0, wits) / 4));
+}
 /** Natural roll that always misses, whatever the numbers say. */
 export const WHIFF = 1;
 
@@ -217,4 +229,44 @@ export function depthBands(depth: number): readonly { level: number; weight: num
 /** Every third floor, the stairs are guarded. */
 export function wardenAt(depth: number): boolean {
   return depth >= 3 && depth % 3 === 0;
+}
+
+/* ── the armory ──────────────────────────────────────────────────────────── */
+
+/**
+ * What a floor may leave lying on the ground, guarded. One item per floor,
+ * chosen by counted draw, its grant scaled by depth: a keepsake early, a
+ * difference-maker deep. Kinds are article-free — the Covenant's name rules
+ * apply to the world's own data before they apply to any model.
+ *
+ * `per` is how many depths buy one more point of the grant; lower is faster.
+ * The blade leads the table because might compounds through the damage bands,
+ * which is also why it scales slowest.
+ */
+export interface Relic {
+  readonly kind: string;
+  readonly grants: keyof Stats;
+  readonly base: number;
+  readonly per: number;
+  readonly weight: number;
+}
+
+export const ARMORY: readonly Relic[] = Object.freeze([
+  Object.freeze({ kind: 'keen edge', grants: 'might' as const, base: 1, per: 3, weight: 3 }),
+  Object.freeze({ kind: 'iron charm', grants: 'hp' as const, base: 3, per: 1, weight: 3 }),
+  Object.freeze({ kind: 'fleet boots', grants: 'speed' as const, base: 1, per: 3, weight: 2 }),
+  Object.freeze({ kind: 'grey lens', grants: 'wits' as const, base: 1, per: 2, weight: 2 }),
+]);
+
+/** The grant a relic gives at a depth. Never zero: a prize that does nothing
+ *  is a lie with a guard on it. */
+export function relicGrant(relic: Relic, depth: number): Stats {
+  const d = Math.max(1, Math.floor(depth));
+  const amount = relic.base + Math.floor((d - 1) / relic.per);
+  return {
+    hp: relic.grants === 'hp' ? amount : 0,
+    might: relic.grants === 'might' ? amount : 0,
+    wits: relic.grants === 'wits' ? amount : 0,
+    speed: relic.grants === 'speed' ? amount : 0,
+  };
 }
