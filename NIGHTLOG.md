@@ -134,3 +134,15 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > **Try it:** `npm run dev`, open the browser, fight your way down. Or headless:
 > `npm run play -- --policy brawler --seeds 12 --floors 3`.
 
+> [!NOTE]
+> **04:1x — The Covenant now stops bad names at the door, live**
+> The register assay sits inside the Oracle's ask path: a mood posing as a name
+> ("small iron want"), an article, shouting, or a name already spent on another
+> kind is a **failed call** — visible in the queue with the reason, retried
+> automatically — never a permanent fact. It promptly refused our own test
+> stub's "the thing" for the article, which is the guard working: the test
+> double now obeys the Covenant, not the other way around.
+>
+> **Try it:** watch "the world is thinking" — a refused name shows as
+> `failed · the covenant refuses …` and the next ask tries again.
+
