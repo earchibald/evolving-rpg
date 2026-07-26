@@ -26,6 +26,8 @@ export interface GameState {
    *  the player has finished. */
   readonly xp: number;
   readonly level: number;
+  /** How deep this floor lies. The first is 1. */
+  readonly depth: number;
 }
 
 const NO_ENTITIES: readonly Entity[] = Object.freeze([]);
@@ -47,4 +49,5 @@ export const EMPTY_STATE: GameState = Object.freeze({
   rules: NO_RULES,
   xp: 0,
   level: 1,
+  depth: 1,
 });

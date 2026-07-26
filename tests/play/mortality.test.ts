@@ -15,7 +15,7 @@ import type { GameEvent } from '../../src/core/events.js';
 function doomed(playerHp = 1): { log: EventLog; refs: Refs } {
   const world: GameEvent = {
     id: 'w', parent: null, seq: 0,
-    type: 'WORLD_INIT', schemaVersion: 4, rngCounter: 0, rngDraws: 0,
+    type: 'WORLD_INIT', schemaVersion: 5, rngCounter: 0, rngDraws: 0,
     payload: {
       width: 5, height: 1, tiles: new Array<number>(5).fill(FLOOR), seed: 11,
       items: [{

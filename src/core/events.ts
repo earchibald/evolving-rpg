@@ -11,7 +11,7 @@ import type { Item } from './item.js';
  *  payload — a special case that could not survive any second consumer of
  *  randomness, and combat is one. */
 export const SCHEMA_VERSIONS = {
-  WORLD_INIT: 4,
+  WORLD_INIT: 5,
   MOVE: 2,
   MOVE_BLOCKED: 2,
   TURN_ADVANCED: 2,
@@ -33,6 +33,9 @@ export interface EntitySeed {
 }
 
 export interface WorldInitPayload {
+  /** How deep this floor lies. v5 always writes it; older events lack it and
+   *  read as depth 1. */
+  depth?: number;
   /** Carried progress, present on depth-crossing worlds (v5). A bare world
    *  omits them and starts at nothing. */
   xp?: number;

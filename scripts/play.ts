@@ -3,7 +3,9 @@ import { emptyLog, append, chain } from '../src/log/chain.js';
 import { createWorld } from '../src/core/commands.js';
 import { autoplay } from '../src/play/autoplay.js';
 import { POLICIES } from '../src/play/policies.js';
-import { beginAgain } from '../src/play/session.js';
+import { beginAgain, descend } from '../src/play/session.js';
+import { createRef, emptyRefs, getRef } from '../src/log/refs.js';
+import { fold } from '../src/log/chain.js';
 import { readTheGame } from '../src/critic/critic.js';
 import { deserialise } from '../src/play/store.js';
 import type { Position } from '../src/play/session.js';
@@ -25,6 +27,7 @@ import type { Saved } from '../src/play/store.js';
 
 interface RunReport {
   seed: number | string;
+  depth: number;
   ended: string;
   actions: number;
   hpLeft: number;
@@ -56,11 +59,21 @@ function savedWorld(path: string): Position {
   return { log: begun.log, head };
 }
 
-function playOne(start: Position, policyName: string, seed: number | string): RunReport {
+function playOne(start: Position, policyName: string, seed: number | string, floors = 1): RunReport {
   const policy = POLICIES[policyName];
   if (policy === undefined) throw new Error(`no policy "${policyName}" — have: ${Object.keys(POLICIES).join(', ')}`);
 
-  const done = autoplay(start, policy, 600);
+  // Multi-floor runs: play to the exit, take the stairs, keep going. The run
+  // ends at death, at the last requested floor's exit, or at the action cap.
+  let done = autoplay(start, policy, 600);
+  for (let floor = 2; floor <= floors && done.ended === 'escaped'; floor += 1) {
+    const refs = createRef(emptyRefs(), 'run', done.position.head, 0, 'playtest');
+    const down = descend(done.position.log, refs, 'run', { width: 24, height: 16, walls: 60 });
+    if (down === null) break;
+    const head = getRef(down.refs, 'run').head;
+    if (head === null) break;
+    done = autoplay({ log: down.log, head }, policy, 600);
+  }
   const report = readTheGame(done.position.log, done.position.head);
   const surprise = report.readings.find((r) => r.lens === 2);
   const interest = report.readings.find((r) => r.lens === 61);
@@ -72,6 +85,7 @@ function playOne(start: Position, policyName: string, seed: number | string): Ru
 
   return {
     seed,
+    depth: fold(done.position.log, done.position.head).depth,
     ended: done.ended,
     actions: done.actions,
     hpLeft: you?.stats.hp ?? 0,
@@ -87,6 +101,7 @@ function playOne(start: Position, policyName: string, seed: number | string): Ru
 const policyArg = arg('policy', 'rusher');
 const seeds = Number(arg('seeds', '10'));
 const worldPath = arg('world', '');
+const floors = Number(arg('floors', '1'));
 
 const policies = policyArg === 'all' ? Object.keys(POLICIES) : [policyArg];
 const out: Record<string, { runs: RunReport[]; escaped: number; dead: number; playing: number }> = {};
@@ -96,7 +111,7 @@ for (const name of policies) {
   if (worldPath !== '') {
     runs.push(playOne(savedWorld(worldPath), name, `saved:${worldPath}`));
   } else {
-    for (let seed = 1; seed <= seeds; seed += 1) runs.push(playOne(freshWorld(seed), name, seed));
+    for (let seed = 1; seed <= seeds; seed += 1) runs.push(playOne(freshWorld(seed), name, seed, floors));
   }
   out[name] = {
     runs,
@@ -113,6 +128,6 @@ if (wantsJson) {
     console.log(`\n${name}: ${String(r.escaped)} escaped, ${String(r.dead)} dead, ${String(r.playing)} still going of ${String(r.runs.length)}`);
     const mean = (f: (x: RunReport) => number): string =>
       (r.runs.reduce((a, x) => a + f(x), 0) / Math.max(r.runs.length, 1)).toFixed(1);
-    console.log(`   mean actions ${mean((x) => x.actions)}, hp left ${mean((x) => x.hpLeft)}, strikes ${mean((x) => x.strikes)}, rule firings ${mean((x) => x.ruleFirings)}, dead-air ${mean((x) => Math.max(0, x.deadAir))}`);
+    console.log(`   mean actions ${mean((x) => x.actions)}, hp left ${mean((x) => x.hpLeft)}, strikes ${mean((x) => x.strikes)}, depth reached ${mean((x) => x.depth)}, dead-air ${mean((x) => Math.max(0, x.deadAir))}`);
   }
 }

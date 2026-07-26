@@ -1,6 +1,6 @@
 import { emptyLog, append, chain, fold } from '../../src/log/chain.js';
 import { playerStep, playerWait, runWorldTurns } from '../../src/play/session.js';
-import { createWorld, outcome, OPPONENT_COUNT } from '../../src/core/commands.js';
+import { createWorld, outcome } from '../../src/core/commands.js';
 import { farthestFrom } from '../../src/core/mapgen.js';
 import { EXIT, FLOOR } from '../../src/core/grid.js';
 import { reachableFrom } from '../../src/core/reachability.js';
@@ -59,8 +59,9 @@ describe('the world a run starts in', () => {
 
     // On a creature's tile: taking it means going through something. An item
     // you can pick up for free is not a choice.
+    // Population is the budget's business; guarding is this test's.
     const guards = state.entities.filter((e) => e.kind !== 'you');
-    expect(guards).toHaveLength(OPPONENT_COUNT);
+    expect(guards.length).toBeGreaterThanOrEqual(1);
     expect(guards.some((g) => g.pos.x === item.pos.x && g.pos.y === item.pos.y)).toBe(true);
   });
 });
@@ -92,7 +93,7 @@ describe('holding position', () => {
     // That is correct, and worth knowing.
     const world: GameEvent = {
       id: 'w', parent: null, seq: 0,
-      type: 'WORLD_INIT', schemaVersion: 4, rngCounter: 0, rngDraws: 0,
+      type: 'WORLD_INIT', schemaVersion: 5, rngCounter: 0, rngDraws: 0,
       payload: {
         width: 9, height: 1, tiles: new Array<number>(9).fill(FLOOR), seed: 3, items: [],
         player: { id: 'player', kind: 'you', pos: { x: 0, y: 0 }, stats: { hp: 10, might: 3, wits: 3, speed: 4 }, tags: [] },
@@ -125,7 +126,7 @@ describe('a finished run', () => {
   function corridor(): { log: ReturnType<typeof emptyLog>; head: string } {
     const world: GameEvent = {
       id: 'w', parent: null, seq: 0,
-      type: 'WORLD_INIT', schemaVersion: 4, rngCounter: 0, rngDraws: 0,
+      type: 'WORLD_INIT', schemaVersion: 5, rngCounter: 0, rngDraws: 0,
       payload: {
         width: 3, height: 1, tiles: [FLOOR, FLOOR, EXIT], seed: 1, items: [],
         player: { id: 'player', kind: 'you', pos: { x: 0, y: 0 }, stats: { hp: 10, might: 3, wits: 3, speed: 4 }, tags: [] },
@@ -170,7 +171,7 @@ describe('a finished run', () => {
   it('is dead, not playing, at no hit points', () => {
     const world: GameEvent = {
       id: 'w', parent: null, seq: 0,
-      type: 'WORLD_INIT', schemaVersion: 4, rngCounter: 0, rngDraws: 0,
+      type: 'WORLD_INIT', schemaVersion: 5, rngCounter: 0, rngDraws: 0,
       payload: {
         width: 3, height: 1, tiles: [FLOOR, FLOOR, EXIT], seed: 1, items: [],
         player: { id: 'player', kind: 'you', pos: { x: 0, y: 0 }, stats: { hp: 0, might: 3, wits: 3, speed: 4 }, tags: [] },
@@ -190,7 +191,7 @@ describe('taking what is underfoot', () => {
     const world: GameEvent = {
       id: 'w', parent: null, seq: 0,
       type: 'WORLD_INIT',
-      schemaVersion: 4,
+      schemaVersion: 5,
       rngCounter: 0,
       rngDraws: 0,
       payload: {
@@ -230,7 +231,7 @@ describe('a pocketed creature cannot freeze the world', () => {
     // round-robin hung on it for the rest of the run.
     const world: GameEvent = {
       id: 'w', parent: null, seq: 0,
-      type: 'WORLD_INIT', schemaVersion: 4, rngCounter: 0, rngDraws: 0,
+      type: 'WORLD_INIT', schemaVersion: 5, rngCounter: 0, rngDraws: 0,
       payload: {
         width: 5, height: 1,
         tiles: [FLOOR, FLOOR, 1, FLOOR, FLOOR], seed: 3, items: [],

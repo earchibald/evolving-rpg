@@ -79,3 +79,28 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 >
 > **Try it:** the "you" panel shows `level 1 · 0 xp`; kill something.
 
+> [!IMPORTANT]
+> **03:20 — The dungeon goes down now, and fighting is the right idea**
+> Reach the way out and a **descend** button lights up: the next floor is part
+> of the same run — same log, same rules, same you (stats, xp, level carried in
+> the crossing). Floors spawn from the bestiary by **threat budget** with
+> Brogue-style level overlap; **the warden guards every third floor** and pays
+> half its own threat out of the floor's budget, so a boss floor is a peak, not
+> a double peak. A creature stuck behind a wall no longer freezes the round
+> (an engine bug the assay caught before any player did).
+>
+> **The strategy inversion, measured on 20 fixed seeds:**
+> | | old game | tonight |
+> |---|---|---|
+> | fight everything (brawler) | ~10% survive | **60% clear the boss floor** |
+> | skip everything (rusher) | ~70% escape | **40% by floor 3, dying unleveled** |
+>
+> Depth-by-depth: 95% → 80% → 60% → ~17% at floor five. A strictly rising
+> sawtooth, pinned by `tests/balance/sawtooth.test.ts` on fixed seeds (exact,
+> not flaky). Four tuning passes are in `docs/design/BALANCE.md`'s tuning log —
+> including the one where I overshot and floor five went from bath to
+> abattoir (83% → 17%) before pass 3 pulled it back.
+>
+> **Try it:** play to the green square, press **descend**. Your level rides
+> with you; the floor below bites harder.
+

@@ -1,7 +1,7 @@
 import { emptyLog, append, chain, fold, verifyChain } from '../log/chain.js';
 import { emptyRefs, createRef, getRef, setHead, fork, reset, listRefs } from '../log/refs.js';
 import { createWorld, ratifyRule } from '../core/commands.js';
-import { playerStep, playerWait, runWorldTurns, buryIfDead, beginAgain, isGrave } from '../play/session.js';
+import { playerStep, playerWait, runWorldTurns, buryIfDead, beginAgain, descend, isGrave } from '../play/session.js';
 import { isAlive } from '../core/entity.js';
 import { outcome, hitChance } from '../core/commands.js';
 import { damageDice } from '../core/tables.js';
@@ -373,6 +373,7 @@ function render(): void {
     ['standing at', player === undefined ? '—' : `${player.pos.x}, ${player.pos.y}`, ''],
     ['turn', String(state.turn), ''],
     ['world', active, ''],
+    ['depth', String(state.depth), ''],
   ];
 
   const vitalsEl = el('vitals');
@@ -436,6 +437,8 @@ function render(): void {
     li.append(who, odds);
     threats.appendChild(li);
   }
+
+  (el('descend') as HTMLButtonElement).disabled = done !== 'escaped';
 
   // ── what the lenses see ───────────────────────────────────────────────
   const scorecardEl = el('scorecard');
@@ -1077,6 +1080,18 @@ function watchTheClock(): void {
 }
 
 el('open-forge').addEventListener('click', () => { renderForge(); forge.showModal(); });
+
+// The stairs down. Present always so the layout never moves; live only when
+// you are standing on the way out.
+el('descend').addEventListener('click', () => {
+  const down = descend(log, refs, active, { width: WIDTH, height: HEIGHT, walls: WALLS });
+  if (down === null) { say('the way down is not open — reach the way out first'); return; }
+  log = down.log;
+  refs = down.refs;
+  persist();
+  say(`down. depth ${down.depth} — it is colder here`);
+  render();
+});
 
 // Beginning again without having to die for it. The rules stay; everything
 // else goes back to the start.

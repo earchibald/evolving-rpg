@@ -80,6 +80,12 @@ export function upcastEvent(raw: unknown): DraftEvent {
       payload.items = payload.items ?? [];
     }
 
+    if (version <= 4) {
+      // v4 → v5: worlds learned how deep they lie. Everything recorded before
+      // depth existed was the first floor, which is simply true.
+      payload.depth = payload.depth ?? 1;
+    }
+
     return {
       type: 'WORLD_INIT',
       schemaVersion: current,

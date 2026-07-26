@@ -50,6 +50,7 @@ function world(entities = [being('player', 0, 0, 5, 10)], opts: { exitAt?: numbe
     rules: opts.rules ?? [],
     xp: 0,
     level: 1,
+    depth: 1,
   };
 }
 

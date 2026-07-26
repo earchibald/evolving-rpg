@@ -22,6 +22,10 @@ function logFromFixture(): EventLog {
 describe('golden replay', () => {
   it('has the expected shape', () => {
     expect(fixture.script).toHaveLength(100);
+    // The run may end before the input does — a scripted walker can die under
+    // real combat, and a fixture that died exercised the sharpest code.
+    expect(fixture.played).toBeGreaterThan(10);
+    expect(['dead', 'escaped', 'playing']).toContain(fixture.outcome);
 
     type Recorded = { type: string; rngDraws: number; payload: Record<string, unknown> };
     const events = fixture.events as unknown as ReadonlyArray<Recorded>;
@@ -34,7 +38,7 @@ describe('golden replay', () => {
     const byPlayer = events.filter(
       (e) => e.payload.entityId === 'player' || e.payload.attackerId === 'player',
     );
-    expect(byPlayer).toHaveLength(100);
+    expect(byPlayer).toHaveLength(fixture.played);
 
     // Draw accounting, stated as the rule rather than as totals. This is the
     // assertion that makes verifyChain's counter check worth having: before

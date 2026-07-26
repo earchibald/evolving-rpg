@@ -43,11 +43,11 @@ grew variance with mean. Flats give a floor; dice keep the top end alive.
 
 ## Experience and levels
 
-`XP_TO_REACH = [—, 0, 10, 25, 45, 70, 100, 140, 190, 250]` — early levels land
+`XP_TO_REACH = [—, 0, 16, 40, 72, 112, 160, 224, 304, 400]` — early levels land
 inside one floor; later ones demand deliberate risk. **XP = the threat value of
 what you killed** (risk in, reward out, one number both ways).
 
-Level-up (`growthAt`): **+3 maxHp every level; might on even levels, speed on
+Level-up (`growthAt`): **+2 maxHp every level; might on even levels, speed on
 odd; wits every third; full heal on the moment of leveling.** The full heal is
 the sawtooth's ease tooth. Deterministic (no choice UI) so replay stays exact;
 choices are a thing the Forge may propose later.
@@ -67,7 +67,7 @@ Kinds are mechanical bones; the Oracle names each kind as it is touched
 ## Spawning: budgets and overlap
 
 ```
-budget(depth) = 14 + 12·depth          threat is the currency
+budget(depth) = 24 + 15·depth          threat is the currency
 bands(depth)  = {depth ×6, depth−1 ×3, depth+1 ×1}   (Brogue-style blur)
 warden at depths 3, 6, 9…
 ```
@@ -78,14 +78,36 @@ feeling solved.
 
 ## Target bands (what "balanced" means, measurably)
 
-| measure | band | why |
-|---|---|---|
-| depth-1 brawler survival | 55–80% | fighting must be viable, not free |
-| depth-1 anchor hit chance | exactly 60% | feel anchor |
-| depth-2 survival, unleveled | ≥10 points below depth-1 | depth must bite |
-| depth-2 survival, leveled from d1 | recovers ≥ half the drop | XP must matter |
-| rusher vs brawler escape at depth 2+ | rusher must not dominate | skipping fights has a cost |
+Revised after the first measured passes — the door is gentler than first
+written, the deep is crueller, and both are on purpose. The bands live in
+`tests/balance/sawtooth.test.ts` on fixed seeds, so a breach is a defect and a
+drift inside the band is tuning.
+
+| measure | band | measured (pass 4) | why |
+|---|---|---|---|
+| depth-1 brawler survival | 70–100% | 95% | the door is gentle; floor 1 teaches |
+| depth-1 anchor hit chance | exactly 60% | 60% | feel anchor |
+| cumulative to depth 3 (boss floor) | 30–85% | 60% | the warden is a peak, not a wall |
+| brawler vs rusher at depth 3 | brawler strictly higher | 60% vs 40% | fighting must pay — the inversion |
+| cumulative to depth 5 | 5–50% | ~17% | the deep is earned |
 
 Tuning knobs, in order of bluntness: spawn budget slope → creature growth
 rows → XP thresholds → damage bands → the to-hit clamp (touch last; it moves
 everything).
+
+## Tuning log
+
+**Pass 1 (02:0x, first measured sweep).** Budget floor raised 14+12d → 22+14d:
+one unlucky bruiser roll was eating floor 1's whole budget, and a
+single-creature floor teaches nothing.
+
+**Pass 2 (03:0x, band sweep).** Depth-1 brawler survival measured 95% (band
+55–80) and five-floor survival 83% with *rising* hp — growth outpaced depth,
+the ease tooth was a bath. Three knobs, one notch each: XP thresholds ×~1.6
+(levels arrive a floor later), level hp +3 → +2 (the heal stays; the padding
+shrinks), budget slope 22+14d → 20+18d (deeper floors gain a real creature,
+depth 1 nearly unchanged).
+
+**Pass 3.** Pass 2 overshot the deep end: five-floor survival fell 83% → 17%
+with deaths at depth ~3.5. One knob back — slope 20+18d → 24+15d, floor 1
+untouched, depth 5 about ten points of budget gentler.

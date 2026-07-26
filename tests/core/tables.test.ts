@@ -69,11 +69,13 @@ describe('experience', () => {
   });
 
   it('maps xp to the highest level reached, totally', () => {
+    // Derived from the table rather than hardcoded, so tuning the thresholds
+    // does not break the mapping's contract.
     expect(levelForXp(0)).toBe(1);
-    expect(levelForXp(9)).toBe(1);
-    expect(levelForXp(10)).toBe(2);
-    expect(levelForXp(44)).toBe(3);
-    expect(levelForXp(45)).toBe(4);
+    expect(levelForXp(XP_TO_REACH[2]! - 1)).toBe(1);
+    expect(levelForXp(XP_TO_REACH[2]!)).toBe(2);
+    expect(levelForXp(XP_TO_REACH[4]! - 1)).toBe(3);
+    expect(levelForXp(XP_TO_REACH[4]!)).toBe(4);
     expect(levelForXp(99999)).toBe(XP_TO_REACH.length - 1);
     expect(levelForXp(-5)).toBe(1);
   });

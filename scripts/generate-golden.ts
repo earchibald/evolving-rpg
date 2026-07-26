@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { sha256 } from '@noble/hashes/sha256';
 import { bytesToHex } from '@noble/hashes/utils';
 import { emptyLog, append, chain, fold } from '../src/log/chain.js';
-import { createWorld } from '../src/core/commands.js';
+import { createWorld, outcome } from '../src/core/commands.js';
 import { playerStep, runWorldTurns } from '../src/play/session.js';
 import { canonicalJson } from '../src/log/canonical.js';
 import { ENGINE_VERSION } from '../src/version.js';
@@ -25,7 +25,10 @@ if (process.env.ALLOW_GOLDEN_REGEN !== '1') {
   process.exit(1);
 }
 
-const SEED = 12345;
+// Hand-picked so the scripted walk actually meets combat: 13 strikes under
+// the current tables. A golden fixture that never fights leaves the newest and
+// riskiest code untouched by the strongest test in the repo.
+const SEED = 12;
 const WIDTH = 24;
 const HEIGHT = 16;
 const WALLS = 60;
@@ -42,9 +45,16 @@ const first = append(log, null, createWorld(SEED, WIDTH, HEIGHT, WALLS));
 log = first.log;
 let head = first.event.id;
 
+let played = 0;
 for (const key of SCRIPT) {
   const step = STEPS[key];
   if (step === undefined) throw new Error(`bad script character ${key}`);
+
+  // The run can end before the script does — under real combat the scripted
+  // walker sometimes dies, and a fixture that dies is a fixture that exercised
+  // the sharpest code. `played` records how far the input got.
+  if (outcome(fold(log, head)) !== 'playing') break;
+  played += 1;
 
   // A real playthrough, not just a walk: the world takes its turns too, so the
   // recorded run exercises the AI, combat, and a draw count that actually
@@ -58,6 +68,7 @@ for (const key of SCRIPT) {
 }
 
 const finalState = fold(log, head);
+const ended = outcome(finalState);
 const fixture = {
   note: 'Generated once and committed. Never regenerate to make a failing test pass.',
   engineVersion: ENGINE_VERSION,
@@ -66,6 +77,8 @@ const fixture = {
   height: HEIGHT,
   walls: WALLS,
   script: SCRIPT,
+  played,
+  outcome: ended,
   head,
   finalStateHash: bytesToHex(sha256(new TextEncoder().encode(canonicalJson(finalState)))),
   events: chain(log, head),

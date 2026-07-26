@@ -67,7 +67,7 @@ const seed = (id: string, kind: string, x: number, y: number, hp: number, might:
 
 function born(width: number, tiles: number[], player: EntitySeed, opponents: EntitySeed[], items: Item[]): Position {
   const init = {
-    type: 'WORLD_INIT', schemaVersion: 4, rngCounter: 0, rngDraws: 0,
+    type: 'WORLD_INIT', schemaVersion: 5, rngCounter: 0, rngDraws: 0,
     payload: { width, height: 1, tiles, seed: 7, items, player, opponents },
   } as DraftEvent;
   const w = append(emptyLog(), null, init);

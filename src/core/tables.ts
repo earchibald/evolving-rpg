@@ -95,7 +95,7 @@ export function meanDamage(might: number): number {
  * a deliberate detour through danger — which is the whole incentive the game
  * was missing.
  */
-export const XP_TO_REACH: readonly number[] = Object.freeze([0, 0, 10, 25, 45, 70, 100, 140, 190, 250]);
+export const XP_TO_REACH: readonly number[] = Object.freeze([0, 0, 16, 40, 72, 112, 160, 224, 304, 400]);
 
 export function levelForXp(xp: number): number {
   let level = 1;
@@ -112,7 +112,7 @@ export function levelForXp(xp: number): number {
  *  needs no choices, and the Forge can propose choice later. */
 export function growthAt(level: number): Stats {
   return {
-    hp: 3,
+    hp: 2,
     might: level % 2 === 0 ? 1 : 0,
     speed: level % 2 === 1 ? 1 : 0,
     wits: level % 3 === 0 ? 1 : 0,
@@ -196,10 +196,11 @@ export function threatOf(stats: Stats): number {
 }
 
 /** The spawn budget a floor may spend on creatures. Linear and steep enough
- *  that depth 2 visibly bites: ~3 modest creatures at depth 1, 4–5 stronger
- *  ones at depth 2, the warden's floor at 3. */
+ *  that depth 2 visibly bites. First cut (14+12d) let one unlucky bruiser roll
+ *  eat floor 1 whole — a single-creature floor teaches nothing — so the base
+ *  covers two or three modest creatures outright. */
 export function spawnBudget(depth: number): number {
-  return 14 + 12 * Math.max(1, Math.floor(depth));
+  return 24 + 15 * Math.max(1, Math.floor(depth));
 }
 
 /** Out-of-depth overlap: which creature-levels a floor may draw, with weights.

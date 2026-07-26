@@ -34,7 +34,7 @@ const other = (): DraftEvent => ({
  *  rather than guessed from what happened to be rolled. */
 function world(might: number): DraftEvent {
   return {
-    type: 'WORLD_INIT', schemaVersion: 4, rngCounter: 0, rngDraws: 0,
+    type: 'WORLD_INIT', schemaVersion: 5, rngCounter: 0, rngDraws: 0,
     payload: {
       width: 4, height: 1, tiles: new Array<number>(4).fill(FLOOR), seed: 1, items: [],
       player: { id: 'player', kind: 'you', pos: { x: 0, y: 0 }, stats: { hp: 10, might, wits: 1, speed: 3 }, tags: [] },

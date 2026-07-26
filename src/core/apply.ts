@@ -96,6 +96,7 @@ function reduce(state: GameState, event: GameEvent): GameState {
         // events never wrote these.
         xp: p.xp ?? 0,
         level: p.level ?? 1,
+        depth: p.depth ?? 1,
       };
     }
 

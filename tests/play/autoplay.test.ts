@@ -26,7 +26,7 @@ function emptyWorld(): Position {
   const tiles = new Array<number>(10).fill(FLOOR);
   tiles[9] = EXIT;
   const born = append(emptyLog(), null, {
-    type: 'WORLD_INIT', schemaVersion: 4, rngCounter: 0, rngDraws: 0,
+    type: 'WORLD_INIT', schemaVersion: 5, rngCounter: 0, rngDraws: 0,
     payload: {
       width: 10, height: 1, tiles, seed: 1, items: [],
       player: { id: 'player', kind: 'you', pos: { x: 0, y: 0 }, stats: { hp: 10, might: 3, wits: 1, speed: 3 }, tags: [] },

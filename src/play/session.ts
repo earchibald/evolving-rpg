@@ -1,7 +1,8 @@
 import { append, fold, chain } from '../log/chain.js';
 import { getRef, fork, setHead, listRefs } from '../log/refs.js';
 import type { Refs } from '../log/refs.js';
-import { attemptMove, advanceTurn, endsTurn, wait, takeUnderfoot, outcome, ratifyRule } from '../core/commands.js';
+import { attemptMove, advanceTurn, endsTurn, wait, takeUnderfoot, outcome, ratifyRule, createWorld } from '../core/commands.js';
+import { u32 } from '../core/rng.js';
 import { decide } from '../core/ai.js';
 import { fireRules } from '../canon/interpret.js';
 import type { Trigger } from '../canon/rule.js';
@@ -304,6 +305,50 @@ export function beginAgain(
   }
 
   return { log: current, refs: setHead(refs, active, head) };
+}
+
+/**
+ * Down the stairs: the floor you escaped becomes the floor below.
+ *
+ * The chain continues — the new WORLD_INIT is appended to the current head, so
+ * one run's history holds every floor it crossed, replayable end to end. The
+ * player crosses inside the event: stats, ceiling, xp and level ride in the
+ * payload, which is what lets a depth-2 log replay without needing depth 1
+ * folded first. Rules re-ratify onto the new floor exactly as `beginAgain`
+ * re-ratifies them onto a fresh start; the world changes, what it has agreed
+ * to does not.
+ *
+ * The next floor's seed derives from this one's — deterministic, so the same
+ * run descends into the same world every time it replays.
+ */
+export function descend(
+  log: EventLog,
+  refs: Refs,
+  active: string,
+  dims: { width: number; height: number; walls: number },
+  playerId = 'player',
+): { log: EventLog; refs: Refs; depth: number } | null {
+  const ref = getRef(refs, active);
+  const state = fold(log, ref.head);
+  if (outcome(state, playerId) !== 'escaped') return null;
+
+  const you = findEntity(state.entities, playerId);
+  if (you === undefined) return null;
+
+  const nextDepth = state.depth + 1;
+  const nextSeed = u32(state.seed, 1_000_003 + state.depth);
+  const born = append(log, ref.head, createWorld(
+    nextSeed, dims.width, dims.height, dims.walls, playerId, nextDepth,
+    { stats: { ...you.stats }, maxHp: you.maxHp, xp: state.xp, level: state.level },
+  ));
+
+  let current: Position = { log: born.log, head: born.event.id };
+  for (const rule of state.rules) {
+    const done = append(current.log, current.head, ratifyRule(fold(current.log, current.head), rule));
+    current = { log: done.log, head: done.event.id };
+  }
+
+  return { log: current.log, refs: setHead(refs, active, current.head), depth: nextDepth };
 }
 
 export function buryIfDead(

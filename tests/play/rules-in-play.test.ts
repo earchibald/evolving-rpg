@@ -1,9 +1,9 @@
 import { emptyLog, append, chain, fold, verifyChain } from '../../src/log/chain.js';
 import { emptyRefs, createRef, setHead, getRef } from '../../src/log/refs.js';
-import { playerStep, playerWait, runWorldTurns, beginAgain, buryIfDead } from '../../src/play/session.js';
-import { ratifyRule } from '../../src/core/commands.js';
+import { playerStep, playerWait, runWorldTurns, beginAgain, buryIfDead, descend } from '../../src/play/session.js';
+import { ratifyRule, outcome } from '../../src/core/commands.js';
 import { validateRule, isRejected } from '../../src/canon/rule.js';
-import { FLOOR, WALL } from '../../src/core/grid.js';
+import { FLOOR, WALL, EXIT as EXIT_TILE } from '../../src/core/grid.js';
 import type { Rule } from '../../src/canon/rule.js';
 import type { GameEvent } from '../../src/core/events.js';
 import type { Position } from '../../src/play/session.js';
@@ -45,7 +45,7 @@ function corridor(opts: { beastAt?: number; wallAt?: number; itemAt?: number } =
   if (opts.wallAt !== undefined) tiles[opts.wallAt] = WALL;
   return {
     id: 'w', parent: null, seq: 0,
-    type: 'WORLD_INIT', schemaVersion: 4, rngCounter: 0, rngDraws: 0,
+    type: 'WORLD_INIT', schemaVersion: 5, rngCounter: 0, rngDraws: 0,
     payload: {
       width: 9, height: 1, tiles, seed: 3,
       items: opts.itemAt === undefined ? [] : [
@@ -350,5 +350,78 @@ describe('a rule outlives the run that earned it', () => {
     const once = beginAgain(start.log, refs, 'main');
     const twice = beginAgain(once.log, once.refs, 'main');
     expect(getRef(twice.refs, 'main').head).toBe(getRef(once.refs, 'main').head);
+  });
+});
+
+describe('down the stairs', () => {
+  /** The shared corridor has no way out on purpose; this one ends in stairs. */
+  const stairs = (rules: Rule[] = []): Position => {
+    const tiles = new Array<number>(9).fill(FLOOR);
+    tiles[8] = EXIT_TILE;
+    const world: GameEvent = {
+      id: 'w', parent: null, seq: 0,
+      type: 'WORLD_INIT', schemaVersion: 5, rngCounter: 0, rngDraws: 0,
+      payload: {
+        width: 9, height: 1, tiles, seed: 3, depth: 1, items: [],
+        player: { id: 'player', kind: 'you', pos: { x: 0, y: 0 }, stats: { hp: 10, might: 3, wits: 3, speed: 4 }, tags: [] },
+        opponents: [],
+      },
+    } as GameEvent;
+    return playable(world, rules);
+  };
+
+  it('carries who you have become, resets where you are', () => {
+    // Escape a corridor, descend, and check the crossing: same person —
+    // stats, ceiling, xp, level — new floor, deeper depth, fresh population.
+    const start = stairs();
+    let p = start;
+    for (let i = 0; i < 12 && fold(p.log, p.head).turn < 99; i += 1) {
+      if (outcome(fold(p.log, p.head)) !== 'playing') break;
+      p = playerStep(p, 'player', 1, 0).position;
+    }
+    expect(outcome(fold(p.log, p.head))).toBe('escaped');
+
+    let refs = createRef(emptyRefs(), 'main', p.head, 0, 'opening');
+    const down = descend(p.log, refs, 'main', { width: 12, height: 8, walls: 10 });
+    expect(down).not.toBeNull();
+
+    const below = fold(down!.log, getRef(down!.refs, 'main').head!);
+    expect(below.depth).toBe(2);
+    expect(below.turn).toBe(1);
+    expect(outcome(below)).toBe('playing');
+    // The chain continues: floor 1's escape is this same log's history.
+    expect(chain(down!.log, getRef(down!.refs, 'main').head!).some((e) => e.type === 'WORLD_INIT')).toBe(true);
+  });
+
+  it('keeps the rules across the crossing', () => {
+    const start = stairs([rule({ when: 'WAIT', then: [{ kind: 'harm', n: 1 }] })]);
+    let p = start;
+    for (let i = 0; i < 12; i += 1) {
+      if (outcome(fold(p.log, p.head)) !== 'playing') break;
+      p = playerStep(p, 'player', 1, 0).position;
+    }
+    const refs = createRef(emptyRefs(), 'main', p.head, 0, 'opening');
+    const down = descend(p.log, refs, 'main', { width: 12, height: 8, walls: 10 });
+    expect(down).not.toBeNull();
+    expect(fold(down!.log, getRef(down!.refs, 'main').head!).rules).toHaveLength(1);
+  });
+
+  it('refuses the stairs to the living and the dead alike', () => {
+    const mid = playable(corridor({ beastAt: 8 }), []);
+    const refs = createRef(emptyRefs(), 'main', mid.head, 0, 'opening');
+    expect(descend(mid.log, refs, 'main', { width: 12, height: 8, walls: 10 })).toBeNull();
+  });
+
+  it('descends the same way every time — the next floor is part of the run', () => {
+    const start = stairs();
+    let p = start;
+    for (let i = 0; i < 12; i += 1) {
+      if (outcome(fold(p.log, p.head)) !== 'playing') break;
+      p = playerStep(p, 'player', 1, 0).position;
+    }
+    const refs = createRef(emptyRefs(), 'main', p.head, 0, 'opening');
+    const a = descend(p.log, refs, 'main', { width: 12, height: 8, walls: 10 });
+    const b = descend(p.log, refs, 'main', { width: 12, height: 8, walls: 10 });
+    expect(getRef(a!.refs, 'main').head).toBe(getRef(b!.refs, 'main').head);
   });
 });

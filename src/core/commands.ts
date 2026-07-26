@@ -2,8 +2,8 @@ import { generateMap, pickSpawnPoints, farthestFrom, withExit } from './mapgen.j
 import { inBounds, isPassable } from './grid.js';
 import { findEntity, isAlive } from './entity.js';
 import { intBetween } from './rng.js';
-import { neededToHit, chanceIn20, damageDice, CRIT, WHIFF } from './tables.js';
-import type { Entity } from './entity.js';
+import { neededToHit, chanceIn20, damageDice, CRIT, WHIFF, BESTIARY, creatureStats, threatOf, spawnBudget, depthBands, wardenAt } from './tables.js';
+import type { Entity, Stats } from './entity.js';
 import { itemAt } from './item.js';
 import { EXIT, tileAt } from './grid.js';
 import { nextActive } from './turns.js';
@@ -18,9 +18,7 @@ const STARTING_STATS = { hp: 10, might: 3, wits: 3, speed: 4 } as const;
 /** Fewer hit points than you, and it hits harder. One is a fight you win while
  *  losing blood; two at once is a fight you lose. That gap is the whole reason
  *  avoiding something, or detouring for an edge, can be the better move. */
-const OPPONENT_STATS = { hp: 5, might: 4, wits: 1, speed: 3 } as const;
 
-export const OPPONENT_COUNT = 3;
 
 /** Far enough that nothing is already on top of you when the world opens. */
 export const OPPONENT_MIN_DISTANCE = 8;
@@ -32,12 +30,14 @@ export const OPPONENT_MIN_DISTANCE = 8;
 export const STRIKE_DRAWS = 2;
 
 /**
- * Whether one creature will attack another. Different kinds are hostile; alike
- * kinds are not, which is what stops a crowd of them from brawling with each
- * other on the way to you.
+ * Whether one creature will attack another: the world against you, never
+ * against itself. The old rule — different kinds fight — was written when
+ * every creature was a 'thing'; a mixed bestiary under it would brawl among
+ * itself on the way to the player, and a dungeon that clears its own floors
+ * is a hallway.
  */
 export function isHostile(a: Entity, b: Entity): boolean {
-  return a.kind !== b.kind;
+  return (a.kind === 'you') !== (b.kind === 'you');
 }
 
 /**
@@ -86,12 +86,88 @@ function resolveStrike(
   return { roll, needed, hit, crit, damage: hit ? (crit ? rolledDamage * 2 : rolledDamage) : 0 };
 }
 
+/** The player as a floor receives them: stats, ceiling and progress carried
+ *  whole from the floor above. */
+export interface CarriedPlayer {
+  stats: Stats;
+  maxHp: number;
+  xp: number;
+  level: number;
+}
+
+/**
+ * Chooses this floor's population from the bestiary, spending the depth's
+ * threat budget. Every choice is a counted draw, so generation stays inside
+ * the draw protocol.
+ *
+ * Two-stage pick per creature: a depth band (mostly here, sometimes one up,
+ * rarely one down — the Brogue blur), then an archetype by weight. Spending
+ * stops when the budget cannot afford the cheapest thing left, so a floor is
+ * always as full as its budget allows. The warden joins on its floors without
+ * consuming budget: a boss is the floor's *feature*, not part of its rent.
+ */
+function chooseSpawns(seed: number, counter: number, depth: number): {
+  chosen: { kind: string; level: number; stats: Stats }[];
+  counterAfter: number;
+} {
+  const chosen: { kind: string; level: number; stats: Stats }[] = [];
+  const spawnable = BESTIARY.filter((a) => a.weight > 0);
+  let budget = spawnBudget(depth);
+  let c = counter;
+
+  // A boss floor is a peak, not a double peak: the warden pays half its own
+  // threat out of the floor's budget, so its minions thin out around it and
+  // the fight is about the warden rather than the crowd it stands in.
+  if (wardenAt(depth)) {
+    const level = Math.max(1, Math.floor(depth / 3));
+    budget -= Math.floor(threatOf(creatureStats('warden', level)!) / 2);
+  }
+
+  const cheapest = (): number => Math.min(
+    ...spawnable.map((a) => threatOf(creatureStats(a.kind, Math.max(1, depth - 1))!)),
+  );
+
+  for (let guard = 0; guard < 32 && budget >= cheapest(); guard += 1) {
+    const bands = depthBands(depth);
+    const bandTotal = bands.reduce((n, b) => n + b.weight, 0);
+    let roll = intBetween(seed, c, 1, bandTotal); c += 1;
+    let level = bands[0]!.level;
+    for (const band of bands) {
+      roll -= band.weight;
+      if (roll <= 0) { level = band.level; break; }
+    }
+
+    const archTotal = spawnable.reduce((n, a) => n + a.weight, 0);
+    let pick = intBetween(seed, c, 1, archTotal); c += 1;
+    let arch = spawnable[0]!;
+    for (const a of spawnable) {
+      pick -= a.weight;
+      if (pick <= 0) { arch = a; break; }
+    }
+
+    const stats = creatureStats(arch.kind, level)!;
+    const price = threatOf(stats);
+    if (price > budget) continue; // rolled above our means; roll again
+    budget -= price;
+    chosen.push({ kind: level === 1 ? arch.kind : `${arch.kind}-${String(level)}`, level, stats });
+  }
+
+  if (wardenAt(depth)) {
+    const level = Math.max(1, Math.floor(depth / 3));
+    chosen.push({ kind: level === 1 ? 'warden' : `warden-${String(level)}`, level, stats: creatureStats('warden', level)! });
+  }
+
+  return { chosen, counterAfter: c };
+}
+
 export function createWorld(
   seed: number,
   width: number,
   height: number,
   wallCount: number,
   playerId = 'player',
+  depth = 1,
+  carried?: CarriedPlayer,
 ): Extract<DraftEvent, { type: 'WORLD_INIT' }> {
   const generated = generateMap(seed, 0, width, height, wallCount);
 
@@ -100,12 +176,13 @@ export function createWorld(
   const exit = farthestFrom(generated.grid, generated.start);
   const grid = withExit(generated.grid, exit);
 
+  const population = chooseSpawns(seed, generated.counterAfter, depth);
   const spawned = pickSpawnPoints(
     seed,
-    generated.counterAfter,
+    population.counterAfter,
     grid,
     generated.start,
-    OPPONENT_COUNT,
+    population.chosen.length,
     OPPONENT_MIN_DISTANCE,
   );
 
@@ -125,6 +202,9 @@ export function createWorld(
       height,
       tiles: [...grid.tiles],
       seed,
+      depth,
+      xp: carried?.xp ?? 0,
+      level: carried?.level ?? 1,
       items: [{
         id: 'keen-edge',
         kind: 'a keen edge',
@@ -135,14 +215,14 @@ export function createWorld(
         id: playerId,
         kind: 'you',
         pos: { x: generated.start.x, y: generated.start.y },
-        stats: { ...STARTING_STATS },
+        stats: carried === undefined ? { ...STARTING_STATS } : { ...carried.stats },
         tags: [],
       },
-      opponents: spawned.points.map((p, i) => ({
-        id: `thing-${i + 1}`,
-        kind: 'thing',
-        pos: { x: p.x, y: p.y },
-        stats: { ...OPPONENT_STATS },
+      opponents: population.chosen.map((c, i) => ({
+        id: `foe-${String(i + 1)}`,
+        kind: c.kind,
+        pos: { x: spawned.points[i]?.x ?? exit.x, y: spawned.points[i]?.y ?? exit.y },
+        stats: { ...c.stats },
         tags: [],
       })),
     },

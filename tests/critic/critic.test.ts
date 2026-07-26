@@ -15,7 +15,7 @@ import type { DraftEvent } from '../../src/core/events.js';
 const W = 12;
 
 const world = (beastAt = 11, hp = 10): DraftEvent => ({
-  type: 'WORLD_INIT', schemaVersion: 4, rngCounter: 0, rngDraws: 0,
+  type: 'WORLD_INIT', schemaVersion: 5, rngCounter: 0, rngDraws: 0,
   payload: {
     width: W, height: 1, tiles: new Array<number>(W).fill(FLOOR), seed: 1, items: [],
     player: { id: 'player', kind: 'you', pos: { x: 0, y: 0 }, stats: { hp, might: 3, wits: 1, speed: 3 }, tags: [] },

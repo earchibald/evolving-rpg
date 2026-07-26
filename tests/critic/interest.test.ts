@@ -18,7 +18,7 @@ const WIDE = 12;
 
 function world(beastAt: number, hp = 10): DraftEvent {
   return {
-    type: 'WORLD_INIT', schemaVersion: 4, rngCounter: 0, rngDraws: 0,
+    type: 'WORLD_INIT', schemaVersion: 5, rngCounter: 0, rngDraws: 0,
     payload: {
       width: WIDE, height: 1, tiles: new Array<number>(WIDE).fill(FLOOR), seed: 1, items: [],
       player: { id: 'player', kind: 'you', pos: { x: 0, y: 0 }, stats: { hp, might: 3, wits: 1, speed: 3 }, tags: [] },
@@ -165,7 +165,7 @@ describe('the awkward chains', () => {
 
   it('handles a world with nothing alive in it', () => {
     const alone: DraftEvent = {
-      type: 'WORLD_INIT', schemaVersion: 4, rngCounter: 0, rngDraws: 0,
+      type: 'WORLD_INIT', schemaVersion: 5, rngCounter: 0, rngDraws: 0,
       payload: {
         width: WIDE, height: 1, tiles: new Array<number>(WIDE).fill(FLOOR), seed: 1, items: [],
         player: { id: 'player', kind: 'you', pos: { x: 0, y: 0 }, stats: { hp: 10, might: 3, wits: 1, speed: 3 }, tags: [] },
