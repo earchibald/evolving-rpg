@@ -197,6 +197,16 @@ export function assayRule(rule: Rule): RuleAssay {
   }
 
   // ── trial of function (M3) — a caution, never a refusal ───────────────
+  //
+  // The exploiters above play badly on purpose, so rules gated on playing
+  // *well* — a cleared floor, a long walk, a late turn — never fire for them
+  // and drew a false caution. (The founding case: a dead-air rule that fired
+  // four times in real sweeps while the assay called it dead weight.) A
+  // fighter's honest pass through the same world covers that class.
+  if (fired === 0) {
+    const honest = autoplay(withRule(greedWorld(), rule), brawler, TRIAL_ACTIONS * 2);
+    fired += firings(honest.position, rule.id);
+  }
   const neverFired = fired === 0;
   if (neverFired) {
     findings.push(

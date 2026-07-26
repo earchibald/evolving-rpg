@@ -177,3 +177,30 @@ describe('the covenant is enforced, not aspirational', () => {
     }
   });
 });
+
+describe('the function trial plays well before it cautions (M3)', () => {
+  it('does not call a play-well rule dead weight', () => {
+    // The dead-air rule's shape: fires only after the floor is cleared, far
+    // from the exit, late, healthy. Exploiters never get there; a fighter
+    // does. This exact shape drew the false caution that motivated the fix.
+    const got = assayRule(rule({
+      when: 'TURN_PASSED',
+      require: [
+        { kind: 'creaturesAtMost', n: 0 },
+        { kind: 'exitBeyond', n: 4 },
+        { kind: 'turnAtLeast', n: 10 },
+      ],
+      then: [{ kind: 'harm', n: 1 }],
+    }));
+    expect(got.neverFired).toBe(false);
+    expect(got.findings.join(' ')).not.toMatch(/caution/);
+  });
+
+  it('still cautions on what genuinely cannot be reached', () => {
+    const got = assayRule(rule({
+      require: [{ kind: 'turnAtLeast', n: 900 }],
+      then: [{ kind: 'heal', n: 1 }],
+    }));
+    expect(got.neverFired).toBe(true);
+  });
+});
