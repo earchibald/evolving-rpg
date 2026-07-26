@@ -222,7 +222,7 @@ describe('what gets stored is exactly the vocabulary', () => {
       ['id', 'provenance', 'ratifiedAt', 'require', 'then', 'when'],
     );
     expect(Object.keys(r.then[0]!).sort()).toEqual(['kind', 'n']);
-    expect(Object.keys(r.provenance).sort()).toEqual(['because', 'events', 'notes']);
+    expect(Object.keys(r.provenance).sort()).toEqual(['because', 'events', 'lenses', 'notes']);
     expect(JSON.stringify(r)).not.toContain('onerror');
   });
 });

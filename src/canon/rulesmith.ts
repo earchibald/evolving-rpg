@@ -7,6 +7,8 @@ import type { Note } from '../channels/channels.js';
 import type { Oracle } from '../oracle/oracle.js';
 import type { GameEvent } from '../core/events.js';
 import type { GameState } from '../core/state.js';
+import { readTheGame } from '../critic/critic.js';
+import type { EventLog } from '../log/chain.js';
 
 /**
  * The Rulesmith: reads a run that has ended and drafts one rule.
@@ -50,6 +52,11 @@ export interface RunSummary {
   citableNotes: string[];
   /** Already in force, in English, so it does not propose them again. */
   inForce: string[];
+  /** The Critic's verdicts, one sentence each. A reading only a human sees is
+   *  a report; one the world sees is a gradient. */
+  measured: string[];
+  /** Lens numbers the verdicts covered, so a citation can be checked. */
+  citableLenses: number[];
 }
 
 function count(events: readonly GameEvent[], type: GameEvent['type']): number {
@@ -72,6 +79,16 @@ export function summariseRun(
   world: string,
   playerId = 'player',
 ): RunSummary {
+  // The Critic reads the same events, reconstructed as a log. Chains are
+  // parent-linked, so the reconstruction is exact.
+  const asLog: EventLog = { events: new Map(events.map((e) => [e.id, e])) };
+  const head = events.length === 0 ? null : events[events.length - 1]!.id;
+  const report = readTheGame(asLog, head);
+  const measured = report.readings
+    .filter((r) => r.measured)
+    .map((r) => `Lens #${r.lens}, ${r.title}: ${r.verdict} (${r.confidence})`);
+  const citableLenses = report.readings.filter((r) => r.measured).map((r) => r.lens);
+
   const strikes = events.filter((e) => e.type === 'STRIKE');
   const mine = strikes.filter((e) => e.type === 'STRIKE' && e.payload.attackerId === playerId);
   const theirs = strikes.filter((e) => e.type === 'STRIKE' && e.payload.targetId === playerId);
@@ -120,6 +137,8 @@ export function summariseRun(
     citable: events.slice(-40).map((e) => e.id),
     citableNotes: theirNotes.map((n) => n.at),
     inForce: state.rules.map(readRule),
+    measured,
+    citableLenses,
   };
 }
 
@@ -179,10 +198,17 @@ function pruneProvenance(raw: unknown, run: RunSummary): unknown {
   const keep = (list: unknown, allowed: readonly string[]): string[] =>
     (Array.isArray(list) ? list : []).filter((x): x is string => typeof x === 'string' && allowed.includes(x));
 
+  const rawLenses: unknown = p['lenses'];
+  const lenses = (Array.isArray(rawLenses) ? rawLenses : [])
+    .filter((x): x is number => typeof x === 'number' && run.citableLenses.includes(x));
+
   return {
     ...p,
     events: keep(p['events'], run.citable),
     notes: keep(p['notes'], run.citableNotes),
+    // Same treatment as event ids: a lens the reading never produced is an
+    // invented reason, and invented reasons do not enter an append-only log.
+    lenses,
   };
 }
 

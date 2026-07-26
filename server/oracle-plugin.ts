@@ -59,6 +59,9 @@ function proposePrompt(context: Record<string, unknown>): string {
     'WHAT THE PLAYER SAID',
     list(run.said) || '(they said nothing)',
     '',
+    'WHAT THE LENSES MEASURED — findings to answer',
+    list(run.measured) || '(no readings yet)',
+    '',
     'RULES ALREADY IN FORCE — do not propose these again',
     list(run.inForce) || '(none)',
     '',
@@ -94,6 +97,9 @@ function proposePrompt(context: Record<string, unknown>): string {
     'Do not propose a rule that merely sounds good. Prefer a small rule that',
     'makes one existing action worth taking to a large one that adds a system.',
     'You must cite at least one event id or note timestamp from the lists above.',
+    'If your rule answers a lens finding, cite it: "lenses":[2] in provenance.',
+    'A lens reading zero is a thing the world may address — a game whose dice',
+    'never surprise anyone, or whose runs end in dead air, is naming its lack.',
     'Cite nothing you were not given — invented ids are stripped and the rule',
     'is then rejected for citing nothing.',
     '',
@@ -101,7 +107,7 @@ function proposePrompt(context: Record<string, unknown>): string {
     '{"name":"<four words or fewer, a label for this rule>",',
     ' "line":"<one sentence to the player on why this rule, second person>",',
     ' "rule":{"when":"...","require":[...],"then":[...],',
-    '   "provenance":{"events":["..."],"notes":["..."],',
+    '   "provenance":{"events":["..."],"notes":["..."],"lenses":[...],',
     '     "because":"<one sentence on what in the run prompted this>"}}}',
   ].join('\n');
 }

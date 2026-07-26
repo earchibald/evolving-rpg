@@ -80,6 +80,9 @@ export type EffectKind = Effect['kind'];
 export interface Provenance {
   readonly events: readonly string[];
   readonly notes: readonly string[];
+  /** Lens numbers from the Critic's reading, when a rule answers a
+   *  measurement. Optional: not every rule is born from a lens. */
+  readonly lenses: readonly number[];
   readonly because: string;
 }
 
@@ -266,6 +269,11 @@ function validateProvenance(raw: unknown): Provenance | Rejected {
 
   const events = stringsOnly(raw['events']);
   const notes = stringsOnly(raw['notes']);
+  const rawLenses: unknown = raw['lenses'] ?? [];
+  const lenses = Array.isArray(rawLenses)
+    ? rawLenses.filter((x): x is number => typeof x === 'number' && Number.isInteger(x) && x > 0)
+    : null;
+  if (lenses === null) return reject(`provenance: lenses must be a list of lens numbers, got ${show(rawLenses)}`);
   if (events === null) return reject(`provenance: events must be a list of ids, got ${show(raw['events'])}`);
   if (notes === null) return reject(`provenance: notes must be a list of timestamps, got ${show(raw['notes'])}`);
 
@@ -282,6 +290,7 @@ function validateProvenance(raw: unknown): Provenance | Rejected {
   return Object.freeze({
     events: Object.freeze([...events]),
     notes: Object.freeze([...notes]),
+    lenses: Object.freeze([...lenses]),
     because: because.slice(0, MAX_BECAUSE),
   });
 }

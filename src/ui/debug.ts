@@ -876,8 +876,10 @@ function renderForge(): void {
   el('proposal-said').textContent = readRule(pending);
   el('proposal-why').textContent = pending.provenance.because;
   const cites = pending.provenance;
+  const lensBit = cites.lenses.length === 0 ? ''
+    : ` · citing lens${cites.lenses.length === 1 ? '' : 'es'} ${cites.lenses.map((n) => `#${n}`).join(', ')}`;
   el('proposal-cites').textContent =
-    `answering ${cites.events.length} event(s) and ${cites.notes.length} of your note(s)`;
+    `answering ${cites.events.length} event(s) and ${cites.notes.length} of your note(s)${lensBit}`;
 }
 
 /** One row of the editor: a kind, and whatever that kind needs. */

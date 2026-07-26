@@ -307,3 +307,46 @@ describe('never blocking, never canon', () => {
     expect(call?.state).toBe('answered');
   });
 });
+
+describe('reading the Critic', () => {
+  const run = () => summariseRun(events(), state(), [note()], 'main');
+
+  it('carries the lens verdicts into the summary', () => {
+    const s = run();
+    expect(s.measured.length).toBeGreaterThan(0);
+    expect(s.measured.join(' ')).toMatch(/#2|#61|surprise|tension|Lens/i);
+  });
+
+  it('sends the verdicts across the transport, not just into the summary', async () => {
+    const transport = spying(WELL_FORMED);
+    await proposeRule(new Oracle({ transport }), run(), [], AT);
+    expect(JSON.stringify(transport.seen())).toMatch(/measured/);
+  });
+
+  it('keeps a citation to a lens that was actually read', async () => {
+    const got = await proposeRule(new Oracle({
+      transport: returning({
+        ...WELL_FORMED,
+        provenance: { events: ['ev-1'], notes: [], lenses: [2, 61], because: 'the dice never surprise you' },
+      }),
+    }), run(), [], AT);
+    if (isRejected(got)) throw new Error(got.rejected);
+    expect(got.provenance.lenses).toEqual([2, 61]);
+  });
+
+  it('strips an invented lens number, exactly as it strips an invented event id', async () => {
+    const got = await proposeRule(new Oracle({
+      transport: returning({
+        ...WELL_FORMED,
+        provenance: { events: ['ev-1'], notes: [], lenses: [2, 999, -1], because: 'y' },
+      }),
+    }), run(), [], AT);
+    if (isRejected(got)) throw new Error(got.rejected);
+    expect(got.provenance.lenses).toEqual([2]);
+  });
+
+  it('still accepts a rule that cites no lens at all', async () => {
+    const got = await proposeRule(new Oracle({ transport: returning(WELL_FORMED) }), run(), [], AT);
+    expect(isRejected(got)).toBe(false);
+  });
+});
