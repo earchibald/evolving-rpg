@@ -97,6 +97,10 @@ export function interestOf(log: EventLog, head: string | null, playerId = 'playe
   if (events.length === 0) return NOTHING;
 
   const curve: number[] = [];
+  /** Which floor each sample belongs to, so flat stretches never span the
+   *  stairs: a run that descends is several curves stitched, and dead air
+   *  measured across the seam blames floor one for floor three. */
+  const floorOf: number[] = [];
   let state: GameState = EMPTY_STATE;
   let sampledTurn = -1;
 
@@ -111,13 +115,17 @@ export function interestOf(log: EventLog, head: string | null, playerId = 'playe
     if (state.turn !== sampledTurn) {
       sampledTurn = state.turn;
       curve.push(settle(tensionOf(state, playerId)));
+      floorOf.push(state.depth);
     }
   }
 
   // The last state always gets a point, so the end of a run is never invisible
   // just because the turn did not tick over on the final event.
   const last = settle(tensionOf(state, playerId));
-  if (curve.length === 0 || curve[curve.length - 1] !== last) curve.push(last);
+  if (curve.length === 0 || curve[curve.length - 1] !== last) {
+    curve.push(last);
+    floorOf.push(state.depth);
+  }
 
   const mean = curve.reduce((a, b) => a + b, 0) / curve.length;
   const spread = Math.sqrt(curve.reduce((a, b) => a + (b - mean) ** 2, 0) / curve.length);
@@ -130,7 +138,8 @@ export function interestOf(log: EventLog, head: string | null, playerId = 'playe
   let flattest = 1;
   let run = 1;
   for (let i = 1; i < curve.length; i += 1) {
-    run = curve[i] === curve[i - 1] ? run + 1 : 1;
+    const sameFloor = floorOf[i] === floorOf[i - 1];
+    run = sameFloor && curve[i] === curve[i - 1] ? run + 1 : 1;
     flattest = Math.max(flattest, run);
   }
 

@@ -182,3 +182,28 @@ describe('the awkward chains', () => {
     expect(read(drafts)).toEqual(read(drafts));
   });
 });
+
+describe('the stairs cut the curve', () => {
+  it('never lets a flat stretch span two floors', () => {
+    // Two identical dead-calm floors, crossed mid-run. Measured as one curve
+    // the flat stretch doubles; measured honestly it belongs to each floor
+    // alone.
+    const first: DraftEvent[] = [world(11)];
+    for (let n = 2; n <= 8; n += 1) first.push(turn(n));
+    const descentWorld: DraftEvent = {
+      type: 'WORLD_INIT', schemaVersion: 5, rngCounter: 0, rngDraws: 0,
+      payload: {
+        width: WIDE, height: 1, tiles: new Array<number>(WIDE).fill(FLOOR), seed: 2, depth: 2, items: [],
+        player: { id: 'player', kind: 'you', pos: { x: 0, y: 0 }, stats: { hp: 10, might: 3, wits: 1, speed: 3 }, tags: [] },
+        opponents: [{ id: 'thing-2', kind: 'thing', pos: { x: 11, y: 0 }, stats: { hp: 99, might: 3, wits: 1, speed: 2 }, tags: [] }],
+      },
+    } as DraftEvent;
+    const both = [...first, descentWorld];
+    for (let n = 2; n <= 8; n += 1) both.push(turn(n));
+
+    const oneFloor = read(first);
+    const twoFloors = read(both);
+    expect(twoFloors.flattest).toBeLessThanOrEqual(oneFloor.flattest + 1);
+    expect(twoFloors.turns).toBeGreaterThan(oneFloor.turns);
+  });
+});
