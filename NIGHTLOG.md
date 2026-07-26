@@ -146,3 +146,56 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > **Try it:** watch "the world is thinking" — a refused name shows as
 > `failed · the covenant refuses …` and the next ask tries again.
 
+> [!TIP]
+> **04:2x — Delegation, twice, on the new game**
+> The **playtester** (haiku, hardened persona) re-swept everything and held its
+> rails this time — "ran to cap" for passive policies instead of fake boredom
+> numbers, comparisons only against the recorded shape. Its one flag — 75%
+> boss-floor survival on its 12 seeds vs the documented 60% on 20 — is subset
+> variance inside the pinned band, and it *asked* rather than inventing a
+> cause. The persona files grow from their own failures; both have.
+>
+> The **live loop** ran twice against the new balance. First pass: the model
+> returned a rule missing provenance — refused before trial, loop exits 2,
+> exactly as designed (and the report now shows the raw reply, so an agent can
+> tell model-flake from plugin-bug). Second pass produced the night's best
+> candidate:
+>
+> > *When a turn goes by, with 0 creatures still alive and the way out more
+> > than 4 squares off and turn 10 or later and your health above 50% — you
+> > lose 1 hit point. "Nothing left to fight, and the door still far. The air
+> > tightens around you."*
+>
+> It attacks **dead air** — the Critic's aftermath finding — with a soft clock
+> that cannot kill (the 50% floor). Measured: brawler dead-air 15 → 11.
+> Assay: sound. Register: clean. The `because` describes the actual effect.
+> **Ratify-worthy, left unratified — your world is yours.** The full report is
+> `runs/loops/2026-07-26T09-07-28-912Z.md`; ratify it from the Forge if you
+> agree.
+
+> [!IMPORTANT]
+> **04:30 — Morning brief: what you're waking up to**
+>
+> **The game:** `npm run dev`, then fight your way down. Kills pay XP, levels
+> heal you full and grow you, the way out is stairs, the warden waits at depth
+> 3. Death still forks a grave; rules still ratify through the Forge — and now
+> every proposal is *played by exploiters* before you may accept it.
+>
+> **The proof it's a game:** on 20 fixed seeds — floor 1: 95% · two floors:
+> 80% · past the boss: 60% (the runner: 40%) · floor five: ~17%. A rising
+> sawtooth, pinned in `tests/balance/sawtooth.test.ts`. 546 tests. The whole
+> math is `docs/design/BALANCE.md`; every number's reason and its knob.
+>
+> **Direction questions only you can answer:**
+> 1. The dead-air rule above — ratify it? It's the evolution loop working
+>    end-to-end on real evidence.
+> 2. Depth currently rises forever. Is there a bottom — a floor with something
+>    on it that ends a run in *victory* — or is deeper-forever the fiction?
+> 3. Level-ups are deterministic (might/speed alternate). Want the Forge to
+>    start proposing *choices* at level-up instead?
+>
+> **Polish you might notice before I do:** creature names arrive per kind
+> (`bruiser-2` earns its own name from the Oracle, register-guarded now);
+> the trial-of-function caution can disagree with the sweep (a rule the trials
+> never fire may still fire in real play — wording covers it, but it could
+> count sweep firings too).
