@@ -56,9 +56,14 @@ evidence, not a decision.
 6. Everything notable goes in a commit message or `runs/loops/`; the user
    checks polish and direction, not mechanics.
 
-## Known shape of the game (update when it moves)
+## Known shape of the game (updated 2026-07-26, increment 5)
 
-Fighting loses: ~90% brawler death across seeds. Fleeing is safe and pointless:
-coward survives indefinitely, never escapes. The dice never surprise (lens #2
-reads 0.00 by construction — to-hit sits near even money). Dead air is the
-boredom number; rusher baseline ~10, sitter ~600.
+**Fighting pays.** Kills yield threat-value XP; levels grow the player and heal
+to full; floors descend by threat budget with Brogue-style overlap; the warden
+guards every third floor and pays half its threat out of the floor's budget.
+Measured on 20 fixed seeds (pinned in tests/balance/sawtooth.test.ts):
+depth-1 brawler survival 95%; two floors 80%; past the boss floor 60% (rusher
+40% — the inversion); floor five ~17%. Crits exist (nat 20 doubles, nat 1
+whiffs), so lens #2 finally counts real events. The old shape — brawler 90%
+dead, rusher dominant — is history; if these numbers drift outside their
+bands, that is a defect, not a mood.

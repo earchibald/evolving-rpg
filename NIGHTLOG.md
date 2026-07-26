@@ -104,3 +104,33 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > **Try it:** play to the green square, press **descend**. Your level rides
 > with you; the floor below bites harder.
 
+> [!WARNING]
+> **03:5x — Two bugs the harness and the browser caught tonight**
+> 1. **A pocketed creature froze the world.** A creature walking into a wall
+>    never yielded its turn; the round-robin hung on it and the turn counter
+>    stopped for the rest of the run. Found by the *assay*, whose TURN_PASSED
+>    trial read "unexploitable" because the turn never passed. The world's
+>    blocked moves now yield; yours still cost nothing.
+> 2. **The health ceiling didn't cross the stairs.** Descend at 8/12, arrive at
+>    8/8 — a wounded player's maximum collapsed to their wound. Found by
+>    *playing in the browser*; the first descent test escaped unwounded and
+>    couldn't see it. The crossing carries the ceiling now, and the wounded
+>    case is pinned.
+>
+> Both are the goal working as intended: play finds what tests structurally
+> cannot.
+
+> [!TIP]
+> **04:00 — A whole journey, played live in the browser**
+> | floor | outcome | left at | level |
+> |---|---|---|---|
+> | 1 | cleared | 12/12 | 2 |
+> | 2 | cleared | 16/16 | 4 |
+> | 3 — **the warden's floor** | cleared | 13/18 | 5 |
+> | 4 | standing at the top of it | — | — |
+>
+> "down. depth 4 — it is colder here."
+>
+> **Try it:** `npm run dev`, open the browser, fight your way down. Or headless:
+> `npm run play -- --policy brawler --seeds 12 --floors 3`.
+
