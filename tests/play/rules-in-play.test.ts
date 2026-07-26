@@ -387,15 +387,21 @@ describe('down the stairs', () => {
 
     const below = fold(down!.log, getRef(down!.refs, 'main').head!);
     expect(below.depth).toBe(2);
+    // The ceiling crosses even when the hp under it is dented. Found by
+    // playing: an unwounded fixture cannot see this, and the first one didn't.
+    const you = below.entities.find((e) => e.id === 'player')!;
+    expect(you.maxHp).toBeGreaterThanOrEqual(you.stats.hp);
     expect(below.turn).toBe(1);
     expect(outcome(below)).toBe('playing');
     // The chain continues: floor 1's escape is this same log's history.
     expect(chain(down!.log, getRef(down!.refs, 'main').head!).some((e) => e.type === 'WORLD_INIT')).toBe(true);
   });
 
-  it('keeps the rules across the crossing', () => {
+  it('keeps the rules across the crossing, and the dented ceiling with them', () => {
     const start = stairs([rule({ when: 'WAIT', then: [{ kind: 'harm', n: 1 }] })]);
     let p = start;
+    // Wait once so the harm rule dents hp below the ceiling before escaping.
+    p = playerWait(p, 'player').position;
     for (let i = 0; i < 12; i += 1) {
       if (outcome(fold(p.log, p.head)) !== 'playing') break;
       p = playerStep(p, 'player', 1, 0).position;
@@ -403,7 +409,11 @@ describe('down the stairs', () => {
     const refs = createRef(emptyRefs(), 'main', p.head, 0, 'opening');
     const down = descend(p.log, refs, 'main', { width: 12, height: 8, walls: 10 });
     expect(down).not.toBeNull();
-    expect(fold(down!.log, getRef(down!.refs, 'main').head!).rules).toHaveLength(1);
+    const below = fold(down!.log, getRef(down!.refs, 'main').head!);
+    expect(below.rules).toHaveLength(1);
+    const you = below.entities.find((e) => e.id === 'player')!;
+    expect(you.stats.hp).toBeLessThan(you.maxHp);
+    expect(you.maxHp).toBe(10);
   });
 
   it('refuses the stairs to the living and the dead alike', () => {

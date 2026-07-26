@@ -368,7 +368,7 @@ function render(): void {
     ['this run', done, done === 'dead' ? 'urgent' : done === 'escaped' ? 'good' : ''],
     ['hit points', player === undefined ? '—' : `${player.stats.hp} / ${player.maxHp}`, hurt ? 'urgent' : ''],
     ['level', `${state.level} · ${state.xp} xp`, ''],
-    ['you deal', player === undefined ? '—' : `1–${player.stats.might}`, ''],
+    ['you deal', player === undefined ? '—' : (() => { const d = damageDice(player.stats.might); return `${1 + d.flat}–${d.die + d.flat}`; })(), ''],
     ['the way out', toExit, done === 'escaped' ? 'good' : ''],
     ['standing at', player === undefined ? '—' : `${player.pos.x}, ${player.pos.y}`, ''],
     ['turn', String(state.turn), ''],

@@ -40,6 +40,9 @@ export interface WorldInitPayload {
    *  omits them and starts at nothing. */
   xp?: number;
   level?: number;
+  /** The carried health ceiling. Without it a wounded player descends with
+   *  their maximum collapsed to their wound — the seed's hp is all a seed has. */
+  playerMaxHp?: number;
   width: number;
   height: number;
   tiles: number[];

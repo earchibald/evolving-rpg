@@ -205,6 +205,7 @@ export function createWorld(
       depth,
       xp: carried?.xp ?? 0,
       level: carried?.level ?? 1,
+      ...(carried === undefined ? {} : { playerMaxHp: carried.maxHp }),
       items: [{
         id: 'keen-edge',
         kind: 'a keen edge',

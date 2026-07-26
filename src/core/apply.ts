@@ -73,7 +73,9 @@ function reduce(state: GameState, event: GameEvent): GameState {
         pos: { x: s.pos.x, y: s.pos.y },
         stats: { ...s.stats },
         tags: [...s.tags],
-        maxHp: s.stats.hp,
+        // A creature's ceiling is its birth hp; the player's crossed a floor
+        // and may arrive wounded, so the ceiling rides in the payload.
+        maxHp: s.id === p.player.id ? (p.playerMaxHp ?? s.stats.hp) : s.stats.hp,
       }));
       return {
         grid: makeGrid(p.width, p.height, p.tiles),
