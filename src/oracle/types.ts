@@ -9,7 +9,7 @@
  * Unlike `describe` it is never cached and never becomes canon — a proposal is
  * a conversation, and asking twice may reasonably give two different answers.
  */
-export type Intent = 'describe' | 'gamemaster' | 'propose' | 'judge';
+export type Intent = 'describe' | 'describe-batch' | 'gamemaster' | 'propose' | 'judge';
 
 /**
  * What is being asked about.

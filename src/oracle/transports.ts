@@ -11,6 +11,28 @@ export function stubTransport(): Transport {
   return {
     name: 'stub',
     ask(question: Question) {
+      if (question.intent === 'describe-batch') {
+        const things = Array.isArray(question.context['things'])
+          ? question.context['things'] as Array<{ subject?: unknown }>
+          : [];
+        return Promise.resolve({
+          name: `${String(things.length)} named`,
+          line: '',
+          model: 'stub',
+          costUsd: 0,
+          data: things.map((t) => {
+            const subject = String(t.subject ?? '');
+            const bare = subject.slice(subject.indexOf(':') + 1);
+            return {
+              subject,
+              // "pale skirmisher", "grey keen edge" — distinct per subject, so
+              // a batch of different things passes the duplicate check.
+              name: `pale ${bare}`,
+              line: `It is a ${bare}, and the stub has nothing further to say.`,
+            };
+          }),
+        });
+      }
       const bare = question.subject.slice(question.subject.indexOf(':') + 1);
       return Promise.resolve({
         // Article-free on purpose: the stub's names pass the same register

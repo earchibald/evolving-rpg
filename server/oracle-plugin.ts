@@ -21,7 +21,10 @@ import type { Plugin } from 'vite';
  * is a world whose canon has two voices, with nothing recording which is which.
  */
 
-const TIMEOUT_MS = 45_000;
+// Long enough for a batched naming call. 45s was tuned for one name; a
+// floor's worth runs longer, and killing a paid call at the deadline wastes
+// the money AND the names — the browser's queue shows the failure either way.
+const TIMEOUT_MS = 120_000;
 
 function gamemasterPrompt(context: Record<string, unknown>): string {
   return [
@@ -136,6 +139,41 @@ function judgePrompt(context: Record<string, unknown>): string {
   ].join('\n');
 }
 
+/**
+ * One call, every unnamed thing on the floor. Naming ran one call per kind
+ * and a fast player outpaced it — descending two floors quickly left whole
+ * rooms of placeholders. The rules are the single-name prompt's rules; only
+ * the shape is plural, and the world is told to name them as a SET so the
+ * floor's names cohere instead of arriving from four separate moods.
+ */
+function batchPrompt(context: Record<string, unknown>): string {
+  const things = Array.isArray(context.things) ? context.things : [];
+  return [
+    'You are naming several things in a cold, quiet, attentive world.',
+    'The world has no established genre yet, and what you say becomes permanent.',
+    'Name them as one set: things found on one floor of one dungeon, in one voice.',
+    '',
+    'EVERY NAME MUST NAME ITS THING.',
+    'A player reads it in a list and must know what they are looking at.',
+    'A creature\'s name must read as something alive that can hurt you.',
+    'An item\'s name must read as a thing you could hold.',
+    'Concrete noun as the head word, at most one modifier before it.',
+    'Do NOT produce a mood in place of a thing. "small iron want", "the quiet',
+    'below", "a held breath" all fail — a player cannot point at them.',
+    'No abstract nouns as the head word. Lowercase, no article, two or three words.',
+    'Every name in the set must be distinct.',
+    '',
+    'THE THINGS',
+    ...things.map((t) => JSON.stringify(t)),
+    '',
+    'Reply with ONLY a JSON object, no prose around it, no code fence:',
+    '{"name": "<how many you named, e.g. 3 named>",',
+    ' "line": "",',
+    ' "things": [{"subject": "<exactly as given>", "name": "<the name>",',
+    '   "line": "<one sentence, second person, under twenty words>"}, ...]}',
+  ].join('\n');
+}
+
 function prompt(subject: string, context: unknown): string {
   const [kind] = subject.split(':');
   return [
@@ -179,7 +217,7 @@ function extract(text: string): { name: string; line: string; data?: unknown } {
   if (start < 0 || end <= start) throw new Error(`no object in reply: ${text.slice(0, 120)}`);
 
   const parsed = JSON.parse(text.slice(start, end + 1)) as {
-    name?: unknown; line?: unknown; rule?: unknown; provenance?: unknown;
+    name?: unknown; line?: unknown; rule?: unknown; provenance?: unknown; things?: unknown;
   };
   if (typeof parsed.name !== 'string') throw new Error('reply had no name');
 
@@ -198,8 +236,9 @@ function extract(text: string): { name: string; line: string; data?: unknown } {
     name: parsed.name,
     line: typeof parsed.line === 'string' ? parsed.line : '',
     // Otherwise unvalidated, deliberately: this is a dev server, and the one
-    // place that decides whether a rule is a rule is the validator in canon/.
-    data: rule,
+    // place that decides whether a rule is a rule is the validator in canon/
+    // — and whether a batched name is a name is the Oracle's register guard.
+    data: rule ?? parsed.things,
   };
 }
 
@@ -242,7 +281,8 @@ export function oraclePlugin(): Plugin {
               intent === 'gamemaster' ? gamemasterPrompt(context)
                 : intent === 'propose' ? proposePrompt(context)
                   : intent === 'judge' ? judgePrompt(context)
-                    : prompt(subject, context),
+                    : intent === 'describe-batch' ? batchPrompt(context)
+                      : prompt(subject, context),
               '--output-format',
               'json',
             ],

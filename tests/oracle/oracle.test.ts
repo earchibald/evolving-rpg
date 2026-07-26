@@ -452,3 +452,85 @@ describe('the covenant guards the canon, live', () => {
     expect(answered.line).toBe('a reply');
   });
 });
+
+describe('asking for a whole floor at once', () => {
+  const THREE: Question[] = [
+    describeQuestion('creature', 'skirmisher', { might: 2 }),
+    describeQuestion('creature', 'bruiser', { might: 4 }),
+    describeQuestion('item', 'keen edge', { grants: { might: 2 } }),
+  ];
+
+  it('settles every unnamed thing from one transport call', async () => {
+    let calls = 0;
+    let sawIntent = '';
+    const counting: Transport = {
+      name: 'counting',
+      ask(question) {
+        calls += 1;
+        sawIntent = question.intent;
+        return stubTransport().ask(question);
+      },
+    };
+    const oracle = new Oracle({ transport: counting });
+    oracle.askMany(THREE);
+    await tick();
+
+    expect(calls).toBe(1);
+    expect(sawIntent).toBe('describe-batch');
+    for (const q of THREE) {
+      const a = oracle.ask(q);
+      expect(a.source).toBe('cache');
+      expect(a.name).toBe(`pale ${q.subject.slice(q.subject.indexOf(':') + 1)}`);
+    }
+  });
+
+  it('asks nothing at all when everything is already settled', async () => {
+    const oracle = new Oracle({ transport: stubTransport() });
+    oracle.askMany(THREE);
+    await tick();
+    let calls = 0;
+    const counting: Transport = { name: 'c', ask(q) { calls += 1; return stubTransport().ask(q); } };
+    const again = new Oracle({ transport: counting, known: oracle.known() });
+    again.askMany(THREE);
+    await tick();
+    expect(calls).toBe(0);
+  });
+
+  it('refuses a duplicate inside the batch and keeps the rest', async () => {
+    // A batch that names two different things identically is a batch trying
+    // to write a contradiction into canon. The first name lands; the second
+    // faces the same duplicate check any single call would.
+    const monotone: Transport = {
+      name: 'monotone',
+      ask(question) {
+        const things = Array.isArray(question.context['things'])
+          ? question.context['things'] as Array<{ subject?: unknown }>
+          : [];
+        return Promise.resolve({
+          name: `${String(things.length)} named`, line: '', model: 'stub', costUsd: 0,
+          data: things.map((t) => ({ subject: String(t.subject ?? ''), name: 'grey wolf', line: 'It watches.' })),
+        });
+      },
+    };
+    const oracle = new Oracle({ transport: monotone });
+    const two = [THREE[0]!, THREE[1]!];
+    oracle.askMany(two);
+    await tick();
+
+    expect(oracle.ask(two[0]!).name).toBe('grey wolf');
+    expect(oracle.ask(two[1]!).source).toBe('fallback');
+  });
+
+  it('routes a batch of one through the ordinary single ask', async () => {
+    let sawIntent = '';
+    const watching: Transport = {
+      name: 'w',
+      ask(question) { sawIntent = question.intent; return stubTransport().ask(question); },
+    };
+    const oracle = new Oracle({ transport: watching });
+    oracle.askMany([THREE[0]!]);
+    await tick();
+    expect(sawIntent).toBe('describe');
+    expect(oracle.ask(THREE[0]!).source).toBe('cache');
+  });
+});

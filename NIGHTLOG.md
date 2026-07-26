@@ -440,3 +440,33 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 >    screen to one column (CSS order — the cap came later in the file), and
 >    the rail's overflow guard clipped tooltips to a sliver at its edge.
 >    Both fixed; the whole pane verified by hover, key and screenshot.
+
+> [!IMPORTANT]
+> **16:2x — Your review batch: four fixes, two new muscles**
+> 1. **The fog leak is found and sealed**: the sight-sweep recorded tiles one
+>    past the map's east edge, and plain `y*width+x` wraps that to a real
+>    tile rows away — your "discovered square in the void". Bounds-gated,
+>    pinned by a test that decodes every lit tile back to coordinates,
+>    mutation-proofed.
+> 2. **Wielding speaks canon**: the rail and the swap line now use the
+>    world's name ("whetted blade"), never the table's kind ("keen edge") —
+>    two names for one thing was the exact contradiction canon forbids.
+> 3. **One tooltip, the browser's own** (the styled double is gone), and
+>    **the gamemaster's screen fills the window** with a single scrollbar —
+>    nothing inside it scrolls on its own any more, so the wheel works
+>    wherever the pointer rests.
+> 4. **Trial of proportion (new Covenant M6)** — "the rule proposed was far
+>    too strong" is now measurable *before* ratifying: every proposal is
+>    played with and without across six rerolled fights, and the swing rides
+>    with it ("swings hit points left by 4.7, flips 2 outcomes — heavier
+>    than a relic; weigh it"). Caution, never refusal: how heavy is too
+>    heavy is your call — blind was the only wrong way to make it.
+>    (Found en route: the trial player must start mid-level, or the level-up
+>    full heal launders every swing to zero.)
+> 5. **Floor naming is one batched call** — every unnamed kind on the floor,
+>    fog or no fog, named as a set in one ask instead of one call each.
+>    Each name still faces the register guard individually, duplicates
+>    inside a batch are refused, a batch of one takes the ordinary path.
+>    Verified live to the transport (the singleton came home as **gristle
+>    hound**, opus, register-clean); server timeout raised 45s → 120s for
+>    batch-sized calls.

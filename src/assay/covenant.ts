@@ -87,6 +87,12 @@ export const COVENANT: readonly Invariant[] = Object.freeze([
     enforcedBy: 'assayName duplicate check (structural half); judged canon pass (deferred)',
   }),
   Object.freeze({
+    id: 'M6',
+    register: 'mechanical' as const,
+    statement: 'A rule\'s weight is measured and said. Every proposal carries the outcome swing its trials measured, so a ratifier never weighs a rule blind — a bounded rule can still be far too strong.',
+    enforcedBy: 'assayRule: trial of proportion; the Forge\'s assay line',
+  }),
+  Object.freeze({
     id: 'L1',
     register: 'legible' as const,
     statement: 'Every system exposes its mechanics human-readably: what it decided, with the real numbers, where a player will read it. A facility whose reasoning cannot be read cannot be checked, and ships unfinished.',

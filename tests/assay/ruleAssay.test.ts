@@ -109,6 +109,25 @@ describe('trial of the coward — death must remain possible (M1)', () => {
   });
 });
 
+describe('trial of proportion — the swing, measured and said (M6)', () => {
+  it('cautions on a bounded rule that is still far too strong', () => {
+    // Heals 3 on every kill: greed cannot refuse it (current hp is not a
+    // watched stat and the kills run out), the coward never kills so M1
+    // holds — and a fighter carries a relic's worth of extra blood out of
+    // every fight. The founding case was a ratifier only feeling "far too
+    // strong" after playing it; the trial says it beforehand.
+    const got = assayRule(rule({ when: 'KILLED', then: [{ kind: 'heal', n: 3 }] }));
+    expect(got.verdict).toBe('sound');
+    expect(got.findings.join(' ')).toMatch(/M6/);
+    expect(got.findings.join(' ')).toMatch(/swings hit points/);
+  });
+
+  it('stays silent about a rule with no mechanical weight at all', () => {
+    const got = assayRule(rule({ when: 'KILLED', then: [{ kind: 'speak', text: 'the floor drinks what falls' }] }));
+    expect(got.findings.join(' ')).not.toMatch(/M6/);
+  });
+});
+
 describe('trial of function — cautions, not refusals (M3)', () => {
   it('cautions on a rule no trial can reach, and still calls it sound', () => {
     // turnAtLeast 900: legitimate late-game design the 120-action trials will

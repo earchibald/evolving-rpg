@@ -1,4 +1,4 @@
-import { WALL, tileAt, idx } from '../core/grid.js';
+import { WALL, tileAt, idx, inBounds } from '../core/grid.js';
 import type { Grid } from '../core/grid.js';
 import type { EventLog } from '../log/chain.js';
 import type { GameEvent } from '../core/events.js';
@@ -53,8 +53,13 @@ export function visibleFrom(grid: Grid, ox: number, oy: number, radius = SIGHT):
 
         const x = ox + col * xx + depth * yx;
         const y = oy + col * xy + depth * yy;
-        // Round-ish edge rather than a square of sight.
-        if (col * col + depth * depth <= radius * radius + radius) {
+        // Bounds first: `idx` is plain y*width+x, so an out-of-range x wraps
+        // to a real tile on the next row — the scan running one tile past the
+        // east wall lit a phantom square rows away, found by a player seeing
+        // a "discovered" tile beyond the border. tileAt below is safe (out of
+        // bounds reads as wall, which is what ends the sweep); only the
+        // *recording* must be gated. Round-ish edge rather than a square.
+        if (inBounds(grid, x, y) && col * col + depth * depth <= radius * radius + radius) {
           out.add(idx(grid, x, y));
         }
 

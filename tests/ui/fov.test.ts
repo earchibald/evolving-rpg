@@ -42,6 +42,23 @@ describe('visibleFrom (shadowcasting)', () => {
     expect(seen.has(idx(g, 14, 5))).toBe(false);  // and further behind
   });
 
+  it('never lights a tile past the map edge — indexes do not wrap', () => {
+    // idx() is plain y*width+x, so a coordinate one past the east edge is a
+    // real index on the NEXT row. Standing near the edge of an open grid, the
+    // unfixed sweep recorded exactly those phantoms — a player found one as a
+    // "discovered" square in the void beyond the border wall. Every lit tile
+    // must decode to a coordinate genuinely within sight of the origin.
+    const g = grid(24, 12);
+    for (const [ox, oy] of [[23, 5], [0, 5], [12, 0], [12, 11], [23, 11]] as const) {
+      for (const i of visibleFrom(g, ox, oy)) {
+        const x = i % 24;
+        const y = Math.floor(i / 24);
+        expect(Math.abs(x - ox)).toBeLessThanOrEqual(SIGHT + 1);
+        expect(Math.abs(y - oy)).toBeLessThanOrEqual(SIGHT + 1);
+      }
+    }
+  });
+
   it('reads a corridor as a tunnel, not a window', () => {
     // A 1-wide corridor at y=5, solid rows above and below.
     const walls: Array<[number, number]> = [];

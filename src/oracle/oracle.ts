@@ -149,6 +149,100 @@ export class Oracle {
     return fallbackFor(question);
   }
 
+  /**
+   * Asks for every unnamed thing at once — one call, one voice.
+   *
+   * Naming ran one call per kind and a fast player outpaced it: two quick
+   * descents left whole rooms wearing placeholders while four separate calls
+   * crawled home. This raises a single batched question for everything not
+   * yet settled and not already in the air. Each answered name still faces
+   * the register guard *individually* — and against the names accepted
+   * earlier in the same batch, so a batch cannot smuggle in a duplicate.
+   * A name the Covenant refuses is simply skipped: its key keeps its try
+   * count, and the ordinary per-kind ask remains as the retry path.
+   */
+  askMany(questions: readonly Question[]): void {
+    if (this.transport === null) return;
+
+    const fresh = new Map<string, Question>();
+    for (const q of questions) {
+      const key = keyOf(q);
+      if (this.canon.has(key) || this.inFlight.has(key) || fresh.has(key)) continue;
+      if ((this.tries.get(key) ?? 0) >= MAX_TRIES) continue;
+      fresh.set(key, q);
+    }
+    if (fresh.size === 0) return;
+    if (fresh.size === 1) {
+      for (const q of fresh.values()) this.ask(q);
+      return;
+    }
+
+    for (const key of fresh.keys()) {
+      this.inFlight.add(key);
+      this.tries.set(key, (this.tries.get(key) ?? 0) + 1);
+    }
+    void this.raiseMany(fresh);
+  }
+
+  private async raiseMany(fresh: ReadonlyMap<string, Question>): Promise<void> {
+    if (this.transport === null) return;
+    const era = this.epoch;
+
+    const id = String(this.nextId).padStart(4, '0');
+    this.nextId += 1;
+    const call: Call = {
+      id,
+      intent: 'describe-batch',
+      subject: `${String(fresh.size)} unnamed things`,
+      state: 'asking',
+      ms: 0,
+      detail: this.transport.name,
+    };
+    this.calls.set(id, call);
+    this.raisedAt.set(id, this.now());
+    this.onChange();
+
+    try {
+      const said = await this.transport.ask({
+        intent: 'describe-batch',
+        subject: `batch:${String(fresh.size)}`,
+        context: { things: [...fresh.values()].map((q) => ({ subject: q.subject, known: q.context })) },
+      });
+      if (era !== this.epoch) {
+        this.calls.set(id, { ...call, state: 'failed', detail: 'asked about a world that was wiped' });
+        return;
+      }
+      const offered = Array.isArray(said.data) ? said.data as Array<Record<string, unknown>> : [];
+      let accepted = 0;
+      for (const [key, question] of fresh) {
+        const entry = offered.find((o) => o['subject'] === question.subject);
+        const name = typeof entry?.['name'] === 'string' ? entry['name'].trim() : '';
+        if (name === '') continue;
+        const taken = [...this.canon.values()].map((a) => a.name);
+        if (!assayName(name, taken).sound) continue;
+        this.canon.set(key, {
+          name,
+          line: typeof entry?.['line'] === 'string' ? entry['line'].trim() : '',
+          source: 'model',
+          model: said.model,
+          ms: this.now() - (this.raisedAt.get(id) ?? this.now()),
+          costUsd: accepted === 0 ? said.costUsd : 0,
+        });
+        accepted += 1;
+      }
+      this.calls.set(id, {
+        ...call,
+        state: accepted > 0 ? 'answered' : 'failed',
+        detail: `${String(accepted)} of ${String(fresh.size)} named${said.model === null ? '' : ` · ${said.model}`}`,
+      });
+    } catch (error) {
+      this.calls.set(id, { ...call, state: 'failed', detail: String(error).slice(0, 80) });
+    } finally {
+      for (const key of fresh.keys()) this.inFlight.delete(key);
+    }
+    this.onChange();
+  }
+
   /** Anything still wearing a placeholder, so a view can offer to try again. */
   unanswered(): number {
     let waiting = 0;

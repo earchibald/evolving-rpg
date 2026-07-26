@@ -210,20 +210,28 @@ const oracle = new Oracle({
  * rooms away both spends money on the unmet and spoils what the panel may
  * later reveal.
  */
-function nameWhatIsHere(state: ReturnType<typeof fold>, fog: { seen: ReadonlySet<number>; visible: ReadonlySet<number> }): void {
+function nameWhatIsHere(state: ReturnType<typeof fold>): void {
+  // The whole floor, fog or no fog, as ONE batched question. Naming used to
+  // wait for line of sight and run one call per kind — and a fast player
+  // outran it: two quick descents left whole rooms wearing placeholders
+  // while the calls crawled home one by one. A name is a fact about a kind,
+  // not a sighting — the fog still hides the thing itself; pre-naming it
+  // spoils nothing and means it is already named when it steps into view.
+  // Runs before any panel renders, so the singles the panels would raise
+  // find the batch already in flight and stand down.
+  const questions = [];
   for (const e of state.entities) {
     if (e.kind === 'you') continue;
-    if (!fog.visible.has(idx(state.grid, e.pos.x, e.pos.y))) continue;
-    oracle.ask(describeQuestion('creature', e.kind, {
+    questions.push(describeQuestion('creature', e.kind, {
       hitPoints: e.stats.hp,
       might: e.stats.might,
       speed: e.stats.speed,
     }));
   }
   for (const i of state.items) {
-    if (!fog.seen.has(idx(state.grid, i.pos.x, i.pos.y))) continue;
-    oracle.ask(describeQuestion('item', i.kind, { grants: i.grants }));
+    questions.push(describeQuestion('item', i.kind, { grants: i.grants }));
   }
+  oracle.askMany(questions);
 }
 
 /** What the world calls a kind of thing, whether or not it has answered yet. */
@@ -407,7 +415,7 @@ function render(): void {
     }
   }
 
-  nameWhatIsHere(state, fog);
+  nameWhatIsHere(state);
 
   // ── what you decide on, beside the map ─────────────────────────────────
   const exitAt = state.grid.tiles.indexOf(EXIT);
@@ -422,19 +430,23 @@ function render(): void {
   const hurt = player !== undefined && player.stats.hp <= 3;
   const done = outcome(state);
 
-  // What a piece of gear does, said with its numbers — "keen edge +2 might".
-  // The row exists because a prize refused ("why didn't I pick that up?") is
-  // only explicable when what you already hold shows its worth.
+  // What a piece of gear does, said with its numbers — "whetted blade +2
+  // might". The row exists because a prize refused ("why didn't I pick that
+  // up?") is only explicable when what you already hold shows its worth.
+  // Named by the WORLD's name for it, not the table's kind: you picked up a
+  // "whetted blade", and a rail that calls it "keen edge" is two names for
+  // one thing — the exact contradiction canon exists to prevent.
   const wornIn = (slot: string): string => {
     const g = player?.gear?.[slot];
     if (g === undefined) return '—';
+    const called = oracle.ask(describeQuestion('item', g.kind, { grants: g.grants })).name;
     const parts = [
       g.grants.might === 0 ? '' : `+${g.grants.might} might`,
       g.grants.hp === 0 ? '' : `+${g.grants.hp} hp`,
       g.grants.speed === 0 ? '' : `+${g.grants.speed} speed`,
       g.grants.wits === 0 ? '' : `+${g.grants.wits} wits`,
     ].filter((p) => p !== '');
-    return `${g.kind} ${parts.join(' ')}`;
+    return `${called} ${parts.join(' ')}`;
   };
 
   // A row is either one value or independently-glowing segments. Segments
@@ -522,10 +534,12 @@ function render(): void {
     tips.set('hit points', `${p.hp} of a ceiling of ${player.maxHp}: ${born} at birth + ${levelHp} from levels + ${gearHp} from what you wear. wounds close whole at each level, and on the stairs of a cleared floor.`);
     tips.set('you deal', `1d${d.die}+${d.flat} each blow that lands — the band your might ${p.might} sits in.${next} a crit doubles the roll.`);
   }
+  // The native title only. The first cut drew its own styled box as well,
+  // and the two tooltips stacked — one popup per question is the rule.
   const tipped = (node: HTMLElement, key: string): void => {
     const text = tips.get(key);
     if (text === undefined) return;
-    node.dataset['tip'] = text;
+    node.classList.add('tip');
     node.title = text;
   };
 
@@ -898,11 +912,13 @@ function narrate(fresh: readonly GameEvent[], state: ReturnType<typeof fold>): s
         g.speed === 0 ? '' : `speed +${g.speed}`,
       ].filter((d) => d !== '');
       // Say the swap when there is one: what came off matters as much as what
-      // went on.
+      // went on — under the world's name for it, same as the rail.
       const takerBefore = state.entities.find((x) => x.id === event.payload.entityId);
       const slotName = slotOf(event.payload.grants);
-      const replaced = takerBefore?.gear?.[slotName]?.kind;
-      const swap = replaced === undefined ? '' : ` · your ${replaced} is set down`;
+      const shed = takerBefore?.gear?.[slotName];
+      const swap = shed === undefined ? '' : ` · your ${
+        oracle.ask(describeQuestion('item', shed.kind, { grants: shed.grants })).name
+      } is set down`;
       lines.push(`you take up ${calledItem(event.payload.itemId, state)} — ${deltas.join(', ')}${swap}`);
       continue;
     }

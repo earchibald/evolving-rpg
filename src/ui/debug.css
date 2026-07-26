@@ -194,27 +194,31 @@ h2 {
 .vitals .was { color: var(--player); }
 .vitals .now { color: var(--exit); }
 
-/* What a number IS, on hover: the derivation, with today's values in it.
-   Instant — the native title's second of hesitation reads as "no tooltip
-   here" — and anchored by its right edge so it opens toward the map, never
-   off the page. The dotted underline is the only standing hint. */
-.vitals [data-tip] { cursor: help; text-decoration: underline dotted rgba(153, 161, 176, .45); text-underline-offset: 3px; position: relative; }
-.vitals [data-tip]:hover::after {
-  content: attr(data-tip);
-  position: absolute; right: 0; top: calc(100% + .35rem); z-index: 6;
-  width: 19rem; padding: .5rem .65rem;
-  background: var(--ground); border: 1px solid var(--rule); border-radius: 3px;
-  color: var(--soft); font-size: .75rem; line-height: 1.5;
-  white-space: normal; text-decoration: none;
-}
+/* What a number IS, on hover: the derivation rides in the native title —
+   one popup, the browser's own. The dotted underline is the standing hint
+   that a row can be asked. */
+.vitals .tip { cursor: help; text-decoration: underline dotted rgba(153, 161, 176, .45); text-underline-offset: 3px; }
 
-/* The gamemaster's screen: wide, tall, scrolls inside itself. The rest-grid
-   keeps its own layout; it just lives behind a key now. The compound
-   selector out-ranks .sheet's 34rem cap — these rules sit earlier in the
-   file, and at equal specificity the cap was winning. */
-.sheet.screen { width: calc(100vw - 2.5rem); max-width: 74rem; max-height: 88vh; overflow-y: auto; scrollbar-gutter: stable; }
+/* The gamemaster's screen: nearly the whole window, one scrollbar. The
+   compound selector out-ranks .sheet's 34rem cap — these rules sit earlier
+   in the file, and at equal specificity the cap was winning.
+
+   Inside it, NOTHING scrolls on its own: the fixed heights and inner
+   scrollbars that keep the main page still would trap the wheel here — a
+   pointer resting over a list stops the sheet mid-scroll. Every list flows
+   full-length and the sheet is the one scroll surface, so the wheel works
+   wherever the pointer happens to rest. */
+.sheet.screen {
+  width: calc(100vw - 2.5rem); max-width: none;
+  height: calc(100vh - 2.5rem); max-height: none;
+  overflow-y: auto; scrollbar-gutter: stable;
+}
 .sheet.screen .rest { border-top: 1px solid var(--rule); padding-top: 1rem; margin-top: 1rem; }
 .sheet.screen > h2 { margin-bottom: .4rem; }
+.sheet.screen .scrolls {
+  height: auto; max-height: none;
+  overflow: visible; overscroll-behavior: auto;
+}
 .vitals dd.good { color: var(--exit); }
 
 .threats {

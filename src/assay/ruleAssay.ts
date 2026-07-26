@@ -66,10 +66,13 @@ export interface RuleAssay {
 const seed = (id: string, kind: string, x: number, y: number, hp: number, might: number, speed: number): EntitySeed =>
   ({ id, kind, pos: { x, y }, stats: { hp, might, wits: 1, speed }, tags: [] });
 
-function born(width: number, tiles: number[], player: EntitySeed, opponents: EntitySeed[], items: Item[]): Position {
+function born(
+  width: number, tiles: number[], player: EntitySeed, opponents: EntitySeed[], items: Item[],
+  worldSeed = 7, progress?: { xp: number; level: number },
+): Position {
   const init = {
     type: 'WORLD_INIT', schemaVersion: SCHEMA_VERSIONS.WORLD_INIT, rngCounter: 0, rngDraws: 0,
-    payload: { width, height: 1, tiles, seed: 7, items, player, opponents },
+    payload: { width, height: 1, tiles, seed: worldSeed, items, player, opponents, ...(progress ?? {}) },
   } as DraftEvent;
   const w = append(emptyLog(), null, init);
   return { log: w.log, head: w.event.id };
@@ -77,8 +80,10 @@ function born(width: number, tiles: number[], player: EntitySeed, opponents: Ent
 
 /** A friendly corridor for greed: room to shuffle, a wall to bump, an item to
  *  take, an exit far off, and three ordinary creatures at the far end so
- *  STRIKE and KILLED have something to spend themselves on. */
-function greedWorld(): Position {
+ *  STRIKE and KILLED have something to spend themselves on. The seed varies
+ *  only the dice, never the geometry — which is what lets the proportion
+ *  trial reroll the same fight. */
+function greedWorld(worldSeed = 7): Position {
   // One open row. An earlier draft put a wall mid-corridor for the bumper to
   // hit and thereby cut the creatures off from the brawler entirely — KILLED
   // could never fire and read as unexploitable. The map edge bumps just as
@@ -95,6 +100,32 @@ function greedWorld(): Position {
       stats: creatureStats('skirmisher', 1)!, tags: [],
     })),
     [{ id: 'item-0', kind: 'edge', pos: { x: 2, y: 0 }, grants: { hp: 0, might: 1, wits: 0, speed: 0 } }],
+    worldSeed,
+  );
+}
+
+/** The proportion trial's fight: opposition heavy enough that the bare
+ *  fighter ends bloody. Weight cannot be measured against a fight the player
+ *  wins untouched — the greed corridor's chaff left every heal clamped at
+ *  the ceiling and every rule reading as weightless. The player starts
+ *  mid-level (xp 41, next threshold at 72; three kills pay ~27) because the
+ *  level-up's full heal otherwise lands in BOTH runs and launders whatever
+ *  blood the rule saved — measured: every swing read exactly zero. */
+function proportionWorld(worldSeed: number): Position {
+  const width = 16;
+  const tiles = new Array<number>(width).fill(FLOOR);
+  tiles[width - 1] = EXIT;
+  return born(
+    width, tiles,
+    seed('player', 'you', 0, 0, 12, 3, 3),
+    [
+      { id: 'thing-1', kind: 'skirmisher-2', pos: { x: 8, y: 0 }, stats: creatureStats('skirmisher', 2)!, tags: [] },
+      { id: 'thing-2', kind: 'skirmisher', pos: { x: 10, y: 0 }, stats: creatureStats('skirmisher', 1)!, tags: [] },
+      { id: 'thing-3', kind: 'bruiser', pos: { x: 12, y: 0 }, stats: creatureStats('bruiser', 1)!, tags: [] },
+    ],
+    [],
+    worldSeed,
+    { xp: 41, level: 3 },
   );
 }
 
@@ -194,6 +225,34 @@ export function assayRule(rule: Rule): RuleAssay {
   if (baseline.ended === 'dead' && cowardRun.ended !== 'dead') {
     findings.push(
       'refused (M1): a brute that kills an idle player in a handful of turns no longer can — death has stopped being possible while holding still',
+    );
+  }
+
+  // ── trial of proportion (M6) — the swing, measured and said ───────────
+  //
+  // Bounded is not the same as fair: a rule can pass greed and coward and
+  // still hand the fighter a relic's worth of hit points every floor — the
+  // founding case was a ratifier reading a proposal and only feeling "far
+  // too strong" after playing it. So the same fight is rerolled across
+  // seeds, with and without the rule, and the measured swing rides with the
+  // proposal. A caution, never a refusal: how heavy is too heavy is exactly
+  // the judgment the ratifier is there to make — blind is the only wrong way
+  // to make it.
+  const PROPORTION_SEEDS = [7, 11, 23, 41, 61, 83] as const;
+  let hpSwing = 0;
+  let flips = 0;
+  for (const s of PROPORTION_SEEDS) {
+    const ruled = autoplay(withRule(proportionWorld(s), rule), brawler, TRIAL_ACTIONS);
+    const bare = autoplay(proportionWorld(s), brawler, TRIAL_ACTIONS);
+    fired += firings(ruled.position, rule.id);
+    hpSwing += statOf(ruled.state, 'hp') - statOf(bare.state, 'hp');
+    if ((ruled.ended === 'dead') !== (bare.ended === 'dead')) flips += 1;
+  }
+  const meanSwing = hpSwing / PROPORTION_SEEDS.length;
+  if (Math.abs(meanSwing) >= 4 || flips >= 3) {
+    const direction = meanSwing >= 0 ? 'in the player\'s favour' : 'against the player';
+    findings.push(
+      `caution (M6): across ${String(PROPORTION_SEEDS.length)} rerolled fights this rule swings hit points left by ${meanSwing.toFixed(1)} and flips ${String(flips)} outcome(s) ${direction} — heavier than a relic; weigh it before ratifying`,
     );
   }
 
