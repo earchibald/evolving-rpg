@@ -372,3 +372,22 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > player" until met — a fog bug shows as a disagreement between that list
 > and the map. Shadowcasting, floor-reset and shove-following are all
 > mutation-proofed (x-ray, pre-mapped descents, blind shoves: caught).
+
+> [!NOTE]
+> **11:4x — One world menu, keys for everything, and the ledger**
+> 1. **world…** (<kbd>n</kbd>) is the one top-level control: *begin this
+>    world again* / *another world* / *wipe everything*, each with a plain
+>    sentence on what it keeps and what it costs. `run again` moved inside
+>    (still one keystroke: <kbd>r</kbd>).
+> 2. **Keys for everything**: <kbd>n</kbd> world · <kbd>g</kbd> forge ·
+>    <kbd>r</kbd> again · <kbd>v</kbd> verify · <kbd>f</kbd> fork ·
+>    <kbd>b</kbd> back 10 · <kbd>?</kbd> the key sheet · <kbd>PgUp/PgDn</kbd>
+>    journal · <kbd>esc</kbd> closes sheets and leaves writing boxes ·
+>    <kbd>enter</kbd> sends. One table drives both the dispatch and the help
+>    sheet, so the help cannot drift from the truth. Buttons wear their keys.
+> 3. **The ledger** (new panel): the run's decision chain read straight off
+>    the event chain — every floor's birth with its recorded account, every
+>    law with its why. And floors now record their *whole* account: rooms,
+>    loops, the walk, the spawn budget and what it bought, **who watches the
+>    stairs**, what lies guarded. Old floors honestly show the shorter story
+>    they were born with.

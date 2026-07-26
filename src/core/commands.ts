@@ -177,9 +177,7 @@ export function createWorld(
   const exit = farthestFrom(generated.grid, generated.start);
   const grid = withExit(generated.grid, exit);
 
-  // The account of what generation decided, covenant L1: shape, then journey.
   const walk = walkDistance(grid, generated.start, exit);
-  const story = `${generated.story} · the way out is ${Number.isFinite(walk) ? walk : '?'} steps of walking`;
 
   const population = chooseSpawns(seed, generated.counterAfter, depth);
 
@@ -264,6 +262,18 @@ export function createWorld(
   const freePoints = spawned.points.filter((p, i) =>
     i >= relics.length && !(keeperTile !== undefined && p.x === keeperTile.x && p.y === keeperTile.y));
   let nextFree = 0;
+
+  // The floor's whole account, recorded where facts live — covenant L1: the
+  // shape, the journey, the rent and what it bought, who watches the door,
+  // what lies guarded. This is the generation reasoning chain, in the event,
+  // so the ledger can read it back for any floor of any run forever.
+  const spent = population.chosen.reduce((n, ch) => n + threatOf(ch.stats), 0);
+  const kinds = population.chosen.map((ch) => ch.kind).join(', ');
+  const watcher = keeper >= 0 && keeperTile !== undefined ? population.chosen[keeper]!.kind : 'nobody';
+  const story = `${generated.story} · the way out is ${Number.isFinite(walk) ? walk : '?'} steps of walking`
+    + ` · a budget of ${spawnBudget(depth)} paid ${spent} for ${population.chosen.length}: ${kinds}`
+    + ` · ${watcher} watches the stairs`
+    + ` · ${relics.map((r) => r.kind).join(' and ') || 'nothing'} lies guarded`;
 
   return {
     type: 'WORLD_INIT',

@@ -290,6 +290,16 @@ button:focus-visible { outline: 2px solid var(--player); outline-offset: 2px; }
 }
 .ghost:hover { background: var(--raised); color: var(--soft); border-color: var(--soft); }
 
+/* One world action per row: the button, then plainly what it keeps and what
+   it costs. The old sheet made new/wipe/again three scattered controls and
+   the player called the differences fuzzy — the descriptions ARE the control
+   now. */
+.world-option { display: flex; flex-direction: column; gap: .25rem; }
+.world-option button { align-self: flex-start; }
+
+/* Key hints live inside the buttons they press. */
+button kbd { margin-left: .3rem; font-size: .68rem; background: transparent; border-color: currentColor; opacity: .6; color: inherit; }
+
 /* Making and destroying worlds lives behind a deliberate step, because one of
    them cannot be undone. */
 .sheet {

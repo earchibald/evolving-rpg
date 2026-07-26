@@ -19,12 +19,12 @@
           <div id="grid" class="grid" role="img" aria-label="the world"></div>
           <p id="status" class="status" role="status"></p>
           <div class="turn-controls">
-            <button id="verify" type="button" class="ghost">verify chain</button>
-            <button id="fork" type="button" class="ghost">fork here</button>
-            <button id="rewind" type="button" class="ghost">back 10</button>
-            <button id="open-worlds" type="button" class="ghost">worlds&hellip;</button>
-            <button id="open-forge" type="button" class="ghost">the forge&hellip;</button>
-            <button id="again" type="button" class="ghost">run again</button>
+            <button id="open-worlds" type="button" class="ghost">world&hellip; <kbd>n</kbd></button>
+            <button id="open-forge" type="button" class="ghost">the forge&hellip; <kbd>g</kbd></button>
+            <button id="verify" type="button" class="ghost">verify chain <kbd>v</kbd></button>
+            <button id="fork" type="button" class="ghost">fork here <kbd>f</kbd></button>
+            <button id="rewind" type="button" class="ghost">back 10 <kbd>b</kbd></button>
+            <button id="open-help" type="button" class="ghost">keys <kbd>?</kbd></button>
           </div>
         </div>
 
@@ -82,6 +82,11 @@
           </section>
 
           <section>
+            <h2>the ledger</h2>
+            <ul id="ledger" class="rules scrolls"></ul>
+          </section>
+
+          <section>
             <h2>under the floorboards</h2>
             <dl id="detail" class="vitals"></dl>
           </section>
@@ -96,19 +101,46 @@
 
     <dialog id="worlds-dialog" class="sheet">
       <form method="dialog">
-        <h2>worlds</h2>
-        <p class="sheet-line">
-          Another world adds one alongside the ones you already have, sharing the
-          same store. Nothing you have played is discarded.
-        </p>
-        <button id="newrun" type="button">another world</button>
-        <p class="sheet-line danger">
-          Wiping throws away every world, every grave, and every name the world
-          has ever given you. There is no undo.
-        </p>
-        <button id="wipe" type="button" class="danger">wipe everything</button>
+        <h2>world</h2>
+
+        <div class="world-option">
+          <button id="again" type="button" autofocus>begin this world again</button>
+          <p class="sheet-line">
+            Same map, same seed, back to turn 1. Ratified rules stay in force.
+            This run's progress ends; nothing is deleted — the old events stay
+            in the log.
+          </p>
+        </div>
+
+        <div class="world-option">
+          <button id="newrun" type="button">another world</button>
+          <p class="sheet-line">
+            A fresh map with a fresh seed, alongside the ones you already
+            have. Rules do not follow — a new world is born lawless. Switch
+            between worlds in the <em>worlds</em> list below the map.
+          </p>
+        </div>
+
+        <div class="world-option">
+          <button id="wipe" type="button" class="danger">wipe everything</button>
+          <p class="sheet-line danger">
+            Every world, every grave, every name the world has given you —
+            gone. There is no undo.
+          </p>
+        </div>
+
         <menu>
-          <button value="cancel" class="ghost">close</button>
+          <button value="cancel" class="ghost">close <kbd>esc</kbd></button>
+        </menu>
+      </form>
+    </dialog>
+
+    <dialog id="help" class="sheet">
+      <form method="dialog">
+        <h2>keys</h2>
+        <dl id="keymap" class="vitals"></dl>
+        <menu>
+          <button value="cancel" class="ghost">close <kbd>esc</kbd></button>
         </menu>
       </form>
     </dialog>

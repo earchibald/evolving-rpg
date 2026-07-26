@@ -630,6 +630,38 @@ function render(): void {
     detail.append(dt, dd);
   }
 
+  // ── the ledger: the run's decision chain, read off the chain ───────────
+  // Every floor's recorded generation account and every law with its why,
+  // oldest first. Nothing here is tracked separately — it is the event log
+  // wearing its reasoning on the outside, which is what makes it true for
+  // any fork, any rewind, any replay.
+  const ledger = el('ledger');
+  ledger.textContent = '';
+  for (const event of chain(log, head)) {
+    if (event.type === 'WORLD_INIT') {
+      const li = document.createElement('li');
+      const said = document.createElement('span');
+      said.className = 'rule-said';
+      said.textContent = `depth ${String(event.payload.depth ?? 1)} born`;
+      const why = document.createElement('span');
+      why.className = 'rule-why';
+      why.textContent = event.payload.story ?? 'a floor from before floors told their stories';
+      li.append(said, why);
+      ledger.appendChild(li);
+    } else if (event.type === 'RULE_RATIFIED') {
+      const li = document.createElement('li');
+      const said = document.createElement('span');
+      said.className = 'rule-said';
+      said.textContent = `law — ${readRule(event.payload.rule)}`;
+      const why = document.createElement('span');
+      why.className = 'rule-why';
+      why.textContent = event.payload.rule.provenance.because;
+      li.append(said, why);
+      ledger.appendChild(li);
+    }
+  }
+  ledger.scrollTop = ledger.scrollHeight;
+
   // ── through the fog: the developer's eyes ──────────────────────────────
   // The play surfaces above honour the fog; this list does not, on purpose.
   // Someone building the game needs to see what the player cannot yet — and
@@ -961,11 +993,48 @@ function wire(formId: string, inputId: string, channel: Channel): void {
 wire('designer-form', 'designer-said', 'designer');
 wire('gm-form', 'gm-said', 'gamemaster');
 
+/**
+ * Every key the page answers to, in one table. The table renders the help
+ * sheet AND drives the dispatch, so the help cannot drift from the truth —
+ * they are the same object. Covenant L1, applied to the keyboard.
+ *
+ * Button keys .click() the real button rather than calling its function, so
+ * a key and a mouse take exactly one code path each.
+ */
+const KEYMAP: ReadonlyArray<{ shown: string; what: string; button?: string }> = [
+  { shown: '← ↑ → ↓ · wasd', what: 'move — into a creature is a strike, into a wall is free' },
+  { shown: '. · space', what: 'hold still (this is a turn)' },
+  { shown: 'PgUp · PgDn', what: 'read back through the journal' },
+  { shown: 'n', what: 'world… — begin again / another / wipe', button: 'open-worlds' },
+  { shown: 'g', what: 'the forge — ask the world for a rule', button: 'open-forge' },
+  { shown: 'r', what: 'begin this world again, straight away', button: 'again' },
+  { shown: 'v', what: 'verify every hash and counter in the chain', button: 'verify' },
+  { shown: 'f', what: 'fork a new timeline from this moment', button: 'fork' },
+  { shown: 'b', what: 'rewind 10 events (the log keeps them)', button: 'rewind' },
+  { shown: '?', what: 'this sheet', button: 'open-help' },
+  { shown: 'esc', what: 'close a sheet · leave a writing box' },
+  { shown: 'enter', what: 'send, in a writing box' },
+];
+
+const BUTTON_KEYS: Readonly<Record<string, string>> = Object.fromEntries(
+  KEYMAP.filter((k) => k.button !== undefined).map((k) => [k.shown, k.button!]),
+);
+
 window.addEventListener('keydown', (event) => {
   // Typing into a channel is not playing. Without this, writing "search the
-  // wall" walks you four squares west.
+  // wall" walks you four squares west. Escape steps back out of the box.
   const target = event.target;
-  if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) return;
+  if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
+    if (event.key === 'Escape') target.blur();
+    return;
+  }
+
+  // An open sheet owns the keyboard: Escape closes and Enter presses its
+  // focused button natively. Game keys through a dialog would be play you
+  // cannot see.
+  if (document.querySelector('dialog[open]') !== null) return;
+
+  if (event.metaKey || event.ctrlKey || event.altKey) return;
 
   // Paging the journal — the log is readable history, and history needs keys.
   if (event.key === 'PageUp' || event.key === 'PageDown') {
@@ -981,9 +1050,32 @@ window.addEventListener('keydown', (event) => {
     return;
   }
   const move = KEYS[event.key];
-  if (move === undefined) return;
-  event.preventDefault();
-  step(move[0], move[1]);
+  if (move !== undefined) {
+    event.preventDefault();
+    step(move[0], move[1]);
+    return;
+  }
+
+  const pressed = BUTTON_KEYS[event.key];
+  if (pressed !== undefined) {
+    event.preventDefault();
+    el(pressed).click();
+  }
+});
+
+// The help sheet is the KEYMAP, rendered. Nothing to keep in sync.
+const helpSheet = el('help') as HTMLDialogElement;
+el('open-help').addEventListener('click', () => {
+  const dl = el('keymap');
+  dl.textContent = '';
+  for (const k of KEYMAP) {
+    const dt = document.createElement('dt');
+    dt.textContent = k.shown;
+    const dd = document.createElement('dd');
+    dd.textContent = k.what;
+    dl.append(dt, dd);
+  }
+  helpSheet.showModal();
 });
 
 el('verify').addEventListener('click', () => {
@@ -1298,7 +1390,8 @@ function watchTheClock(): void {
 el('open-forge').addEventListener('click', () => { renderForge(); forge.showModal(); });
 
 // Beginning again without having to die for it. The rules stay; everything
-// else goes back to the start.
+// else goes back to the start. Lives in the world sheet, but the `r` key
+// presses it directly — dying is frequent enough to deserve one keystroke.
 el('again').addEventListener('click', () => {
   const kept = fold(log, getRef(refs, active).head).rules.length;
   const begun = beginAgain(log, refs, active);
@@ -1308,6 +1401,7 @@ el('again').addEventListener('click', () => {
   say(kept === 0
     ? 'back to the start of this world'
     : `back to the start of this world, still under ${kept} rule(s)`);
+  if (sheet.open) sheet.close();
   render();
 });
 
