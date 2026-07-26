@@ -2,6 +2,7 @@ import { generateMap, pickSpawnPoints, farthestFrom, withExit } from './mapgen.j
 import { inBounds, isPassable } from './grid.js';
 import { findEntity, isAlive } from './entity.js';
 import { intBetween } from './rng.js';
+import { neededToHit, chanceIn20, damageDice, CRIT, WHIFF } from './tables.js';
 import type { Entity } from './entity.js';
 import { itemAt } from './item.js';
 import { EXIT, tileAt } from './grid.js';
@@ -55,15 +56,12 @@ export function isHostile(a: Entity, b: Entity): boolean {
  * done nothing at all, because nothing ever said so.
  */
 export function toHit(attacker: Entity, target: Entity): number {
-  return 10 + target.stats.speed - attacker.stats.might;
+  return neededToHit(attacker.stats.might, target.stats.speed);
 }
 
 /** The chance, out of 20, that the blow lands. */
 export function hitChance(attacker: Entity, target: Entity): number {
-  const needed = toHit(attacker, target);
-  if (needed <= 1) return 20;
-  if (needed > 20) return 0;
-  return 21 - needed;
+  return chanceIn20(toHit(attacker, target));
 }
 
 function resolveStrike(
@@ -71,13 +69,21 @@ function resolveStrike(
   counter: number,
   attacker: Entity,
   target: Entity,
-): { roll: number; needed: number; hit: boolean; damage: number } {
+): { roll: number; needed: number; hit: boolean; damage: number; crit: boolean } {
   const roll = intBetween(seed, counter, 1, 20);
   const needed = toHit(attacker, target);
-  const hit = roll >= needed;
-  // Drawn either way, so the count does not depend on the outcome.
-  const rolledDamage = intBetween(seed, counter + 1, 1, attacker.stats.might);
-  return { roll, needed, hit, damage: hit ? rolledDamage : 0 };
+
+  // The naturals outrank the arithmetic: a 20 always lands and doubles, a 1
+  // always misses. Five percent of blows become stories in each direction,
+  // and the Surprise lens finally has events under its threshold.
+  const crit = roll === CRIT;
+  const hit = crit || (roll !== WHIFF && roll >= needed);
+
+  // Drawn either way, so the draw count never depends on the outcome. The
+  // crit doubles this same draw rather than taking another.
+  const { die, flat } = damageDice(attacker.stats.might);
+  const rolledDamage = intBetween(seed, counter + 1, 1, die) + flat;
+  return { roll, needed, hit, crit, damage: hit ? (crit ? rolledDamage * 2 : rolledDamage) : 0 };
 }
 
 export function createWorld(

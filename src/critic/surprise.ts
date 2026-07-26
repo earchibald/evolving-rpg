@@ -73,11 +73,14 @@ export function surpriseOf(log: EventLog, head: string | null): Surprise {
 
   for (const event of events) {
     if (event.type === 'STRIKE') {
-      const p = event.payload as Partial<{ attackerId: string; hit: boolean; damage: number; needed: number }>;
+      const p = event.payload as Partial<{ attackerId: string; hit: boolean; crit: boolean; damage: number; needed: number }>;
 
       if (isNumber(p.needed) && typeof p.hit === 'boolean') {
+        // A natural 20 is its own outcome with its own probability — 1 in 20,
+        // always under the threshold. This is the event the lens waited for:
+        // before crits existed, nothing the dice could do was unlikely.
         const landed = chanceToHit(p.needed);
-        const happened = p.hit ? landed : 1 - landed;
+        const happened = p.crit === true ? 1 / 20 : p.hit ? landed : 1 - landed;
         modelled += 1;
         if (happened < SURPRISE_THRESHOLD) surprising += 1;
       }

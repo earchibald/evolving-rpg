@@ -75,10 +75,11 @@ describe('trial of greed — unbounded growth by repetition (M2)', () => {
 });
 
 describe('trial of the coward — death must remain possible (M1)', () => {
-  it('refuses a heal that outpaces a brute at arm\'s length', () => {
-    // heal 3 per wait against ~2 incoming per turn: the sitting player is
-    // unkillable. The game can no longer be lost by doing nothing.
-    const got = assayRule(rule({ then: [{ kind: 'heal', n: 3 }] }));
+  it('refuses a heal no bruiser can burst through', () => {
+    // The level-1 bruiser's heaviest crit is 8 against a 10-hp player, so
+    // heal 8 on every wait means no sequence of blows can ever finish the
+    // sitter. Provably unkillable — the exact degenerate M1 refuses.
+    const got = assayRule(rule({ then: [{ kind: 'heal', n: 8 }] }));
     expect(got.verdict).toBe('refused');
     expect(got.findings.join(' ')).toMatch(/M1/);
   });

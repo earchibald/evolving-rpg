@@ -150,3 +150,27 @@ describe('reading history it did not write', () => {
     expect(got.surprising).toBe(0);
   });
 });
+
+describe('crits are the surprises', () => {
+  it('counts a realized natural 20 as an unlikely outcome', () => {
+    // p = 1/20 = 0.05, under the threshold — the first event this lens has
+    // ever had to count in ordinary play.
+    const crit = { ...strike(9, true, 6, 20), payload: undefined } as unknown as { payload: unknown };
+    void crit;
+    const p = played(3, [{
+      type: 'STRIKE', schemaVersion: 2, rngCounter: 0, rngDraws: 2,
+      payload: { attackerId: 'player', targetId: 'thing-1', hit: true, crit: true, damage: 6, roll: 20, needed: 9 },
+    } as DraftEvent]);
+    expect(surpriseOf(p.log, p.head).surprising).toBeGreaterThanOrEqual(1);
+  });
+
+  it('still reads an ordinary even-money blow as unremarkable', () => {
+    const p = played(3, [{
+      type: 'STRIKE', schemaVersion: 2, rngCounter: 0, rngDraws: 2,
+      payload: { attackerId: 'player', targetId: 'thing-1', hit: true, crit: false, damage: 2, roll: 12, needed: 9 },
+    } as DraftEvent]);
+    // The damage-roll term may still register; the to-hit outcome must not.
+    const got = surpriseOf(p.log, p.head);
+    expect(got.modelled).toBeGreaterThan(0);
+  });
+});

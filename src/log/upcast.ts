@@ -89,6 +89,20 @@ export function upcastEvent(raw: unknown): DraftEvent {
     } as unknown as DraftEvent;
   }
 
+  if (type === 'STRIKE') {
+    // v1 → v2: blows learned to be critical. Nothing recorded before crits
+    // existed was one, and saying `false` outright is the honest migration —
+    // reinterpreting an old natural 20 as a crit would change history's damage.
+    const payload = { ...event.payload, crit: event.payload.crit ?? false };
+    return {
+      type: 'STRIKE',
+      schemaVersion: current,
+      rngCounter: event.rngCounter,
+      rngDraws: typeof event.rngDraws === 'number' ? event.rngDraws : 0,
+      payload,
+    } as unknown as DraftEvent;
+  }
+
   if (version !== 1) throw new Error(`upcastEvent: no upcaster from ${type} v${version}`);
 
   // Cast through unknown: the payload came off disk as a Record, and narrowing

@@ -4,6 +4,7 @@ import { createWorld, ratifyRule } from '../core/commands.js';
 import { playerStep, playerWait, runWorldTurns, buryIfDead, beginAgain, isGrave } from '../play/session.js';
 import { isAlive } from '../core/entity.js';
 import { outcome, hitChance } from '../core/commands.js';
+import { damageDice } from '../core/tables.js';
 import { itemAt } from '../core/item.js';
 import { save, load, clear, emptySession } from '../play/store.js';
 import {
@@ -423,9 +424,13 @@ function render(): void {
       // actually decide on. "hit 10+ (11/20)" made you convert a die target into
       // a chance in your head, every turn, for every creature.
       const pct = (a: Entity, b: Entity): string => `${hitChance(a, b) * 5}%`;
+      const swing = (m: number): string => {
+        const { die, flat } = damageDice(m);
+        return `${1 + flat}–${die + flat}`;
+      };
       odds.textContent = player === undefined
         ? `hp ${e.stats.hp}`
-        : `hp ${e.stats.hp} · ${away} away · you ${pct(player, e)} 1–${player.stats.might} · it ${pct(e, player)} 1–${e.stats.might}`;
+        : `hp ${e.stats.hp} · ${away} away · you ${pct(player, e)} ${swing(player.stats.might)} · it ${pct(e, player)} ${swing(e.stats.might)}`;
     }
     li.append(who, odds);
     threats.appendChild(li);
@@ -644,9 +649,11 @@ function narrate(fresh: readonly GameEvent[], state: ReturnType<typeof fold>): s
     const mine = p.attackerId === 'player';
     const them = named(state, mine ? p.targetId : p.attackerId);
     const roll = `(${p.roll} vs ${p.needed})`;
+    // A crit narrates as what it is; the register stays quiet about it.
+    const clean = p.crit ? ' — clean through' : '';
     lines.push(mine
-      ? (p.hit ? `you hit ${them} for ${p.damage} ${roll}` : `you miss ${them} ${roll}`)
-      : (p.hit ? `${them} hits you for ${p.damage} ${roll}` : `${them} misses you ${roll}`));
+      ? (p.hit ? `you hit ${them} for ${p.damage}${clean} ${roll}` : `you miss ${them} ${roll}`)
+      : (p.hit ? `${them} hits you for ${p.damage}${clean} ${roll}` : `${them} misses you ${roll}`));
   }
 
   return lines;

@@ -248,11 +248,12 @@ describe('striking', () => {
     expect((draft.payload as { roll: number }).roll).toBeLessThanOrEqual(20);
   });
 
-  it('deals between one and the attacker might', () => {
+  it('deals inside the might band\'s dice, doubled on a crit', () => {
+    // might 3 → 1d3+1: 2..4 on an ordinary hit, 4..8 on a natural 20.
     const draft = attemptMove(brawl(counterRolling((r) => r >= 10)), 'player', 1, 0);
-    const { damage } = draft.payload as { damage: number };
-    expect(damage).toBeGreaterThanOrEqual(1);
-    expect(damage).toBeLessThanOrEqual(3);
+    const { damage, crit } = draft.payload as { damage: number; crit: boolean };
+    expect(damage).toBeGreaterThanOrEqual(crit ? 4 : 2);
+    expect(damage).toBeLessThanOrEqual(crit ? 8 : 4);
   });
 
   it('takes hit points away on a hit', () => {

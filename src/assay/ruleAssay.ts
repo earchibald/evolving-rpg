@@ -4,6 +4,7 @@ import { FLOOR, EXIT } from '../core/grid.js';
 import { autoplay } from '../play/autoplay.js';
 import { sitter, shuffler, bumper, brawler } from '../play/policies.js';
 import { assayLine } from './register.js';
+import { creatureStats } from '../core/tables.js';
 import type { Policy } from '../play/policies.js';
 import type { Position } from '../play/session.js';
 import type { Rule, StatName } from '../canon/rule.js';
@@ -87,25 +88,35 @@ function greedWorld(): Position {
   return born(
     width, tiles,
     seed('player', 'you', 0, 0, 12, 3, 3),
-    [
-      seed('thing-1', 'thing', 8, 0, 5, 1, 2),
-      seed('thing-2', 'thing', 10, 0, 5, 1, 2),
-      seed('thing-3', 'thing', 12, 0, 5, 1, 2),
-    ],
+    // Table-standard chaff, so the trial's economy matches the game's.
+    [8, 10, 12].map((x, i) => ({
+      id: `thing-${String(i + 1)}`, kind: 'skirmisher', pos: { x, y: 0 },
+      stats: creatureStats('skirmisher', 1)!, tags: [],
+    })),
     [{ id: 'item-0', kind: 'edge', pos: { x: 2, y: 0 }, grants: { hp: 0, might: 1, wits: 0, speed: 0 } }],
   );
 }
 
-/** The coward's corner: a brute adjacent, nowhere worth going. Kills a sitting
- *  player in a handful of turns unless a rule intervenes. */
+/**
+ * The coward's corner: a table-standard bruiser adjacent, nowhere worth going.
+ * Kills a sitting player in a handful of turns unless a rule intervenes.
+ *
+ * The aggressor comes from the bestiary rather than being hand-rolled, and its
+ * band matters: a level-1 bruiser's heaviest crit (1d3+1 doubled = 8) cannot
+ * one-shot a full 10-hp player, so "heal enough every wait" genuinely makes
+ * death impossible — which is exactly the degenerate case M1 exists to refuse.
+ * Against a heavier aggressor, crits pierce any heal and the trial could never
+ * fire at all.
+ */
 function cowardWorld(): Position {
   const width = 6;
   const tiles = new Array<number>(width).fill(FLOOR);
   tiles[width - 1] = EXIT;
+  const bruiser = creatureStats('bruiser', 1)!;
   return born(
     width, tiles,
     seed('player', 'you', 0, 0, 10, 3, 3),
-    [seed('brute', 'thing', 1, 0, 99, 5, 1)],
+    [{ id: 'brute', kind: 'bruiser', pos: { x: 1, y: 0 }, stats: { ...bruiser, hp: 99 }, tags: [] }],
     [],
   );
 }

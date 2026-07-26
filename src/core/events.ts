@@ -15,7 +15,7 @@ export const SCHEMA_VERSIONS = {
   MOVE: 2,
   MOVE_BLOCKED: 2,
   TURN_ADVANCED: 2,
-  STRIKE: 1,
+  STRIKE: 2,
   WAIT: 1,
   ITEM_TAKEN: 1,
   RULE_RATIFIED: 1,
@@ -112,6 +112,9 @@ export interface StrikePayload {
   roll: number;
   needed: number;
   hit: boolean;
+  /** A natural 20: always lands, damage already doubled in `damage`. Recorded
+   *  so replay and the Surprise lens read the blow the way it happened. */
+  crit: boolean;
   damage: number;
 }
 

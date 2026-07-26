@@ -42,3 +42,22 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > **Try it:** read `docs/design/BALANCE.md` — every number has its reason and
 > its tuning knob. 19 shape tests pin the monotonicities; 4 mutations caught.
 
+> [!NOTE]
+> **02:14 — Combat runs on the tables now (STRIKE v2)**
+> Blows resolve through bounded accuracy; **natural 20 doubles damage, natural
+> 1 whiffs**. Old logs upcast cleanly (a v1 strike was never a crit — saying so
+> is the honest migration). Damage reads as dice: your might-3 swing is 2–4,
+> not 1–3-with-a-third-of-blows-at-1. The threat panel now shows real ranges
+> ("you 60% 2–4"), the status line marks a crit quietly ("— clean through"),
+> and the **Surprise lens counts its first-ever events**: a realized nat-20 is
+> p=0.05, under the 0.15 line.
+>
+> Crits had a consequence worth recording: **no heal can make you unkillable
+> against heavy hitters anymore** (burst pierces it), so the assay's
+> death-must-remain-possible trial re-derived its aggressor from the bestiary —
+> a level-1 bruiser, whose worst crit (8) can't one-shot a 10-hp player, which
+> keeps "heal 8 every wait" provably degenerate and refusable.
+>
+> **Try it:** walk into anything — the odds line under "what is here" shows the
+> new math. 526 tests; the golden fixture regenerated behind its guard.
+
