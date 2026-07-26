@@ -1,12 +1,19 @@
 import { emptyLog, append, chain, fold, verifyChain } from '../log/chain.js';
 import { emptyRefs, createRef, getRef, setHead, fork, reset, listRefs } from '../log/refs.js';
-import { createWorld } from '../core/commands.js';
-import { playerStep, playerWait, runWorldTurns, buryIfDead, isGrave } from '../play/session.js';
+import { createWorld, ratifyRule } from '../core/commands.js';
+import { playerStep, playerWait, runWorldTurns, buryIfDead, beginAgain, isGrave } from '../play/session.js';
 import { isAlive } from '../core/entity.js';
 import { outcome, hitChance } from '../core/commands.js';
 import { itemAt } from '../core/item.js';
 import { save, load, clear, emptySession } from '../play/store.js';
-import { readRule } from '../canon/rule.js';
+import {
+  readRule, rangeOf, takesStat, takesNumber, needsTriggers,
+  TRIGGERS, STATS, CONDITION_KINDS, EFFECT_KINDS,
+  MAX_CONDITIONS, MAX_EFFECTS, MAX_TEXT, MAX_RULES, isRejected,
+} from '../canon/rule.js';
+import type { Rule } from '../canon/rule.js';
+import { summariseRun, proposeRule, finalise } from '../canon/rulesmith.js';
+import type { RunSummary } from '../canon/rulesmith.js';
 import { Oracle, describeQuestion } from '../oracle/oracle.js';
 import { cliTransport } from '../oracle/transports.js';
 import { send, loadNotes, saveNotes, NOTES_KEY } from '../channels/channels.js';
@@ -634,6 +641,7 @@ function finish(before: number, head: string): void {
   // Death is handled here rather than inside the step, because it is not a move
   // — it is what the world does about a move that went badly.
   const burial = buryIfDead(log, refs, active);
+  log = burial.log;
   refs = burial.refs;
 
   persist();
@@ -766,3 +774,271 @@ el('newrun').addEventListener('click', () => {
 render();
 persist();
 say(booted);
+
+/* ── the forge ────────────────────────────────────────────────────────────
+ *
+ * Where a proposal becomes a rule, or does not.
+ *
+ * Two things shape this. Asking costs real money and takes real seconds, so it
+ * happens when you press the button and never on its own — a run ending offers
+ * a proposal rather than demanding one, and the offer can be ignored forever.
+ * And the editor is built out of the vocabulary itself: every control is a
+ * select or a bounded number, so a rule you assemble by hand cannot be one the
+ * validator would refuse. It still passes the validator regardless, because a
+ * form is a convenience and the gate is the gate.
+ */
+
+const forge = el('forge') as HTMLDialogElement;
+let pending: Rule | null = null;
+let lastRun: RunSummary | null = null;
+/** Set while the editor is open; what accept ratifies instead of `pending`. */
+let edited: Record<string, unknown> | null = null;
+
+function rulesInForce(): readonly Rule[] {
+  return fold(log, getRef(refs, active).head).rules;
+}
+
+function renderForge(): void {
+  const state = fold(log, getRef(refs, active).head);
+  const done = outcome(state);
+  const inForce = state.rules.length;
+
+  el('forge-state').textContent = inForce >= MAX_RULES
+    ? `This world holds all ${MAX_RULES} rules it can. Fork it to keep going.`
+    : done === 'playing'
+      ? `This run is still going. The world proposes when a run ends — ${inForce} rule(s) in force.`
+      : `This run ended: ${done}. The world can read it back and propose one rule — ${inForce} in force.`;
+
+  const ask = el('ask-rule') as HTMLButtonElement;
+  ask.disabled = done === 'playing' || inForce >= MAX_RULES;
+
+  const box = el('proposal');
+  if (pending === null) { box.hidden = true; return; }
+  box.hidden = false;
+
+  el('proposal-said').textContent = readRule(pending);
+  el('proposal-why').textContent = pending.provenance.because;
+  const cites = pending.provenance;
+  el('proposal-cites').textContent =
+    `answering ${cites.events.length} event(s) and ${cites.notes.length} of your note(s)`;
+}
+
+/** One row of the editor: a kind, and whatever that kind needs. */
+function control(
+  kinds: readonly string[],
+  current: Record<string, unknown>,
+  when: string,
+  onChange: (next: Record<string, unknown>) => void,
+  onRemove: () => void,
+): HTMLElement {
+  const row = document.createElement('div');
+  row.className = 'editor-row';
+
+  const kindSel = document.createElement('select');
+  for (const k of kinds) {
+    const opt = document.createElement('option');
+    opt.value = k;
+    opt.textContent = k;
+    // Greyed rather than absent: seeing that "push" exists but needs a blow
+    // teaches the vocabulary; silently hiding it teaches nothing.
+    const only = needsTriggers(k);
+    if (only !== undefined && !only.includes(when as never)) {
+      opt.disabled = true;
+      opt.textContent = `${k} (needs ${only.join('/')})`;
+    }
+    if (k === current['kind']) opt.selected = true;
+    kindSel.appendChild(opt);
+  }
+  kindSel.addEventListener('change', () => { onChange({ kind: kindSel.value }); });
+  row.appendChild(kindSel);
+
+  const kind = String(current['kind']);
+
+  if (takesStat(kind)) {
+    const statSel = document.createElement('select');
+    for (const st of STATS) {
+      const opt = document.createElement('option');
+      opt.value = st; opt.textContent = st;
+      if (st === current['stat']) opt.selected = true;
+      statSel.appendChild(opt);
+    }
+    statSel.addEventListener('change', () => { onChange({ ...current, stat: statSel.value }); });
+    row.appendChild(statSel);
+  }
+
+  if (kind === 'speak') {
+    const text = document.createElement('input');
+    text.type = 'text';
+    text.maxLength = MAX_TEXT;
+    text.value = String(current['text'] ?? '');
+    text.addEventListener('input', () => { onChange({ ...current, text: text.value }); });
+    row.appendChild(text);
+  } else if (takesNumber(kind)) {
+    const range = rangeOf(kind)!;
+    const num = document.createElement('input');
+    num.type = 'number';
+    num.min = String(range[0]); num.max = String(range[1]); num.step = '1';
+    num.value = String(current['n'] ?? range[0]);
+    num.addEventListener('input', () => {
+      // Clamped here as well as validated later: a spinner that lets you type
+      // 900 and then refuses the whole rule is a worse experience than one
+      // that will not go past 20.
+      const v = Math.max(range[0], Math.min(range[1], Math.round(Number(num.value) || range[0])));
+      onChange({ ...current, n: v });
+    });
+    row.appendChild(num);
+    const hint = document.createElement('span');
+    hint.className = 'hint';
+    hint.textContent = `${range[0]}–${range[1]}`;
+    row.appendChild(hint);
+  }
+
+  const drop = document.createElement('button');
+  drop.type = 'button'; drop.className = 'ghost'; drop.textContent = '×';
+  drop.addEventListener('click', onRemove);
+  row.appendChild(drop);
+  return row;
+}
+
+function renderEditor(): void {
+  if (edited === null) return;
+  const host = el('editor');
+  host.textContent = '';
+
+  const when = String(edited['when']);
+  const require = (edited['require'] as Record<string, unknown>[] | undefined) ?? [];
+  const then = (edited['then'] as Record<string, unknown>[] | undefined) ?? [];
+
+  const trigger = document.createElement('select');
+  for (const t of TRIGGERS) {
+    const opt = document.createElement('option');
+    opt.value = t; opt.textContent = t;
+    if (t === when) opt.selected = true;
+    trigger.appendChild(opt);
+  }
+  trigger.addEventListener('change', () => {
+    edited = { ...edited, when: trigger.value };
+    renderEditor();
+  });
+  const wrap = document.createElement('div');
+  wrap.className = 'editor-row';
+  const lab = document.createElement('span');
+  lab.className = 'hint'; lab.textContent = 'when';
+  wrap.append(lab, trigger);
+  host.appendChild(wrap);
+
+  const section = (
+    title: string, list: Record<string, unknown>[], kinds: readonly string[],
+    cap: number, key: 'require' | 'then', blank: Record<string, unknown>,
+  ): void => {
+    const head = document.createElement('p');
+    head.className = 'hint'; head.textContent = `${title} (${list.length}/${cap})`;
+    host.appendChild(head);
+
+    list.forEach((item, i) => {
+      host.appendChild(control(kinds, item, when, (next) => {
+        const copy = [...list];
+        copy[i] = next;
+        edited = { ...edited, [key]: copy };
+        renderEditor();
+      }, () => {
+        edited = { ...edited, [key]: list.filter((_x, j) => j !== i) };
+        renderEditor();
+      }));
+    });
+
+    if (list.length < cap) {
+      const add = document.createElement('button');
+      add.type = 'button'; add.className = 'ghost'; add.textContent = `add ${title.slice(0, -1)}`;
+      add.addEventListener('click', () => {
+        edited = { ...edited, [key]: [...list, blank] };
+        renderEditor();
+      });
+      host.appendChild(add);
+    }
+  };
+
+  section('conditions', require, CONDITION_KINDS, MAX_CONDITIONS, 'require', { kind: 'hpAtMost', n: 5 });
+  section('effects', then, EFFECT_KINDS, MAX_EFFECTS, 'then', { kind: 'heal', n: 1 });
+
+  // What it will actually say, live. A player editing a rule they cannot read
+  // is not editing anything.
+  const preview = document.createElement('p');
+  preview.className = 'preview';
+  const trial = finalise({ ...edited }, [], 'preview');
+  preview.textContent = isRejected(trial) ? `not yet a rule — ${trial.rejected}` : readRule(trial);
+  preview.classList.toggle('bad', isRejected(trial));
+  host.appendChild(preview);
+}
+
+el('open-forge').addEventListener('click', () => { renderForge(); forge.showModal(); });
+
+// Beginning again without having to die for it. The rules stay; everything
+// else goes back to the start.
+el('again').addEventListener('click', () => {
+  const kept = fold(log, getRef(refs, active).head).rules.length;
+  const begun = beginAgain(log, refs, active);
+  log = begun.log;
+  refs = begun.refs;
+  persist();
+  say(kept === 0
+    ? 'back to the start of this world'
+    : `back to the start of this world, still under ${kept} rule(s)`);
+  render();
+});
+
+el('ask-rule').addEventListener('click', () => {
+  const head = getRef(refs, active).head;
+  const state = fold(log, head);
+  lastRun = summariseRun(chain(log, head), state, notes, active);
+
+  say('the world is reading the run back');
+  void proposeRule(oracle, lastRun, state.rules, new Date().toISOString()).then((got) => {
+    if (isRejected(got)) {
+      pending = null;
+      say(`no rule this time — ${got.rejected}`);
+    } else {
+      pending = got;
+      edited = null;
+      el('editor').hidden = true;
+    }
+    renderForge();
+    render();
+  });
+});
+
+el('accept').addEventListener('click', () => {
+  if (pending === null) return;
+  // The edited draft when there is one, and through the same gate either way.
+  const draft = edited ?? (pending as unknown as Record<string, unknown>);
+  const settled = finalise(draft, rulesInForce(), new Date().toISOString(), lastRun ?? undefined);
+  if (isRejected(settled)) { say(`refused — ${settled.rejected}`); return; }
+
+  const head = getRef(refs, active).head;
+  const done = append(log, head, ratifyRule(fold(log, head), settled));
+  log = done.log;
+  refs = setHead(refs, active, done.event.id);
+
+  pending = null; edited = null;
+  el('editor').hidden = true;
+  persist();
+  say(`ratified — ${readRule(settled)}`);
+  forge.close();
+  render();
+});
+
+el('edit').addEventListener('click', () => {
+  if (pending === null) return;
+  edited = JSON.parse(JSON.stringify(pending)) as Record<string, unknown>;
+  el('editor').hidden = false;
+  renderEditor();
+});
+
+el('reject').addEventListener('click', () => {
+  // Writes nothing at all. The veto is meant to be cheaper than the acceptance.
+  pending = null;
+  edited = null;
+  el('editor').hidden = true;
+  say('rejected — nothing was written');
+  renderForge();
+});

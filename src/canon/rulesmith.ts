@@ -123,6 +123,46 @@ export function summariseRun(
   };
 }
 
+/**
+ * The single gate everything passes to become a rule — the Rulesmith's draft
+ * and the player's edit of it alike.
+ *
+ * There is exactly one of these on purpose. An edit that skipped validation
+ * would be the obvious hole: the proposal is checked, the player nudges a
+ * number, and an unchecked object goes into an append-only log.
+ */
+export function finalise(
+  draft: unknown,
+  existing: readonly Rule[],
+  at: string,
+  run?: RunSummary,
+): Rule | Rejected {
+  if (existing.length >= MAX_RULES) {
+    return { rejected: `this world already holds the limit of ${MAX_RULES} rules` };
+  }
+  if (typeof draft !== 'object' || draft === null) {
+    return { rejected: 'that is not a rule' };
+  }
+
+  const d = draft as Record<string, unknown>;
+  const stamped = {
+    ...d,
+    // The id is ours, not the model's: it must not collide with one already in
+    // force, and a rule named "the good one" helps nobody.
+    id: `rule-${existing.length + 1}`,
+    ratifiedAt: at,
+    provenance: run === undefined ? d['provenance'] : pruneProvenance(d['provenance'], run),
+  };
+
+  const checked = validateRule(stamped);
+  if (isRejected(checked)) return checked;
+
+  if (duplicates(checked, existing)) {
+    return { rejected: `this world already plays under that rule: ${readRule(checked)}` };
+  }
+  return checked;
+}
+
 /** Same trigger and same effects as something already in force. Proposing one
  *  of these wastes the player's attention on a decision they already made. */
 function duplicates(rule: Rule, existing: readonly Rule[]): boolean {
@@ -159,10 +199,6 @@ export async function proposeRule(
   existing: readonly Rule[],
   at: string,
 ): Promise<Rule | Rejected> {
-  if (existing.length >= MAX_RULES) {
-    return { rejected: `this world already holds the limit of ${MAX_RULES} rules` };
-  }
-
   let answered;
   try {
     answered = await oracle.consult({
@@ -174,26 +210,9 @@ export async function proposeRule(
     return { rejected: `the world had nothing to propose: ${String(error).slice(0, 120)}` };
   }
 
-  const raw = answered.data;
-  if (typeof raw !== 'object' || raw === null) {
+  if (typeof answered.data !== 'object' || answered.data === null) {
     return { rejected: 'the reply was not a rule' };
   }
 
-  // The id is ours, not the model's: it must not collide with one already in
-  // force, and a rule named "the good one" helps nobody.
-  const draft = {
-    ...(raw as Record<string, unknown>),
-    id: `rule-${existing.length + 1}`,
-    ratifiedAt: at,
-    provenance: pruneProvenance((raw as Record<string, unknown>)['provenance'], run),
-  };
-
-  const checked = validateRule(draft);
-  if (isRejected(checked)) return checked;
-
-  if (duplicates(checked, existing)) {
-    return { rejected: `this world already plays under that rule: ${readRule(checked)}` };
-  }
-
-  return checked;
+  return finalise(answered.data, existing, at, run);
 }

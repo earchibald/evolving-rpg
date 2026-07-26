@@ -266,3 +266,43 @@ button:focus-visible { outline: 2px solid var(--player); outline-offset: 2px; }
 .sheet menu { margin: .4rem 0 0; padding: 0; display: flex; justify-content: flex-end; }
 button.danger { background: var(--foe); border-color: var(--foe); color: #f6e9e7; }
 button.danger:hover { background: #c9564a; border-color: #c9564a; }
+
+/* ── the forge ────────────────────────────────────────────────────────────
+ *
+ * A dialog rather than a panel, so it is out of flow and cannot move the page
+ * whatever it contains — the no-movement rule holds here by construction. Its
+ * own height is capped so a rule with three effects and a long spoken line
+ * scrolls inside instead of running off the screen.
+ */
+.forge { max-width: 44rem; width: calc(100vw - 3rem); }
+.forge h3 { margin: 0; font-size: .95rem; font-weight: 500; color: var(--ink); line-height: 1.45; }
+
+.proposal {
+  border-top: 1px solid var(--rule); margin-top: .9rem; padding-top: .9rem;
+  display: flex; flex-direction: column; gap: .6rem;
+  max-height: 60vh; overflow-y: auto; scrollbar-gutter: stable;
+}
+.cites { margin: 0; color: var(--faint); font-size: .75rem; }
+.proposal-actions { margin: .2rem 0 0; padding: 0; display: flex; gap: .4rem; }
+
+.editor {
+  display: flex; flex-direction: column; gap: .4rem;
+  border-left: 2px solid var(--rule); padding-left: .7rem;
+}
+.editor-row { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+.editor select, .editor input {
+  font: inherit; font-size: .8rem; background: var(--ground); color: var(--ink);
+  border: 1px solid var(--rule); border-radius: 3px; padding: .2rem .35rem;
+}
+.editor input[type="number"] { width: 4.5rem; }
+.editor input[type="text"] { flex: 1 1 16rem; }
+.editor option:disabled { color: var(--faint); }
+.hint { color: var(--faint); font-size: .72rem; margin: .3rem 0 0; }
+
+/* What the rule will actually say, live. Editing a rule you cannot read is not
+   editing anything. */
+.preview {
+  margin: .4rem 0 0; padding: .4rem .6rem; border-radius: 3px;
+  background: var(--ground); color: var(--exit); font-size: .82rem;
+}
+.preview.bad { color: var(--foe); }

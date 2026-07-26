@@ -1,5 +1,6 @@
-import { emptyLog, append, chain, fold } from '../../src/log/chain.js';
-import { playerStep, playerWait, runWorldTurns } from '../../src/play/session.js';
+import { emptyLog, append, chain, fold, verifyChain } from '../../src/log/chain.js';
+import { emptyRefs, createRef, setHead, getRef } from '../../src/log/refs.js';
+import { playerStep, playerWait, runWorldTurns, beginAgain, buryIfDead } from '../../src/play/session.js';
 import { ratifyRule } from '../../src/core/commands.js';
 import { validateRule, isRejected } from '../../src/canon/rule.js';
 import { FLOOR, WALL } from '../../src/core/grid.js';
@@ -282,5 +283,67 @@ describe('the triggers the widening added', () => {
       if (fold(p.log, p.head).entities[0]!.stats.hp <= 0) break;
     }
     if (sawMiss) expect(fired(p).some((e) => e.payload.ruleId === 'on-miss')).toBe(true);
+  });
+});
+
+describe('a rule outlives the run that earned it', () => {
+  it('keeps the rules when the world begins again', () => {
+    // The hole this closes: rules live on the chain, so every "start again"
+    // reset to the world's root and left them behind. Ratify a rule, die, and
+    // the rule died with you — the whole loop could not close.
+    const start = playable(corridor({ beastAt: 8 }), [rule({ when: 'WAIT', then: [{ kind: 'harm', n: 1 }] })]);
+    let refs = createRef(emptyRefs(), 'main', start.head, 0, 'opening');
+
+    let p = playerWait(start, 'player').position;
+    p = runWorldTurns(p, 'player');
+    refs = setHead(refs, 'main', p.head);
+    // The run genuinely moved on: more events, and the rule has bitten.
+    expect(chain(p.log, p.head).length).toBeGreaterThan(chain(start.log, start.head).length);
+    expect(fold(p.log, p.head).entities[0]!.stats.hp).toBeLessThan(10);
+
+    const again = beginAgain(p.log, refs, 'main');
+    const head = getRef(again.refs, 'main').head!;
+    const after = fold(again.log, head);
+
+    expect(after.rules).toHaveLength(1);
+    expect(after.turn).toBe(1);
+    expect(after.entities[0]?.stats.hp).toBe(10);
+    // And the rules are genuinely on the new chain, not carried beside it.
+    expect(chain(again.log, head).filter((e) => e.type === 'RULE_RATIFIED')).toHaveLength(1);
+    expect(verifyChain(again.log, head)).toBeNull();
+  });
+
+  it('carries them through death, and leaves the grave intact', () => {
+    const start = playable(corridor({ beastAt: 1 }), [rule({ when: 'STRUCK', then: [{ kind: 'harm', n: 1 }] })]);
+    let refs = createRef(emptyRefs(), 'main', start.head, 0, 'opening');
+
+    // Take blows until it kills you.
+    let p = start;
+    for (let i = 0; i < 200; i += 1) {
+      p = playerWait(p, 'player').position;
+      p = runWorldTurns(p, 'player');
+      if (fold(p.log, p.head).entities[0]!.stats.hp <= 0) break;
+    }
+    expect(fold(p.log, p.head).entities[0]!.stats.hp).toBe(0);
+    refs = setHead(refs, 'main', p.head);
+
+    const burial = buryIfDead(p.log, refs, 'main');
+    expect(burial.grave).not.toBeNull();
+
+    const fresh = fold(burial.log, getRef(burial.refs, 'main').head!);
+    expect(fresh.rules).toHaveLength(1);
+    expect(fresh.entities[0]?.stats.hp).toBe(10);
+
+    // The dead timeline is still there, still dead.
+    const dead = fold(burial.log, getRef(burial.refs, burial.grave!).head!);
+    expect(dead.entities[0]?.stats.hp).toBe(0);
+  });
+
+  it('gives the same ids when the same world begins again twice', () => {
+    const start = playable(corridor(), [rule({ when: 'WAIT', then: [{ kind: 'harm', n: 1 }] })]);
+    const refs = createRef(emptyRefs(), 'main', start.head, 0, 'opening');
+    const once = beginAgain(start.log, refs, 'main');
+    const twice = beginAgain(once.log, once.refs, 'main');
+    expect(getRef(twice.refs, 'main').head).toBe(getRef(once.refs, 'main').head);
   });
 });

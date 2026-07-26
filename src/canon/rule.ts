@@ -117,7 +117,34 @@ const RANGES: Record<string, readonly [number, number]> = {
 
 /** Conditions that test the blow that triggered the rule rather than the world.
  *  They carry no number, and only mean anything under STRIKE or STRUCK. */
-const BLOW_CONDITIONS = ['blowLanded', 'blowMissed'] as const;
+export const BLOW_CONDITIONS = ['blowLanded', 'blowMissed'] as const;
+
+/** Kinds that name a stat as well as a number. */
+export const STAT_KINDS = ['statAtLeast', 'grant', 'drain'] as const;
+
+/** The range a kind's `n` must fall in, or undefined for kinds that take none.
+ *  Exported so the Forge's editor can build controls that cannot produce an
+ *  invalid rule in the first place, rather than ones that get rejected after. */
+export function rangeOf(kind: string): readonly [number, number] | undefined {
+  return RANGES[kind];
+}
+
+export function takesStat(kind: string): boolean {
+  return (STAT_KINDS as readonly string[]).includes(kind);
+}
+
+export function takesNumber(kind: string): boolean {
+  return RANGES[kind] !== undefined;
+}
+
+/** Which triggers a kind is usable with, or undefined for "any". Mirrors the
+ *  two coherence checks below, so the editor can grey out what would be
+ *  refused instead of letting you build it and then be told no. */
+export function needsTriggers(kind: string): readonly Trigger[] | undefined {
+  if ((BLOW_CONDITIONS as readonly string[]).includes(kind)) return ['STRIKE', 'STRUCK'];
+  if (kind === 'harmOther' || kind === 'push') return ['STRIKE', 'STRUCK', 'KILLED'];
+  return undefined;
+}
 
 export const CONDITION_KINDS: readonly ConditionKind[] = [
   'hpAtMost', 'hpAtLeast', 'hpBelowPercent', 'hpAbovePercent',

@@ -1,7 +1,7 @@
 import { append, fold, chain } from '../log/chain.js';
-import { getRef, fork, reset, listRefs } from '../log/refs.js';
+import { getRef, fork, setHead, listRefs } from '../log/refs.js';
 import type { Refs } from '../log/refs.js';
-import { attemptMove, advanceTurn, endsTurn, wait, takeUnderfoot, outcome } from '../core/commands.js';
+import { attemptMove, advanceTurn, endsTurn, wait, takeUnderfoot, outcome, ratifyRule } from '../core/commands.js';
 import { decide } from '../core/ai.js';
 import { fireRules } from '../canon/interpret.js';
 import type { Trigger } from '../canon/rule.js';
@@ -233,6 +233,9 @@ export function isGrave(name: string): boolean {
 }
 
 export interface Burial {
+  /** Beginning again appends the world's rules onto the fresh chain, so the
+   *  log grows — the caller must take this back, not just the refs. */
+  log: EventLog;
   refs: Refs;
   /** The world your corpse is in, or null if you are still alive. */
   grave: string | null;
@@ -255,6 +258,41 @@ export interface Burial {
  * This is the answer to "why fork". Until dying was something history had to
  * keep, forking was a devtool.
  */
+/**
+ * Starts the world over, keeping what it has agreed to.
+ *
+ * Rules live on the chain, which is what makes them forkable — but it also
+ * means every "start again" resets to the world's root and leaves them behind.
+ * Ratify a rule, die, and the rule died with you: the loop this whole increment
+ * exists to build could not close.
+ *
+ * So a fresh run is the root followed by the rules that were in force,
+ * re-appended. They are genuinely on the new chain rather than carried in some
+ * side channel — the new run replays exactly, forks exactly, and verifies
+ * exactly, like any other. And because events are content-addressed, beginning
+ * again twice from the same rules produces the same ids both times.
+ */
+export function beginAgain(
+  log: EventLog,
+  refs: Refs,
+  active: string,
+): { log: EventLog; refs: Refs } {
+  const ref = getRef(refs, active);
+  const rules = fold(log, ref.head).rules;
+  const root = chain(log, ref.head)[0];
+  if (root === undefined) return { log, refs };
+
+  let current = log;
+  let head = root.id;
+  for (const rule of rules) {
+    const done = append(current, head, ratifyRule(fold(current, head), rule));
+    current = done.log;
+    head = done.event.id;
+  }
+
+  return { log: current, refs: setHead(refs, active, head) };
+}
+
 export function buryIfDead(
   log: EventLog,
   refs: Refs,
@@ -262,13 +300,15 @@ export function buryIfDead(
   playerId = 'player',
 ): Burial {
   const ref = getRef(refs, active);
-  if (outcome(fold(log, ref.head), playerId) !== 'dead') return { refs, grave: null };
+  if (outcome(fold(log, ref.head), playerId) !== 'dead') return { log, refs, grave: null };
 
   const past = listRefs(refs).filter((r) => r.name.startsWith(`${active}${GRAVE_MARK}`)).length;
   const grave = `${active}${GRAVE_MARK}${past + 1}`;
 
   const kept = fork(log, refs, active, grave, ref.head, 'died here');
 
-  const root = chain(log, ref.head)[0];
-  return { refs: reset(log, kept, active, root?.id ?? null), grave };
+  // Back to the beginning, but not back to nothing: whatever this world agreed
+  // to, it still plays under.
+  const begun = beginAgain(log, kept, active);
+  return { log: begun.log, refs: begun.refs, grave };
 }

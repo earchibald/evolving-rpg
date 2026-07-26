@@ -23,6 +23,8 @@
             <button id="fork" type="button" class="ghost">fork here</button>
             <button id="rewind" type="button" class="ghost">back 10</button>
             <button id="open-worlds" type="button" class="ghost">worlds&hellip;</button>
+            <button id="open-forge" type="button" class="ghost">the forge&hellip;</button>
+            <button id="again" type="button" class="ghost">run again</button>
           </div>
         </div>
 
@@ -98,6 +100,30 @@
         <menu>
           <button value="cancel" class="ghost">close</button>
         </menu>
+      </form>
+    </dialog>
+
+    <dialog id="forge" class="sheet forge">
+      <h2>the forge</h2>
+      <p class="sheet-line" id="forge-state"></p>
+      <p class="sheet-line"><button id="ask-rule" type="button">ask the world for a rule</button></p>
+
+      <section id="proposal" class="proposal" hidden>
+        <h3 id="proposal-said" class="proposal-said"></h3>
+        <p id="proposal-why" class="sheet-line"></p>
+        <p id="proposal-cites" class="cites"></p>
+
+        <div id="editor" class="editor" hidden></div>
+
+        <menu class="proposal-actions">
+          <button id="accept" type="button">accept</button>
+          <button id="edit" type="button" class="ghost">edit&hellip;</button>
+          <button id="reject" type="button" class="ghost">reject</button>
+        </menu>
+      </section>
+
+      <form method="dialog">
+        <menu><button value="cancel" class="ghost">close</button></menu>
       </form>
     </dialog>
 
