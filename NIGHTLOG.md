@@ -262,3 +262,14 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > sequence, not reading the time. True span: 01:34 to 02:29. The order is
 > exact; git holds the real minutes.*
 
+> [!NOTE]
+> **02:41 — Last pass: the loop got sturdier, the model got flakier**
+> Two of four live proposals tonight arrived with `provenance` lifted outside
+> the rule; the plugin now reattaches a sibling provenance (tolerance, not
+> trust — the validator still judges), and a refused proposal prints its raw
+> reply so you can tell model-flake from plugin-bug. Two other attempts hit
+> plain 502s from the CLI; every failure exited clean with a report in
+> `runs/loops/`. The ratify-worthy **dead-air rule** from the successful run
+> remains the artifact to act on. Naming verified live and Covenant-clean:
+> *ash-jaw stalker*, *hewing axe*.
+
