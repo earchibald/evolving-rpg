@@ -1,3 +1,4 @@
+import type { Rule } from '../canon/rule.js';
 import type { Pos, Stats } from './entity.js';
 import type { Item } from './item.js';
 
@@ -16,6 +17,7 @@ export const SCHEMA_VERSIONS = {
   STRIKE: 1,
   WAIT: 1,
   ITEM_TAKEN: 1,
+  RULE_RATIFIED: 1,
 } as const;
 
 export type EventType = keyof typeof SCHEMA_VERSIONS;
@@ -73,6 +75,13 @@ export interface ItemTakenPayload {
   grants: Stats;
 }
 
+/** A rule entering play. The rule is carried whole rather than by reference,
+ *  because the log is the only store — there is nowhere else to look it up, and
+ *  a world's ruleset must be reconstructible from its chain alone. */
+export interface RuleRatifiedPayload {
+  rule: Rule;
+}
+
 export interface StrikePayload {
   attackerId: string;
   targetId: string;
@@ -95,6 +104,7 @@ export type DraftEvent =
   | { type: 'TURN_ADVANCED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: TurnAdvancedPayload }
   | { type: 'STRIKE'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: StrikePayload }
   | { type: 'WAIT'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: WaitPayload }
-  | { type: 'ITEM_TAKEN'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: ItemTakenPayload };
+  | { type: 'ITEM_TAKEN'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: ItemTakenPayload }
+  | { type: 'RULE_RATIFIED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: RuleRatifiedPayload };
 
 export type GameEvent = DraftEvent & { id: string; parent: string | null; seq: number };

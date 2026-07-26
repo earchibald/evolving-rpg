@@ -18,6 +18,7 @@ function room(entities: Entity[], walls: Array<[number, number]> = []): GameStat
     activeEntityId: entities[0]?.id ?? null,
     seed: 7,
     rngCounter: 0,
+    rules: [],
   };
 }
 

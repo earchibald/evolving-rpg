@@ -2,6 +2,7 @@ import { WALL, makeGrid } from './grid.js';
 import type { Grid } from './grid.js';
 import type { Entity } from './entity.js';
 import type { Item } from './item.js';
+import type { Rule } from '../canon/rule.js';
 
 /** `readonly` throughout, matching `Grid`'s convention, because `apply()` is
  *  required to be pure — the type should refuse in-place mutation rather than
@@ -16,10 +17,15 @@ export interface GameState {
   readonly activeEntityId: string | null;
   readonly seed: number;
   readonly rngCounter: number;
+  /** The R2 rules this world plays under, in ratification order. Derived
+   *  entirely from RULE_RATIFIED events on this chain, which is what makes a
+   *  fork's ruleset differ from its sibling's without anything copying it. */
+  readonly rules: readonly Rule[];
 }
 
 const NO_ENTITIES: readonly Entity[] = Object.freeze([]);
 const NO_ITEMS: readonly Item[] = Object.freeze([]);
+const NO_RULES: readonly Rule[] = Object.freeze([]);
 
 /** What a fold starts from. A WORLD_INIT event replaces it wholesale.
  *  Frozen as well as typed readonly: every fold in the process shares this one
@@ -33,4 +39,5 @@ export const EMPTY_STATE: GameState = Object.freeze({
   activeEntityId: null,
   seed: 0,
   rngCounter: 0,
+  rules: NO_RULES,
 });

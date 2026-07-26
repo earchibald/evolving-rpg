@@ -6,6 +6,8 @@ import type { Entity } from './entity.js';
 import { itemAt } from './item.js';
 import { EXIT, tileAt } from './grid.js';
 import { nextActive } from './turns.js';
+import { MAX_RULES } from '../canon/rule.js';
+import type { Rule } from '../canon/rule.js';
 import { SCHEMA_VERSIONS } from './events.js';
 import type { DraftEvent } from './events.js';
 import type { GameState } from './state.js';
@@ -276,6 +278,30 @@ export function outcome(state: GameState, playerId = 'player'): Outcome {
   if (player === undefined || !isAlive(player)) return 'dead';
   if (tileAt(state.grid, player.pos.x, player.pos.y) === EXIT) return 'escaped';
   return 'playing';
+}
+
+/**
+ * Puts a rule into play.
+ *
+ * The cap is enforced here rather than at validation because it is a property
+ * of a *world*, not of a rule: the same rule may be perfectly ratifiable in a
+ * fork that has room for it. Throwing rather than returning a rejection is
+ * deliberate — by this point the player has already said yes, so a full
+ * ruleset is a bug in whatever offered the choice, not a routine outcome.
+ */
+export function ratifyRule(state: GameState, rule: Rule): Extract<DraftEvent, { type: 'RULE_RATIFIED' }> {
+  if (state.rules.length >= MAX_RULES) {
+    throw new Error(`ratify: this world already holds the limit of ${MAX_RULES} rules`);
+  }
+  return {
+    type: 'RULE_RATIFIED',
+    schemaVersion: SCHEMA_VERSIONS.RULE_RATIFIED,
+    rngCounter: state.rngCounter,
+    // Rules never consume randomness. See the interpreter for why that is a
+    // load-bearing guarantee rather than an accident.
+    rngDraws: 0,
+    payload: { rule },
+  };
 }
 
 export function advanceTurn(state: GameState): Extract<DraftEvent, { type: 'TURN_ADVANCED' }> {

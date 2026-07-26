@@ -35,7 +35,17 @@ function reduce(state: GameState, event: GameEvent): GameState {
         activeEntityId: p.player.id,
         seed: p.seed,
         rngCounter: 0,
+        // A new world plays under no rules, whatever stood before it on the
+        // log. WORLD_INIT replaces state wholesale, and rules are state.
+        rules: [],
       };
+    }
+
+    case 'RULE_RATIFIED': {
+      // A fresh list. The old one is shared with every fold that has already
+      // observed this state, so pushing in place would rewrite history that
+      // something else is already holding.
+      return { ...state, rules: [...state.rules, event.payload.rule] };
     }
 
     case 'MOVE': {

@@ -80,6 +80,7 @@ function fixture(extra: Entity[] = []): GameState {
     activeEntityId: 'player',
     seed: 5,
     rngCounter: 40,
+    rules: [],
   };
 }
 
@@ -218,6 +219,7 @@ describe('striking', () => {
       activeEntityId: 'player',
       seed: 5,
       rngCounter: counter,
+      rules: [],
     };
   }
 
