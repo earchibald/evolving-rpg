@@ -197,6 +197,15 @@ h2 {
   align-items: start;
 }
 
+.rules {
+  margin: 0; padding: 0 .4rem 0 0; list-style: none;
+  display: flex; flex-direction: column; gap: .5rem;
+  height: 9rem;
+}
+.rules li { border-left: 2px solid var(--exit); padding-left: .55rem; }
+.rules .rule-said { display: block; color: var(--ink); }
+.rules .rule-why { color: var(--faint); font-size: .78rem; }
+
 .names, .oracle, .refs {
   margin: 0; padding: 0 .4rem 0 0; list-style: none;
   display: flex; flex-direction: column; gap: .3rem;

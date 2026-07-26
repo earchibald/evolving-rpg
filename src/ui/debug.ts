@@ -6,6 +6,7 @@ import { isAlive } from '../core/entity.js';
 import { outcome, hitChance } from '../core/commands.js';
 import { itemAt } from '../core/item.js';
 import { save, load, clear, emptySession } from '../play/store.js';
+import { readRule } from '../canon/rule.js';
 import { Oracle, describeQuestion } from '../oracle/oracle.js';
 import { cliTransport } from '../oracle/transports.js';
 import { send } from '../channels/channels.js';
@@ -403,6 +404,27 @@ function render(): void {
     threats.appendChild(li);
   }
 
+  // ── what this world has agreed to ─────────────────────────────────────
+  const rulesEl = el('rules');
+  rulesEl.textContent = '';
+  if (state.rules.length === 0) {
+    const li = document.createElement('li');
+    li.className = 'idle';
+    li.textContent = 'no rules yet — this world plays as it was born';
+    rulesEl.appendChild(li);
+  }
+  for (const r of state.rules) {
+    const li = document.createElement('li');
+    const said = document.createElement('span');
+    said.className = 'rule-said';
+    said.textContent = readRule(r);
+    const why = document.createElement('span');
+    why.className = 'rule-why';
+    why.textContent = r.provenance.because;
+    li.append(said, why);
+    rulesEl.appendChild(li);
+  }
+
   // ── under the floorboards ──────────────────────────────────────────────
   const detail = el('detail');
   detail.textContent = '';
@@ -551,6 +573,18 @@ function narrate(fresh: readonly GameEvent[], state: ReturnType<typeof fold>): s
         g.speed === 0 ? '' : `speed +${g.speed}`,
       ].filter((d) => d !== '');
       lines.push(`you take ${calledItem(event.payload.itemId, state)} — ${deltas.join(', ')}`);
+      continue;
+    }
+    if (event.type === 'RULE_FIRED') {
+      // Named by what it did, not by which rule did it. "rule-3 fired" tells a
+      // player nothing; "the world gives back 2" is the thing they can feel.
+      const p = event.payload;
+      const who = named(state, p.actorId);
+      for (const eff of p.effects) {
+        if (eff.kind === 'speak') lines.push(`“${eff.text}”`);
+        else if (eff.kind === 'heal') lines.push(`${who === 'you' ? 'you recover' : `${who} recovers`} ${eff.n}`);
+        else lines.push(`${who === 'you' ? 'you lose' : `${who} loses`} ${eff.n}`);
+      }
       continue;
     }
     if (event.type !== 'STRIKE') continue;

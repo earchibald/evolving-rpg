@@ -251,17 +251,19 @@ export function readRule(rule: Rule): string {
     ITEM_TAKEN: 'you pick something up',
   }[rule.when];
 
+  const plural = (n: number, one: string): string => `${n} ${one}${n === 1 ? '' : 's'}`;
+
   const conditions = rule.require.map((c) => ({
-    noCreatureWithin: `nothing living within ${c.n} squares`,
-    creatureWithin: `something living within ${c.n} squares`,
+    noCreatureWithin: `nothing living within ${plural(c.n, 'square')}`,
+    creatureWithin: `something living within ${plural(c.n, 'square')}`,
     hpAtMost: `your hit points at ${c.n} or below`,
     hpAtLeast: `your hit points at ${c.n} or above`,
   }[c.kind]));
 
   const effects = rule.then.map((e) => (
     e.kind === 'speak' ? `the world says: “${e.text}”`
-      : e.kind === 'heal' ? `you recover ${e.n} hit point${e.n === 1 ? '' : 's'}`
-        : `you lose ${e.n} hit point${e.n === 1 ? '' : 's'}`
+      : e.kind === 'heal' ? `you recover ${plural(e.n, 'hit point')}`
+        : `you lose ${plural(e.n, 'hit point')}`
   ));
 
   const clause = conditions.length === 0 ? when : `${when}, with ${conditions.join(' and ')}`;

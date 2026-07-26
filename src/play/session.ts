@@ -3,6 +3,8 @@ import { getRef, fork, reset, listRefs } from '../log/refs.js';
 import type { Refs } from '../log/refs.js';
 import { attemptMove, advanceTurn, endsTurn, wait, takeUnderfoot, outcome } from '../core/commands.js';
 import { decide } from '../core/ai.js';
+import { fireRules } from '../canon/interpret.js';
+import type { Trigger } from '../canon/rule.js';
 import { findEntity, isAlive } from '../core/entity.js';
 import type { Action } from '../core/ai.js';
 import type { EventLog } from '../log/chain.js';
@@ -23,12 +25,49 @@ export interface Position {
   head: string;
 }
 
-/** Appends a draft, then the turn advance it earns. A refused action earns none. */
-function commit(position: Position, draft: DraftEvent): Position {
-  const acted = append(position.log, position.head, draft);
-  if (!endsTurn(draft)) return { log: acted.log, head: acted.event.id };
+/** Which R2 trigger an action counts as, or null for actions no rule can see. */
+function triggerFor(draft: DraftEvent): Trigger | null {
+  switch (draft.type) {
+    case 'WAIT': return 'WAIT';
+    case 'STRIKE': return 'STRIKE';
+    case 'MOVE_BLOCKED': return 'MOVE_BLOCKED';
+    case 'ITEM_TAKEN': return 'ITEM_TAKEN';
+    default: return null;
+  }
+}
 
-  const turned = append(acted.log, acted.event.id, advanceTurn(fold(acted.log, acted.event.id)));
+/**
+ * Appends a draft, then anything the world's rules have to say about it, then
+ * the turn advance it earns.
+ *
+ * The order is the design. Rules fire *after* the action — so they see the
+ * world it produced — and *before* the turn passes, so their effects belong to
+ * that action rather than arriving out of nowhere on the next one.
+ *
+ * Crucially, whether a turn is earned is decided from `draft` alone and never
+ * from what fired. A blocked move costs nothing; a rule firing on it must not
+ * hand back the turn that bug once gave away for free.
+ *
+ * `rulesFor` is the entity whose rules apply, or null for none. Creatures pass
+ * null: the player ratified a rule reading "you recover 2 hit points", and
+ * firing it for everything on the map would both make that sentence false and
+ * heal the things hunting them.
+ */
+function commit(position: Position, draft: DraftEvent, rulesFor: string | null): Position {
+  const acted = append(position.log, position.head, draft);
+  let current: Position = { log: acted.log, head: acted.event.id };
+
+  const trigger = triggerFor(draft);
+  if (rulesFor !== null && trigger !== null) {
+    for (const firing of fireRules(fold(current.log, current.head), trigger, rulesFor)) {
+      const done = append(current.log, current.head, firing);
+      current = { log: done.log, head: done.event.id };
+    }
+  }
+
+  if (!endsTurn(draft)) return current;
+
+  const turned = append(current.log, current.head, advanceTurn(fold(current.log, current.head)));
   return { log: turned.log, head: turned.event.id };
 }
 
@@ -63,7 +102,7 @@ function draftFor(state: GameState, entityId: string, action: Action): DraftEven
  *  decision, walking there was. */
 function collect(position: Position, entityId: string): Position {
   const taken = takeUnderfoot(fold(position.log, position.head), entityId);
-  return taken === null ? position : commit(position, taken);
+  return taken === null ? position : commit(position, taken, entityId);
 }
 
 export function playerStep(position: Position, playerId: string, dx: number, dy: number): {
@@ -77,7 +116,7 @@ export function playerStep(position: Position, playerId: string, dx: number, dy:
   if (outcome(state, playerId) !== 'playing') return { position, draft: null };
 
   const draft = attemptMove(state, playerId, dx, dy);
-  return { position: collect(commit(position, draft), playerId), draft };
+  return { position: collect(commit(position, draft, playerId), playerId), draft };
 }
 
 /** Hold position and let the world come to you. */
@@ -89,7 +128,7 @@ export function playerWait(position: Position, playerId: string): {
   if (outcome(state, playerId) !== 'playing') return { position, draft: null };
 
   const draft = wait(state, playerId);
-  return { position: commit(position, draft), draft };
+  return { position: commit(position, draft, playerId), draft };
 }
 
 /**
@@ -121,7 +160,8 @@ export function runWorldTurns(position: Position, playerId: string, maxSteps = 6
       current = { log: turned.log, head: turned.event.id };
       continue;
     }
-    current = commit(current, draft);
+    // null: a creature's action never fires the player's rules.
+    current = commit(current, draft, null);
   }
 
   return current;
