@@ -207,6 +207,18 @@ h2 {
   align-items: start;
 }
 
+.scorecard {
+  margin: 0; padding: 0 .4rem 0 0; list-style: none;
+  display: flex; flex-direction: column; gap: .5rem;
+  height: 9rem;
+}
+.scorecard li { border-left: 2px solid var(--rule); padding-left: .55rem; }
+.scorecard li.measured { border-left-color: var(--designer); }
+.scorecard .lens-title { display: block; color: var(--ink); }
+.scorecard .lens-verdict { color: var(--soft); font-size: .78rem; }
+.scorecard li.unmeasured .lens-title { color: var(--faint); }
+.scorecard li.unmeasured .lens-verdict { color: var(--faint); }
+
 .rules {
   margin: 0; padding: 0 .4rem 0 0; list-style: none;
   display: flex; flex-direction: column; gap: .5rem;

@@ -17,6 +17,7 @@ import type { RunSummary } from '../canon/rulesmith.js';
 import { Oracle, describeQuestion } from '../oracle/oracle.js';
 import { cliTransport } from '../oracle/transports.js';
 import { send, loadNotes, saveNotes, NOTES_KEY } from '../channels/channels.js';
+import { CachedCritic } from '../critic/memo.js';
 import type { Channel, Note } from '../channels/channels.js';
 import { WALL, EXIT, idx } from '../core/grid.js';
 import type { EventLog } from '../log/chain.js';
@@ -227,6 +228,9 @@ function calledCreature(kind: string, e: { stats: { hp: number; might: number; s
  *  it was typed into. */
 const notes: Note[] = loadNotes();
 
+/** The lenses, memoised by head — same history, same reading, no recompute. */
+const critic = new CachedCritic();
+
 /** What the player can currently see, so the gamemaster is not answering blind. */
 function scene(): Record<string, unknown> {
   const head = getRef(refs, active).head;
@@ -424,6 +428,23 @@ function render(): void {
     }
     li.append(who, odds);
     threats.appendChild(li);
+  }
+
+  // ── what the lenses see ───────────────────────────────────────────────
+  const scorecardEl = el('scorecard');
+  scorecardEl.textContent = '';
+  const report = critic.read(log, head);
+  for (const r of report.readings) {
+    const li = document.createElement('li');
+    li.className = r.measured ? 'measured' : 'unmeasured';
+    const title = document.createElement('span');
+    title.className = 'lens-title';
+    title.textContent = `#${r.lens} ${r.title} · ${r.figure}`;
+    const verdict = document.createElement('span');
+    verdict.className = 'lens-verdict';
+    verdict.textContent = `${r.verdict} (${r.confidence})`;
+    li.append(title, verdict);
+    scorecardEl.appendChild(li);
   }
 
   // ── what this world has agreed to ─────────────────────────────────────
