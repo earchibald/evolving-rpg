@@ -24,7 +24,6 @@ import type { Refs } from '../log/refs.js';
 import type { Entity } from '../core/entity.js';
 import type { GameEvent } from '../core/events.js';
 
-const FIRST_SEED = 20260724;
 const WIDTH = 24;
 const HEIGHT = 16;
 const WALLS = 60;
@@ -36,11 +35,23 @@ let active = MAIN;
 let forkCount = 0;
 let booted = '';
 
+/**
+ * The first world, and the one a wipe leaves behind.
+ *
+ * The seed used to be a constant, which meant every player saw the same room
+ * and — worse — a wipe handed back the identical map, creature for creature.
+ * "Start over" that starts the same place is not starting over.
+ *
+ * Chosen rather than derived, which is fine: it is an input, like a keypress.
+ * It is recorded in WORLD_INIT, so this world stays exactly as reproducible as
+ * any other, and it is on screen so you can note one you liked.
+ */
 function freshWorld(): void {
+  const seed = Math.floor(Math.random() * 2 ** 31);
   const session = emptySession(MAIN);
-  const first = append(session.log, null, createWorld(FIRST_SEED, WIDTH, HEIGHT, WALLS));
+  const first = append(session.log, null, createWorld(seed, WIDTH, HEIGHT, WALLS));
   log = first.log;
-  refs = createRef(session.refs, MAIN, first.event.id, 0, 'opening run');
+  refs = createRef(session.refs, MAIN, first.event.id, 0, `opening run · seed ${seed}`);
   active = MAIN;
 }
 

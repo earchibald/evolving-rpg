@@ -356,6 +356,38 @@ describe('unlearning', () => {
     expect(oracle.ask(CREATURE).name).toBe('the thing');
   });
 
+  it('does not let an answer from before the wipe land after it', async () => {
+    // The bug this exists for, reported from real play: names kept surviving a
+    // wipe, and a *second* wipe appeared to fix it. The wipe's own re-render
+    // starts fresh calls; those take tens of seconds; the wipe takes none. The
+    // answers landed afterwards and wrote themselves straight into the canon
+    // that had just been emptied. By the second wipe nothing was still in the
+    // air, which is why it looked like it worked.
+    const held = heldTransport();
+    const oracle = new Oracle({ transport: held });
+
+    oracle.ask(CREATURE);          // in flight
+    oracle.unlearn();              // wiped while it is still out there
+    held.release('ash-crawler');   // and now it answers
+    await tick();
+
+    expect(Object.keys(oracle.known())).toHaveLength(0);
+    expect(oracle.ask(CREATURE).source).toBe('fallback');
+    expect(oracle.queue().some((c) => c.state === 'failed')).toBe(true);
+  });
+
+  it('lets a question asked after the wipe answer normally', () => {
+    // The guard must not be a blanket refusal — the new world still needs names.
+    const held = heldTransport();
+    const oracle = new Oracle({ transport: held });
+    oracle.ask(CREATURE);
+    oracle.unlearn();
+
+    // Not blocked by the stale in-flight entry for the same question.
+    oracle.ask(CREATURE);
+    expect(oracle.queue().some((c) => c.state === 'asking')).toBe(true);
+  });
+
   it('is not what forget does — finished work goes, canon stays', async () => {
     const oracle = new Oracle({ transport: stubTransport() });
     oracle.ask(CREATURE);

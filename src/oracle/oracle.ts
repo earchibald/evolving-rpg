@@ -87,6 +87,8 @@ export class Oracle {
    *  become a storm of identical failing calls on every frame. */
   private readonly tries = new Map<string, number>();
   private nextId = 1;
+  /** Bumped by `unlearn`, so answers cannot cross a wipe. */
+  private epoch = 0;
 
   constructor(options: OracleOptions) {
     this.transport = options.transport;
@@ -188,6 +190,14 @@ export class Oracle {
   private async raise(key: string, question: Question): Promise<void> {
     if (this.transport === null) return;
 
+    // Which era of the world this question belongs to. A call takes tens of
+    // seconds; a wipe takes none. Without this the answer to a question asked
+    // before the wipe lands afterwards and writes itself into the canon that
+    // was just emptied — which is exactly why names kept coming back from a
+    // wipe, and why a *second* wipe appeared to work: by then nothing was
+    // still in the air.
+    const era = this.epoch;
+
     const id = String(this.nextId).padStart(4, '0');
     this.nextId += 1;
 
@@ -214,15 +224,22 @@ export class Oracle {
         ms: this.now() - started,
         costUsd: said.costUsd,
       };
-      // A name, once spoken, is permanent. This overwrites the fallback that
-      // was standing in for it — the only time canon is ever rewritten, and
-      // only from a placeholder to the real thing.
-      this.canon.set(key, answer);
-      this.calls.set(id, {
-        ...call,
-        state: 'answered',
-        detail: `${answer.name}${answer.model === null ? '' : ` · ${answer.model}`}`,
-      });
+      if (era !== this.epoch) {
+        // The world it was about no longer exists. Said out loud rather than
+        // dropped in silence, because a call that was paid for and discarded
+        // is worth seeing.
+        this.calls.set(id, { ...call, state: 'failed', detail: 'asked about a world that was wiped' });
+      } else {
+        // A name, once spoken, is permanent. This overwrites the fallback that
+        // was standing in for it — the only time canon is ever rewritten, and
+        // only from a placeholder to the real thing.
+        this.canon.set(key, answer);
+        this.calls.set(id, {
+          ...call,
+          state: 'answered',
+          detail: `${answer.name}${answer.model === null ? '' : ` · ${answer.model}`}`,
+        });
+      }
     } catch (error) {
       // The fallback already committed, so the world keeps its name and play
       // continues. Only the queue records that the world tried and could not.
@@ -295,10 +312,14 @@ export class Oracle {
    * have done nothing, which is exactly what it looked like.
    */
   unlearn(): void {
+    // Bumped first: everything already in flight belongs to the old world and
+    // must not be allowed to answer into the new one.
+    this.epoch += 1;
     this.canon.clear();
     this.tries.clear();
     this.calls.clear();
     this.raisedAt.clear();
+    this.inFlight.clear();
     this.onChange();
   }
 
