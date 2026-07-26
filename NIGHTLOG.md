@@ -470,3 +470,11 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 >    Verified live to the transport (the singleton came home as **gristle
 >    hound**, opus, register-clean); server timeout raised 45s → 120s for
 >    batch-sized calls.
+
+> [!NOTE]
+> **16:4x — Change-glow no longer haunts across worlds**
+> The before→after memory survived a wipe, so a fresh game diffed its empty
+> hands against a dead game's gear ("iron charm +4 hp → —"). The memory now
+> dies at every world boundary — wipe, new world, world switch, begin-again
+> — and survives only the stairs, because descending is the same character's
+> same run. Reproduced live (3 rows glowing), wiped, verified silent (0).

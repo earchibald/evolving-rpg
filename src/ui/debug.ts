@@ -49,6 +49,14 @@ let booted = '';
  * It is recorded in WORLD_INIT, so this world stays exactly as reproducible as
  * any other, and it is on screen so you can note one you liked.
  */
+/** Last seen vitals values, what each was before it changed, and the turn
+ *  until which the change stays lit. Declared above the world-makers because
+ *  they clear it: the before→after memory belongs to one character's run,
+ *  and carrying it across a wipe showed a fresh game diffing its empty
+ *  hands against a dead game's gear — "iron charm +4 hp → —". Descending
+ *  keeps it (same character, same run); everything else forgets. */
+const lastVitals = new Map<string, { value: string; was: string; until: number }>();
+
 function freshWorld(): void {
   const seed = Math.floor(Math.random() * 2 ** 31);
   const session = emptySession(MAIN);
@@ -56,6 +64,7 @@ function freshWorld(): void {
   log = first.log;
   refs = createRef(session.refs, MAIN, first.event.id, 0, `opening run · seed ${seed}`);
   active = MAIN;
+  lastVitals.clear();
 }
 
 /**
@@ -84,6 +93,7 @@ function anotherWorld(): string {
   log = born.log;
   refs = createRef(refs, name, born.event.id, 0, `seed ${seed}`);
   active = name;
+  lastVitals.clear();
   return name;
 }
 
@@ -248,9 +258,6 @@ const notes: Note[] = loadNotes();
 /** The lenses, memoised by head — same history, same reading, no recompute. */
 const critic = new CachedCritic();
 
-/** Last seen vitals values, what each was before it changed, and the turn
- *  until which the change stays lit. */
-const lastVitals = new Map<string, { value: string; was: string; until: number }>();
 
 /** What the player can currently see, so the gamemaster is not answering
  *  blind — and only what they can see, so it is not answering psychic. The
@@ -875,6 +882,9 @@ function render(): void {
     li.style.cursor = 'pointer';
     li.addEventListener('click', () => {
       active = ref.name;
+      // Another world is another character's story: their gear diffed
+      // against this one's would light nonsense.
+      lastVitals.clear();
       persist();
       say(`switched to ${ref.name}`);
       render();
@@ -1510,6 +1520,9 @@ el('again').addEventListener('click', () => {
   const begun = beginAgain(log, refs, active);
   log = begun.log;
   refs = begun.refs;
+  // A fresh run is a fresh sheet: diffing turn 1 against the death that
+  // ended the last run would glow with borrowed history.
+  lastVitals.clear();
   persist();
   say(kept === 0
     ? 'back to the start of this world'
