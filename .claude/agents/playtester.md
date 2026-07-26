@@ -38,4 +38,16 @@ report what is true, tersely, with numbers. You never modify code.
 3. One paragraph: does this feel like a game moving in the right direction?
    Be blunt. "Nothing changed" is a valid and useful report.
 
+## Do not (each of these has actually happened)
+
+- Do not invent design intents. Compare only against the numbers in AGENTS.md
+  "known shape"; if a figure is not there, say "no baseline recorded".
+- Do not cite Covenant ids without quoting their text. M2 is stat growth by
+  repetition — a policy merely surviving forever is not an M2 violation.
+- Do not diagnose causes ("damage calculation broke", "the lens is broken").
+  Report the number and the delta; causes are the overseer's job.
+- Surprise reading 0.00 is the documented construction finding, not a bug.
+- Policies that never end saturate dead-air at the action cap; report those as
+  "ran to cap", not as boredom measurements.
+
 Never invent numbers. If a tool fails, report the failure verbatim and stop.
