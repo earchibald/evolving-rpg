@@ -4,7 +4,7 @@ import { createWorld, ratifyRule } from '../core/commands.js';
 import { playerStep, playerWait, runWorldTurns, buryIfDead, beginAgain, descend, isGrave } from '../play/session.js';
 import { isAlive } from '../core/entity.js';
 import { outcome, hitChance } from '../core/commands.js';
-import { damageDice } from '../core/tables.js';
+import { damageDice, XP_TO_REACH } from '../core/tables.js';
 import { itemAt } from '../core/item.js';
 import { save, load, clear, emptySession } from '../play/store.js';
 import {
@@ -367,7 +367,10 @@ function render(): void {
   const vitals: Array<[string, string, string]> = [
     ['this run', done, done === 'dead' ? 'urgent' : done === 'escaped' ? 'good' : ''],
     ['hit points', player === undefined ? '—' : `${player.stats.hp} / ${player.maxHp}`, hurt ? 'urgent' : ''],
-    ['level', `${state.level} · ${state.xp} xp`, ''],
+    ['level', (() => {
+      const next = XP_TO_REACH[state.level + 1];
+      return next === undefined ? `${state.level} · ${state.xp} xp` : `${state.level} · ${state.xp}/${next} xp`;
+    })(), ''],
     ['you deal', player === undefined ? '—' : (() => { const d = damageDice(player.stats.might); return `${1 + d.flat}–${d.die + d.flat}`; })(), ''],
     ['the way out', toExit, done === 'escaped' ? 'good' : ''],
     ['standing at', player === undefined ? '—' : `${player.pos.x}, ${player.pos.y}`, ''],
