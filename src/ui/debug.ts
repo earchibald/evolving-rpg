@@ -240,8 +240,9 @@ const notes: Note[] = loadNotes();
 /** The lenses, memoised by head — same history, same reading, no recompute. */
 const critic = new CachedCritic();
 
-/** Last seen vitals values, and the turn until which a change stays lit. */
-const lastVitals = new Map<string, { value: string; until: number }>();
+/** Last seen vitals values, what each was before it changed, and the turn
+ *  until which the change stays lit. */
+const lastVitals = new Map<string, { value: string; was: string; until: number }>();
 
 /** What the player can currently see, so the gamemaster is not answering
  *  blind — and only what they can see, so it is not answering psychic. The
@@ -467,19 +468,31 @@ function render(): void {
     ['depth', String(state.depth), ''],
   ];
 
-  // A changed value glows for a few turns — but only rows that change rarely.
-  // Position and the turn counter change every step; a glow that is always on
-  // is a glow that means nothing.
+  // A changed value shows its history for a few turns: what it was (orange),
+  // then what it is (green) — "1–4 → 3–6" — so a pickup or a level explains
+  // itself in place. Only rows that change rarely; position and the turn
+  // counter change every step, and a glow that is always on means nothing.
   const NOTABLE = ['hit points', 'level', 'you deal', 'might · speed · wits', 'wielding', 'wearing', 'depth'];
-  const glowing = (key: string, value: string): boolean => {
-    const was = lastVitals.get(key);
-    if (was !== undefined && was.value !== value) {
-      lastVitals.set(key, { value, until: state.turn + 3 });
-    } else if (was === undefined) {
-      lastVitals.set(key, { value, until: 0 });
+  const remember = (key: string, value: string): { lit: boolean; was: string } => {
+    const prior = lastVitals.get(key);
+    if (prior === undefined) {
+      lastVitals.set(key, { value, was: value, until: 0 });
+      return { lit: false, was: value };
     }
-    const mark = lastVitals.get(key);
-    return mark !== undefined && mark.until >= state.turn && mark.until > 0;
+    if (prior.value !== value) {
+      lastVitals.set(key, { value, was: prior.value, until: state.turn + 3 });
+    }
+    const mark = lastVitals.get(key)!;
+    return { lit: mark.until >= state.turn && mark.until > 0, was: mark.was };
+  };
+  const beforeAfter = (into: HTMLElement, was: string, now: string): void => {
+    const old = document.createElement('span');
+    old.className = 'was';
+    old.textContent = was;
+    const fresh = document.createElement('span');
+    fresh.className = 'now';
+    fresh.textContent = now;
+    into.append(old, document.createTextNode(' → '), fresh);
   };
 
   const vitalsEl = el('vitals');
@@ -491,16 +504,28 @@ function render(): void {
     if (tone !== '') dd.className = tone;
 
     if (typeof value === 'string') {
-      dd.textContent = value;
-      if (NOTABLE.includes(label) && glowing(label, value)) {
-        dd.className = `${dd.className} changed`.trim();
+      if (NOTABLE.includes(label)) {
+        const mark = remember(label, value);
+        if (mark.lit) {
+          dd.className = `${dd.className} changed`.trim();
+          beforeAfter(dd, mark.was, value);
+        } else {
+          dd.textContent = value;
+        }
+      } else {
+        dd.textContent = value;
       }
     } else {
       value.forEach((seg, i) => {
         if (i > 0) dd.append(document.createTextNode(' · '));
         const span = document.createElement('span');
-        span.textContent = seg.text;
-        if (glowing(`${label}#${seg.key}`, seg.text)) span.className = 'changed';
+        const mark = remember(`${label}#${seg.key}`, seg.text);
+        if (mark.lit) {
+          span.className = 'changed';
+          beforeAfter(span, mark.was, seg.text);
+        } else {
+          span.textContent = seg.text;
+        }
         dd.append(span);
       });
     }

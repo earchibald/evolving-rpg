@@ -67,13 +67,24 @@ body {
   font: 14px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
+/* Two columns: everything, and the character. The right rail holds you —
+   vitals, the controls, what is here — and spans every row, sticky, with its
+   own scroll if a short window needs one. However far down the page you
+   read, you are still in view. */
 #app {
-  max-width: 1040px;
+  max-width: 1150px;
   margin: 0 auto;
   padding: 1rem 1.25rem 3rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 21rem;
+  grid-auto-rows: min-content;
+  gap: 1rem 1.25rem;
+  align-items: start;
+}
+.top, .channels-wrap, .rest { grid-column: 1; }
+@media (max-width: 1080px) {
+  #app { grid-template-columns: minmax(0, 1fr); }
+  .panel { grid-column: 1; grid-row: auto; position: static; max-height: none; }
 }
 
 /* ── header ───────────────────────────────────────────────────────────── */
@@ -102,7 +113,7 @@ kbd {
 
 /* ── the board and the panel ──────────────────────────────────────────── */
 
-.play { display: flex; gap: 1.25rem; align-items: flex-start; flex-wrap: wrap; }
+.play { grid-column: 1; }
 .board { display: flex; flex-direction: column; gap: .6rem; }
 
 .grid { display: grid; gap: 1px; width: max-content; }
@@ -119,9 +130,11 @@ kbd {
 .cell.item { background: var(--item); }
 /* The fog. Never seen: nothing — not even the wall's silhouette, because a
    mapped outline is knowledge too. Seen but out of sight: the geometry and
-   the still things, dimmed; creatures are simply not painted there. */
+   the still things, dimmed but *readable* — the first cut sat at 45%
+   brightness and the designer ruled that squinting is not a game feature.
+   Memory reads clearly; only the living is reserved for the lit. */
 .cell.veil { background: #0e1013; }
-.cell.dim { filter: brightness(.45) saturate(.6); }
+.cell.dim { filter: brightness(.74) saturate(.7); }
 /* Ringed rather than filled, so a creature standing on the prize stays visible
    as a creature while the square still reads as worth taking. */
 .cell.guarding { box-shadow: inset 0 0 0 2px var(--item); }
@@ -153,7 +166,13 @@ kbd {
 .status .line.fresh { color: var(--player); }
 .status .turn-mark { color: var(--faint); font-size: .72rem; }
 
-.panel { flex: 1 1 20rem; min-width: 18rem; display: flex; flex-direction: column; gap: 1rem; }
+.panel {
+  display: flex; flex-direction: column; gap: 1rem;
+  grid-column: 2; grid-row: 2 / span 9;
+  position: sticky; top: .5rem; align-self: start;
+  max-height: calc(100vh - 1rem);
+  overflow-y: auto; scrollbar-gutter: stable; overscroll-behavior: contain;
+}
 .panel section, .rest-grid section { display: flex; flex-direction: column; gap: .4rem; }
 
 h2 {
@@ -166,10 +185,13 @@ h2 {
 .vitals dt { color: var(--soft); }
 .vitals dd { margin: 0; font-variant-numeric: tabular-nums; }
 .vitals dd.urgent { color: var(--foe); }
-/* A number that just moved. Lit for a few turns, then ordinary again. The
-   selector covers whole rows and single segments alike, so a stat row can
-   light one number without lying about its neighbours. */
-.vitals .changed { color: var(--player); background: rgba(240, 173, 60, .12); border-radius: 2px; padding: 0 .25rem; }
+/* A number that just moved shows its history: what it was in orange, what it
+   is in green, for a few turns — then ordinary again. The selector covers
+   whole rows and single segments alike, so a stat row can light one number
+   without lying about its neighbours. */
+.vitals .changed { background: rgba(240, 173, 60, .1); border-radius: 2px; padding: 0 .25rem; }
+.vitals .was { color: var(--player); }
+.vitals .now { color: var(--exit); }
 .vitals dd.good { color: var(--exit); }
 
 .threats {

@@ -403,3 +403,20 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > campaign arcs ("later we will have stories"). Recommendation inside:
 > build L1 when naming coherence next bothers play; nothing mechanical
 > moves except through tables.
+
+> [!NOTE]
+> **12:0x — The character rail, and numbers that show their history**
+> 1. **Everything about you lives in one right-hand rail** — vitals, the
+>    buttons (rearranged to fit), and *what is here* — beside the map, sticky
+>    for the whole page: scroll to the lenses and you are still in view. No
+>    more scrolling to find your own hit points. Narrow windows fall back to
+>    stacking.
+> 2. **Changes show BEFORE → AFTER**: pick up a blade and *you deal* reads
+>    `2–4 → 3–6`, *might* reads `4 → 6` — what was, in orange; what is, in
+>    green; for three turns. Same for gear ("— → keen edge +2 might"),
+>    hit points, level, depth.
+> 3. **Remembered rooms are readable now** (brightness 45% → 74%):
+>    squinting is not a game feature.
+> Verified by an agent playing through the browser: BFS-walked to the
+> guarded blade, killed two wolves on the way, leveled mid-fight, equipped —
+> every row told its story.
