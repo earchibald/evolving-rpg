@@ -1,5 +1,28 @@
 # BONES — what finding your body should confer
 
+**DECIDED 2026-07-27** (the designer delegated the call; the choice below
+follows §2's own analysis and a second research pass on graves and loss
+aversion). The composition ships as:
+
+- **D stands as the floor** — finding your body always narrates.
+- **Information, never stats**: standing where you fell borrows that dead
+  life's *eyes* — the floor as it explored it joins your map (pure
+  event-sourcing: the dead run's seen-tiles were always on its timeline).
+  Zero exploit surface; the tradition's hard rule ("emotionally hot,
+  mechanically cold") kept exactly.
+- **F stays open** — `bodyHere` is in the rule vocabulary, so any world may
+  yet ratify its own meaning for its dead, through the trials like any law.
+- **B arrives once, at the bottom** — during the ninth floor's holdout, the
+  world's first stir raises an echo from every body on that floor, wearing
+  your current strength whole. Your deepest deaths become the last things
+  between you and out. Depth-9 only, once per run: no farming surface.
+- Bodies are never lootable. NetHack needed an 80% curse tax because it
+  chose lootable corpses; we decline the whole branch.
+
+The survey that fed the decision follows, unchanged.
+
+---
+
 The designer's call to make, prepared: the tradition surveyed (decades of
 it), the option space distilled, nothing chosen. Written 2026-07-26.
 What exists today: your body persists in this world's grave timelines; the

@@ -1,7 +1,8 @@
 import { append, fold, chain } from '../log/chain.js';
 import { getRef, fork, setHead, listRefs } from '../log/refs.js';
 import type { Refs } from '../log/refs.js';
-import { attemptMove, advanceTurn, endsTurn, wait, takeUnderfoot, outcome, ratifyRule, foundWorld, createWorld, recordBodies, lungeStrike, vigilKept, useCarried } from '../core/commands.js';
+import { attemptMove, advanceTurn, endsTurn, wait, takeUnderfoot, outcome, ratifyRule, foundWorld, createWorld, recordBodies, lungeStrike, vigilKept, useCarried, stirWorld, heartHeld } from '../core/commands.js';
+import { BOTTOM_DEPTH, WAVE_EVERY } from '../core/tables.js';
 import { u32 } from '../core/rng.js';
 import { decide } from '../core/ai.js';
 import { fireRules } from '../canon/interpret.js';
@@ -127,6 +128,18 @@ function passTurn(position: Position, playerId: string): Position {
     for (const event of fireRules(after, 'TURN_PASSED', playerId)) {
       const done = append(current.log, current.head, event);
       current = { log: done.log, head: done.event.id };
+    }
+
+    // The seized world answers back: every WAVE_EVERY turns while the heart
+    // is carried across the bottom, something rises. Here, with the other
+    // things a completed round means — the stir is the world's turn too.
+    const now = fold(current.log, current.head);
+    if (now.depth >= BOTTOM_DEPTH && heartHeld(now, playerId) && now.turn % WAVE_EVERY === 0) {
+      const stirred = stirWorld(now, playerId);
+      if (stirred !== null) {
+        const done = append(current.log, current.head, stirred);
+        current = { log: done.log, head: done.event.id };
+      }
     }
   }
   return current;

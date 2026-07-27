@@ -763,3 +763,27 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > deliberately dumb reflexes (drink under 35%, smoke at 3 tiles) — they
 > are the canary: if a fixed threshold plays the satchel as well as you
 > do, the design has failed and we will hear it. 28 new tests.
+
+> [!NOTE]
+> **00:2x — The world has a bottom, and the bottom has a heart**
+> GESTALT's last rung. The dungeon is no longer forever: floor one now
+> says it plainly — nine floors deep, and something beats at the bottom.
+> The ninth floor turns around: the heart lies at the far end behind the
+> last warden, and the stair you came down by is the way out. Taking the
+> heart fills your hands and seals your satchel; every eight turns the
+> seized world stirs — and the FIRST stir raises your own dead: an echo
+> stands up from every body you left on that floor, wearing your full
+> strength. Reach the stair carrying the heart and the world is won.
+> (Instant-win-on-touch is the anticlimax DCSS diagnosed in its own orb
+> run — the ending is the reversal, not the touch.) Along the way down,
+> the bible keeps its word: promises whisper on the floors before each
+> warden and are confirmed when the warden falls, first delivery per
+> world only. Your bodies now lend you their eyes — stand where you fell
+> and that life's explored map joins yours (knowledge, never stats: the
+> BONES decision, made and documented). Also fixed under the same stone:
+> the warden now keeps the door by ROLE (the by-construction claim had
+> quietly broken — a depth-9 warden rated fourth-scariest on its own
+> floor), and deep wardens finally grow with their floors. Bots can win
+> worlds now; one does, in the tests, every run. Golden regenerated on a
+> livelier seed (13 strikes, a crit, an item, a lunge on record).
+> 707/707 green.

@@ -1,21 +1,21 @@
 {
   "note": "Generated once and committed. Never regenerate to make a failing test pass.",
   "engineVersion": "0.1.0",
-  "seed": 16,
+  "seed": 15,
   "width": 48,
   "height": 32,
   "policy": "brawler",
   "maxActions": 220,
-  "actions": 47,
+  "actions": 69,
   "outcome": "escaped",
-  "head": "d0249508d8b1f34a6fcde2ec12da72d29e3bffc83b59a55f754bba79be33579e",
-  "finalStateHash": "f497131f14d698e57e0eb01c3868030241f8339285c08b814d3485d9bfe7ca40",
+  "head": "927303e21dee7df06b229f5f8d7d32c2e5eee34927eb8f2ad5065316e2beb84c",
+  "finalStateHash": "7bede3ccb6f0f647fec25eec865d508b8dd3cfd48668027f9e7f0eb219cd7f80",
   "events": [
     {
       "type": "WORLD_INIT",
-      "schemaVersion": 7,
+      "schemaVersion": 8,
       "rngCounter": 0,
-      "rngDraws": 155,
+      "rngDraws": 253,
       "payload": {
         "width": 48,
         "height": 32,
@@ -75,32 +75,189 @@
           1,
           1,
           1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
           0,
           0,
           2,
-          0,
-          0,
-          0,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
           1,
           1,
           1,
@@ -117,14 +274,6 @@
           1,
           1,
           1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          0,
-          0,
           0,
           0,
           0,
@@ -139,14 +288,9 @@
           0,
           0,
           0,
-          0,
-          1,
-          1,
           1,
           1,
-          1,
-          1,
-          1,
+          0,
           1,
           1,
           1,
@@ -155,6 +299,13 @@
           1,
           1,
           1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
           1,
           1,
           1,
@@ -177,20 +328,24 @@
           0,
           0,
           0,
-          1,
+          0,
           1,
+          0,
           1,
           1,
+          0,
           1,
           1,
           1,
           1,
-          0,
-          0,
           0,
-          0,
-          0,
+          1,
+          1,
+          1,
+          1,
           1,
+          1,
+          1,
           0,
           0,
           0,
@@ -198,8 +353,7 @@
           0,
           0,
           0,
-          1,
-          1,
+          0,
           1,
           1,
           1,
@@ -220,24 +374,26 @@
           1,
           1,
           0,
-          1,
           1,
           1,
           1,
           1,
-          1,
-          1,
-          1,
-          1,
-          1,
+          0,
           1,
           1,
+          0,
           1,
           0,
           0,
           0,
           0,
           0,
+          0,
+          1,
+          1,
+          1,
+          1,
+          1,
           0,
           0,
           0,
@@ -246,8 +402,6 @@
           0,
           0,
           0,
-          1,
-          1,
           1,
           1,
           1,
@@ -268,25 +422,13 @@
           1,
           1,
           0,
-          1,
-          1,
-          1,
           1,
           1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
           0,
           0,
           0,
           0,
           0,
-          1,
           0,
           0,
           0,
@@ -294,62 +436,20 @@
           0,
           0,
           0,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
           0,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
           0,
           0,
           0,
           0,
           0,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
           1,
           1,
           1,
@@ -364,15 +464,17 @@
           1,
           1,
           0,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
           1,
           1,
+          0,
           1,
+          0,
           1,
           1,
           1,
@@ -382,12 +484,13 @@
           0,
           0,
           0,
-          1,
+          0,
           1,
           1,
           1,
           1,
           1,
+          0,
           1,
           1,
           1,
@@ -408,8 +511,16 @@
           1,
           1,
           1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
           1,
           1,
+          0,
           1,
           0,
           1,
@@ -428,7 +539,6 @@
           1,
           1,
           0,
-          1,
           1,
           1,
           1,
@@ -449,21 +559,18 @@
           1,
           1,
           1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
           0,
-          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
           1,
           1,
+          0,
           1,
+          0,
           1,
           1,
           1,
@@ -480,18 +587,9 @@
           0,
           0,
           0,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
+          0,
+          0,
+          0,
           1,
           1,
           1,
@@ -501,13 +599,6 @@
           1,
           1,
           1,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
           1,
           1,
           1,
@@ -520,35 +611,16 @@
           0,
           0,
           0,
-          0,
-          1,
-          1,
           0,
           0,
           0,
           0,
           0,
-          1,
-          1,
-          1,
-          1,
-          1,
           0,
           0,
           0,
           0,
           0,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
           0,
           0,
           0,
@@ -556,14 +628,6 @@
           0,
           0,
           0,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
           0,
           0,
           0,
@@ -576,16 +640,10 @@
           0,
           0,
           0,
-          1,
           1,
           1,
           1,
           1,
-          0,
-          0,
-          0,
-          0,
-          0,
           1,
           1,
           1,
@@ -597,13 +655,6 @@
           1,
           1,
           1,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
           0,
           0,
           0,
@@ -611,28 +662,10 @@
           0,
           0,
           0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          1,
-          1,
-          1,
-          1,
-          1,
           1,
           1,
-          1,
-          1,
-          1,
-          1,
-          0,
-          0,
           0,
-          0,
+          1,
           0,
           1,
           1,
@@ -652,20 +685,13 @@
           0,
           0,
           0,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
+          0,
           1,
+          0,
           1,
           1,
-          0,
           1,
           1,
-          0,
           1,
           1,
           1,
@@ -682,12 +708,13 @@
           0,
           0,
           0,
-          1,
-          1,
-          1,
+          0,
+          0,
           1,
           1,
+          0,
           1,
+          0,
           1,
           1,
           1,
@@ -700,16 +727,6 @@
           1,
           1,
           0,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
           0,
           0,
           0,
@@ -717,17 +734,11 @@
           0,
           0,
           0,
-          1,
-          1,
-          1,
-          1,
-          1,
           1,
-          1,
+          0,
           1,
           1,
           1,
-          0,
           1,
           1,
           1,
@@ -741,11 +752,15 @@
           1,
           1,
           1,
+          0,
           1,
+          0,
           1,
           1,
+          0,
           1,
           1,
+          0,
           1,
           0,
           1,
@@ -758,6 +773,8 @@
           1,
           1,
           1,
+          1,
+          0,
           0,
           0,
           0,
@@ -766,6 +783,7 @@
           0,
           0,
           1,
+          0,
           1,
           1,
           1,
@@ -775,7 +793,6 @@
           1,
           1,
           1,
-          0,
           1,
           1,
           1,
@@ -783,9 +800,17 @@
           1,
           1,
           1,
+          0,
           1,
+          0,
           1,
           1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
           1,
           1,
           1,
@@ -795,45 +820,25 @@
           1,
           1,
           1,
-          0,
           1,
           1,
           1,
           1,
           1,
           1,
+          0,
           1,
           1,
           1,
           1,
-          0,
-          0,
           0,
-          0,
-          0,
-          0,
-          0,
           1,
           1,
           1,
           1,
           1,
           1,
-          1,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
           1,
-          0,
-          0,
-          0,
-          0,
-          0,
           1,
           1,
           1,
@@ -844,18 +849,10 @@
           1,
           1,
           0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
+          1,
           0,
+          1,
+          1,
           0,
           0,
           0,
@@ -868,25 +865,16 @@
           1,
           1,
           1,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
+          1,
+          1,
           1,
-          0,
-          0,
-          0,
-          0,
-          0,
+          1,
           1,
           1,
           1,
           1,
           1,
+          0,
           1,
           1,
           1,
@@ -902,28 +890,17 @@
           1,
           1,
           1,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
           0,
+          1,
           0,
+          1,
+          1,
           0,
           0,
           0,
@@ -939,45 +916,25 @@
           1,
           1,
           1,
-          0,
           1,
           1,
           1,
           1,
           1,
           1,
+          0,
           1,
           1,
           1,
           1,
-          0,
-          0,
           0,
-          0,
-          0,
-          0,
-          0,
-          0,
           1,
           1,
           1,
           1,
           1,
           1,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
           1,
-          0,
-          0,
-          0,
-          0,
-          0,
           1,
           1,
           1,
@@ -989,8 +946,10 @@
           1,
           0,
           1,
+          0,
           1,
           1,
+          0,
           0,
           0,
           0,
@@ -1001,31 +960,25 @@
           1,
           1,
           1,
-          0,
           1,
           1,
           1,
-          0,
           1,
           1,
           1,
           1,
           1,
           1,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
+          1,
           0,
           1,
+          1,
           0,
           0,
           0,
           0,
           0,
+          1,
           1,
           1,
           1,
@@ -1035,8 +988,15 @@
           1,
           1,
           1,
+          1,
+          1,
+          1,
+          1,
           0,
+          1,
           0,
+          1,
+          1,
           0,
           0,
           0,
@@ -1056,10 +1016,6 @@
           0,
           0,
           0,
-          1,
-          1,
-          1,
-          1,
           0,
           0,
           0,
@@ -1068,37 +1024,20 @@
           0,
           0,
           0,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
+          0,
+          0,
           1,
           1,
           1,
-          0,
           1,
           1,
           1,
-          0,
-          0,
-          0,
-          0,
-          0,
           1,
           1,
           1,
           1,
           1,
           1,
-          0,
           0,
           0,
           0,
@@ -1112,7 +1051,6 @@
           1,
           1,
           0,
-          0,
           1,
           1,
           1,
@@ -1132,8 +1070,10 @@
           1,
           1,
           0,
-          1,
-          1,
+          0,
+          0,
+          0,
+          0,
           1,
           1,
           1,
@@ -1146,13 +1086,20 @@
           1,
           1,
           1,
-          0,
           0,
           0,
           0,
           0,
           0,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
           0,
+          1,
           0,
           0,
           0,
@@ -1172,16 +1119,6 @@
           1,
           1,
           1,
-          1,
-          1,
-          1,
-          1,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
           1,
           1,
           1,
@@ -1194,6 +1131,8 @@
           1,
           1,
           1,
+          0,
+          0,
           0,
           0,
           0,
@@ -1208,6 +1147,8 @@
           1,
           1,
           0,
+          1,
+          0,
           0,
           0,
           0,
@@ -1224,12 +1165,6 @@
           1,
           1,
           1,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
           1,
           1,
           1,
@@ -1242,7 +1177,11 @@
           1,
           1,
           1,
+          1,
+          1,
           0,
+          1,
+          1,
           0,
           0,
           0,
@@ -1256,6 +1195,8 @@
           1,
           1,
           0,
+          1,
+          0,
           0,
           0,
           0,
@@ -1272,12 +1213,6 @@
           1,
           1,
           1,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
           1,
           1,
           1,
@@ -1290,7 +1225,16 @@
           1,
           1,
           1,
+          0,
+          0,
+          0,
+          0,
           1,
+          0,
+          0,
+          0,
+          0,
+          0,
           1,
           1,
           1,
@@ -1298,20 +1242,13 @@
           1,
           1,
           1,
+          0,
           1,
           1,
           1,
           1,
           1,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
           0,
-          0,
-          1,
           1,
           1,
           1,
@@ -1320,12 +1257,6 @@
           1,
           1,
           1,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
           1,
           1,
           1,
@@ -1342,11 +1273,16 @@
           1,
           1,
           1,
+          0,
+          0,
+          0,
+          0,
           1,
           1,
           1,
           1,
           1,
+          0,
           1,
           1,
           1,
@@ -1354,11 +1290,13 @@
           1,
           1,
           1,
+          0,
           1,
           1,
           1,
           1,
           1,
+          0,
           1,
           1,
           1,
@@ -1368,12 +1306,6 @@
           1,
           1,
           1,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
           1,
           1,
           1,
@@ -1389,23 +1321,39 @@
           1,
           1,
           1,
+          0,
+          0,
+          0,
+          0,
           1,
           1,
           1,
           1,
           1,
+          0,
           1,
           1,
           1,
           1,
           1,
+          0,
+          0,
+          0,
+          0,
+          0,
           1,
           1,
           1,
+          0,
           1,
           1,
           1,
           1,
+          0,
+          0,
+          0,
+          0,
+          0,
           1,
           1,
           1,
@@ -1421,15 +1369,39 @@
           1,
           1,
           1,
+          0,
+          0,
+          0,
+          0,
           1,
           1,
           1,
           1,
           1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
           1,
           1,
           1,
           1,
+          0,
+          0,
+          0,
+          0,
+          0,
           1,
           1,
           1,
@@ -1445,6 +1417,10 @@
           1,
           1,
           1,
+          0,
+          0,
+          0,
+          0,
           1,
           1,
           1,
@@ -1456,9 +1432,24 @@
           1,
           1,
           1,
+          0,
+          0,
+          0,
+          0,
+          0,
           1,
           1,
           1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
           1,
           1,
           1,
@@ -1474,6 +1465,10 @@
           1,
           1,
           1,
+          0,
+          0,
+          0,
+          0,
           1,
           1,
           1,
@@ -1498,6 +1493,11 @@
           1,
           1,
           1,
+          0,
+          0,
+          0,
+          0,
+          0,
           1,
           1,
           1,
@@ -1557,8 +1557,8 @@
           1,
           1
         ],
-        "seed": 16,
-        "story": "the door · 14 rooms, 3 loops · the way out is 32 steps of walking · a budget of 39 paid 31 for 2: bruiser, skirmisher · bruiser watches the stairs · keen edge lies guarded",
+        "seed": 15,
+        "story": "the door · 14 rooms, 3 loops · the way out is 62 steps of walking · a budget of 39 paid 36 for 2: stalker, skirmisher · stalker watches the stairs · keen edge lies guarded · vital draught lies where the path does not go · the world runs 9 floors deep, and something beats at the bottom",
         "motif": "door",
         "depth": 1,
         "xp": 0,
@@ -1568,12 +1568,26 @@
             "id": "relic-1",
             "kind": "keen edge",
             "pos": {
-              "x": 10,
-              "y": 21
+              "x": 14,
+              "y": 20
             },
             "grants": {
               "hp": 0,
               "might": 2,
+              "wits": 0,
+              "speed": 0
+            }
+          },
+          {
+            "id": "provision-1",
+            "kind": "vital draught",
+            "pos": {
+              "x": 15,
+              "y": 13
+            },
+            "grants": {
+              "hp": 0,
+              "might": 0,
               "wits": 0,
               "speed": 0
             }
@@ -1583,8 +1597,8 @@
           "id": "player",
           "kind": "you",
           "pos": {
-            "x": 21,
-            "y": 17
+            "x": 7,
+            "y": 28
           },
           "stats": {
             "hp": 10,
@@ -1597,16 +1611,16 @@
         "opponents": [
           {
             "id": "foe-1",
-            "kind": "bruiser",
+            "kind": "stalker",
             "pos": {
-              "x": 10,
-              "y": 1
+              "x": 44,
+              "y": 4
             },
             "stats": {
-              "hp": 7,
-              "might": 4,
-              "wits": 1,
-              "speed": 1
+              "hp": 3,
+              "might": 3,
+              "wits": 2,
+              "speed": 4
             },
             "tags": []
           },
@@ -1614,8 +1628,8 @@
             "id": "foe-2",
             "kind": "skirmisher",
             "pos": {
-              "x": 10,
-              "y": 21
+              "x": 14,
+              "y": 20
             },
             "stats": {
               "hp": 4,
@@ -1627,849 +1641,1214 @@
           }
         ]
       },
-      "id": "dc4b2276d0d2b99b8f41f951b5c3d8a7eadb96085d9957c37674780207a5ba96",
+      "id": "815b653c97eb02e94eeee36fa31c410182deb4fa78a9ff37dd2e4d8992221279",
       "parent": null,
       "seq": 0
     },
     {
       "type": "MOVE",
       "schemaVersion": 2,
-      "rngCounter": 155,
+      "rngCounter": 253,
       "rngDraws": 0,
       "payload": {
         "entityId": "player",
         "from": {
-          "x": 21,
-          "y": 17
+          "x": 7,
+          "y": 28
         },
         "to": {
-          "x": 21,
-          "y": 18
+          "x": 7,
+          "y": 27
         }
       },
-      "id": "d784bf5ed52cbcad167beef3fa580afcd96b0555a08d046e0494d57de695b5e0",
-      "parent": "dc4b2276d0d2b99b8f41f951b5c3d8a7eadb96085d9957c37674780207a5ba96",
+      "id": "1ab7486458282de16fab5c1d83ec46255843b42b8c62f57e24dc6483c749ec11",
+      "parent": "815b653c97eb02e94eeee36fa31c410182deb4fa78a9ff37dd2e4d8992221279",
       "seq": 1
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 155,
+      "rngCounter": 253,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-2",
         "turn": 1
       },
-      "id": "f4324b21c820c8b0cb001a4f48c39b7223d943057422915d2f01ea575c89f089",
-      "parent": "d784bf5ed52cbcad167beef3fa580afcd96b0555a08d046e0494d57de695b5e0",
+      "id": "80360dbd2e5807f38423effd7788523bbc5a179b97c59bdb376a317ddd96f037",
+      "parent": "1ab7486458282de16fab5c1d83ec46255843b42b8c62f57e24dc6483c749ec11",
       "seq": 2
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 155,
+      "rngCounter": 253,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-1",
-        "turn": 1
+        "turn": 2
       },
-      "id": "1fe507fcdff1c2fae3b48ad973efafbb782fe5ab604098027a99d689b0ebb13a",
-      "parent": "f4324b21c820c8b0cb001a4f48c39b7223d943057422915d2f01ea575c89f089",
+      "id": "dcfd2a7a0ed753ebaeea5419e82732274f640905078683d148bb17131c294ab1",
+      "parent": "80360dbd2e5807f38423effd7788523bbc5a179b97c59bdb376a317ddd96f037",
       "seq": 3
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 155,
+      "rngCounter": 253,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "player",
         "turn": 2
       },
-      "id": "1db79c39b32c3016b49b2eb4c1c98b289e5ba36771868cf1c053d764a3da4093",
-      "parent": "1fe507fcdff1c2fae3b48ad973efafbb782fe5ab604098027a99d689b0ebb13a",
+      "id": "bf1383b611cbf497aacc9ca37adda645fd3305597d070f8b008c919c1452e891",
+      "parent": "dcfd2a7a0ed753ebaeea5419e82732274f640905078683d148bb17131c294ab1",
       "seq": 4
     },
     {
       "type": "MOVE",
       "schemaVersion": 2,
-      "rngCounter": 155,
+      "rngCounter": 253,
       "rngDraws": 0,
       "payload": {
         "entityId": "player",
         "from": {
-          "x": 21,
-          "y": 18
+          "x": 7,
+          "y": 27
         },
         "to": {
-          "x": 21,
-          "y": 19
+          "x": 7,
+          "y": 26
         }
       },
-      "id": "1e75371e1257000e09edbde35e0fc0d795721d4a62c9e819dd0874d0371bd975",
-      "parent": "1db79c39b32c3016b49b2eb4c1c98b289e5ba36771868cf1c053d764a3da4093",
+      "id": "1c382819ed7cb58aab2a4b441e6f674f151a0d0db5c83fadcc7a2442ef8a2da0",
+      "parent": "bf1383b611cbf497aacc9ca37adda645fd3305597d070f8b008c919c1452e891",
       "seq": 5
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 155,
+      "rngCounter": 253,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-2",
         "turn": 2
       },
-      "id": "dfded42c761214c058500238ae3df84bf9a9885ba32d60e9af5174be3af2d073",
-      "parent": "1e75371e1257000e09edbde35e0fc0d795721d4a62c9e819dd0874d0371bd975",
+      "id": "6ece499682c23c156511b7b39a8369989de0bd1db5a9f99dafc8c1dcfa07ca09",
+      "parent": "1c382819ed7cb58aab2a4b441e6f674f151a0d0db5c83fadcc7a2442ef8a2da0",
       "seq": 6
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 155,
+      "rngCounter": 253,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-1",
-        "turn": 2
+        "turn": 3
       },
-      "id": "259742b28a3c44461d7680173a7554833bfa2bd7b267cfce6ebc3cfad91599c9",
-      "parent": "dfded42c761214c058500238ae3df84bf9a9885ba32d60e9af5174be3af2d073",
+      "id": "e08f328097e4f56cbfa21f0b3e3ca1f0eef4c05f7712bdc9769f00892b4decf3",
+      "parent": "6ece499682c23c156511b7b39a8369989de0bd1db5a9f99dafc8c1dcfa07ca09",
       "seq": 7
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 155,
+      "rngCounter": 253,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "player",
         "turn": 3
       },
-      "id": "c76f22eb0b7e505b665f20cfa17f78494ecdf8ea0ca6c0f558fc3899080ce37c",
-      "parent": "259742b28a3c44461d7680173a7554833bfa2bd7b267cfce6ebc3cfad91599c9",
+      "id": "449d28ccd1cf6dc36b0c3553b3b82945b351bf9557c08b54f0a3007cba406d0e",
+      "parent": "e08f328097e4f56cbfa21f0b3e3ca1f0eef4c05f7712bdc9769f00892b4decf3",
       "seq": 8
     },
     {
       "type": "MOVE",
       "schemaVersion": 2,
-      "rngCounter": 155,
+      "rngCounter": 253,
       "rngDraws": 0,
       "payload": {
         "entityId": "player",
         "from": {
-          "x": 21,
-          "y": 19
+          "x": 7,
+          "y": 26
         },
         "to": {
-          "x": 21,
-          "y": 20
+          "x": 7,
+          "y": 25
         }
       },
-      "id": "856fabf9cd3afd2d4f05f9103e0249eb90893d9345452e2b953f56bb759af311",
-      "parent": "c76f22eb0b7e505b665f20cfa17f78494ecdf8ea0ca6c0f558fc3899080ce37c",
+      "id": "3522e46d618f5c54451e65b33cc9966a6e7d5359b5cc6b1d19c8aade797b2bff",
+      "parent": "449d28ccd1cf6dc36b0c3553b3b82945b351bf9557c08b54f0a3007cba406d0e",
       "seq": 9
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 155,
+      "rngCounter": 253,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-2",
         "turn": 3
       },
-      "id": "c797f0c55d35a818b8342f9b2181e54b745b5362d948b08d1c4039efa50870a9",
-      "parent": "856fabf9cd3afd2d4f05f9103e0249eb90893d9345452e2b953f56bb759af311",
+      "id": "bc156de6f6a541f1762a0fea993aed0df11ba894f293e15182cfdf2f2a7d2557",
+      "parent": "3522e46d618f5c54451e65b33cc9966a6e7d5359b5cc6b1d19c8aade797b2bff",
       "seq": 10
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 155,
+      "rngCounter": 253,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-1",
-        "turn": 3
+        "turn": 4
       },
-      "id": "fe1e2459bea55f20a5864eb890c52d08260b3ac500c9c32bcc3cf4052fd35c5f",
-      "parent": "c797f0c55d35a818b8342f9b2181e54b745b5362d948b08d1c4039efa50870a9",
+      "id": "f69b1982d9072d17eadc504755e1532635c649f09821db7f30625f7732c90608",
+      "parent": "bc156de6f6a541f1762a0fea993aed0df11ba894f293e15182cfdf2f2a7d2557",
       "seq": 11
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 155,
+      "rngCounter": 253,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "player",
         "turn": 4
       },
-      "id": "3da6837661760356d0555feb2ae7f2755b45bd2ec808fb7785961a299621d3d9",
-      "parent": "fe1e2459bea55f20a5864eb890c52d08260b3ac500c9c32bcc3cf4052fd35c5f",
+      "id": "893ac08e2183c9748aa0de0c8f003438b9c361f0a4510a7a522dd8f74750dfeb",
+      "parent": "f69b1982d9072d17eadc504755e1532635c649f09821db7f30625f7732c90608",
       "seq": 12
     },
     {
       "type": "MOVE",
       "schemaVersion": 2,
-      "rngCounter": 155,
+      "rngCounter": 253,
       "rngDraws": 0,
       "payload": {
         "entityId": "player",
         "from": {
-          "x": 21,
-          "y": 20
+          "x": 7,
+          "y": 25
         },
         "to": {
-          "x": 21,
-          "y": 21
+          "x": 7,
+          "y": 24
         }
       },
-      "id": "4aa1175925d5d2900ef261701249659e1cc6bd5d7de3367e24fc6eefbf65f6ef",
-      "parent": "3da6837661760356d0555feb2ae7f2755b45bd2ec808fb7785961a299621d3d9",
+      "id": "26a9b9337a6aed989bb2ca2b238852f88b98fbd9456f9b71a3127fe59dcb3544",
+      "parent": "893ac08e2183c9748aa0de0c8f003438b9c361f0a4510a7a522dd8f74750dfeb",
       "seq": 13
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 155,
+      "rngCounter": 253,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-2",
         "turn": 4
       },
-      "id": "23bcab304d9ede1c7ed7f5a00f7c8383313c50946c4bec70ba9bd13f76b56d0e",
-      "parent": "4aa1175925d5d2900ef261701249659e1cc6bd5d7de3367e24fc6eefbf65f6ef",
+      "id": "143dd996f9e4f6d1c1e2ceaee8587fc388db7b7af0df380dff3bc04b206c02af",
+      "parent": "26a9b9337a6aed989bb2ca2b238852f88b98fbd9456f9b71a3127fe59dcb3544",
       "seq": 14
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 155,
+      "rngCounter": 253,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-1",
-        "turn": 4
+        "turn": 5
       },
-      "id": "49f0e9933888d7ae0e6fcc5407b9569df45058f19f1156c1b25503358ea0eed4",
-      "parent": "23bcab304d9ede1c7ed7f5a00f7c8383313c50946c4bec70ba9bd13f76b56d0e",
+      "id": "7b94ae67862040db7150fa29d69e9eaf706f53eabb80017619ed8cd8a7b24aa0",
+      "parent": "143dd996f9e4f6d1c1e2ceaee8587fc388db7b7af0df380dff3bc04b206c02af",
       "seq": 15
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 155,
+      "rngCounter": 253,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "player",
         "turn": 5
       },
-      "id": "c9676a9763d9d2530e5c67ffec43bfdeb7ce5ad555e8351fb12931a04783c1af",
-      "parent": "49f0e9933888d7ae0e6fcc5407b9569df45058f19f1156c1b25503358ea0eed4",
+      "id": "33e1a85c8565fda5d8d7ac7fa8aaa2c168f1cf81169041b736605de35232df2e",
+      "parent": "7b94ae67862040db7150fa29d69e9eaf706f53eabb80017619ed8cd8a7b24aa0",
       "seq": 16
     },
     {
       "type": "MOVE",
       "schemaVersion": 2,
-      "rngCounter": 155,
+      "rngCounter": 253,
       "rngDraws": 0,
       "payload": {
         "entityId": "player",
         "from": {
-          "x": 21,
-          "y": 21
+          "x": 7,
+          "y": 24
         },
         "to": {
-          "x": 20,
-          "y": 21
+          "x": 7,
+          "y": 23
         }
       },
-      "id": "863fccc3e1881c0b079a403a468138c07b3b49ca53c4234b8fe2613916965638",
-      "parent": "c9676a9763d9d2530e5c67ffec43bfdeb7ce5ad555e8351fb12931a04783c1af",
+      "id": "59f9d0c7b9481fa297e3972b04edff3074c436656886caccd2cf420b34888491",
+      "parent": "33e1a85c8565fda5d8d7ac7fa8aaa2c168f1cf81169041b736605de35232df2e",
       "seq": 17
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 155,
+      "rngCounter": 253,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-2",
         "turn": 5
       },
-      "id": "34a774e382d9b9b415d404e828487259d0ae92caa5169b22b246a98a200cf871",
-      "parent": "863fccc3e1881c0b079a403a468138c07b3b49ca53c4234b8fe2613916965638",
+      "id": "f455108ad7fbb54e2f44cf32650fcdf70f0ea54c1d77fa47447189b3efe34f5a",
+      "parent": "59f9d0c7b9481fa297e3972b04edff3074c436656886caccd2cf420b34888491",
       "seq": 18
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 155,
+      "rngCounter": 253,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-1",
-        "turn": 5
+        "turn": 6
       },
-      "id": "dd5d9184d4a6a79510858d4d730c1b527477d5630c80c0bd2426ca8e62df3ac9",
-      "parent": "34a774e382d9b9b415d404e828487259d0ae92caa5169b22b246a98a200cf871",
+      "id": "d4f158c8296e8bf22222c2e10791814bb3a4b2767908d047ea3c7692ed07e0b1",
+      "parent": "f455108ad7fbb54e2f44cf32650fcdf70f0ea54c1d77fa47447189b3efe34f5a",
       "seq": 19
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 155,
+      "rngCounter": 253,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "player",
         "turn": 6
       },
-      "id": "b7383fb11740a605b239847ff4170375ce47d9a66afd9fd55450904c35d54d0b",
-      "parent": "dd5d9184d4a6a79510858d4d730c1b527477d5630c80c0bd2426ca8e62df3ac9",
+      "id": "66c1de0be3b814ab86695cd19409693c2020ed06fa582ec54ff87946e70903db",
+      "parent": "d4f158c8296e8bf22222c2e10791814bb3a4b2767908d047ea3c7692ed07e0b1",
       "seq": 20
     },
     {
       "type": "MOVE",
       "schemaVersion": 2,
-      "rngCounter": 155,
+      "rngCounter": 253,
       "rngDraws": 0,
       "payload": {
         "entityId": "player",
         "from": {
-          "x": 20,
-          "y": 21
+          "x": 7,
+          "y": 23
         },
         "to": {
-          "x": 19,
-          "y": 21
+          "x": 8,
+          "y": 23
         }
       },
-      "id": "a7b8b9b1d6268548d544f148d238716474f8c245bb0086a05609ac300b3f564c",
-      "parent": "b7383fb11740a605b239847ff4170375ce47d9a66afd9fd55450904c35d54d0b",
+      "id": "108a597de271ef64c0772e1ff5aabab1eb29c5005a917cf56a5169fdb01f542e",
+      "parent": "66c1de0be3b814ab86695cd19409693c2020ed06fa582ec54ff87946e70903db",
       "seq": 21
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 155,
+      "rngCounter": 253,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-2",
         "turn": 6
       },
-      "id": "9d45dd043423fb0a990822aa6b03113732660e16a9593f20118722f49f5c1c35",
-      "parent": "a7b8b9b1d6268548d544f148d238716474f8c245bb0086a05609ac300b3f564c",
+      "id": "31c8dc9f3952de88fdbdefdf9c27f18cbf32307a59186e3bb57deb4fc7d3150a",
+      "parent": "108a597de271ef64c0772e1ff5aabab1eb29c5005a917cf56a5169fdb01f542e",
       "seq": 22
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 155,
+      "rngCounter": 253,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-1",
-        "turn": 6
+        "turn": 7
       },
-      "id": "b1e11152e8a914c11f39b5113fc0d1817b8727bd7ddff8aecf9b8a8378d25a9c",
-      "parent": "9d45dd043423fb0a990822aa6b03113732660e16a9593f20118722f49f5c1c35",
+      "id": "3f757e5ebc07712bf71b134d7171f4bcf5a47c20af6af2dabce0eb1fa69005a8",
+      "parent": "31c8dc9f3952de88fdbdefdf9c27f18cbf32307a59186e3bb57deb4fc7d3150a",
       "seq": 23
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 155,
+      "rngCounter": 253,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "player",
         "turn": 7
       },
-      "id": "d19c3690651a578e0672bc28156144445c27d2c25f52c11a0a9a439bf57d445f",
-      "parent": "b1e11152e8a914c11f39b5113fc0d1817b8727bd7ddff8aecf9b8a8378d25a9c",
+      "id": "326e4b97140371d4f6a40abcc649001ea741512ac82ef7c9803ac548ff6a4524",
+      "parent": "3f757e5ebc07712bf71b134d7171f4bcf5a47c20af6af2dabce0eb1fa69005a8",
       "seq": 24
     },
     {
       "type": "MOVE",
       "schemaVersion": 2,
-      "rngCounter": 155,
+      "rngCounter": 253,
       "rngDraws": 0,
       "payload": {
         "entityId": "player",
         "from": {
-          "x": 19,
-          "y": 21
+          "x": 8,
+          "y": 23
         },
         "to": {
-          "x": 18,
-          "y": 21
+          "x": 9,
+          "y": 23
         }
       },
-      "id": "25aa57e6bb3cb11bc8fa61ab9bafa9e09c681082c43c8b908cb1d88fb773f842",
-      "parent": "d19c3690651a578e0672bc28156144445c27d2c25f52c11a0a9a439bf57d445f",
+      "id": "9087fa43af58e5e395d7932085a6923185b874a921d43fbff3ef997037b6fad8",
+      "parent": "326e4b97140371d4f6a40abcc649001ea741512ac82ef7c9803ac548ff6a4524",
       "seq": 25
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 155,
+      "rngCounter": 253,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-2",
         "turn": 7
       },
-      "id": "22a0ce323488d5985fdc922e1ac1e8f3e71bbe2efcbdb27db3c7a647cd8b41bd",
-      "parent": "25aa57e6bb3cb11bc8fa61ab9bafa9e09c681082c43c8b908cb1d88fb773f842",
+      "id": "8e683fd44364758e34903a520e589ba735a9ae07f2a6343487b5c588ac0c72a6",
+      "parent": "9087fa43af58e5e395d7932085a6923185b874a921d43fbff3ef997037b6fad8",
       "seq": 26
     },
     {
       "type": "MOVE",
       "schemaVersion": 2,
-      "rngCounter": 155,
+      "rngCounter": 253,
       "rngDraws": 0,
       "payload": {
         "entityId": "foe-2",
         "from": {
-          "x": 10,
-          "y": 21
+          "x": 14,
+          "y": 20
         },
         "to": {
-          "x": 11,
+          "x": 14,
           "y": 21
         }
       },
-      "id": "b76c12024c3c834b9ec1433b312530634117a7c3e65d8a56a3a946e985b5f648",
-      "parent": "22a0ce323488d5985fdc922e1ac1e8f3e71bbe2efcbdb27db3c7a647cd8b41bd",
+      "id": "bc6c5b16a87b43aec1f356f4946e452d3eedd2282c58138e4ffa59040f579bfe",
+      "parent": "8e683fd44364758e34903a520e589ba735a9ae07f2a6343487b5c588ac0c72a6",
       "seq": 27
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 155,
+      "rngCounter": 253,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-1",
-        "turn": 7
+        "turn": 8
       },
-      "id": "23037fb01fb8edc15204f8bbc5de2330cfb105d5103b2ad3002b5e3e020a8c6f",
-      "parent": "b76c12024c3c834b9ec1433b312530634117a7c3e65d8a56a3a946e985b5f648",
+      "id": "ecec9ec32d7dbfa8c8220e0d7807dd56e8f9283fde91ba6762b28ba6254d2d13",
+      "parent": "bc6c5b16a87b43aec1f356f4946e452d3eedd2282c58138e4ffa59040f579bfe",
       "seq": 28
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 155,
+      "rngCounter": 253,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "player",
         "turn": 8
       },
-      "id": "c5af20e9c7862cebf1027a7f01ada4fcaebd4c35a8d0e60517151e3d59f8bc36",
-      "parent": "23037fb01fb8edc15204f8bbc5de2330cfb105d5103b2ad3002b5e3e020a8c6f",
+      "id": "0eb59c3afa70d464832913bb2f5b62c6eb6deb4d75ff955c539f73cf94e91a7d",
+      "parent": "ecec9ec32d7dbfa8c8220e0d7807dd56e8f9283fde91ba6762b28ba6254d2d13",
       "seq": 29
     },
     {
       "type": "MOVE",
       "schemaVersion": 2,
-      "rngCounter": 155,
+      "rngCounter": 253,
       "rngDraws": 0,
       "payload": {
         "entityId": "player",
         "from": {
-          "x": 18,
-          "y": 21
+          "x": 9,
+          "y": 23
         },
         "to": {
-          "x": 17,
-          "y": 21
+          "x": 10,
+          "y": 23
         }
       },
-      "id": "381fbc7f9ffa6ab54d63d93deec810f186d26bfe757b182f2df9f0d28d8a56f2",
-      "parent": "c5af20e9c7862cebf1027a7f01ada4fcaebd4c35a8d0e60517151e3d59f8bc36",
+      "id": "9e345d7f5ab87c6a4d4cc5535d66344b94d581e74173f687c7cf24bc740e690e",
+      "parent": "0eb59c3afa70d464832913bb2f5b62c6eb6deb4d75ff955c539f73cf94e91a7d",
       "seq": 30
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 155,
+      "rngCounter": 253,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-2",
         "turn": 8
       },
-      "id": "827b038a56ee19e16d8eb3236f3b3b2611afe1fc7bdecb9ff08c3255e1ada4e2",
-      "parent": "381fbc7f9ffa6ab54d63d93deec810f186d26bfe757b182f2df9f0d28d8a56f2",
+      "id": "afa6bb28dccf24a00154ad7dd6eb0cc8d63d204987e66929959c7043e90f3518",
+      "parent": "9e345d7f5ab87c6a4d4cc5535d66344b94d581e74173f687c7cf24bc740e690e",
       "seq": 31
     },
     {
       "type": "MOVE",
       "schemaVersion": 2,
-      "rngCounter": 155,
+      "rngCounter": 253,
       "rngDraws": 0,
       "payload": {
         "entityId": "foe-2",
         "from": {
-          "x": 11,
+          "x": 14,
           "y": 21
         },
         "to": {
-          "x": 12,
+          "x": 13,
           "y": 21
         }
       },
-      "id": "117cf195f7ac3b129f72a124f44d740dcfb51c5a8bbf5cdf5f1897aa546c6cf0",
-      "parent": "827b038a56ee19e16d8eb3236f3b3b2611afe1fc7bdecb9ff08c3255e1ada4e2",
+      "id": "78e6ae92a0c96ead0863c61c4abb9af138f149c15a94b33e0b9791365fab6b59",
+      "parent": "afa6bb28dccf24a00154ad7dd6eb0cc8d63d204987e66929959c7043e90f3518",
       "seq": 32
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 155,
+      "rngCounter": 253,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-1",
-        "turn": 8
+        "turn": 9
       },
-      "id": "4cf0aad9a94d1d0f196bca1cd7f4e19989cd097e42864f4dc9a95fea6dbcfe36",
-      "parent": "117cf195f7ac3b129f72a124f44d740dcfb51c5a8bbf5cdf5f1897aa546c6cf0",
+      "id": "f84de30a237f7546a8673110434041f53be1c358fe834a2cba59033e51172c2b",
+      "parent": "78e6ae92a0c96ead0863c61c4abb9af138f149c15a94b33e0b9791365fab6b59",
       "seq": 33
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 155,
+      "rngCounter": 253,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "player",
         "turn": 9
       },
-      "id": "d720d78324b82a6234e235de3e62d8cf88aefaa98ca398153ab34e20ec4fef5a",
-      "parent": "4cf0aad9a94d1d0f196bca1cd7f4e19989cd097e42864f4dc9a95fea6dbcfe36",
+      "id": "fa0901162cc99c3b75f4c4c3abd29a22949f33e132d36fcb00a20cd142fa806d",
+      "parent": "f84de30a237f7546a8673110434041f53be1c358fe834a2cba59033e51172c2b",
       "seq": 34
     },
     {
       "type": "MOVE",
       "schemaVersion": 2,
-      "rngCounter": 155,
+      "rngCounter": 253,
       "rngDraws": 0,
       "payload": {
         "entityId": "player",
         "from": {
-          "x": 17,
-          "y": 21
+          "x": 10,
+          "y": 23
         },
         "to": {
-          "x": 16,
-          "y": 21
+          "x": 11,
+          "y": 23
         }
       },
-      "id": "de32a0476528a62f2a9656bee5812bdafbc13b23eca254c9de97cc9b5b6ca69b",
-      "parent": "d720d78324b82a6234e235de3e62d8cf88aefaa98ca398153ab34e20ec4fef5a",
+      "id": "d1346d9343e6f812ba85e97bd8afb8a168ab424aa2ac909b1eca970d7c893b4e",
+      "parent": "fa0901162cc99c3b75f4c4c3abd29a22949f33e132d36fcb00a20cd142fa806d",
       "seq": 35
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 155,
+      "rngCounter": 253,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-2",
         "turn": 9
       },
-      "id": "56649b3d62a01e32100c8c703e4bd7c7627ea46fe4642567c9beba1ae667d464",
-      "parent": "de32a0476528a62f2a9656bee5812bdafbc13b23eca254c9de97cc9b5b6ca69b",
+      "id": "06d84f0fbb0357bbd49f7aa2e3eb7185706aaaf769fbc3aef2f50485b3ddb5d4",
+      "parent": "d1346d9343e6f812ba85e97bd8afb8a168ab424aa2ac909b1eca970d7c893b4e",
       "seq": 36
     },
     {
       "type": "MOVE",
       "schemaVersion": 2,
-      "rngCounter": 155,
+      "rngCounter": 253,
       "rngDraws": 0,
       "payload": {
         "entityId": "foe-2",
         "from": {
-          "x": 12,
+          "x": 13,
           "y": 21
         },
         "to": {
-          "x": 13,
+          "x": 12,
           "y": 21
         }
       },
-      "id": "34f7c5e9f6cc50dd5f6999debd39c1850139e7dffd8e8b09dd58307ace2e3a37",
-      "parent": "56649b3d62a01e32100c8c703e4bd7c7627ea46fe4642567c9beba1ae667d464",
+      "id": "12187ac9d5e1bde363158ac6784cf371eeafe67febbe8dcab6b1371d97952fdb",
+      "parent": "06d84f0fbb0357bbd49f7aa2e3eb7185706aaaf769fbc3aef2f50485b3ddb5d4",
       "seq": 37
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 155,
+      "rngCounter": 253,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-1",
-        "turn": 9
+        "turn": 10
       },
-      "id": "877520b71365a526ecde4871e646b8215518587ad8ea00203d324fdd2f3810b8",
-      "parent": "34f7c5e9f6cc50dd5f6999debd39c1850139e7dffd8e8b09dd58307ace2e3a37",
+      "id": "36bd174e79d3ef6da52ae040ee34ac8a78421c90f0af3d2189f27030c2bef4b8",
+      "parent": "12187ac9d5e1bde363158ac6784cf371eeafe67febbe8dcab6b1371d97952fdb",
       "seq": 38
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 155,
+      "rngCounter": 253,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "player",
         "turn": 10
       },
-      "id": "908b34832f27da82c237070faafe06a415fb2e0ba42754c0c8b939171d5eeec1",
-      "parent": "877520b71365a526ecde4871e646b8215518587ad8ea00203d324fdd2f3810b8",
+      "id": "4e1038690b3b8f1225e8f53408a03cbf95b1cabfb631d2a4ab43a0ce8951b2b5",
+      "parent": "36bd174e79d3ef6da52ae040ee34ac8a78421c90f0af3d2189f27030c2bef4b8",
       "seq": 39
     },
     {
       "type": "MOVE",
       "schemaVersion": 2,
-      "rngCounter": 155,
+      "rngCounter": 253,
       "rngDraws": 0,
       "payload": {
         "entityId": "player",
         "from": {
-          "x": 16,
-          "y": 21
+          "x": 11,
+          "y": 23
         },
         "to": {
-          "x": 15,
-          "y": 21
+          "x": 12,
+          "y": 23
         }
       },
-      "id": "6b7fc8655572f8f39502b5a98774046bf2b46598cba4207da6466340c883cc51",
-      "parent": "908b34832f27da82c237070faafe06a415fb2e0ba42754c0c8b939171d5eeec1",
+      "id": "d941af56fc385d9a583bd33d0dd08516c8ae3f8dccdfed3f3011365b3bd75e55",
+      "parent": "4e1038690b3b8f1225e8f53408a03cbf95b1cabfb631d2a4ab43a0ce8951b2b5",
       "seq": 40
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 155,
+      "rngCounter": 253,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-2",
         "turn": 10
       },
-      "id": "4b03a8e857ec5ed4f988fef7a62a2d94e6d85c0350c82812f3c602ba5d60f31d",
-      "parent": "6b7fc8655572f8f39502b5a98774046bf2b46598cba4207da6466340c883cc51",
+      "id": "ddf7e32ab76a025d15e6c2b4cb41aa012c202d613f57bf0e294933f28dc1f653",
+      "parent": "d941af56fc385d9a583bd33d0dd08516c8ae3f8dccdfed3f3011365b3bd75e55",
       "seq": 41
     },
     {
-      "type": "MOVE",
-      "schemaVersion": 2,
-      "rngCounter": 155,
-      "rngDraws": 0,
+      "type": "STRIKE",
+      "schemaVersion": 3,
+      "rngCounter": 253,
+      "rngDraws": 2,
       "payload": {
-        "entityId": "foe-2",
-        "from": {
-          "x": 13,
-          "y": 21
-        },
-        "to": {
-          "x": 14,
-          "y": 21
+        "attackerId": "foe-2",
+        "targetId": "player",
+        "roll": 10,
+        "needed": 12,
+        "hit": false,
+        "crit": false,
+        "damage": 0,
+        "attackerTo": {
+          "x": 12,
+          "y": 22
         }
       },
-      "id": "abd010036b409289af3af9d482881e8a7b6904851c33f436b43cf18adb6c1e43",
-      "parent": "4b03a8e857ec5ed4f988fef7a62a2d94e6d85c0350c82812f3c602ba5d60f31d",
+      "id": "234ed03cb029ed620c9444c51709537bff66ce9da30afc8addc51a53ad986a8c",
+      "parent": "ddf7e32ab76a025d15e6c2b4cb41aa012c202d613f57bf0e294933f28dc1f653",
       "seq": 42
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 155,
+      "rngCounter": 255,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-1",
-        "turn": 10
+        "turn": 11
       },
-      "id": "e2de61c5b150a09d2ee97682fdf6f2e2eba46fd0131e883556b6fdf94052a344",
-      "parent": "abd010036b409289af3af9d482881e8a7b6904851c33f436b43cf18adb6c1e43",
+      "id": "5d460fbb13e2a2fcaf5d044bcf46b45a5d7f4bbbf4616cbd17f106f5f9eb4a6a",
+      "parent": "234ed03cb029ed620c9444c51709537bff66ce9da30afc8addc51a53ad986a8c",
       "seq": 43
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 155,
+      "rngCounter": 255,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "player",
         "turn": 11
       },
-      "id": "754acc49fc42b600edbf317bc43b0add5b27927c950a4cd4450605ee5c88f9b3",
-      "parent": "e2de61c5b150a09d2ee97682fdf6f2e2eba46fd0131e883556b6fdf94052a344",
+      "id": "56b46a28cbb8a8b1d13fe84eb43f1d19f035e045e9ce60702864786839d67c68",
+      "parent": "5d460fbb13e2a2fcaf5d044bcf46b45a5d7f4bbbf4616cbd17f106f5f9eb4a6a",
       "seq": 44
     },
     {
       "type": "STRIKE",
-      "schemaVersion": 2,
-      "rngCounter": 155,
+      "schemaVersion": 3,
+      "rngCounter": 255,
       "rngDraws": 2,
       "payload": {
         "attackerId": "player",
         "targetId": "foe-2",
-        "roll": 3,
+        "roll": 10,
         "needed": 10,
-        "hit": false,
+        "hit": true,
         "crit": false,
-        "damage": 0
+        "damage": 3
       },
-      "id": "6069e7378a2dfa7ad82d1894627eee96e64036f0c7a6e1f06cc0d49dc4d8b049",
-      "parent": "754acc49fc42b600edbf317bc43b0add5b27927c950a4cd4450605ee5c88f9b3",
+      "id": "e899fecaea724ed448a64c58322a5add83012293126d8c4e05b63096bca5b66d",
+      "parent": "56b46a28cbb8a8b1d13fe84eb43f1d19f035e045e9ce60702864786839d67c68",
       "seq": 45
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 157,
+      "rngCounter": 257,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-2",
         "turn": 11
       },
-      "id": "8adb092584d848cd6410ed22efe1a45e040c350d3527ce144f7b3a450d32ffa4",
-      "parent": "6069e7378a2dfa7ad82d1894627eee96e64036f0c7a6e1f06cc0d49dc4d8b049",
+      "id": "19dcc56ddfda8342b9e4c15d4de1ff06ca8d4d7821691b7d10f128e89401a15a",
+      "parent": "e899fecaea724ed448a64c58322a5add83012293126d8c4e05b63096bca5b66d",
       "seq": 46
     },
     {
       "type": "STRIKE",
-      "schemaVersion": 2,
-      "rngCounter": 157,
+      "schemaVersion": 3,
+      "rngCounter": 257,
       "rngDraws": 2,
       "payload": {
         "attackerId": "foe-2",
         "targetId": "player",
-        "roll": 20,
+        "roll": 13,
         "needed": 12,
         "hit": true,
-        "crit": true,
-        "damage": 4
+        "crit": false,
+        "damage": 1
       },
-      "id": "1f52f8be1b9c7d56dc0f874680d112f5334d91fb6c20279c8b74b8233b37cad4",
-      "parent": "8adb092584d848cd6410ed22efe1a45e040c350d3527ce144f7b3a450d32ffa4",
+      "id": "606d8180e5b9eaac2e9dfd0664b47e312e6d950718724c154efd2c959a416f1f",
+      "parent": "19dcc56ddfda8342b9e4c15d4de1ff06ca8d4d7821691b7d10f128e89401a15a",
       "seq": 47
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 159,
+      "rngCounter": 259,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-1",
-        "turn": 11
+        "turn": 12
       },
-      "id": "145c1860767670557222573442a4cec31f1ef9572fbbaf38880e64e2ec55b787",
-      "parent": "1f52f8be1b9c7d56dc0f874680d112f5334d91fb6c20279c8b74b8233b37cad4",
+      "id": "bcf735ebb057e69e73eb54be40acff9ea299f02b4dcc99b964d420389cc78048",
+      "parent": "606d8180e5b9eaac2e9dfd0664b47e312e6d950718724c154efd2c959a416f1f",
       "seq": 48
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 159,
+      "rngCounter": 259,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "player",
         "turn": 12
       },
-      "id": "868bb6eba8015e4aac505d6487a8345fb769277761d69f3fa0bff9fc86f75a33",
-      "parent": "145c1860767670557222573442a4cec31f1ef9572fbbaf38880e64e2ec55b787",
+      "id": "f52861f422305f7d3f09c2577486eeb5d631e22ebe63e85bfddce3ec42473465",
+      "parent": "bcf735ebb057e69e73eb54be40acff9ea299f02b4dcc99b964d420389cc78048",
       "seq": 49
     },
     {
       "type": "STRIKE",
-      "schemaVersion": 2,
-      "rngCounter": 159,
+      "schemaVersion": 3,
+      "rngCounter": 259,
       "rngDraws": 2,
       "payload": {
         "attackerId": "player",
         "targetId": "foe-2",
-        "roll": 13,
+        "roll": 1,
         "needed": 10,
-        "hit": true,
+        "hit": false,
         "crit": false,
-        "damage": 4
+        "damage": 0
       },
-      "id": "a3b6788756ae97fbd87e5d119a8b781d2896b9221c5c7622aced3f1f49b52792",
-      "parent": "868bb6eba8015e4aac505d6487a8345fb769277761d69f3fa0bff9fc86f75a33",
+      "id": "078584abd21dff802b1839645470ae30b3da07259b80b3151a80254f3cb7d417",
+      "parent": "f52861f422305f7d3f09c2577486eeb5d631e22ebe63e85bfddce3ec42473465",
       "seq": 50
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 261,
       "rngDraws": 0,
       "payload": {
-        "activeEntityId": "foe-1",
+        "activeEntityId": "foe-2",
         "turn": 12
       },
-      "id": "5e4a50c8a7200c97bfef68d9856bea3ca95a2d545c7498693fd484c53eb28c72",
-      "parent": "a3b6788756ae97fbd87e5d119a8b781d2896b9221c5c7622aced3f1f49b52792",
+      "id": "2d5117a30fc18b9b7ed304d9b8c1af6840f90d672b4a17825fffb3d3479b8a46",
+      "parent": "078584abd21dff802b1839645470ae30b3da07259b80b3151a80254f3cb7d417",
       "seq": 51
+    },
+    {
+      "type": "STRIKE",
+      "schemaVersion": 3,
+      "rngCounter": 261,
+      "rngDraws": 2,
+      "payload": {
+        "attackerId": "foe-2",
+        "targetId": "player",
+        "roll": 2,
+        "needed": 12,
+        "hit": false,
+        "crit": false,
+        "damage": 0
+      },
+      "id": "9cced417ef94984a4b3cea205bc8e58578f2c65654d951d947a3a88174068577",
+      "parent": "2d5117a30fc18b9b7ed304d9b8c1af6840f90d672b4a17825fffb3d3479b8a46",
+      "seq": 52
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 263,
       "rngDraws": 0,
       "payload": {
-        "activeEntityId": "player",
+        "activeEntityId": "foe-1",
         "turn": 13
       },
-      "id": "59889ecee7331ff1cabf4f95396e4ef61ee187cd0c273c374f8f1ba6beadcfff",
-      "parent": "5e4a50c8a7200c97bfef68d9856bea3ca95a2d545c7498693fd484c53eb28c72",
-      "seq": 52
-    },
-    {
-      "type": "MOVE",
-      "schemaVersion": 2,
-      "rngCounter": 161,
-      "rngDraws": 0,
-      "payload": {
-        "entityId": "player",
-        "from": {
-          "x": 15,
-          "y": 21
-        },
-        "to": {
-          "x": 14,
-          "y": 21
-        }
-      },
-      "id": "eaa893433c79b60e4c3caf4547b258f1f852d1a23290c53dbc0f51c122324fb9",
-      "parent": "59889ecee7331ff1cabf4f95396e4ef61ee187cd0c273c374f8f1ba6beadcfff",
+      "id": "e7db76e9ab2513c9e335e650e0e625893f4ad5a3a584d84ea241f097eaf2d440",
+      "parent": "9cced417ef94984a4b3cea205bc8e58578f2c65654d951d947a3a88174068577",
       "seq": 53
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 263,
       "rngDraws": 0,
       "payload": {
-        "activeEntityId": "foe-1",
+        "activeEntityId": "player",
         "turn": 13
       },
-      "id": "25478b3c9c5a4089a18928b86637a7ab0356c96ff7c67e5fca74e214efce6f7f",
-      "parent": "eaa893433c79b60e4c3caf4547b258f1f852d1a23290c53dbc0f51c122324fb9",
+      "id": "1aa8f5ac0c26d997c9d39627ba64d353b7824b7783b5ec0173b0116ef210df74",
+      "parent": "e7db76e9ab2513c9e335e650e0e625893f4ad5a3a584d84ea241f097eaf2d440",
       "seq": 54
+    },
+    {
+      "type": "STRIKE",
+      "schemaVersion": 3,
+      "rngCounter": 263,
+      "rngDraws": 2,
+      "payload": {
+        "attackerId": "player",
+        "targetId": "foe-2",
+        "roll": 6,
+        "needed": 10,
+        "hit": false,
+        "crit": false,
+        "damage": 0
+      },
+      "id": "08679f89f27ddf10616e6d19366b833fde3713cc9bc78b8ba8d9ca2b9923ace9",
+      "parent": "1aa8f5ac0c26d997c9d39627ba64d353b7824b7783b5ec0173b0116ef210df74",
+      "seq": 55
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 265,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "foe-2",
+        "turn": 13
+      },
+      "id": "6c6d8aebf79d98b671501ec94b0a87ed3543850b82d6fe349598dea9080410ac",
+      "parent": "08679f89f27ddf10616e6d19366b833fde3713cc9bc78b8ba8d9ca2b9923ace9",
+      "seq": 56
+    },
+    {
+      "type": "STRIKE",
+      "schemaVersion": 3,
+      "rngCounter": 265,
+      "rngDraws": 2,
+      "payload": {
+        "attackerId": "foe-2",
+        "targetId": "player",
+        "roll": 4,
+        "needed": 12,
+        "hit": false,
+        "crit": false,
+        "damage": 0
+      },
+      "id": "6ee0480277f74c5d59700489b3925e79c17c6aa2fc77bebc88b141b25a186339",
+      "parent": "6c6d8aebf79d98b671501ec94b0a87ed3543850b82d6fe349598dea9080410ac",
+      "seq": 57
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 267,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "foe-1",
+        "turn": 14
+      },
+      "id": "4fffb8b65003a841355a94b71ce2686e14ca767470bf8235cb40fb29527bda0a",
+      "parent": "6ee0480277f74c5d59700489b3925e79c17c6aa2fc77bebc88b141b25a186339",
+      "seq": 58
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 267,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "player",
         "turn": 14
       },
-      "id": "ee4b04a2a6dd54a45d1b8d14e3c81a518d9ca80713037c1c409e50ae3aaa01e5",
-      "parent": "25478b3c9c5a4089a18928b86637a7ab0356c96ff7c67e5fca74e214efce6f7f",
-      "seq": 55
+      "id": "198c47f3f36615314845a475355341e6550dea386bd0fa14486435bccf96d269",
+      "parent": "4fffb8b65003a841355a94b71ce2686e14ca767470bf8235cb40fb29527bda0a",
+      "seq": 59
+    },
+    {
+      "type": "STRIKE",
+      "schemaVersion": 3,
+      "rngCounter": 267,
+      "rngDraws": 2,
+      "payload": {
+        "attackerId": "player",
+        "targetId": "foe-2",
+        "roll": 6,
+        "needed": 10,
+        "hit": false,
+        "crit": false,
+        "damage": 0
+      },
+      "id": "30bc01ef099d3f648500827a3673c7ac31f2e60328760bc0585577b35025d24c",
+      "parent": "198c47f3f36615314845a475355341e6550dea386bd0fa14486435bccf96d269",
+      "seq": 60
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 269,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "foe-2",
+        "turn": 14
+      },
+      "id": "13760769c6ecfe0041ac6f8c12b819b8784d66582c400c10bbdb4d68c87cf859",
+      "parent": "30bc01ef099d3f648500827a3673c7ac31f2e60328760bc0585577b35025d24c",
+      "seq": 61
+    },
+    {
+      "type": "STRIKE",
+      "schemaVersion": 3,
+      "rngCounter": 269,
+      "rngDraws": 2,
+      "payload": {
+        "attackerId": "foe-2",
+        "targetId": "player",
+        "roll": 6,
+        "needed": 12,
+        "hit": false,
+        "crit": false,
+        "damage": 0
+      },
+      "id": "b7edf004649a8ef3f4f2dcea61afa15864837d02342b64e72390415e234f8453",
+      "parent": "13760769c6ecfe0041ac6f8c12b819b8784d66582c400c10bbdb4d68c87cf859",
+      "seq": 62
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 271,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "foe-1",
+        "turn": 15
+      },
+      "id": "f0525c4761887df6e1293ff66b0026f9a953c85f86d98346dd811e60d168bdfc",
+      "parent": "b7edf004649a8ef3f4f2dcea61afa15864837d02342b64e72390415e234f8453",
+      "seq": 63
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 271,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "player",
+        "turn": 15
+      },
+      "id": "6c26c86ba6a91fe0a006c8980d2a879a5a4151b9a660399c9881bf878356b0fc",
+      "parent": "f0525c4761887df6e1293ff66b0026f9a953c85f86d98346dd811e60d168bdfc",
+      "seq": 64
+    },
+    {
+      "type": "STRIKE",
+      "schemaVersion": 3,
+      "rngCounter": 271,
+      "rngDraws": 2,
+      "payload": {
+        "attackerId": "player",
+        "targetId": "foe-2",
+        "roll": 20,
+        "needed": 10,
+        "hit": true,
+        "crit": true,
+        "damage": 6
+      },
+      "id": "3594f2683dcbc9866f37895b256d3ab269d3f1681d7022d5c22d572da98ecebd",
+      "parent": "6c26c86ba6a91fe0a006c8980d2a879a5a4151b9a660399c9881bf878356b0fc",
+      "seq": 65
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "foe-1",
+        "turn": 16
+      },
+      "id": "a53e1f063eaa973eedae27cb6b8f3c4e9b2559180f1555b81f48a2678c6f05c0",
+      "parent": "3594f2683dcbc9866f37895b256d3ab269d3f1681d7022d5c22d572da98ecebd",
+      "seq": 66
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "player",
+        "turn": 16
+      },
+      "id": "b83b9bfb8ad5db6017e6cb42439df82f644ed6664b44b2928a648a11d4b7b7a3",
+      "parent": "a53e1f063eaa973eedae27cb6b8f3c4e9b2559180f1555b81f48a2678c6f05c0",
+      "seq": 67
     },
     {
       "type": "MOVE",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "entityId": "player",
+        "from": {
+          "x": 12,
+          "y": 23
+        },
+        "to": {
+          "x": 13,
+          "y": 23
+        }
+      },
+      "id": "db67185a691e1ea3f8d17497e2fac23d6d46b8403367aa57fe6601a20e959895",
+      "parent": "b83b9bfb8ad5db6017e6cb42439df82f644ed6664b44b2928a648a11d4b7b7a3",
+      "seq": 68
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "foe-1",
+        "turn": 17
+      },
+      "id": "1b34ee07b4faf570656efb8148569ce27110381e1885eb3c2364580b903e7641",
+      "parent": "db67185a691e1ea3f8d17497e2fac23d6d46b8403367aa57fe6601a20e959895",
+      "seq": 69
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "player",
+        "turn": 17
+      },
+      "id": "568233de61ab5575891a807b5487861fa4c73b56f41ee2d9826672bc3ff5ca5d",
+      "parent": "1b34ee07b4faf570656efb8148569ce27110381e1885eb3c2364580b903e7641",
+      "seq": 70
+    },
+    {
+      "type": "MOVE",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "entityId": "player",
+        "from": {
+          "x": 13,
+          "y": 23
+        },
+        "to": {
+          "x": 14,
+          "y": 23
+        }
+      },
+      "id": "24b1b7615b16bae137ac54d43ecd6a2dda3e3fa43a7354ec1412fafdc93c4dc8",
+      "parent": "568233de61ab5575891a807b5487861fa4c73b56f41ee2d9826672bc3ff5ca5d",
+      "seq": 71
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "foe-1",
+        "turn": 18
+      },
+      "id": "3bc319d4bbdb131000271cbf9cab993eb87ed9043d4dc701dab557b8bc8f3974",
+      "parent": "24b1b7615b16bae137ac54d43ecd6a2dda3e3fa43a7354ec1412fafdc93c4dc8",
+      "seq": 72
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "player",
+        "turn": 18
+      },
+      "id": "3dcb8926f732a761010bf89e342865f2d4cb5f34a14679b9230edb332af850ab",
+      "parent": "3bc319d4bbdb131000271cbf9cab993eb87ed9043d4dc701dab557b8bc8f3974",
+      "seq": 73
+    },
+    {
+      "type": "MOVE",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "entityId": "player",
+        "from": {
+          "x": 14,
+          "y": 23
+        },
+        "to": {
+          "x": 14,
+          "y": 22
+        }
+      },
+      "id": "61a515852dc3ca471c8691e28444f9dc27aed25c2a348ec78860932156f52fb8",
+      "parent": "3dcb8926f732a761010bf89e342865f2d4cb5f34a14679b9230edb332af850ab",
+      "seq": 74
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "foe-1",
+        "turn": 19
+      },
+      "id": "a029ffade1db1cef55d1508a418a25d79c014b9723ffe0611f09ee26ef3886f7",
+      "parent": "61a515852dc3ca471c8691e28444f9dc27aed25c2a348ec78860932156f52fb8",
+      "seq": 75
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "player",
+        "turn": 19
+      },
+      "id": "a9ec4708030f7a3df268494411421ec60a53a688ce1e1677dfecf42e22c1a056",
+      "parent": "a029ffade1db1cef55d1508a418a25d79c014b9723ffe0611f09ee26ef3886f7",
+      "seq": 76
+    },
+    {
+      "type": "MOVE",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "entityId": "player",
+        "from": {
+          "x": 14,
+          "y": 22
+        },
+        "to": {
+          "x": 14,
+          "y": 21
+        }
+      },
+      "id": "0155b2184e995d324f360b8e2b9e69e65ee0cd50e184572c1b58202121b48426",
+      "parent": "a9ec4708030f7a3df268494411421ec60a53a688ce1e1677dfecf42e22c1a056",
+      "seq": 77
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "foe-1",
+        "turn": 20
+      },
+      "id": "d5f265f995759c5a27cae216def200d59f3944dbfaff0ce9bc75b8aed2aef984",
+      "parent": "0155b2184e995d324f360b8e2b9e69e65ee0cd50e184572c1b58202121b48426",
+      "seq": 78
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "player",
+        "turn": 20
+      },
+      "id": "a165f93790f98d529d9066e8cebaed3463295daddd18d3bf3ea8897918796ad9",
+      "parent": "d5f265f995759c5a27cae216def200d59f3944dbfaff0ce9bc75b8aed2aef984",
+      "seq": 79
+    },
+    {
+      "type": "MOVE",
+      "schemaVersion": 2,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "entityId": "player",
@@ -2478,169 +2857,31 @@
           "y": 21
         },
         "to": {
-          "x": 13,
-          "y": 21
+          "x": 14,
+          "y": 20
         }
       },
-      "id": "02aa4aca6532551b78b6c510e93844a268c46498edb1d2d9ee9675de186ad45d",
-      "parent": "ee4b04a2a6dd54a45d1b8d14e3c81a518d9ca80713037c1c409e50ae3aaa01e5",
-      "seq": 56
+      "id": "af39f042be6ef236a25402244c86d0c02d1bebc063145af74540c1a6abfce44b",
+      "parent": "a165f93790f98d529d9066e8cebaed3463295daddd18d3bf3ea8897918796ad9",
+      "seq": 80
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-1",
-        "turn": 14
+        "turn": 21
       },
-      "id": "7bb58bef636a919ecf21dbad1f5f835d4c2a8dc61aedf757062f886694833961",
-      "parent": "02aa4aca6532551b78b6c510e93844a268c46498edb1d2d9ee9675de186ad45d",
-      "seq": 57
-    },
-    {
-      "type": "TURN_ADVANCED",
-      "schemaVersion": 2,
-      "rngCounter": 161,
-      "rngDraws": 0,
-      "payload": {
-        "activeEntityId": "player",
-        "turn": 15
-      },
-      "id": "7542d6e1831ffc7b083c5e3b10f0ef9bee1688ca79e2542e3feea452162d5636",
-      "parent": "7bb58bef636a919ecf21dbad1f5f835d4c2a8dc61aedf757062f886694833961",
-      "seq": 58
-    },
-    {
-      "type": "MOVE",
-      "schemaVersion": 2,
-      "rngCounter": 161,
-      "rngDraws": 0,
-      "payload": {
-        "entityId": "player",
-        "from": {
-          "x": 13,
-          "y": 21
-        },
-        "to": {
-          "x": 12,
-          "y": 21
-        }
-      },
-      "id": "e4356041a98ae1acb07e143dc1b6b54f00cd9af293df15ceba5eaafc41c394e1",
-      "parent": "7542d6e1831ffc7b083c5e3b10f0ef9bee1688ca79e2542e3feea452162d5636",
-      "seq": 59
-    },
-    {
-      "type": "TURN_ADVANCED",
-      "schemaVersion": 2,
-      "rngCounter": 161,
-      "rngDraws": 0,
-      "payload": {
-        "activeEntityId": "foe-1",
-        "turn": 15
-      },
-      "id": "e550bb3743d46541f9ba3a6d33f28aa7aacd760d808b623acce048fef4ba6a0f",
-      "parent": "e4356041a98ae1acb07e143dc1b6b54f00cd9af293df15ceba5eaafc41c394e1",
-      "seq": 60
-    },
-    {
-      "type": "TURN_ADVANCED",
-      "schemaVersion": 2,
-      "rngCounter": 161,
-      "rngDraws": 0,
-      "payload": {
-        "activeEntityId": "player",
-        "turn": 16
-      },
-      "id": "b63a996b577c81be7c474d376f4d3b222d672a4a69f615e284fc65c59564ead4",
-      "parent": "e550bb3743d46541f9ba3a6d33f28aa7aacd760d808b623acce048fef4ba6a0f",
-      "seq": 61
-    },
-    {
-      "type": "MOVE",
-      "schemaVersion": 2,
-      "rngCounter": 161,
-      "rngDraws": 0,
-      "payload": {
-        "entityId": "player",
-        "from": {
-          "x": 12,
-          "y": 21
-        },
-        "to": {
-          "x": 11,
-          "y": 21
-        }
-      },
-      "id": "ed632a7f612bacf285c71f7c320fb057aa5f046109ca03c86fb2ca8eed18edfa",
-      "parent": "b63a996b577c81be7c474d376f4d3b222d672a4a69f615e284fc65c59564ead4",
-      "seq": 62
-    },
-    {
-      "type": "TURN_ADVANCED",
-      "schemaVersion": 2,
-      "rngCounter": 161,
-      "rngDraws": 0,
-      "payload": {
-        "activeEntityId": "foe-1",
-        "turn": 16
-      },
-      "id": "6e37bae7214f3da6c9b082fb5d06616274c648074a1799e115260c79e19b5a86",
-      "parent": "ed632a7f612bacf285c71f7c320fb057aa5f046109ca03c86fb2ca8eed18edfa",
-      "seq": 63
-    },
-    {
-      "type": "TURN_ADVANCED",
-      "schemaVersion": 2,
-      "rngCounter": 161,
-      "rngDraws": 0,
-      "payload": {
-        "activeEntityId": "player",
-        "turn": 17
-      },
-      "id": "57bc7c21d440bd6a6565c586fe9f40a07b94902bdbbfe055434fc484f54cbb78",
-      "parent": "6e37bae7214f3da6c9b082fb5d06616274c648074a1799e115260c79e19b5a86",
-      "seq": 64
-    },
-    {
-      "type": "MOVE",
-      "schemaVersion": 2,
-      "rngCounter": 161,
-      "rngDraws": 0,
-      "payload": {
-        "entityId": "player",
-        "from": {
-          "x": 11,
-          "y": 21
-        },
-        "to": {
-          "x": 10,
-          "y": 21
-        }
-      },
-      "id": "0d1bdecbd1197ed4dfa8281a68bf8d4254cc24441dec8018c13ff861ec4ef6db",
-      "parent": "57bc7c21d440bd6a6565c586fe9f40a07b94902bdbbfe055434fc484f54cbb78",
-      "seq": 65
-    },
-    {
-      "type": "TURN_ADVANCED",
-      "schemaVersion": 2,
-      "rngCounter": 161,
-      "rngDraws": 0,
-      "payload": {
-        "activeEntityId": "foe-1",
-        "turn": 17
-      },
-      "id": "9de01f4857810f64e9d9b955a6f2b91a6a2422686b05250c6a062b4a613f918c",
-      "parent": "0d1bdecbd1197ed4dfa8281a68bf8d4254cc24441dec8018c13ff861ec4ef6db",
-      "seq": 66
+      "id": "911906c08f899bff7c9d49edb492e35dac8a7032f9b0c4d527986fbf9181e8ed",
+      "parent": "af39f042be6ef236a25402244c86d0c02d1bebc063145af74540c1a6abfce44b",
+      "seq": 81
     },
     {
       "type": "ITEM_TAKEN",
-      "schemaVersion": 2,
-      "rngCounter": 161,
+      "schemaVersion": 3,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "entityId": "player",
@@ -2652,1479 +2893,2279 @@
           "speed": 0
         }
       },
-      "id": "6d5b11786e588844d5f2386847b7e5bf2d105430b30a432fc40d0393c478b2b5",
-      "parent": "9de01f4857810f64e9d9b955a6f2b91a6a2422686b05250c6a062b4a613f918c",
-      "seq": 67
-    },
-    {
-      "type": "TURN_ADVANCED",
-      "schemaVersion": 2,
-      "rngCounter": 161,
-      "rngDraws": 0,
-      "payload": {
-        "activeEntityId": "player",
-        "turn": 18
-      },
-      "id": "66968dfe9f833de9d3f2fb2e9570ea3a910d3148fbf97876805f897211ca3e55",
-      "parent": "6d5b11786e588844d5f2386847b7e5bf2d105430b30a432fc40d0393c478b2b5",
-      "seq": 68
-    },
-    {
-      "type": "MOVE",
-      "schemaVersion": 2,
-      "rngCounter": 161,
-      "rngDraws": 0,
-      "payload": {
-        "entityId": "player",
-        "from": {
-          "x": 10,
-          "y": 21
-        },
-        "to": {
-          "x": 9,
-          "y": 21
-        }
-      },
-      "id": "7b8612b23ce2e33b950f793dc2e5385bad1348bea21df8e7ec91c80411670e36",
-      "parent": "66968dfe9f833de9d3f2fb2e9570ea3a910d3148fbf97876805f897211ca3e55",
-      "seq": 69
-    },
-    {
-      "type": "TURN_ADVANCED",
-      "schemaVersion": 2,
-      "rngCounter": 161,
-      "rngDraws": 0,
-      "payload": {
-        "activeEntityId": "foe-1",
-        "turn": 18
-      },
-      "id": "8b2462e2061d3c7b3cb1eab9e9d9e4aa60fdda3b64c8f33bcc4ee5925a233691",
-      "parent": "7b8612b23ce2e33b950f793dc2e5385bad1348bea21df8e7ec91c80411670e36",
-      "seq": 70
-    },
-    {
-      "type": "TURN_ADVANCED",
-      "schemaVersion": 2,
-      "rngCounter": 161,
-      "rngDraws": 0,
-      "payload": {
-        "activeEntityId": "player",
-        "turn": 19
-      },
-      "id": "a88cce8585b88496b8ba16ac1ca01928c1c2bf3e5ee6a7b3f1d92a6b2f6db852",
-      "parent": "8b2462e2061d3c7b3cb1eab9e9d9e4aa60fdda3b64c8f33bcc4ee5925a233691",
-      "seq": 71
-    },
-    {
-      "type": "MOVE",
-      "schemaVersion": 2,
-      "rngCounter": 161,
-      "rngDraws": 0,
-      "payload": {
-        "entityId": "player",
-        "from": {
-          "x": 9,
-          "y": 21
-        },
-        "to": {
-          "x": 8,
-          "y": 21
-        }
-      },
-      "id": "d609fcf43dd5a26f24603d2f694eca11b036627e4d802f260bd76e5d329d5fae",
-      "parent": "a88cce8585b88496b8ba16ac1ca01928c1c2bf3e5ee6a7b3f1d92a6b2f6db852",
-      "seq": 72
-    },
-    {
-      "type": "TURN_ADVANCED",
-      "schemaVersion": 2,
-      "rngCounter": 161,
-      "rngDraws": 0,
-      "payload": {
-        "activeEntityId": "foe-1",
-        "turn": 19
-      },
-      "id": "61733eae4c7f722b6028232144d18a0523a3db0485364986b389b54b9b70450b",
-      "parent": "d609fcf43dd5a26f24603d2f694eca11b036627e4d802f260bd76e5d329d5fae",
-      "seq": 73
-    },
-    {
-      "type": "TURN_ADVANCED",
-      "schemaVersion": 2,
-      "rngCounter": 161,
-      "rngDraws": 0,
-      "payload": {
-        "activeEntityId": "player",
-        "turn": 20
-      },
-      "id": "c3aac95c3e0f96e7f65da60bc600d00fd1afc76eb226631d1896514da49034cf",
-      "parent": "61733eae4c7f722b6028232144d18a0523a3db0485364986b389b54b9b70450b",
-      "seq": 74
-    },
-    {
-      "type": "MOVE",
-      "schemaVersion": 2,
-      "rngCounter": 161,
-      "rngDraws": 0,
-      "payload": {
-        "entityId": "player",
-        "from": {
-          "x": 8,
-          "y": 21
-        },
-        "to": {
-          "x": 7,
-          "y": 21
-        }
-      },
-      "id": "90daa98abd99db94c10de8dbc036e686bb4b4a1012dad19b8cc66fb1c2b39d3b",
-      "parent": "c3aac95c3e0f96e7f65da60bc600d00fd1afc76eb226631d1896514da49034cf",
-      "seq": 75
-    },
-    {
-      "type": "TURN_ADVANCED",
-      "schemaVersion": 2,
-      "rngCounter": 161,
-      "rngDraws": 0,
-      "payload": {
-        "activeEntityId": "foe-1",
-        "turn": 20
-      },
-      "id": "5a526e0344d0bbe2154f412c6d549c6dc42c27159c5fa95f151f27e5e2337ccb",
-      "parent": "90daa98abd99db94c10de8dbc036e686bb4b4a1012dad19b8cc66fb1c2b39d3b",
-      "seq": 76
-    },
-    {
-      "type": "TURN_ADVANCED",
-      "schemaVersion": 2,
-      "rngCounter": 161,
-      "rngDraws": 0,
-      "payload": {
-        "activeEntityId": "player",
-        "turn": 21
-      },
-      "id": "ffac2bfabc93bf506167ec2fd570f1165cb5991b7acda8b2a30672dad456e2cd",
-      "parent": "5a526e0344d0bbe2154f412c6d549c6dc42c27159c5fa95f151f27e5e2337ccb",
-      "seq": 77
-    },
-    {
-      "type": "MOVE",
-      "schemaVersion": 2,
-      "rngCounter": 161,
-      "rngDraws": 0,
-      "payload": {
-        "entityId": "player",
-        "from": {
-          "x": 7,
-          "y": 21
-        },
-        "to": {
-          "x": 7,
-          "y": 20
-        }
-      },
-      "id": "db059996a7f25888a0db0fb4f5e70dc513abdc837faa2572b44e5780962787ce",
-      "parent": "ffac2bfabc93bf506167ec2fd570f1165cb5991b7acda8b2a30672dad456e2cd",
-      "seq": 78
-    },
-    {
-      "type": "TURN_ADVANCED",
-      "schemaVersion": 2,
-      "rngCounter": 161,
-      "rngDraws": 0,
-      "payload": {
-        "activeEntityId": "foe-1",
-        "turn": 21
-      },
-      "id": "f16a663008a3922a72f69c3f352d44f0cc89b4789fcbcef2282ca887e0bc2a8e",
-      "parent": "db059996a7f25888a0db0fb4f5e70dc513abdc837faa2572b44e5780962787ce",
-      "seq": 79
-    },
-    {
-      "type": "TURN_ADVANCED",
-      "schemaVersion": 2,
-      "rngCounter": 161,
-      "rngDraws": 0,
-      "payload": {
-        "activeEntityId": "player",
-        "turn": 22
-      },
-      "id": "752d109d50807b14a04665140276258ab403c6b94e3abffa3256aa812307810c",
-      "parent": "f16a663008a3922a72f69c3f352d44f0cc89b4789fcbcef2282ca887e0bc2a8e",
-      "seq": 80
-    },
-    {
-      "type": "MOVE",
-      "schemaVersion": 2,
-      "rngCounter": 161,
-      "rngDraws": 0,
-      "payload": {
-        "entityId": "player",
-        "from": {
-          "x": 7,
-          "y": 20
-        },
-        "to": {
-          "x": 7,
-          "y": 19
-        }
-      },
-      "id": "0b1c0bfd1fca92735abe83cedea0186da3dd448fec580ebb1dabf25541fdd9c8",
-      "parent": "752d109d50807b14a04665140276258ab403c6b94e3abffa3256aa812307810c",
-      "seq": 81
-    },
-    {
-      "type": "TURN_ADVANCED",
-      "schemaVersion": 2,
-      "rngCounter": 161,
-      "rngDraws": 0,
-      "payload": {
-        "activeEntityId": "foe-1",
-        "turn": 22
-      },
-      "id": "e1872d006178a110e1ba560830768589ec60d8b2155a51299a0f2ecf8961b92f",
-      "parent": "0b1c0bfd1fca92735abe83cedea0186da3dd448fec580ebb1dabf25541fdd9c8",
+      "id": "8da6bb54ce962af7f514786e47dbc8b2b5a14030c10e884e3683f3722ae47289",
+      "parent": "911906c08f899bff7c9d49edb492e35dac8a7032f9b0c4d527986fbf9181e8ed",
       "seq": 82
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "player",
-        "turn": 23
+        "turn": 21
       },
-      "id": "596809d9cf5e5c83ae6e3cb8de25216c67fd1d53eac62b80861b07ad0118e5e8",
-      "parent": "e1872d006178a110e1ba560830768589ec60d8b2155a51299a0f2ecf8961b92f",
+      "id": "5939d8edb6f174ea7e6f9ef29e137545649c745e31c2b2d0fe9e13a0462c287e",
+      "parent": "8da6bb54ce962af7f514786e47dbc8b2b5a14030c10e884e3683f3722ae47289",
       "seq": 83
     },
     {
       "type": "MOVE",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "entityId": "player",
         "from": {
-          "x": 7,
-          "y": 19
+          "x": 14,
+          "y": 20
         },
         "to": {
-          "x": 7,
-          "y": 18
+          "x": 14,
+          "y": 19
         }
       },
-      "id": "a6e7876d820b3814a4252fb8eadf4c756a133b1011d78e0de8bf8ee88e14f223",
-      "parent": "596809d9cf5e5c83ae6e3cb8de25216c67fd1d53eac62b80861b07ad0118e5e8",
+      "id": "13eb346dd5606bee0f7162dca532a410667435f0cb5b322f163b5f99830a1305",
+      "parent": "5939d8edb6f174ea7e6f9ef29e137545649c745e31c2b2d0fe9e13a0462c287e",
       "seq": 84
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-1",
-        "turn": 23
+        "turn": 22
       },
-      "id": "c38fb5ef6cb2510ffc2d1fc0fb63967e706fc46f6ee34667151e8d5ec22111a7",
-      "parent": "a6e7876d820b3814a4252fb8eadf4c756a133b1011d78e0de8bf8ee88e14f223",
+      "id": "55d684ee3d2d6e062dae2e4a0cd08b4cb70db15b70b58236bab81b53bebe4884",
+      "parent": "13eb346dd5606bee0f7162dca532a410667435f0cb5b322f163b5f99830a1305",
       "seq": 85
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "player",
-        "turn": 24
+        "turn": 22
       },
-      "id": "c9638fdf04ff9b7c1e6a48e939a43944765ee0e16ac6589c3fa3b50924af0598",
-      "parent": "c38fb5ef6cb2510ffc2d1fc0fb63967e706fc46f6ee34667151e8d5ec22111a7",
+      "id": "b23d77ec3d4db176d73effb5841fdb9a438aebd065d31da98ffdffda772fba54",
+      "parent": "55d684ee3d2d6e062dae2e4a0cd08b4cb70db15b70b58236bab81b53bebe4884",
       "seq": 86
     },
     {
       "type": "MOVE",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "entityId": "player",
         "from": {
-          "x": 7,
-          "y": 18
+          "x": 14,
+          "y": 19
         },
         "to": {
-          "x": 7,
-          "y": 17
+          "x": 14,
+          "y": 18
         }
       },
-      "id": "525a127387b540ce60763c275531d730e4009835e7de76e22a724e5e430e2e93",
-      "parent": "c9638fdf04ff9b7c1e6a48e939a43944765ee0e16ac6589c3fa3b50924af0598",
+      "id": "5e09f56a8ee6850cd2ca4496adc1107ad9765967cae9287bb92490a24eea468c",
+      "parent": "b23d77ec3d4db176d73effb5841fdb9a438aebd065d31da98ffdffda772fba54",
       "seq": 87
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-1",
-        "turn": 24
+        "turn": 23
       },
-      "id": "4ab7f90b4bed33ad175fe6743285afcc989b4ea8501266ece83c2356368af2ec",
-      "parent": "525a127387b540ce60763c275531d730e4009835e7de76e22a724e5e430e2e93",
+      "id": "bdb158f222b9f0cafcd4769fa7f3c219a4cb77c4a6fee32842ba4fd7218416e6",
+      "parent": "5e09f56a8ee6850cd2ca4496adc1107ad9765967cae9287bb92490a24eea468c",
       "seq": 88
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "player",
-        "turn": 25
+        "turn": 23
       },
-      "id": "bee1e1a7ba2b700cf54ffb26bd53156de8746333b3bb0d9161ed729fff6fde2f",
-      "parent": "4ab7f90b4bed33ad175fe6743285afcc989b4ea8501266ece83c2356368af2ec",
+      "id": "f5af28ade4e09cc383b9b29730912a43396d618142f088be703fd18112663d8e",
+      "parent": "bdb158f222b9f0cafcd4769fa7f3c219a4cb77c4a6fee32842ba4fd7218416e6",
       "seq": 89
     },
     {
       "type": "MOVE",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "entityId": "player",
         "from": {
-          "x": 7,
-          "y": 17
+          "x": 14,
+          "y": 18
         },
         "to": {
-          "x": 7,
-          "y": 16
+          "x": 14,
+          "y": 17
         }
       },
-      "id": "51a5f8df429bba980a80e7cccf24ec5b13398e8ec555381d45047e37d1a97e2b",
-      "parent": "bee1e1a7ba2b700cf54ffb26bd53156de8746333b3bb0d9161ed729fff6fde2f",
+      "id": "4595ce59f87eeed85457c59b757946fb2d6871ab1ac3eeb9ae37c400508a30cc",
+      "parent": "f5af28ade4e09cc383b9b29730912a43396d618142f088be703fd18112663d8e",
       "seq": 90
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-1",
-        "turn": 25
+        "turn": 24
       },
-      "id": "54deb864b61ba4208be2d519b5acb3e3eaebcc3bd0a702e449b295257e5003f3",
-      "parent": "51a5f8df429bba980a80e7cccf24ec5b13398e8ec555381d45047e37d1a97e2b",
+      "id": "d1214db7e3d3198d803e2fe8e4c0dc3ba59737ae15e9ec32174a17b29be168c0",
+      "parent": "4595ce59f87eeed85457c59b757946fb2d6871ab1ac3eeb9ae37c400508a30cc",
       "seq": 91
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "player",
-        "turn": 26
+        "turn": 24
       },
-      "id": "d14af2183ba4cc40e756d49785b936bfe1fb1bccc7f461556ce746b361695231",
-      "parent": "54deb864b61ba4208be2d519b5acb3e3eaebcc3bd0a702e449b295257e5003f3",
+      "id": "7a0ae79179bf35470b76666db015d45a9b2bff8f37c149b1b21009b50af450f1",
+      "parent": "d1214db7e3d3198d803e2fe8e4c0dc3ba59737ae15e9ec32174a17b29be168c0",
       "seq": 92
     },
     {
       "type": "MOVE",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "entityId": "player",
         "from": {
-          "x": 7,
-          "y": 16
+          "x": 14,
+          "y": 17
         },
         "to": {
-          "x": 7,
-          "y": 15
+          "x": 14,
+          "y": 16
         }
       },
-      "id": "4714739b81a3dc76e2af7bb888ef818cf597ccdadc2b51b61f9f3f44687a5198",
-      "parent": "d14af2183ba4cc40e756d49785b936bfe1fb1bccc7f461556ce746b361695231",
+      "id": "6f9a3602b19c9846563846a9079a593c2bb917ecae9a67896165092c5fc95121",
+      "parent": "7a0ae79179bf35470b76666db015d45a9b2bff8f37c149b1b21009b50af450f1",
       "seq": 93
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-1",
-        "turn": 26
+        "turn": 25
       },
-      "id": "b40f95f563868f03da9653ed6dc7110247291f66ee4cff5cc0c428c8e852b3f9",
-      "parent": "4714739b81a3dc76e2af7bb888ef818cf597ccdadc2b51b61f9f3f44687a5198",
+      "id": "ada7ef6c8c42f6330c03fd0d8b3762789cf8eb6e07769bca0152c0b138b9d09b",
+      "parent": "6f9a3602b19c9846563846a9079a593c2bb917ecae9a67896165092c5fc95121",
       "seq": 94
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "player",
-        "turn": 27
+        "turn": 25
       },
-      "id": "85be0f79485e58be594e0881a7f378f0fd417d561c06d43da612feebbb5d1a05",
-      "parent": "b40f95f563868f03da9653ed6dc7110247291f66ee4cff5cc0c428c8e852b3f9",
+      "id": "5fcc2416ff0c0c06782f86d77acfe217ed6952b58793ef1930cf173bbea60695",
+      "parent": "ada7ef6c8c42f6330c03fd0d8b3762789cf8eb6e07769bca0152c0b138b9d09b",
       "seq": 95
     },
     {
       "type": "MOVE",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "entityId": "player",
         "from": {
-          "x": 7,
-          "y": 15
+          "x": 14,
+          "y": 16
         },
         "to": {
-          "x": 7,
-          "y": 14
+          "x": 14,
+          "y": 15
         }
       },
-      "id": "cadbbe827f6c3794e46b5fcb54d6b2babe651d0693664ab9f318ea24723b29d9",
-      "parent": "85be0f79485e58be594e0881a7f378f0fd417d561c06d43da612feebbb5d1a05",
+      "id": "2bbf47c3758e3ca6bda0acb27c859461b5b3780ff712093903e7483aaa6c4fdf",
+      "parent": "5fcc2416ff0c0c06782f86d77acfe217ed6952b58793ef1930cf173bbea60695",
       "seq": 96
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-1",
-        "turn": 27
+        "turn": 26
       },
-      "id": "c3f15fbfc42e4d35f6c4d9d20edce629cd39dbec075441a7ab5c479af07151b4",
-      "parent": "cadbbe827f6c3794e46b5fcb54d6b2babe651d0693664ab9f318ea24723b29d9",
+      "id": "732cc4c7ede7b9040ef0f20833fb4e59e6cfc67c1e81fc06f869cca50e15f60b",
+      "parent": "2bbf47c3758e3ca6bda0acb27c859461b5b3780ff712093903e7483aaa6c4fdf",
       "seq": 97
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "player",
-        "turn": 28
+        "turn": 26
       },
-      "id": "200e3f90d72e971a569e07183b6095708d49dd1eb69a4c57dc2d6184ba4f0da7",
-      "parent": "c3f15fbfc42e4d35f6c4d9d20edce629cd39dbec075441a7ab5c479af07151b4",
+      "id": "27ec425624149d5aa536f9b1caf63f825d5231579c3eb9be1fdcd8c743bd5fda",
+      "parent": "732cc4c7ede7b9040ef0f20833fb4e59e6cfc67c1e81fc06f869cca50e15f60b",
       "seq": 98
     },
     {
       "type": "MOVE",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "entityId": "player",
         "from": {
-          "x": 7,
-          "y": 14
+          "x": 14,
+          "y": 15
         },
         "to": {
-          "x": 7,
-          "y": 13
+          "x": 14,
+          "y": 14
         }
       },
-      "id": "d2f7d7f1848676a76ccc7a8b89476c2f31d5ccfe027a16c9f097e897f06f1b90",
-      "parent": "200e3f90d72e971a569e07183b6095708d49dd1eb69a4c57dc2d6184ba4f0da7",
+      "id": "539ef9e9732565322c228ab96e086a3b858365c9c8738383a02e01c6382b5769",
+      "parent": "27ec425624149d5aa536f9b1caf63f825d5231579c3eb9be1fdcd8c743bd5fda",
       "seq": 99
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-1",
-        "turn": 28
+        "turn": 27
       },
-      "id": "fd597f5136633df46431ad2743f4eb4a0e7a8c0df223cee66f927625cc14303d",
-      "parent": "d2f7d7f1848676a76ccc7a8b89476c2f31d5ccfe027a16c9f097e897f06f1b90",
+      "id": "361a2bca7602966e2e161c21ca2794039fbca04cb9b48cc12209bf28abe73172",
+      "parent": "539ef9e9732565322c228ab96e086a3b858365c9c8738383a02e01c6382b5769",
       "seq": 100
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "player",
-        "turn": 29
+        "turn": 27
       },
-      "id": "f8797f4ca8b94e4c0170aaaed7b62acccae8f2f7ccb9c918492aee45213e7a81",
-      "parent": "fd597f5136633df46431ad2743f4eb4a0e7a8c0df223cee66f927625cc14303d",
+      "id": "068643e6e7fcf9c10d75b5730c0fef5b02eba895c5d62bb4587dc29d21d7d36f",
+      "parent": "361a2bca7602966e2e161c21ca2794039fbca04cb9b48cc12209bf28abe73172",
       "seq": 101
     },
     {
       "type": "MOVE",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "entityId": "player",
         "from": {
-          "x": 7,
-          "y": 13
+          "x": 14,
+          "y": 14
         },
         "to": {
-          "x": 7,
-          "y": 12
+          "x": 15,
+          "y": 14
         }
       },
-      "id": "183489310969cde0abf06c10917090aa23468d7b212fdb6ed18de7e5d09d5cf0",
-      "parent": "f8797f4ca8b94e4c0170aaaed7b62acccae8f2f7ccb9c918492aee45213e7a81",
+      "id": "0937a5f7be69062827adbe3bd4a82beaa097c18c4450438c48c4ec40fdf97d5e",
+      "parent": "068643e6e7fcf9c10d75b5730c0fef5b02eba895c5d62bb4587dc29d21d7d36f",
       "seq": 102
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-1",
-        "turn": 29
+        "turn": 28
       },
-      "id": "ae0e18bd27a44d4a3f8198e0c62e6b16249a4f21533cce072ac5661166c5c0a5",
-      "parent": "183489310969cde0abf06c10917090aa23468d7b212fdb6ed18de7e5d09d5cf0",
+      "id": "2b19cfcf596a078c25ed1f752e2e5cd6460a6495563559f62c38e5a90b47f800",
+      "parent": "0937a5f7be69062827adbe3bd4a82beaa097c18c4450438c48c4ec40fdf97d5e",
       "seq": 103
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "player",
-        "turn": 30
+        "turn": 28
       },
-      "id": "f95d94277d823c5d7df9cc9a47f508c2e6a5de2a346cdf1ebc429b24d083342f",
-      "parent": "ae0e18bd27a44d4a3f8198e0c62e6b16249a4f21533cce072ac5661166c5c0a5",
+      "id": "e33d06526ddb78283b575530d26632d946035586a6470c182d94a6a7daa48cbd",
+      "parent": "2b19cfcf596a078c25ed1f752e2e5cd6460a6495563559f62c38e5a90b47f800",
       "seq": 104
     },
     {
       "type": "MOVE",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "entityId": "player",
         "from": {
-          "x": 7,
-          "y": 12
+          "x": 15,
+          "y": 14
         },
         "to": {
-          "x": 7,
-          "y": 11
+          "x": 16,
+          "y": 14
         }
       },
-      "id": "06a2b2c3b38aa2445a95b625126020044cb9d3ab9acb4ebf97a9fa24fbf884a9",
-      "parent": "f95d94277d823c5d7df9cc9a47f508c2e6a5de2a346cdf1ebc429b24d083342f",
+      "id": "e492b74a97e3c44634518e259337387d2bb931f04912094625743fc92cafe8eb",
+      "parent": "e33d06526ddb78283b575530d26632d946035586a6470c182d94a6a7daa48cbd",
       "seq": 105
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-1",
-        "turn": 30
+        "turn": 29
       },
-      "id": "01c7723fb577430efda6b86aeaee3c447b16961ca7a1c45aa19ef16fe6b3f830",
-      "parent": "06a2b2c3b38aa2445a95b625126020044cb9d3ab9acb4ebf97a9fa24fbf884a9",
+      "id": "aabf5a058e0032d5f18ab473eabf2ceead87aa58adee24773a13811a79e7b6eb",
+      "parent": "e492b74a97e3c44634518e259337387d2bb931f04912094625743fc92cafe8eb",
       "seq": 106
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "player",
-        "turn": 31
+        "turn": 29
       },
-      "id": "9f862b8143082b9d5cd0dee913d4323df41acfe520e0e3a52b3aa396e3fbd809",
-      "parent": "01c7723fb577430efda6b86aeaee3c447b16961ca7a1c45aa19ef16fe6b3f830",
+      "id": "e16b0949a6f0c0847c0374d59424ef7d8d57c74eda0b0a14520679784c62024c",
+      "parent": "aabf5a058e0032d5f18ab473eabf2ceead87aa58adee24773a13811a79e7b6eb",
       "seq": 107
     },
     {
       "type": "MOVE",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "entityId": "player",
         "from": {
-          "x": 7,
-          "y": 11
+          "x": 16,
+          "y": 14
         },
         "to": {
-          "x": 7,
-          "y": 10
+          "x": 17,
+          "y": 14
         }
       },
-      "id": "4275d7a5d33d032ec5bc320b9fcbbdf3b008dfeff8faa1125a5cbc1179ecc5ec",
-      "parent": "9f862b8143082b9d5cd0dee913d4323df41acfe520e0e3a52b3aa396e3fbd809",
+      "id": "ad4db7d0c2621b42119de7bc50938689d51c7d670b0918cda8f75519bd38641c",
+      "parent": "e16b0949a6f0c0847c0374d59424ef7d8d57c74eda0b0a14520679784c62024c",
       "seq": 108
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-1",
-        "turn": 31
+        "turn": 30
       },
-      "id": "0967330f70ea9d6855d2eb4ba5beb86ab40ace5708084c0978e37219962bd1fa",
-      "parent": "4275d7a5d33d032ec5bc320b9fcbbdf3b008dfeff8faa1125a5cbc1179ecc5ec",
+      "id": "aa3a89df32ee4c81ed603478821b7ed79bbddbcd76a12e6eeacc713050eb876c",
+      "parent": "ad4db7d0c2621b42119de7bc50938689d51c7d670b0918cda8f75519bd38641c",
       "seq": 109
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "player",
-        "turn": 32
+        "turn": 30
       },
-      "id": "ba417a2519a39014c53d23d7d8f22a908de60b74e0acf0c3b1ff42a5d15e6fde",
-      "parent": "0967330f70ea9d6855d2eb4ba5beb86ab40ace5708084c0978e37219962bd1fa",
+      "id": "9f15fbe0f0588dba1ab77042f9a7e295f553be665f37bb8f592f6defe75f9405",
+      "parent": "aa3a89df32ee4c81ed603478821b7ed79bbddbcd76a12e6eeacc713050eb876c",
       "seq": 110
     },
     {
       "type": "MOVE",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "entityId": "player",
         "from": {
-          "x": 7,
-          "y": 10
+          "x": 17,
+          "y": 14
         },
         "to": {
-          "x": 7,
-          "y": 9
+          "x": 17,
+          "y": 13
         }
       },
-      "id": "87567d11acd86da8f890dce6b23fba234cc4d0e241d7f9fe35baca567deb6a7f",
-      "parent": "ba417a2519a39014c53d23d7d8f22a908de60b74e0acf0c3b1ff42a5d15e6fde",
+      "id": "8f4c4f86d0f317e02e3cd5e650b38e11a3424b2314c2b20e7d63e81eb3ae136c",
+      "parent": "9f15fbe0f0588dba1ab77042f9a7e295f553be665f37bb8f592f6defe75f9405",
       "seq": 111
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-1",
-        "turn": 32
+        "turn": 31
       },
-      "id": "9d750df1b72b834b1fd5198592ce109376e88bd9355e81170afc61904c53ed8a",
-      "parent": "87567d11acd86da8f890dce6b23fba234cc4d0e241d7f9fe35baca567deb6a7f",
+      "id": "b7b5f05515ed29ac99aafc49c5b5b804b12063db151a4420eaaa058cbcf69bf4",
+      "parent": "8f4c4f86d0f317e02e3cd5e650b38e11a3424b2314c2b20e7d63e81eb3ae136c",
       "seq": 112
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "player",
-        "turn": 33
+        "turn": 31
       },
-      "id": "f194c9da0180739cace5da0e288cedc27b57411acb89d3c6b58dc86e248dbe93",
-      "parent": "9d750df1b72b834b1fd5198592ce109376e88bd9355e81170afc61904c53ed8a",
+      "id": "bdf74f591c868a9a106912da754957294d1f7b935fb7b35f3177a0457df04dd4",
+      "parent": "b7b5f05515ed29ac99aafc49c5b5b804b12063db151a4420eaaa058cbcf69bf4",
       "seq": 113
     },
     {
       "type": "MOVE",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "entityId": "player",
         "from": {
-          "x": 7,
-          "y": 9
+          "x": 17,
+          "y": 13
         },
         "to": {
-          "x": 7,
-          "y": 8
+          "x": 17,
+          "y": 12
         }
       },
-      "id": "82ae55f956262a44a3e93c125a59324792545d98ea4e74b80500dd667c38967c",
-      "parent": "f194c9da0180739cace5da0e288cedc27b57411acb89d3c6b58dc86e248dbe93",
+      "id": "13778ae08cf5a7c0c4c7329bb4ffdf6cb5fac083bd6ef82661da50c61480c5ca",
+      "parent": "bdf74f591c868a9a106912da754957294d1f7b935fb7b35f3177a0457df04dd4",
       "seq": 114
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-1",
-        "turn": 33
+        "turn": 32
       },
-      "id": "5e0fd1e82755f7bfdc5c118b6859c93734e79de19facdce9d386bebf3b2f72e9",
-      "parent": "82ae55f956262a44a3e93c125a59324792545d98ea4e74b80500dd667c38967c",
+      "id": "b72ef2b05f889da9e20450d39a3602f2f56e0780e8d581f92c862d08b7904243",
+      "parent": "13778ae08cf5a7c0c4c7329bb4ffdf6cb5fac083bd6ef82661da50c61480c5ca",
       "seq": 115
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "player",
-        "turn": 34
+        "turn": 32
       },
-      "id": "6f7f284e40b86de00f883624e646883aef911337f1cdd526c626a4c43c78ebf9",
-      "parent": "5e0fd1e82755f7bfdc5c118b6859c93734e79de19facdce9d386bebf3b2f72e9",
+      "id": "2b5c3e8f817f493086c7b975f32951cf133cf690895d64c91be211d0f99622f5",
+      "parent": "b72ef2b05f889da9e20450d39a3602f2f56e0780e8d581f92c862d08b7904243",
       "seq": 116
     },
     {
       "type": "MOVE",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "entityId": "player",
         "from": {
-          "x": 7,
-          "y": 8
+          "x": 17,
+          "y": 12
         },
         "to": {
-          "x": 7,
-          "y": 7
+          "x": 18,
+          "y": 12
         }
       },
-      "id": "6e22911eb94658008758e2daba4a6b6a419ce92f362d61c2421e8cce0f731ed9",
-      "parent": "6f7f284e40b86de00f883624e646883aef911337f1cdd526c626a4c43c78ebf9",
+      "id": "dabd2cf3f84b98c4d59e20063ddcb31bbdfba67545879311c15da8f8942bc1bc",
+      "parent": "2b5c3e8f817f493086c7b975f32951cf133cf690895d64c91be211d0f99622f5",
       "seq": 117
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-1",
-        "turn": 34
+        "turn": 33
       },
-      "id": "91075fb94117513c2aeaa806a8eb4fb87475deb37fe058529d59d5d50f79ee9a",
-      "parent": "6e22911eb94658008758e2daba4a6b6a419ce92f362d61c2421e8cce0f731ed9",
+      "id": "1e652bec211a99d7f9ad72f502142f1baf0037c979623993639e9e81f1a12d47",
+      "parent": "dabd2cf3f84b98c4d59e20063ddcb31bbdfba67545879311c15da8f8942bc1bc",
       "seq": 118
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "player",
-        "turn": 35
+        "turn": 33
       },
-      "id": "b9d0063e0537292a6bf5113c4f1acfe47b8f562bdd6e46aac18e63d9715806b5",
-      "parent": "91075fb94117513c2aeaa806a8eb4fb87475deb37fe058529d59d5d50f79ee9a",
+      "id": "7b766deefd2631b2ff7d10c277d0fddf71a889f737abef00889bddfa65d1ce35",
+      "parent": "1e652bec211a99d7f9ad72f502142f1baf0037c979623993639e9e81f1a12d47",
       "seq": 119
     },
     {
       "type": "MOVE",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "entityId": "player",
         "from": {
-          "x": 7,
-          "y": 7
+          "x": 18,
+          "y": 12
         },
         "to": {
-          "x": 7,
-          "y": 6
+          "x": 19,
+          "y": 12
         }
       },
-      "id": "69edf224b5c33a2a36134a33a867883a6f2d93650272444403b1d93500825bb8",
-      "parent": "b9d0063e0537292a6bf5113c4f1acfe47b8f562bdd6e46aac18e63d9715806b5",
+      "id": "3f1100f7701b3312234875c7d14eded5d363309dc2b3d248fb13985738aed7f5",
+      "parent": "7b766deefd2631b2ff7d10c277d0fddf71a889f737abef00889bddfa65d1ce35",
       "seq": 120
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "foe-1",
+        "turn": 34
+      },
+      "id": "f38aa38c53004e08467484fbb641ed44777995aee5f97c8d087d31f9e1bb07be",
+      "parent": "3f1100f7701b3312234875c7d14eded5d363309dc2b3d248fb13985738aed7f5",
+      "seq": 121
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "player",
+        "turn": 34
+      },
+      "id": "932b57227d64ea9308c357217b0a04d0001f51a6e06b35f6dcdcda980a6b879d",
+      "parent": "f38aa38c53004e08467484fbb641ed44777995aee5f97c8d087d31f9e1bb07be",
+      "seq": 122
+    },
+    {
+      "type": "MOVE",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "entityId": "player",
+        "from": {
+          "x": 19,
+          "y": 12
+        },
+        "to": {
+          "x": 20,
+          "y": 12
+        }
+      },
+      "id": "c099d3f2a6c8a9b65397153066512dbac9f0a17a73fdf70ae02c068098e3f96c",
+      "parent": "932b57227d64ea9308c357217b0a04d0001f51a6e06b35f6dcdcda980a6b879d",
+      "seq": 123
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-1",
         "turn": 35
       },
-      "id": "f56b1430865c45d94ccf5aea30324f0547e1126c49fd3ed490f416e1b06bac9d",
-      "parent": "69edf224b5c33a2a36134a33a867883a6f2d93650272444403b1d93500825bb8",
-      "seq": 121
-    },
-    {
-      "type": "MOVE",
-      "schemaVersion": 2,
-      "rngCounter": 161,
-      "rngDraws": 0,
-      "payload": {
-        "entityId": "foe-1",
-        "from": {
-          "x": 10,
-          "y": 1
-        },
-        "to": {
-          "x": 9,
-          "y": 1
-        }
-      },
-      "id": "7f760bbd7e3359a9f079e9d52bb718d49037a932919dd6496ca83a9f4cc2ad43",
-      "parent": "f56b1430865c45d94ccf5aea30324f0547e1126c49fd3ed490f416e1b06bac9d",
-      "seq": 122
-    },
-    {
-      "type": "TURN_ADVANCED",
-      "schemaVersion": 2,
-      "rngCounter": 161,
-      "rngDraws": 0,
-      "payload": {
-        "activeEntityId": "player",
-        "turn": 36
-      },
-      "id": "a838d1873d156ee9971204111f8ce1c06f88732840530b52cc0972c2db51ed06",
-      "parent": "7f760bbd7e3359a9f079e9d52bb718d49037a932919dd6496ca83a9f4cc2ad43",
-      "seq": 123
-    },
-    {
-      "type": "MOVE",
-      "schemaVersion": 2,
-      "rngCounter": 161,
-      "rngDraws": 0,
-      "payload": {
-        "entityId": "player",
-        "from": {
-          "x": 7,
-          "y": 6
-        },
-        "to": {
-          "x": 7,
-          "y": 5
-        }
-      },
-      "id": "e660c0d82876a37e98540813237137ed67c5853082b9e5ebed001055bc9de4e5",
-      "parent": "a838d1873d156ee9971204111f8ce1c06f88732840530b52cc0972c2db51ed06",
+      "id": "d22b8632222bb0e43460acdc19ccd7a7bd0f38121ed90dfc7160c4f58ac96891",
+      "parent": "c099d3f2a6c8a9b65397153066512dbac9f0a17a73fdf70ae02c068098e3f96c",
       "seq": 124
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
-        "activeEntityId": "foe-1",
-        "turn": 36
+        "activeEntityId": "player",
+        "turn": 35
       },
-      "id": "5e49f7e88cb44075e445955e71e24cb504380fa1429e6e46c2525d234498b6e0",
-      "parent": "e660c0d82876a37e98540813237137ed67c5853082b9e5ebed001055bc9de4e5",
+      "id": "5e4ae34187c64a295c1536d23713a69ecaad353c860598e039e9f003190cc0c4",
+      "parent": "d22b8632222bb0e43460acdc19ccd7a7bd0f38121ed90dfc7160c4f58ac96891",
       "seq": 125
     },
     {
       "type": "MOVE",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
-        "entityId": "foe-1",
+        "entityId": "player",
         "from": {
-          "x": 9,
-          "y": 1
+          "x": 20,
+          "y": 12
         },
         "to": {
-          "x": 8,
-          "y": 1
+          "x": 21,
+          "y": 12
         }
       },
-      "id": "f8c1fe5c93f81b14e7a4f7e7ff31c665e8b6f40481859f3c4f3a300317ccdabe",
-      "parent": "5e49f7e88cb44075e445955e71e24cb504380fa1429e6e46c2525d234498b6e0",
+      "id": "88ca718889774a4974031c5288f948c26584ba1b27d60af2396e2faac0f80bb9",
+      "parent": "5e4ae34187c64a295c1536d23713a69ecaad353c860598e039e9f003190cc0c4",
       "seq": 126
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
-        "activeEntityId": "player",
-        "turn": 37
+        "activeEntityId": "foe-1",
+        "turn": 36
       },
-      "id": "23ad2b0ed76a3f3486cae1f841e4c74cff57f127287fe0676a2b3dae59564934",
-      "parent": "f8c1fe5c93f81b14e7a4f7e7ff31c665e8b6f40481859f3c4f3a300317ccdabe",
+      "id": "02a6ff0a9edc26c8011158035aeb3c8c676e618192fccfcb6fb03c5c49226000",
+      "parent": "88ca718889774a4974031c5288f948c26584ba1b27d60af2396e2faac0f80bb9",
       "seq": 127
-    },
-    {
-      "type": "MOVE",
-      "schemaVersion": 2,
-      "rngCounter": 161,
-      "rngDraws": 0,
-      "payload": {
-        "entityId": "player",
-        "from": {
-          "x": 7,
-          "y": 5
-        },
-        "to": {
-          "x": 7,
-          "y": 4
-        }
-      },
-      "id": "3eebc6196a63f58c1d8fa1c38166a151c6ae780362a43310682d17e38e536639",
-      "parent": "23ad2b0ed76a3f3486cae1f841e4c74cff57f127287fe0676a2b3dae59564934",
-      "seq": 128
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "player",
+        "turn": 36
+      },
+      "id": "37ad6e282c264fb0a1ed5223ad4baba9f74f932adbc6ab6add5e53da6e19c354",
+      "parent": "02a6ff0a9edc26c8011158035aeb3c8c676e618192fccfcb6fb03c5c49226000",
+      "seq": 128
+    },
+    {
+      "type": "MOVE",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "entityId": "player",
+        "from": {
+          "x": 21,
+          "y": 12
+        },
+        "to": {
+          "x": 22,
+          "y": 12
+        }
+      },
+      "id": "2873af1a4d41799bf32146157665779243fe1986eb4ddd787a6a2afcb3564860",
+      "parent": "37ad6e282c264fb0a1ed5223ad4baba9f74f932adbc6ab6add5e53da6e19c354",
+      "seq": 129
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-1",
         "turn": 37
       },
-      "id": "d1ffd5681d778e828e0116fbb20b334b0ad19d897add0681434fad2fcc04dae6",
-      "parent": "3eebc6196a63f58c1d8fa1c38166a151c6ae780362a43310682d17e38e536639",
-      "seq": 129
-    },
-    {
-      "type": "MOVE",
-      "schemaVersion": 2,
-      "rngCounter": 161,
-      "rngDraws": 0,
-      "payload": {
-        "entityId": "foe-1",
-        "from": {
-          "x": 8,
-          "y": 1
-        },
-        "to": {
-          "x": 7,
-          "y": 1
-        }
-      },
-      "id": "1c8021de3c88163b4490cca03ba790c683f83be0ce2b5e7be40e669ea107d075",
-      "parent": "d1ffd5681d778e828e0116fbb20b334b0ad19d897add0681434fad2fcc04dae6",
+      "id": "a40c0e88fef4047fdaae4943f3c667bc210e9ee93e1475c87d17000794709ab8",
+      "parent": "2873af1a4d41799bf32146157665779243fe1986eb4ddd787a6a2afcb3564860",
       "seq": 130
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "player",
-        "turn": 38
+        "turn": 37
       },
-      "id": "ab3292f4c0a56bbc7364ce0b51db1a921e9fe50f1c05ca05d50bccd12617b6d2",
-      "parent": "1c8021de3c88163b4490cca03ba790c683f83be0ce2b5e7be40e669ea107d075",
+      "id": "82ed25d8a1bcb585083094ff2e9b13765996b1a5e8769ab9e312529bfa1cf7c0",
+      "parent": "a40c0e88fef4047fdaae4943f3c667bc210e9ee93e1475c87d17000794709ab8",
       "seq": 131
     },
     {
       "type": "MOVE",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "entityId": "player",
         "from": {
-          "x": 7,
-          "y": 4
+          "x": 22,
+          "y": 12
         },
         "to": {
-          "x": 7,
-          "y": 3
+          "x": 23,
+          "y": 12
         }
       },
-      "id": "3c70ecdfe09ca11dfd2093c791b025adb34fa336736163604330b5639df358ee",
-      "parent": "ab3292f4c0a56bbc7364ce0b51db1a921e9fe50f1c05ca05d50bccd12617b6d2",
+      "id": "b59da0877dbd36bf19daecfae28fc0bd441215ec805a043ee82a2457a4ce0645",
+      "parent": "82ed25d8a1bcb585083094ff2e9b13765996b1a5e8769ab9e312529bfa1cf7c0",
       "seq": 132
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-1",
         "turn": 38
       },
-      "id": "9a684fd632615a2864f9e8aa072b963f7018f8b95947ecbb41a22ec5b5393bc9",
-      "parent": "3c70ecdfe09ca11dfd2093c791b025adb34fa336736163604330b5639df358ee",
+      "id": "949bb112ca594df6295ec2b3aec0bb39bb207acdf8d12a04cd5f8c1e59ccc0a0",
+      "parent": "b59da0877dbd36bf19daecfae28fc0bd441215ec805a043ee82a2457a4ce0645",
       "seq": 133
-    },
-    {
-      "type": "MOVE",
-      "schemaVersion": 2,
-      "rngCounter": 161,
-      "rngDraws": 0,
-      "payload": {
-        "entityId": "foe-1",
-        "from": {
-          "x": 7,
-          "y": 1
-        },
-        "to": {
-          "x": 7,
-          "y": 2
-        }
-      },
-      "id": "4d9500a3d52b13a52fa072f126945fdeebda0b4e57359f8863af521a96cd59d2",
-      "parent": "9a684fd632615a2864f9e8aa072b963f7018f8b95947ecbb41a22ec5b5393bc9",
-      "seq": 134
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 161,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "player",
-        "turn": 39
+        "turn": 38
       },
-      "id": "4167996fa607949c1f997e51eaa8391d3dd0cd2e3c4e22fe66561f5b1bde3a3a",
-      "parent": "4d9500a3d52b13a52fa072f126945fdeebda0b4e57359f8863af521a96cd59d2",
+      "id": "e5fde4792450f3a376ad6cae180e055b7619bd4dd87ed8dbe3f7bf63228017db",
+      "parent": "949bb112ca594df6295ec2b3aec0bb39bb207acdf8d12a04cd5f8c1e59ccc0a0",
+      "seq": 134
+    },
+    {
+      "type": "MOVE",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "entityId": "player",
+        "from": {
+          "x": 23,
+          "y": 12
+        },
+        "to": {
+          "x": 24,
+          "y": 12
+        }
+      },
+      "id": "cc26735824f50937649479e3333780512ed6e831ecd9c09bc791f1bd530fee43",
+      "parent": "e5fde4792450f3a376ad6cae180e055b7619bd4dd87ed8dbe3f7bf63228017db",
       "seq": 135
     },
     {
-      "type": "STRIKE",
+      "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 161,
-      "rngDraws": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
       "payload": {
-        "attackerId": "player",
-        "targetId": "foe-1",
-        "roll": 10,
-        "needed": 6,
-        "hit": true,
-        "crit": false,
-        "damage": 4
+        "activeEntityId": "foe-1",
+        "turn": 39
       },
-      "id": "d9d90bc9fdca823f49596822eb868e273ae8dca4928ccc3aec514ede3cff1ce0",
-      "parent": "4167996fa607949c1f997e51eaa8391d3dd0cd2e3c4e22fe66561f5b1bde3a3a",
+      "id": "373236e40a03f6430b94dd5021a6efb61439c02a0bc0515d17b1234a0a7c91b3",
+      "parent": "cc26735824f50937649479e3333780512ed6e831ecd9c09bc791f1bd530fee43",
       "seq": 136
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 163,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
-        "activeEntityId": "foe-1",
+        "activeEntityId": "player",
         "turn": 39
       },
-      "id": "94b3fa6123c2ab38abd9e648cde1a90e16367869f1aed26fcfe9fc35741d2cfc",
-      "parent": "d9d90bc9fdca823f49596822eb868e273ae8dca4928ccc3aec514ede3cff1ce0",
+      "id": "3f055988a0d58d3572fdf307960f192499e5a07d6c2c2810c8a489f0bae428ae",
+      "parent": "373236e40a03f6430b94dd5021a6efb61439c02a0bc0515d17b1234a0a7c91b3",
       "seq": 137
     },
     {
-      "type": "STRIKE",
+      "type": "MOVE",
       "schemaVersion": 2,
-      "rngCounter": 163,
-      "rngDraws": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
       "payload": {
-        "attackerId": "foe-1",
-        "targetId": "player",
-        "roll": 1,
-        "needed": 10,
-        "hit": false,
-        "crit": false,
-        "damage": 0
+        "entityId": "player",
+        "from": {
+          "x": 24,
+          "y": 12
+        },
+        "to": {
+          "x": 25,
+          "y": 12
+        }
       },
-      "id": "70a5aa1a7ef8ec0d88f4f898bc9beca18b394fbbc7a47734fd79999df3170f79",
-      "parent": "94b3fa6123c2ab38abd9e648cde1a90e16367869f1aed26fcfe9fc35741d2cfc",
+      "id": "eb8aba834876ad9529f90dc35111f1314fd149dc7a62aa6b48c57ecd0d5bb18e",
+      "parent": "3f055988a0d58d3572fdf307960f192499e5a07d6c2c2810c8a489f0bae428ae",
       "seq": 138
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 165,
-      "rngDraws": 0,
-      "payload": {
-        "activeEntityId": "player",
-        "turn": 40
-      },
-      "id": "98536c8f920d11acbbe3444c1216500f7c9a388ed796bb2d46e62fd355ef762e",
-      "parent": "70a5aa1a7ef8ec0d88f4f898bc9beca18b394fbbc7a47734fd79999df3170f79",
-      "seq": 139
-    },
-    {
-      "type": "STRIKE",
-      "schemaVersion": 2,
-      "rngCounter": 165,
-      "rngDraws": 2,
-      "payload": {
-        "attackerId": "player",
-        "targetId": "foe-1",
-        "roll": 1,
-        "needed": 6,
-        "hit": false,
-        "crit": false,
-        "damage": 0
-      },
-      "id": "feafb8aa99ffc5ee78721356b8524de6c036fa61459a15ea3eeeac1310fb30fd",
-      "parent": "98536c8f920d11acbbe3444c1216500f7c9a388ed796bb2d46e62fd355ef762e",
-      "seq": 140
-    },
-    {
-      "type": "TURN_ADVANCED",
-      "schemaVersion": 2,
-      "rngCounter": 167,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-1",
         "turn": 40
       },
-      "id": "c85e70fd01b1cc5856f295d862ab3359f27e408b5e7beac97e6a4e19a1a9d3fb",
-      "parent": "feafb8aa99ffc5ee78721356b8524de6c036fa61459a15ea3eeeac1310fb30fd",
+      "id": "3e32a2c9b4e69f8b2dd8d7d3d04ef9dca4c38acfaa7841b2e927adb40c3e76c8",
+      "parent": "eb8aba834876ad9529f90dc35111f1314fd149dc7a62aa6b48c57ecd0d5bb18e",
+      "seq": 139
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "player",
+        "turn": 40
+      },
+      "id": "0414202e0db47a902d2b4b3ec5a19c0f63d03ae0eaf25a418b18c9d674426c6c",
+      "parent": "3e32a2c9b4e69f8b2dd8d7d3d04ef9dca4c38acfaa7841b2e927adb40c3e76c8",
+      "seq": 140
+    },
+    {
+      "type": "MOVE",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "entityId": "player",
+        "from": {
+          "x": 25,
+          "y": 12
+        },
+        "to": {
+          "x": 26,
+          "y": 12
+        }
+      },
+      "id": "c626f76b2c7533459c027e67dee8c855b743a0fa052ea111fcd6de61ebe5e2bf",
+      "parent": "0414202e0db47a902d2b4b3ec5a19c0f63d03ae0eaf25a418b18c9d674426c6c",
       "seq": 141
     },
     {
-      "type": "STRIKE",
+      "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 167,
-      "rngDraws": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
       "payload": {
-        "attackerId": "foe-1",
-        "targetId": "player",
-        "roll": 1,
-        "needed": 10,
-        "hit": false,
-        "crit": false,
-        "damage": 0
+        "activeEntityId": "foe-1",
+        "turn": 41
       },
-      "id": "37364fedf771f5de945d0859229db5b6b78b9dd245268d6700bb24cbf8fa6515",
-      "parent": "c85e70fd01b1cc5856f295d862ab3359f27e408b5e7beac97e6a4e19a1a9d3fb",
+      "id": "ddf0976dab42874e1f259b74fbcec23e2d67993b413bf25229b1c6979fdc2928",
+      "parent": "c626f76b2c7533459c027e67dee8c855b743a0fa052ea111fcd6de61ebe5e2bf",
       "seq": 142
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 169,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "player",
         "turn": 41
       },
-      "id": "887f0d387f8d9a555f4fb0a80a23cba84086f0b7f6a70d639557ed574bfa0ce6",
-      "parent": "37364fedf771f5de945d0859229db5b6b78b9dd245268d6700bb24cbf8fa6515",
+      "id": "90d0f874b5e8b0d4b72529a8f35f667f96f94337a1cafb22816c49a38308f701",
+      "parent": "ddf0976dab42874e1f259b74fbcec23e2d67993b413bf25229b1c6979fdc2928",
       "seq": 143
     },
     {
-      "type": "STRIKE",
+      "type": "MOVE",
       "schemaVersion": 2,
-      "rngCounter": 169,
-      "rngDraws": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
       "payload": {
-        "attackerId": "player",
-        "targetId": "foe-1",
-        "roll": 2,
-        "needed": 6,
-        "hit": false,
-        "crit": false,
-        "damage": 0
+        "entityId": "player",
+        "from": {
+          "x": 26,
+          "y": 12
+        },
+        "to": {
+          "x": 27,
+          "y": 12
+        }
       },
-      "id": "7bc1bb3a84a7b837f0542db3aac901c75f41da7edccd89243bfa06e02dd593d4",
-      "parent": "887f0d387f8d9a555f4fb0a80a23cba84086f0b7f6a70d639557ed574bfa0ce6",
+      "id": "ff55b6a589d9fc483df85584d43fc8a8b380c54d79d6ae0581bfb428f0703855",
+      "parent": "90d0f874b5e8b0d4b72529a8f35f667f96f94337a1cafb22816c49a38308f701",
       "seq": 144
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 171,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-1",
-        "turn": 41
+        "turn": 42
       },
-      "id": "6d6ab55fbcb4d07c7d9abcf1f964a88617ce6ead775e0d37a016b0e9bafa7b11",
-      "parent": "7bc1bb3a84a7b837f0542db3aac901c75f41da7edccd89243bfa06e02dd593d4",
+      "id": "19418fb17631ec4b37c66f28d00f44cf863615f4da015f77018ce05936fe8849",
+      "parent": "ff55b6a589d9fc483df85584d43fc8a8b380c54d79d6ae0581bfb428f0703855",
       "seq": 145
-    },
-    {
-      "type": "STRIKE",
-      "schemaVersion": 2,
-      "rngCounter": 171,
-      "rngDraws": 2,
-      "payload": {
-        "attackerId": "foe-1",
-        "targetId": "player",
-        "roll": 13,
-        "needed": 10,
-        "hit": true,
-        "crit": false,
-        "damage": 2
-      },
-      "id": "f62e54737fda8805e05278d02c7333e4c54d763f64c866ba298cda739e2376e9",
-      "parent": "6d6ab55fbcb4d07c7d9abcf1f964a88617ce6ead775e0d37a016b0e9bafa7b11",
-      "seq": 146
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 173,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "player",
         "turn": 42
       },
-      "id": "96cfeda6441b88b8c0508954534e7528569706ec0d1fdc1b3a764d9d7717a20a",
-      "parent": "f62e54737fda8805e05278d02c7333e4c54d763f64c866ba298cda739e2376e9",
+      "id": "b0d9a5843f29ab9cf53b21ebf5ed3928e640fcbe6886d7a12514abbdc4f1016a",
+      "parent": "19418fb17631ec4b37c66f28d00f44cf863615f4da015f77018ce05936fe8849",
+      "seq": 146
+    },
+    {
+      "type": "MOVE",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "entityId": "player",
+        "from": {
+          "x": 27,
+          "y": 12
+        },
+        "to": {
+          "x": 28,
+          "y": 12
+        }
+      },
+      "id": "2fa3edd64a749282f67794c5e0858bcd7f3885eca72e7ee757f97ecf0440ccfe",
+      "parent": "b0d9a5843f29ab9cf53b21ebf5ed3928e640fcbe6886d7a12514abbdc4f1016a",
       "seq": 147
     },
     {
-      "type": "STRIKE",
+      "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 173,
-      "rngDraws": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
       "payload": {
-        "attackerId": "player",
-        "targetId": "foe-1",
-        "roll": 3,
-        "needed": 6,
-        "hit": false,
-        "crit": false,
-        "damage": 0
+        "activeEntityId": "foe-1",
+        "turn": 43
       },
-      "id": "293dc63f6a1a5ab622ba3f0654c7825bfe7826dab651f529ecfc7e90e6d8892e",
-      "parent": "96cfeda6441b88b8c0508954534e7528569706ec0d1fdc1b3a764d9d7717a20a",
+      "id": "d5a4b8183677aed821d6b588849b57aa33261ede011d176ac13f7d0eb230db17",
+      "parent": "2fa3edd64a749282f67794c5e0858bcd7f3885eca72e7ee757f97ecf0440ccfe",
       "seq": 148
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 175,
-      "rngDraws": 0,
-      "payload": {
-        "activeEntityId": "foe-1",
-        "turn": 42
-      },
-      "id": "731e0ad0591d8c367e18796fc445e7ff00238bc52e883fb0fba7e663eb64ae54",
-      "parent": "293dc63f6a1a5ab622ba3f0654c7825bfe7826dab651f529ecfc7e90e6d8892e",
-      "seq": 149
-    },
-    {
-      "type": "STRIKE",
-      "schemaVersion": 2,
-      "rngCounter": 175,
-      "rngDraws": 2,
-      "payload": {
-        "attackerId": "foe-1",
-        "targetId": "player",
-        "roll": 8,
-        "needed": 10,
-        "hit": false,
-        "crit": false,
-        "damage": 0
-      },
-      "id": "bcb345c7642e4a7967063f16eafc95a028a8a019e1c1f0f0b477a3f30c59d5c6",
-      "parent": "731e0ad0591d8c367e18796fc445e7ff00238bc52e883fb0fba7e663eb64ae54",
-      "seq": 150
-    },
-    {
-      "type": "TURN_ADVANCED",
-      "schemaVersion": 2,
-      "rngCounter": 177,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "player",
         "turn": 43
       },
-      "id": "37c69db9a38b25a945870312545f3b44402378f27cbae8f3cab38c7301da04c1",
-      "parent": "bcb345c7642e4a7967063f16eafc95a028a8a019e1c1f0f0b477a3f30c59d5c6",
-      "seq": 151
+      "id": "938e9d30487d476fd9919d35aa5f90e54254887ddbaf9024be74679b8ab352a2",
+      "parent": "d5a4b8183677aed821d6b588849b57aa33261ede011d176ac13f7d0eb230db17",
+      "seq": 149
     },
     {
-      "type": "STRIKE",
+      "type": "MOVE",
       "schemaVersion": 2,
-      "rngCounter": 177,
-      "rngDraws": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
       "payload": {
-        "attackerId": "player",
-        "targetId": "foe-1",
-        "roll": 15,
-        "needed": 6,
-        "hit": true,
-        "crit": false,
-        "damage": 6
+        "entityId": "player",
+        "from": {
+          "x": 28,
+          "y": 12
+        },
+        "to": {
+          "x": 29,
+          "y": 12
+        }
       },
-      "id": "84e3328e61937a8220378914d52d0f213f393fdd4388e836ae1f386cee0fa2df",
-      "parent": "37c69db9a38b25a945870312545f3b44402378f27cbae8f3cab38c7301da04c1",
-      "seq": 152
+      "id": "4ad717c76185187f07236de5916ea3ba85dc8c37da7381702d58ebb35992863d",
+      "parent": "938e9d30487d476fd9919d35aa5f90e54254887ddbaf9024be74679b8ab352a2",
+      "seq": 150
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 179,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "foe-1",
+        "turn": 44
+      },
+      "id": "93b1dab422bd5531e023b2a79fe7d82b30b4e5d963f1cd287fbf45a0a8394697",
+      "parent": "4ad717c76185187f07236de5916ea3ba85dc8c37da7381702d58ebb35992863d",
+      "seq": 151
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "player",
         "turn": 44
       },
-      "id": "3a1fa71fd86a677f8f377cc9d6a8ac0060339878291f67633f3c5b7699563d8d",
-      "parent": "84e3328e61937a8220378914d52d0f213f393fdd4388e836ae1f386cee0fa2df",
-      "seq": 153
+      "id": "7a5b1c32ba0934a9dd73a47f7668c9ea1d0c99ded528bf77461d683daed47d3f",
+      "parent": "93b1dab422bd5531e023b2a79fe7d82b30b4e5d963f1cd287fbf45a0a8394697",
+      "seq": 152
     },
     {
       "type": "MOVE",
       "schemaVersion": 2,
-      "rngCounter": 179,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "entityId": "player",
         "from": {
-          "x": 7,
-          "y": 3
+          "x": 29,
+          "y": 12
         },
         "to": {
-          "x": 8,
-          "y": 3
+          "x": 30,
+          "y": 12
         }
       },
-      "id": "e7ef4fabf8bd1cc8f231728dbad0a84848b2e807ecb7ebbb0bfd378dfa467320",
-      "parent": "3a1fa71fd86a677f8f377cc9d6a8ac0060339878291f67633f3c5b7699563d8d",
+      "id": "0dd8381859557d22d4ae32d4d6c706d11bb3a715fba4770d5d04d54da379f3ed",
+      "parent": "7a5b1c32ba0934a9dd73a47f7668c9ea1d0c99ded528bf77461d683daed47d3f",
+      "seq": 153
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "foe-1",
+        "turn": 45
+      },
+      "id": "52b566e8e305be647c60c522d82272af39e7264ea221f5441f3053ad7de9e23d",
+      "parent": "0dd8381859557d22d4ae32d4d6c706d11bb3a715fba4770d5d04d54da379f3ed",
       "seq": 154
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 179,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "player",
         "turn": 45
       },
-      "id": "29f124dc9c9aa79d8eeedf08369515df48655822b4ae5048649753213aaaf0ca",
-      "parent": "e7ef4fabf8bd1cc8f231728dbad0a84848b2e807ecb7ebbb0bfd378dfa467320",
+      "id": "19292c6489edd2a69941a5f15ec6d618b8eb7c3c2f39206cf3e464e253345941",
+      "parent": "52b566e8e305be647c60c522d82272af39e7264ea221f5441f3053ad7de9e23d",
       "seq": 155
     },
     {
       "type": "MOVE",
       "schemaVersion": 2,
-      "rngCounter": 179,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "entityId": "player",
         "from": {
-          "x": 8,
-          "y": 3
+          "x": 30,
+          "y": 12
         },
         "to": {
-          "x": 9,
-          "y": 3
+          "x": 31,
+          "y": 12
         }
       },
-      "id": "727032a325624686fa702dca68d3eab718fb0f9547a71941f0b4bc8d51039026",
-      "parent": "29f124dc9c9aa79d8eeedf08369515df48655822b4ae5048649753213aaaf0ca",
+      "id": "c2ba2bd7b6c928c528a857a7b5d1b7b4a9474f1fe28b9c1d0f88931757100631",
+      "parent": "19292c6489edd2a69941a5f15ec6d618b8eb7c3c2f39206cf3e464e253345941",
       "seq": 156
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 179,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "foe-1",
+        "turn": 46
+      },
+      "id": "3d888fe53d76b710f92270fe34ea2f87595b57a8263d906e5fde42f86c52a3c7",
+      "parent": "c2ba2bd7b6c928c528a857a7b5d1b7b4a9474f1fe28b9c1d0f88931757100631",
+      "seq": 157
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "player",
         "turn": 46
       },
-      "id": "384c2b78811ca739d7b6789882a17104d8dce785a2f48dd4a37e5008eb97f84a",
-      "parent": "727032a325624686fa702dca68d3eab718fb0f9547a71941f0b4bc8d51039026",
-      "seq": 157
+      "id": "8ec31db9bab618190ca2a775b743fb42f9f577ca502ff2ba70d5356062e44865",
+      "parent": "3d888fe53d76b710f92270fe34ea2f87595b57a8263d906e5fde42f86c52a3c7",
+      "seq": 158
     },
     {
       "type": "MOVE",
       "schemaVersion": 2,
-      "rngCounter": 179,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "entityId": "player",
         "from": {
-          "x": 9,
-          "y": 3
+          "x": 31,
+          "y": 12
         },
         "to": {
-          "x": 9,
-          "y": 2
+          "x": 32,
+          "y": 12
         }
       },
-      "id": "7700627a3cd185469cc26f9d658929827003ad66b11d46145d4eda95815b1886",
-      "parent": "384c2b78811ca739d7b6789882a17104d8dce785a2f48dd4a37e5008eb97f84a",
-      "seq": 158
+      "id": "e27de76da9e17e66fd712cdd3e15289aeb785d28519d81eaa281310f9625b083",
+      "parent": "8ec31db9bab618190ca2a775b743fb42f9f577ca502ff2ba70d5356062e44865",
+      "seq": 159
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 179,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
-        "activeEntityId": "player",
+        "activeEntityId": "foe-1",
         "turn": 47
       },
-      "id": "1f541f221c9b0f4015bd16e0dbf494b6db1ae9d5fe0504a0a10a538bf7c34a36",
-      "parent": "7700627a3cd185469cc26f9d658929827003ad66b11d46145d4eda95815b1886",
-      "seq": 159
-    },
-    {
-      "type": "MOVE",
-      "schemaVersion": 2,
-      "rngCounter": 179,
-      "rngDraws": 0,
-      "payload": {
-        "entityId": "player",
-        "from": {
-          "x": 9,
-          "y": 2
-        },
-        "to": {
-          "x": 9,
-          "y": 1
-        }
-      },
-      "id": "29e868a76ff4ad8f7b0e769d8fa8945e83ec2dc350df0a3049845bfb1a26f47d",
-      "parent": "1f541f221c9b0f4015bd16e0dbf494b6db1ae9d5fe0504a0a10a538bf7c34a36",
+      "id": "6cd16a907e07aee545e3bc51b3bcc3d3fd6c01427a97a1f88a206f9c85ca9a4e",
+      "parent": "e27de76da9e17e66fd712cdd3e15289aeb785d28519d81eaa281310f9625b083",
       "seq": 160
     },
     {
       "type": "TURN_ADVANCED",
       "schemaVersion": 2,
-      "rngCounter": 179,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "player",
+        "turn": 47
+      },
+      "id": "d254e47d8dd8b4fa69f6dfa1f22ef16fa101a23c4432ccf6f7db12442a9b852f",
+      "parent": "6cd16a907e07aee545e3bc51b3bcc3d3fd6c01427a97a1f88a206f9c85ca9a4e",
+      "seq": 161
+    },
+    {
+      "type": "MOVE",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "entityId": "player",
+        "from": {
+          "x": 32,
+          "y": 12
+        },
+        "to": {
+          "x": 33,
+          "y": 12
+        }
+      },
+      "id": "3dfa66032c062a5f46181bb322d305c78d89b867c6cf69c5828bcfe0c5d60a8f",
+      "parent": "d254e47d8dd8b4fa69f6dfa1f22ef16fa101a23c4432ccf6f7db12442a9b852f",
+      "seq": 162
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "foe-1",
+        "turn": 48
+      },
+      "id": "81d18ca47a6db856ac434e327b64754d1bde153a8412b21bdb9ea8eb647e4fa2",
+      "parent": "3dfa66032c062a5f46181bb322d305c78d89b867c6cf69c5828bcfe0c5d60a8f",
+      "seq": 163
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "player",
         "turn": 48
       },
-      "id": "d0249508d8b1f34a6fcde2ec12da72d29e3bffc83b59a55f754bba79be33579e",
-      "parent": "29e868a76ff4ad8f7b0e769d8fa8945e83ec2dc350df0a3049845bfb1a26f47d",
-      "seq": 161
+      "id": "fd6bb62201afe0fe44e7d4931ae683dd2f26330995428274f3c7d3459ea699ec",
+      "parent": "81d18ca47a6db856ac434e327b64754d1bde153a8412b21bdb9ea8eb647e4fa2",
+      "seq": 164
+    },
+    {
+      "type": "MOVE",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "entityId": "player",
+        "from": {
+          "x": 33,
+          "y": 12
+        },
+        "to": {
+          "x": 34,
+          "y": 12
+        }
+      },
+      "id": "d525dba4777032fa7fa57d35af45cbbf586cbd4c3489f43c922749044d7605fc",
+      "parent": "fd6bb62201afe0fe44e7d4931ae683dd2f26330995428274f3c7d3459ea699ec",
+      "seq": 165
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "foe-1",
+        "turn": 49
+      },
+      "id": "661bdf94140df6c97cdb747723adbf2e99a597ad76c196d06d9f2fc63a6062e6",
+      "parent": "d525dba4777032fa7fa57d35af45cbbf586cbd4c3489f43c922749044d7605fc",
+      "seq": 166
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "player",
+        "turn": 49
+      },
+      "id": "9dca856c97a758a73555f727fc0cd5598f67169216e8d4afbf9d288e81ba5948",
+      "parent": "661bdf94140df6c97cdb747723adbf2e99a597ad76c196d06d9f2fc63a6062e6",
+      "seq": 167
+    },
+    {
+      "type": "MOVE",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "entityId": "player",
+        "from": {
+          "x": 34,
+          "y": 12
+        },
+        "to": {
+          "x": 35,
+          "y": 12
+        }
+      },
+      "id": "f55d7dc08dd1bfea2fec295f715c70447c959e9c20eaff89c6904c686ac36aa6",
+      "parent": "9dca856c97a758a73555f727fc0cd5598f67169216e8d4afbf9d288e81ba5948",
+      "seq": 168
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "foe-1",
+        "turn": 50
+      },
+      "id": "d8c88a59a96770b39213fd1ea5bc24af902f5eb7377dff5a9994ae0d80cabf24",
+      "parent": "f55d7dc08dd1bfea2fec295f715c70447c959e9c20eaff89c6904c686ac36aa6",
+      "seq": 169
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "player",
+        "turn": 50
+      },
+      "id": "afbb12dc862b46f060d15a3f4a63b57f395153e2ea154c44ab533a537aa15ace",
+      "parent": "d8c88a59a96770b39213fd1ea5bc24af902f5eb7377dff5a9994ae0d80cabf24",
+      "seq": 170
+    },
+    {
+      "type": "MOVE",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "entityId": "player",
+        "from": {
+          "x": 35,
+          "y": 12
+        },
+        "to": {
+          "x": 36,
+          "y": 12
+        }
+      },
+      "id": "2af31a1454eeb532e431f32ec0128283da50130ec4c5aba831fe709468649756",
+      "parent": "afbb12dc862b46f060d15a3f4a63b57f395153e2ea154c44ab533a537aa15ace",
+      "seq": 171
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "foe-1",
+        "turn": 51
+      },
+      "id": "1caf8eb3352d66c595cd1296d92d5c956b860fa54699caeaf2c767939a649104",
+      "parent": "2af31a1454eeb532e431f32ec0128283da50130ec4c5aba831fe709468649756",
+      "seq": 172
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "player",
+        "turn": 51
+      },
+      "id": "5129c5473444bd1abb97d7e3851c5a81a87f69f58f1045f4465371ca11399d96",
+      "parent": "1caf8eb3352d66c595cd1296d92d5c956b860fa54699caeaf2c767939a649104",
+      "seq": 173
+    },
+    {
+      "type": "MOVE",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "entityId": "player",
+        "from": {
+          "x": 36,
+          "y": 12
+        },
+        "to": {
+          "x": 37,
+          "y": 12
+        }
+      },
+      "id": "e40bd67247bd6633044e768af1125ed4db23f59600a1825b6ad3709b27234ffd",
+      "parent": "5129c5473444bd1abb97d7e3851c5a81a87f69f58f1045f4465371ca11399d96",
+      "seq": 174
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "foe-1",
+        "turn": 52
+      },
+      "id": "89dd522eb63a7f0068fb36b3ce96bf596a524dfa7951d888cc23d26ce128d857",
+      "parent": "e40bd67247bd6633044e768af1125ed4db23f59600a1825b6ad3709b27234ffd",
+      "seq": 175
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "player",
+        "turn": 52
+      },
+      "id": "69019f9b109f9c45c016132b5afddd301e1c80090fb159e1a341e6dc4e9b26d1",
+      "parent": "89dd522eb63a7f0068fb36b3ce96bf596a524dfa7951d888cc23d26ce128d857",
+      "seq": 176
+    },
+    {
+      "type": "MOVE",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "entityId": "player",
+        "from": {
+          "x": 37,
+          "y": 12
+        },
+        "to": {
+          "x": 38,
+          "y": 12
+        }
+      },
+      "id": "72eadc91fe2379dbe09a87ca07fc60e4a8ac99f40bd8434d83f727a2170c10b9",
+      "parent": "69019f9b109f9c45c016132b5afddd301e1c80090fb159e1a341e6dc4e9b26d1",
+      "seq": 177
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "foe-1",
+        "turn": 53
+      },
+      "id": "272940aff2e24081f59fb84daeb6296864830ee06d01a04c3f401318f1f49b2f",
+      "parent": "72eadc91fe2379dbe09a87ca07fc60e4a8ac99f40bd8434d83f727a2170c10b9",
+      "seq": 178
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "player",
+        "turn": 53
+      },
+      "id": "42f989a9a9df107686c7cef8c4b37b85f42fd8ea93bd10c6fe3be09442d62f65",
+      "parent": "272940aff2e24081f59fb84daeb6296864830ee06d01a04c3f401318f1f49b2f",
+      "seq": 179
+    },
+    {
+      "type": "MOVE",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "entityId": "player",
+        "from": {
+          "x": 38,
+          "y": 12
+        },
+        "to": {
+          "x": 38,
+          "y": 11
+        }
+      },
+      "id": "ae14a325d7c3a3db4f67e96a8f875e029a37fd89cb8aca8972dd23410accee66",
+      "parent": "42f989a9a9df107686c7cef8c4b37b85f42fd8ea93bd10c6fe3be09442d62f65",
+      "seq": 180
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "foe-1",
+        "turn": 54
+      },
+      "id": "80736b3334cfb9ceb03ba7112497f7ca1a29ab7d8aab9bf6024daccc50ced030",
+      "parent": "ae14a325d7c3a3db4f67e96a8f875e029a37fd89cb8aca8972dd23410accee66",
+      "seq": 181
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "player",
+        "turn": 54
+      },
+      "id": "ff88d99c4e96505037002bd42b00040cfc57435eaf8ed27e9c8b9d7346c3471f",
+      "parent": "80736b3334cfb9ceb03ba7112497f7ca1a29ab7d8aab9bf6024daccc50ced030",
+      "seq": 182
+    },
+    {
+      "type": "MOVE",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "entityId": "player",
+        "from": {
+          "x": 38,
+          "y": 11
+        },
+        "to": {
+          "x": 38,
+          "y": 10
+        }
+      },
+      "id": "a875a39cb35c1163675d953ee70923125aa4b60d3510adc372b533b3194d737f",
+      "parent": "ff88d99c4e96505037002bd42b00040cfc57435eaf8ed27e9c8b9d7346c3471f",
+      "seq": 183
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "foe-1",
+        "turn": 55
+      },
+      "id": "33c55f38500636e766b862f497d6dc4530d70381c4bd93f91c425d2523ccd2b8",
+      "parent": "a875a39cb35c1163675d953ee70923125aa4b60d3510adc372b533b3194d737f",
+      "seq": 184
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "player",
+        "turn": 55
+      },
+      "id": "a1b12de8f87e3601cb1caa6a98756a8ce4e9407fe435f2d85e505850fd98bd65",
+      "parent": "33c55f38500636e766b862f497d6dc4530d70381c4bd93f91c425d2523ccd2b8",
+      "seq": 185
+    },
+    {
+      "type": "MOVE",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "entityId": "player",
+        "from": {
+          "x": 38,
+          "y": 10
+        },
+        "to": {
+          "x": 38,
+          "y": 9
+        }
+      },
+      "id": "cb1ba14b1f2c9e28760dc8ceff0368cd3ffc6584e25e52c22cc089c58c983ae9",
+      "parent": "a1b12de8f87e3601cb1caa6a98756a8ce4e9407fe435f2d85e505850fd98bd65",
+      "seq": 186
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "foe-1",
+        "turn": 56
+      },
+      "id": "46579add5a5e2a4c179c481176a3dd0fb8fbdde4ca31d116d6e4c0069b001d60",
+      "parent": "cb1ba14b1f2c9e28760dc8ceff0368cd3ffc6584e25e52c22cc089c58c983ae9",
+      "seq": 187
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "player",
+        "turn": 56
+      },
+      "id": "b59dc9d8733a2108f456ad4f35c202021850df4360286dad313af5a29ea0c0bf",
+      "parent": "46579add5a5e2a4c179c481176a3dd0fb8fbdde4ca31d116d6e4c0069b001d60",
+      "seq": 188
+    },
+    {
+      "type": "MOVE",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "entityId": "player",
+        "from": {
+          "x": 38,
+          "y": 9
+        },
+        "to": {
+          "x": 38,
+          "y": 8
+        }
+      },
+      "id": "d8aa6dc4658308bd5ab8ca3bb1a436a169d4eb470455e15fc983d1f15166b9cb",
+      "parent": "b59dc9d8733a2108f456ad4f35c202021850df4360286dad313af5a29ea0c0bf",
+      "seq": 189
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "foe-1",
+        "turn": 57
+      },
+      "id": "c80661c9218a531e84646974acd8f8c2efacd50024007b4a97158e2f7c1e5837",
+      "parent": "d8aa6dc4658308bd5ab8ca3bb1a436a169d4eb470455e15fc983d1f15166b9cb",
+      "seq": 190
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "player",
+        "turn": 57
+      },
+      "id": "cce855f5a6fe3a97ec116efac0b9c80f0862b85418548fe428208740d527ef69",
+      "parent": "c80661c9218a531e84646974acd8f8c2efacd50024007b4a97158e2f7c1e5837",
+      "seq": 191
+    },
+    {
+      "type": "MOVE",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "entityId": "player",
+        "from": {
+          "x": 38,
+          "y": 8
+        },
+        "to": {
+          "x": 39,
+          "y": 8
+        }
+      },
+      "id": "0845a2374043f3242620a84f66e1c91a6a46cc61ef4eea56d1621c0d2b6321ee",
+      "parent": "cce855f5a6fe3a97ec116efac0b9c80f0862b85418548fe428208740d527ef69",
+      "seq": 192
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "foe-1",
+        "turn": 58
+      },
+      "id": "d7042968c36d381368ca55936fa3c049dc0e6d4995c8caa43dd1d98856db361f",
+      "parent": "0845a2374043f3242620a84f66e1c91a6a46cc61ef4eea56d1621c0d2b6321ee",
+      "seq": 193
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "player",
+        "turn": 58
+      },
+      "id": "c495254d602e0f7e24b48d44fe7ab714ec691e8e535884c843cdb3b7b55d212c",
+      "parent": "d7042968c36d381368ca55936fa3c049dc0e6d4995c8caa43dd1d98856db361f",
+      "seq": 194
+    },
+    {
+      "type": "MOVE",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "entityId": "player",
+        "from": {
+          "x": 39,
+          "y": 8
+        },
+        "to": {
+          "x": 40,
+          "y": 8
+        }
+      },
+      "id": "8236f95a6c61d2298f2d7c04971741164d2b77edebf80eb10e7a6868da17ef84",
+      "parent": "c495254d602e0f7e24b48d44fe7ab714ec691e8e535884c843cdb3b7b55d212c",
+      "seq": 195
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "foe-1",
+        "turn": 59
+      },
+      "id": "78cb415ef23241cb1af2f8599edbd5fbcc39e8b43ab562c3ee19e4ff51d6f70e",
+      "parent": "8236f95a6c61d2298f2d7c04971741164d2b77edebf80eb10e7a6868da17ef84",
+      "seq": 196
+    },
+    {
+      "type": "MOVE",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "entityId": "foe-1",
+        "from": {
+          "x": 44,
+          "y": 4
+        },
+        "to": {
+          "x": 43,
+          "y": 4
+        }
+      },
+      "id": "39c96f45a7dfebde37078c22f91cf8a03bd31ebe6a9e9477b157a809bf04739c",
+      "parent": "78cb415ef23241cb1af2f8599edbd5fbcc39e8b43ab562c3ee19e4ff51d6f70e",
+      "seq": 197
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "player",
+        "turn": 59
+      },
+      "id": "1dba0c8e9c498c4facb7a47faecc32b5a5a348c040116ea9ebc672ee5923b464",
+      "parent": "39c96f45a7dfebde37078c22f91cf8a03bd31ebe6a9e9477b157a809bf04739c",
+      "seq": 198
+    },
+    {
+      "type": "MOVE",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "entityId": "player",
+        "from": {
+          "x": 40,
+          "y": 8
+        },
+        "to": {
+          "x": 41,
+          "y": 8
+        }
+      },
+      "id": "301e586bf4d999ab6de0ab0cb65af2489e10926ee98b24ea437130b03d31aa75",
+      "parent": "1dba0c8e9c498c4facb7a47faecc32b5a5a348c040116ea9ebc672ee5923b464",
+      "seq": 199
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "foe-1",
+        "turn": 60
+      },
+      "id": "cc8b1084f57803c9622a9c51159e17f092e81f30469577bf94e41bea38165aa7",
+      "parent": "301e586bf4d999ab6de0ab0cb65af2489e10926ee98b24ea437130b03d31aa75",
+      "seq": 200
+    },
+    {
+      "type": "MOVE",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "entityId": "foe-1",
+        "from": {
+          "x": 43,
+          "y": 4
+        },
+        "to": {
+          "x": 42,
+          "y": 4
+        }
+      },
+      "id": "7f3623b4ac1e3c1b4d8b4b33a8e2299f912473dd3370a2d55dce69cb68c15998",
+      "parent": "cc8b1084f57803c9622a9c51159e17f092e81f30469577bf94e41bea38165aa7",
+      "seq": 201
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "player",
+        "turn": 60
+      },
+      "id": "df569f9b3c65364e0f99b4357ecd9ffed96f13612e182aee33eeb7d813ba35d3",
+      "parent": "7f3623b4ac1e3c1b4d8b4b33a8e2299f912473dd3370a2d55dce69cb68c15998",
+      "seq": 202
+    },
+    {
+      "type": "MOVE",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "entityId": "player",
+        "from": {
+          "x": 41,
+          "y": 8
+        },
+        "to": {
+          "x": 42,
+          "y": 8
+        }
+      },
+      "id": "cd34d4868b733a0d8adf25043ca8f66a8e7b848b33ec8b7ec35d846d48479c34",
+      "parent": "df569f9b3c65364e0f99b4357ecd9ffed96f13612e182aee33eeb7d813ba35d3",
+      "seq": 203
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "foe-1",
+        "turn": 61
+      },
+      "id": "663288a19ec3c50791d7af47119b181593fe6c50dc5bdf26c35bbfc200193e68",
+      "parent": "cd34d4868b733a0d8adf25043ca8f66a8e7b848b33ec8b7ec35d846d48479c34",
+      "seq": 204
+    },
+    {
+      "type": "MOVE",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "entityId": "foe-1",
+        "from": {
+          "x": 42,
+          "y": 4
+        },
+        "to": {
+          "x": 42,
+          "y": 5
+        }
+      },
+      "id": "3bd07c14b62907d7367f76d57ce3ee36ede1de71e0463cbf615af24c14bcab41",
+      "parent": "663288a19ec3c50791d7af47119b181593fe6c50dc5bdf26c35bbfc200193e68",
+      "seq": 205
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "player",
+        "turn": 61
+      },
+      "id": "3e6816cca2e2f1524809697a67d6c705b4d4e74fd8ef064f34254bc8ba915897",
+      "parent": "3bd07c14b62907d7367f76d57ce3ee36ede1de71e0463cbf615af24c14bcab41",
+      "seq": 206
+    },
+    {
+      "type": "MOVE",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "entityId": "player",
+        "from": {
+          "x": 42,
+          "y": 8
+        },
+        "to": {
+          "x": 42,
+          "y": 7
+        }
+      },
+      "id": "7242e8dc880975f5647898f6d5f99c8501935af4d7057ae97c1973d4ae6b18b6",
+      "parent": "3e6816cca2e2f1524809697a67d6c705b4d4e74fd8ef064f34254bc8ba915897",
+      "seq": 207
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "foe-1",
+        "turn": 62
+      },
+      "id": "4fec7e1a31185c20d9ae00a034c9b71d93454b049c8a7941a504432825fb6a30",
+      "parent": "7242e8dc880975f5647898f6d5f99c8501935af4d7057ae97c1973d4ae6b18b6",
+      "seq": 208
+    },
+    {
+      "type": "MOVE",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "entityId": "foe-1",
+        "from": {
+          "x": 42,
+          "y": 5
+        },
+        "to": {
+          "x": 42,
+          "y": 6
+        }
+      },
+      "id": "522d391e6f7c76f55d094db7d4d00d03c7b0d09b0aa296e76f04359ab9de4a21",
+      "parent": "4fec7e1a31185c20d9ae00a034c9b71d93454b049c8a7941a504432825fb6a30",
+      "seq": 209
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "player",
+        "turn": 62
+      },
+      "id": "38dec4dc68445e1a19b486c94ee91b77463d8729f9a345b555902ade25059741",
+      "parent": "522d391e6f7c76f55d094db7d4d00d03c7b0d09b0aa296e76f04359ab9de4a21",
+      "seq": 210
+    },
+    {
+      "type": "STRIKE",
+      "schemaVersion": 3,
+      "rngCounter": 273,
+      "rngDraws": 2,
+      "payload": {
+        "attackerId": "player",
+        "targetId": "foe-1",
+        "roll": 6,
+        "needed": 9,
+        "hit": false,
+        "crit": false,
+        "damage": 0
+      },
+      "id": "0e1a5a86ac5c3ee13abc167feded3ca4271503fd4d8bcf8fdc8c5fb5a50c9976",
+      "parent": "38dec4dc68445e1a19b486c94ee91b77463d8729f9a345b555902ade25059741",
+      "seq": 211
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 275,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "foe-1",
+        "turn": 63
+      },
+      "id": "bb5908785934e26ce694d06d192d51afe1820d66a45233a213f90732cf03e4bf",
+      "parent": "0e1a5a86ac5c3ee13abc167feded3ca4271503fd4d8bcf8fdc8c5fb5a50c9976",
+      "seq": 212
+    },
+    {
+      "type": "STRIKE",
+      "schemaVersion": 3,
+      "rngCounter": 275,
+      "rngDraws": 2,
+      "payload": {
+        "attackerId": "foe-1",
+        "targetId": "player",
+        "roll": 17,
+        "needed": 11,
+        "hit": true,
+        "crit": false,
+        "damage": 4
+      },
+      "id": "6d229d9be589f5c459425f57857c923a662c1034bc9a2ebb0cc3d4d1615d2f98",
+      "parent": "bb5908785934e26ce694d06d192d51afe1820d66a45233a213f90732cf03e4bf",
+      "seq": 213
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 277,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "player",
+        "turn": 63
+      },
+      "id": "8a8e8b8d0da943e77b0ee4566c2569f82518a8a1509d67a8bb93718b578db3b4",
+      "parent": "6d229d9be589f5c459425f57857c923a662c1034bc9a2ebb0cc3d4d1615d2f98",
+      "seq": 214
+    },
+    {
+      "type": "STRIKE",
+      "schemaVersion": 3,
+      "rngCounter": 277,
+      "rngDraws": 2,
+      "payload": {
+        "attackerId": "player",
+        "targetId": "foe-1",
+        "roll": 9,
+        "needed": 9,
+        "hit": true,
+        "crit": false,
+        "damage": 6
+      },
+      "id": "4f104077a51b3fd042e0823caeb6249430d0d4a8c6535bbb78c775abf79ed765",
+      "parent": "8a8e8b8d0da943e77b0ee4566c2569f82518a8a1509d67a8bb93718b578db3b4",
+      "seq": 215
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 279,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "player",
+        "turn": 64
+      },
+      "id": "388f56314b85bb7a778aaf51cc6e5416f854ff8338c0f375c4f4ca4af0406f25",
+      "parent": "4f104077a51b3fd042e0823caeb6249430d0d4a8c6535bbb78c775abf79ed765",
+      "seq": 216
+    },
+    {
+      "type": "MOVE",
+      "schemaVersion": 2,
+      "rngCounter": 279,
+      "rngDraws": 0,
+      "payload": {
+        "entityId": "player",
+        "from": {
+          "x": 42,
+          "y": 7
+        },
+        "to": {
+          "x": 43,
+          "y": 7
+        }
+      },
+      "id": "d6815bfd1201c4de1090defc00dbf4b2e7738ae80ddcf0ec70fa2d1d5471b10e",
+      "parent": "388f56314b85bb7a778aaf51cc6e5416f854ff8338c0f375c4f4ca4af0406f25",
+      "seq": 217
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 279,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "player",
+        "turn": 65
+      },
+      "id": "caabefbb1479164ee18b3f12c25cf53b1bffbd896e2949a4abc542e864385940",
+      "parent": "d6815bfd1201c4de1090defc00dbf4b2e7738ae80ddcf0ec70fa2d1d5471b10e",
+      "seq": 218
+    },
+    {
+      "type": "MOVE",
+      "schemaVersion": 2,
+      "rngCounter": 279,
+      "rngDraws": 0,
+      "payload": {
+        "entityId": "player",
+        "from": {
+          "x": 43,
+          "y": 7
+        },
+        "to": {
+          "x": 44,
+          "y": 7
+        }
+      },
+      "id": "63e9a4d27e55fb52b2a1bee2840f7658ade483b353d7fe107e8cb4287b3c7e5e",
+      "parent": "caabefbb1479164ee18b3f12c25cf53b1bffbd896e2949a4abc542e864385940",
+      "seq": 219
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 279,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "player",
+        "turn": 66
+      },
+      "id": "4bb0d68fb9c3ab4ebce557bd96978f234ca448dc7eecf65d75e4080c2124365d",
+      "parent": "63e9a4d27e55fb52b2a1bee2840f7658ade483b353d7fe107e8cb4287b3c7e5e",
+      "seq": 220
+    },
+    {
+      "type": "MOVE",
+      "schemaVersion": 2,
+      "rngCounter": 279,
+      "rngDraws": 0,
+      "payload": {
+        "entityId": "player",
+        "from": {
+          "x": 44,
+          "y": 7
+        },
+        "to": {
+          "x": 45,
+          "y": 7
+        }
+      },
+      "id": "51e5ea8d64e96c41746dfd573856a07427131134ff19810412c337587fd3d4ec",
+      "parent": "4bb0d68fb9c3ab4ebce557bd96978f234ca448dc7eecf65d75e4080c2124365d",
+      "seq": 221
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 279,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "player",
+        "turn": 67
+      },
+      "id": "660b5d963c2a92b87ec9729de3f777cf200f60061146a145eef9e6ede098754e",
+      "parent": "51e5ea8d64e96c41746dfd573856a07427131134ff19810412c337587fd3d4ec",
+      "seq": 222
+    },
+    {
+      "type": "MOVE",
+      "schemaVersion": 2,
+      "rngCounter": 279,
+      "rngDraws": 0,
+      "payload": {
+        "entityId": "player",
+        "from": {
+          "x": 45,
+          "y": 7
+        },
+        "to": {
+          "x": 45,
+          "y": 6
+        }
+      },
+      "id": "529876da805d04acc6a6b017aa0b1296a6a2d73914abde0fe9bb54cf559eab4c",
+      "parent": "660b5d963c2a92b87ec9729de3f777cf200f60061146a145eef9e6ede098754e",
+      "seq": 223
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 279,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "player",
+        "turn": 68
+      },
+      "id": "be6ff5ed6d121459c6df5ec3e1af6c31fdb2b7888e566ca2485f37ee47397954",
+      "parent": "529876da805d04acc6a6b017aa0b1296a6a2d73914abde0fe9bb54cf559eab4c",
+      "seq": 224
+    },
+    {
+      "type": "MOVE",
+      "schemaVersion": 2,
+      "rngCounter": 279,
+      "rngDraws": 0,
+      "payload": {
+        "entityId": "player",
+        "from": {
+          "x": 45,
+          "y": 6
+        },
+        "to": {
+          "x": 45,
+          "y": 5
+        }
+      },
+      "id": "71377095e09a5aeb7aec31aefdccd13fb4ecd52169f9d51c7eef136b5d22ba10",
+      "parent": "be6ff5ed6d121459c6df5ec3e1af6c31fdb2b7888e566ca2485f37ee47397954",
+      "seq": 225
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 279,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "player",
+        "turn": 69
+      },
+      "id": "6e71ed7d43c6192ce64ec65d5552c2ead241e341f6ef0a5a994030f0ec508e50",
+      "parent": "71377095e09a5aeb7aec31aefdccd13fb4ecd52169f9d51c7eef136b5d22ba10",
+      "seq": 226
+    },
+    {
+      "type": "MOVE",
+      "schemaVersion": 2,
+      "rngCounter": 279,
+      "rngDraws": 0,
+      "payload": {
+        "entityId": "player",
+        "from": {
+          "x": 45,
+          "y": 5
+        },
+        "to": {
+          "x": 45,
+          "y": 4
+        }
+      },
+      "id": "0775ff959134189ce5c1aec0a1d14eb7fbf23fefdf55d7839d2b98bd3a70a916",
+      "parent": "6e71ed7d43c6192ce64ec65d5552c2ead241e341f6ef0a5a994030f0ec508e50",
+      "seq": 227
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 279,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "player",
+        "turn": 70
+      },
+      "id": "927303e21dee7df06b229f5f8d7d32c2e5eee34927eb8f2ad5065316e2beb84c",
+      "parent": "0775ff959134189ce5c1aec0a1d14eb7fbf23fefdf55d7839d2b98bd3a70a916",
+      "seq": 228
     }
   ]
 }

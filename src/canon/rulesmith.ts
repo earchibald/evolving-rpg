@@ -39,7 +39,7 @@ import type { EventLog } from '../log/chain.js';
 
 export interface RunSummary {
   world: string;
-  ended: 'dead' | 'escaped' | 'playing';
+  ended: 'dead' | 'escaped' | 'playing' | 'won';
   turns: number;
   /** Plain sentences, one per observation, for the model to reason over.
    *  Deliberately not raw JSON — a log dump buries the two facts that matter

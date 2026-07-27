@@ -1,6 +1,6 @@
 import { EXIT, WALL, tileAt, isPassable } from '../core/grid.js';
 import { isAlive, findEntity } from '../core/entity.js';
-import { BOT_QUAFF_BELOW, BOT_SMOKE_WITHIN } from '../core/tables.js';
+import { BOT_QUAFF_BELOW, BOT_SMOKE_WITHIN, BOTTOM_DEPTH, HEART_KIND } from '../core/tables.js';
 import type { GameState } from '../core/state.js';
 import type { Entity, Pos } from '../core/entity.js';
 
@@ -91,11 +91,24 @@ function quaffWish(me: Entity): Wish | null {
   return me.stats.hp < me.maxHp * BOT_QUAFF_BELOW ? USE : null;
 }
 
+/** The bottom floor's errand, shared by the goal-seeking policies: the heart
+ *  first, then the stair you came down by. Null anywhere else. */
+function bottomWish(state: GameState, me: Entity): Wish | null {
+  if (state.depth < BOTTOM_DEPTH) return null;
+  if (me.satchel?.kind === HEART_KIND) {
+    return firstStepToward(state, me.pos, (p) => tileAt(state.grid, p.x, p.y) === EXIT) ?? WAIT;
+  }
+  const heart = state.items.find((i) => i.kind === HEART_KIND);
+  if (heart === undefined) return null;
+  return firstStepToward(state, me.pos, (p) => p.x === heart.pos.x && p.y === heart.pos.y) ?? WAIT;
+}
+
 /** Heads for the way out, fighting through whatever stands in the path. */
 export const rusher: Policy = (state, playerId) => {
   const me = you(state, playerId);
   if (me === undefined) return WAIT;
   return quaffWish(me)
+    ?? bottomWish(state, me)
     ?? firstStepToward(state, me.pos, (p) => tileAt(state.grid, p.x, p.y) === EXIT)
     ?? WAIT;
 };

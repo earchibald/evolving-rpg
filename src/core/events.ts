@@ -25,6 +25,7 @@ export const SCHEMA_VERSIONS = {
   RULE_RATIFIED: 1,
   RULE_FIRED: 1,
   VIGIL_KEPT: 1,
+  WORLD_STIRRED: 1,
 } as const;
 
 export type EventType = keyof typeof SCHEMA_VERSIONS;
@@ -198,6 +199,15 @@ export interface VigilKeptPayload {
   entityId: string;
 }
 
+/** The seized world answering back: while the heart is carried across the
+ *  bottom floor, the world stirs — new hostiles rise, fully resolved here
+ *  (kind, stats, tile all drawn at command time) so replay raises the same
+ *  dead the same way forever. The first stir may include echoes: the
+ *  player's own past falls, standing up where the bodies lie. */
+export interface WorldStirredPayload {
+  opponents: EntitySeed[];
+}
+
 /** Where this world's dead lie on the floor a run is entering. Appended in
  *  the rebirth and descent ceremonies (identity, then the dead, then law) —
  *  never by WORLD_INIT itself, because the bodies are the graveyard's fact,
@@ -226,6 +236,7 @@ export type DraftEvent =
   | { type: 'ITEM_USED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: ItemUsedPayload }
   | { type: 'RULE_RATIFIED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: RuleRatifiedPayload }
   | { type: 'RULE_FIRED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: RuleFiredPayload }
-  | { type: 'VIGIL_KEPT'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: VigilKeptPayload };
+  | { type: 'VIGIL_KEPT'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: VigilKeptPayload }
+  | { type: 'WORLD_STIRRED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: WorldStirredPayload };
 
 export type GameEvent = DraftEvent & { id: string; parent: string | null; seq: number };

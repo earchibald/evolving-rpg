@@ -28,7 +28,7 @@ function world(seed: number): Position {
   return { log: born.log, head: born.event.id };
 }
 
-function floors(seed: number, policy: Policy, count: number): 'escaped' | 'dead' | 'playing' {
+function floors(seed: number, policy: Policy, count: number): 'escaped' | 'dead' | 'playing' | 'won' {
   let done = autoplay(world(seed), policy, 1500);
   for (let floor = 2; floor <= count && done.ended === 'escaped'; floor += 1) {
     const refs = createRef(emptyRefs(), 'run', done.position.head, 0, 'balance');

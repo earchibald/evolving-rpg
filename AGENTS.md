@@ -63,10 +63,38 @@ evidence, not a decision.
 player and heal to full; floors descend by threat budget
 (`24+15d+4(d−2)²`) with Brogue-style overlap; the warden guards every third
 floor. **The stairs are watched**: the strongest thing on the floor posts
-beside the exit (the warden on its floors, by construction). Pinned on 20
-seeds (tests/balance/sawtooth.test.ts): depth 1 gentle (~19/20 fighter),
-depth 3 fighter 13 v runner 3, depth 5 in [1,10]. Lens #33 reads depth 5 as
-brawler-only — past depth 4 nobody runs past what they refused to fight.
+beside the exit — except on warden floors, where the warden keeps the door
+BY ROLE (the old "by construction" claim broke quietly once out-of-depth
+rolls out-threatened the boss; measured at depth 9 with the warden fourth-
+scariest on its own floor). Deep wardens grow with their floors
+(wardenLevel: 1 at depth 3, depth−2 beyond). Pinned on 20 seeds
+(tests/balance/sawtooth.test.ts): depth 1 gentle, depth 3 fighter 13 v
+runner ~2, depth 5 in [1,10].
+
+**The bestiary acts by verbs** (tables.ts VERBS; the tradition chose them):
+bruisers trample (shove + follow, atomic in the blow), skirmishers lunge
+(two tiles + strike in one action), stalkers lie visibly coiled and spring
+one band harder once (depth 2+), the warden keeps a vigil (leashed to its
+post, knits shut when you flee past the leash). Verbs are PRICED into
+threat (×1.1–1.25) — unpriced they collapsed depth-5 survival to 0/20 —
+and the M6 proportion trial weighs rules against verbless stand-ins so the
+scale cannot move with the bestiary.
+
+**The satchel carries one thing, used with q**: vital draught (heal whole +
+permanent ceiling raise by band) or still smoke (hunts chase your stale
+position 6/8/10 turns; adjacent creatures are recorded unfooled). Walk-over
+swaps and leaves the old one lying. One provision per floor, unguarded, off
+the path — the armory pays for fighting, the satchel pays for scouting.
+
+**The world has a bottom** (GESTALT L4): depth 9, said out loud on floor 1.
+The heart lies at the far end of the ninth floor behind the last warden;
+taking it fills and SEALS the satchel and turns the run around — the way
+out is the stair you came down by, and the world stirs every 8 turns while
+you carry it (the first stir raises echoes of you from your own bodies).
+Reaching the stair with the heart = outcome 'won'. Bible promises pay out
+as journal beats: whisper on 2/5/8, kept on the warden's fall at 3/6/9.
+Bodies lend their eyes: standing where you fell merges that life's explored
+map into yours (knowledge, never stats — BONES.md, decided).
 
 **The boards are rooms and corridors** (48x32, docs/design/MAPS.md): total
 connectivity mutation-proofed; creatures hunt by BFS walking distance 8 (a

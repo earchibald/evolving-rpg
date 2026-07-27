@@ -2,7 +2,7 @@ import { generateMap, pickSpawnPoints, farthestFrom, withExit, walkDistance, sea
 import { inBounds, isPassable } from './grid.js';
 import { findEntity, isAlive } from './entity.js';
 import { intBetween } from './rng.js';
-import { neededToHit, chanceIn20, damageDice, critFloor, WHIFF, BESTIARY, creatureStats, threatOf, spawnBudget, depthBands, wardenAt, ARMORY, relicGrant, slotOf, grantValue, motifAt, verbOf, AMBUSH_MIGHT_BONUS, AMBUSH_FROM_DEPTH, PROVISIONS, provisionOf, draughtCeiling, smokeTurns } from './tables.js';
+import { neededToHit, chanceIn20, damageDice, critFloor, WHIFF, BESTIARY, creatureStats, threatOf, spawnBudget, depthBands, wardenAt, ARMORY, relicGrant, slotOf, grantValue, motifAt, verbOf, wardenLevel, AMBUSH_MIGHT_BONUS, AMBUSH_FROM_DEPTH, PROVISIONS, provisionOf, draughtCeiling, smokeTurns, BOTTOM_DEPTH, HEART_KIND, WAVE_DISTANCE } from './tables.js';
 import type { Relic } from './tables.js';
 import type { Entity, Stats, Pos } from './entity.js';
 import { itemAt } from './item.js';
@@ -137,7 +137,7 @@ function chooseSpawns(seed: number, counter: number, depth: number): {
   // threat out of the floor's budget, so its minions thin out around it and
   // the fight is about the warden rather than the crowd it stands in.
   if (wardenAt(depth)) {
-    const level = Math.max(1, Math.floor(depth / 3));
+    const level = wardenLevel(depth);
     budget -= Math.floor(threatOf(creatureStats('warden', level)!, 'warden') / 2);
   }
 
@@ -171,7 +171,7 @@ function chooseSpawns(seed: number, counter: number, depth: number): {
   }
 
   if (wardenAt(depth)) {
-    const level = Math.max(1, Math.floor(depth / 3));
+    const level = wardenLevel(depth);
     chosen.push({ kind: level === 1 ? 'warden' : `warden-${String(level)}`, level, stats: creatureStats('warden', level)! });
   }
 
@@ -194,7 +194,15 @@ export function createWorld(
 
   // The way out sits at the far end of the map, so a run has a direction and
   // the journey is the longest one this world affords rather than an accident.
-  const exit = farthestFrom(generated.grid, generated.start);
+  //
+  // Except at the bottom. The ninth floor turns around: the HEART lies at
+  // the far end (behind the last warden), and the way out is the stair you
+  // came down by — the tile you are standing on when the floor is born.
+  // Seize the heart and carry it back: the ending is the reversal, not the
+  // touch.
+  const bottom = depth >= BOTTOM_DEPTH;
+  const far = farthestFrom(generated.grid, generated.start);
+  const exit = bottom ? generated.start : far;
   const opened = withExit(generated.grid, exit);
 
   // Sometimes a room keeps itself secret — every doorway an illusory wall.
@@ -203,11 +211,13 @@ export function createWorld(
   // being thrown away. By construction repair never fires; a sabotaged build
   // once leaked exactly such a floor into a live session, and the rule is
   // better than the throw.
-  const secret = sealSecretRoom(seed, generated.counterAfter, opened, generated.rooms, generated.start, exit, cut.motif.secretIn);
+  // At the bottom, the far anchor protects the heart's room from sealing
+  // (exit === start there, so both ends stay open either way).
+  const secret = sealSecretRoom(seed, generated.counterAfter, opened, generated.rooms, generated.start, bottom ? far : exit, cut.motif.secretIn);
   const repaired = repairWithSecret(secret.grid, generated.start);
   const grid = repaired.grid;
 
-  const walk = walkDistance(grid, generated.start, exit);
+  const walk = walkDistance(grid, generated.start, bottom ? far : exit);
 
   const population = chooseSpawns(seed, secret.counterAfter, depth);
 
@@ -285,6 +295,16 @@ export function createWorld(
     const t = threatOf(ch.stats, ch.kind);
     if (t >= keeperThreat) { keeperThreat = t; keeper = i; }
   });
+  // On a warden floor the warden keeps the door BY ROLE, not by arithmetic.
+  // The old claim — "it out-threatens everything by construction" — broke
+  // quietly the first time an out-of-depth roll landed: a depth-9 floor was
+  // measured with its warden fourth-scariest, and the stairs going to a
+  // skirmisher. The post is the warden's identity (the vigil verb says so);
+  // the strongest-thing rule remains for every unbossed floor.
+  if (wardenAt(depth)) {
+    const w = population.chosen.findIndex((ch) => ch.kind.startsWith('warden'));
+    if (w >= 0) keeper = w;
+  }
 
   // Guards: the first creatures that are not the keeper, one per relic. A
   // floor too poor in creatures leaves its later prizes lying unguarded —
@@ -298,8 +318,10 @@ export function createWorld(
   // post; everyone unassigned takes the remaining drawn points in order.
   const isGuardPost = (p: { x: number; y: number }): boolean =>
     guardPosts.slice(0, guardOf.size).some((q) => q.x === p.x && q.y === p.y);
+  // What the keeper watches: the stairs — or, at the bottom, the heart.
+  const watched = bottom ? far : exit;
   const keeperTile = ([[1, 0], [-1, 0], [0, 1], [0, -1]] as const)
-    .map(([dx, dy]) => ({ x: exit.x + dx, y: exit.y + dy }))
+    .map(([dx, dy]) => ({ x: watched.x + dx, y: watched.y + dy }))
     .find((p) => isPassable(grid, p.x, p.y)
       // Never on an illusory wall: a keeper standing in what paints as wall
       // gives the secret away, and reads as a haunting.
@@ -321,14 +343,18 @@ export function createWorld(
   const coiled = depth >= AMBUSH_FROM_DEPTH
     ? population.chosen.filter((ch) => verbOf(ch.kind) === 'ambush').length
     : 0;
-  const story = `${cut.motif.name} · ${generated.story} · the way out is ${Number.isFinite(walk) ? walk : '?'} steps of walking`
+  const story = `${cut.motif.name} · ${generated.story}`
+    + (bottom
+      ? ` · the bottom — the heart lies ${Number.isFinite(walk) ? walk : '?'} steps of walking away, and the way out is the stair you came down by`
+      : ` · the way out is ${Number.isFinite(walk) ? walk : '?'} steps of walking`)
     + ` · a budget of ${spawnBudget(depth)} paid ${spent} for ${population.chosen.length}: ${kinds}`
-    + ` · ${watcher} watches the stairs`
+    + ` · ${watcher} watches ${bottom ? 'the heart' : 'the stairs'}`
     + ` · ${relics.map((r) => r.kind).join(' and ') || 'nothing'} lies guarded`
     + ` · ${provision.kind} lies where the path does not go`
     + (coiled > 0 ? ` · ${coiled} of them lie${coiled === 1 ? 's' : ''} coiled, waiting` : '')
     + (secret.sealed ? ' · one room keeps itself secret' : '')
-    + (repaired.punched > 0 ? ` · ${repaired.punched} hidden way(s) cut where no way was` : '');
+    + (repaired.punched > 0 ? ` · ${repaired.punched} hidden way(s) cut where no way was` : '')
+    + (depth === 1 ? ` · the world runs ${BOTTOM_DEPTH} floors deep, and something beats at the bottom` : '');
 
   return {
     type: 'WORLD_INIT',
@@ -365,6 +391,14 @@ export function createWorld(
           pos: { x: provisionTile.x, y: provisionTile.y },
           grants: { hp: 0, might: 0, wits: 0, speed: 0 },
         },
+        // The bottom keeps its heart at the far end, watched by the last
+        // warden. Grants nothing worn — what it grants is the ending.
+        ...(bottom ? [{
+          id: 'heart-1',
+          kind: HEART_KIND,
+          pos: { x: far.x, y: far.y },
+          grants: { hp: 0, might: 0, wits: 0, speed: 0 },
+        }] : []),
       ],
       player: {
         id: playerId,
@@ -571,6 +605,93 @@ export function vigilKept(state: GameState, entityId: string): Extract<DraftEven
 }
 
 /**
+ * The seized world stirring: while the heart is carried, every WAVE_EVERY
+ * turns the bottom floor answers back.
+ *
+ * The first stir raises the dead — your own past falls stand up where the
+ * bodies lie, wearing your current strength whole. The best deaths you ever
+ * died become the last things between you and out; graves grant the world
+ * teeth, never the player loot. Every stir after (and the first, if the
+ * floor is graveless) draws one riser from the bestiary at the bottom's
+ * band, on a drawn tile at least WAVE_DISTANCE from the carrier — pressure
+ * arriving as a chase, never out of the air beside you.
+ *
+ * Everything is resolved here and recorded whole (kinds, stats, tiles), so
+ * replay raises the same dead the same way forever. Null when nothing can
+ * rise — a stir that raises nobody is not a fact worth recording.
+ */
+export function stirWorld(state: GameState, playerId = 'player'): Extract<DraftEvent, { type: 'WORLD_STIRRED' }> | null {
+  const carrier = findEntity(state.entities, playerId);
+  if (carrier === undefined) return null;
+
+  const risen: { id: string; kind: string; pos: Pos; stats: Stats; tags: string[] }[] = [];
+  let c = state.rngCounter;
+
+  const stood = (x: number, y: number): boolean =>
+    state.entities.some((e) => isAlive(e) && e.pos.x === x && e.pos.y === y)
+    || risen.some((r) => r.pos.x === x && r.pos.y === y);
+
+  // The echoes, once: whoever fell here rises with the carrier's strength.
+  if (!state.entities.some((e) => e.kind === 'echo')) {
+    let n = 0;
+    for (const b of state.bodies) {
+      if (stood(b.x, b.y)) continue;
+      n += 1;
+      risen.push({
+        id: `echo-${String(n)}`,
+        kind: 'echo',
+        pos: { x: b.x, y: b.y },
+        stats: { ...carrier.stats, hp: carrier.maxHp },
+        tags: [],
+      });
+    }
+  }
+
+  // One riser from the bestiary, at the bottom's own band, on a drawn tile
+  // far enough away that its arrival is a chase.
+  const spawnable = BESTIARY.filter((a) => a.weight > 0);
+  const archTotal = spawnable.reduce((n, a) => n + a.weight, 0);
+  let pick = intBetween(state.seed, c, 1, archTotal); c += 1;
+  let arch = spawnable[0]!;
+  for (const a of spawnable) {
+    pick -= a.weight;
+    if (pick <= 0) { arch = a; break; }
+  }
+  const level = Math.max(1, Math.floor(BOTTOM_DEPTH / 3));
+
+  const candidates: Pos[] = [];
+  for (let y = 0; y < state.grid.height; y += 1) {
+    for (let x = 0; x < state.grid.width; x += 1) {
+      if (!isPassable(state.grid, x, y)) continue;
+      if (tileAt(state.grid, x, y) === EXIT) continue;
+      if (Math.abs(x - carrier.pos.x) + Math.abs(y - carrier.pos.y) < WAVE_DISTANCE) continue;
+      if (stood(x, y)) continue;
+      candidates.push({ x, y });
+    }
+  }
+  if (candidates.length > 0) {
+    const at = intBetween(state.seed, c, 0, candidates.length - 1); c += 1;
+    const tile = candidates[at]!;
+    risen.push({
+      id: `risen-${String(state.turn)}`,
+      kind: level === 1 ? arch.kind : `${arch.kind}-${String(level)}`,
+      pos: { x: tile.x, y: tile.y },
+      stats: creatureStats(arch.kind, level)!,
+      tags: [],
+    });
+  }
+
+  if (risen.length === 0) return null;
+  return {
+    type: 'WORLD_STIRRED',
+    schemaVersion: SCHEMA_VERSIONS.WORLD_STIRRED,
+    rngCounter: state.rngCounter,
+    rngDraws: c - state.rngCounter,
+    payload: { opponents: risen },
+  };
+}
+
+/**
  * Holding position.
  *
  * Without this, time passes only when you move — so a player could never let
@@ -598,6 +719,20 @@ export function takeUnderfoot(
 
   const item = itemAt(state.items, taker.pos.x, taker.pos.y);
   if (item === undefined) return null;
+
+  // The heart fills your hands. It goes into the satchel — shoving out
+  // whatever was carried (left on the tile, like any swap) — and SEALS it:
+  // nothing else can be taken up or used while you carry the world's ending.
+  // Recorded like any satchel take; the weight is in what it refuses after.
+  if (item.kind === HEART_KIND) {
+    return {
+      type: 'ITEM_TAKEN',
+      schemaVersion: SCHEMA_VERSIONS.ITEM_TAKEN,
+      rngCounter: state.rngCounter,
+      rngDraws: 0,
+      payload: { entityId, itemId: item.id, grants: { ...item.grants }, satchel: { swappedOut: taker.satchel?.kind ?? null } },
+    };
+  }
 
   // A provision rides in the satchel, not on the body. Walking over one with
   // full hands swaps — the old one stays on this tile, permanently, so the
@@ -683,7 +818,12 @@ export function useCarried(
   };
 }
 
-export type Outcome = 'playing' | 'escaped' | 'dead';
+export type Outcome = 'playing' | 'escaped' | 'dead' | 'won';
+
+/** Whether the world's ending rides in this player's hands. */
+export function heartHeld(state: GameState, playerId = 'player'): boolean {
+  return findEntity(state.entities, playerId)?.satchel?.kind === HEART_KIND;
+}
 
 /**
  * How the run stands.
@@ -692,12 +832,17 @@ export type Outcome = 'playing' | 'escaped' | 'dead';
  * escaping and no hit points is dying — both already true in the state, and a
  * second recording of a fact is a second thing that can disagree with the
  * first. The same reason canon is folded rather than kept.
+ *
+ * The bottom floor turns the exit around: its stair is the one you came down
+ * by (you are BORN standing on it), so standing there means nothing until
+ * the heart is in your hands — and then it means everything.
  */
 export function outcome(state: GameState, playerId = 'player'): Outcome {
   const player = findEntity(state.entities, playerId);
   if (player === undefined || !isAlive(player)) return 'dead';
-  if (tileAt(state.grid, player.pos.x, player.pos.y) === EXIT) return 'escaped';
-  return 'playing';
+  if (tileAt(state.grid, player.pos.x, player.pos.y) !== EXIT) return 'playing';
+  if (state.depth >= BOTTOM_DEPTH) return heartHeld(state, playerId) ? 'won' : 'playing';
+  return 'escaped';
 }
 
 /**

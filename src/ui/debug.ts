@@ -5,7 +5,7 @@ import { validateBible, isRefusedBible } from '../canon/bible.js';
 import { playerStep, playerWait, playerUse, runWorldTurns, buryIfDead, beginAgain, descend, isGrave } from '../play/session.js';
 import { isAlive } from '../core/entity.js';
 import { outcome, hitChance } from '../core/commands.js';
-import { damageDice, XP_TO_REACH, slotOf, critFloor } from '../core/tables.js';
+import { damageDice, XP_TO_REACH, slotOf, critFloor, HEART_KIND } from '../core/tables.js';
 import { itemAt } from '../core/item.js';
 import { save, load, clear, emptySession } from '../play/store.js';
 import {
@@ -483,8 +483,12 @@ function render(): void {
   const player = state.entities[0];
 
   // The fog: what this timeline's player has seen, and sees. Derived from
-  // the chain, so a rewind un-sees and a descent starts dark.
-  const fog = fogAt(log, head, (p) => makeGrid(p.width, p.height, p.tiles));
+  // the chain, so a rewind un-sees and a descent starts dark — plus whatever
+  // the dead have lent: standing where you fell borrows that life's explored
+  // map for this floor (knowledge, never power).
+  const bare = fogAt(log, head, (p) => makeGrid(p.width, p.height, p.tiles));
+  const lent = borrowedEyes.get(`${worldRoot() ?? ''}/${String(state.depth)}`);
+  const fog = lent === undefined ? bare : { ...bare, seen: new Set([...bare.seen, ...lent]) };
 
   // Living creatures win the tile over corpses, so a body never hides a threat.
   const occupant = new Map<number, Entity>();
@@ -596,7 +600,7 @@ function render(): void {
   // glow at all.
   type Seg = { key: string; text: string };
   const vitals: Array<[string, string | Seg[], string]> = [
-    ['this run', done, done === 'dead' ? 'urgent' : done === 'escaped' ? 'good' : ''],
+    ['this run', done, done === 'dead' ? 'urgent' : done === 'escaped' || done === 'won' ? 'good' : ''],
     ['hit points', player === undefined ? '—' : `${player.stats.hp} / ${player.maxHp}`, hurt ? 'urgent' : ''],
     ['level', (() => {
       const next = XP_TO_REACH[state.level + 1];
@@ -1118,10 +1122,24 @@ function narrate(fresh: readonly GameEvent[], state: ReturnType<typeof fold>): s
     }
     if (event.type === 'ITEM_TAKEN' && event.payload.satchel !== undefined) {
       const swapped = event.payload.satchel.swappedOut;
+      const takenKind = state.items.find((i) => i.id === event.payload.itemId)?.kind;
+      if (takenKind === HEART_KIND) {
+        lines.push(`you take up ${calledItem(event.payload.itemId, state)} — your hands are full now, and the way out is the stair you came down by`);
+        continue;
+      }
       lines.push(`${calledItem(event.payload.itemId, state)} goes into your satchel${
         swapped === null ? '' : ` — your ${
           oracle.ask(describeQuestion('item', swapped, {}, worldRoot())).name
         } stays where this one lay`}`);
+      continue;
+    }
+    if (event.type === 'WORLD_STIRRED') {
+      const echoes = event.payload.opponents.filter((o) => o.kind === 'echo').length;
+      const others = event.payload.opponents.length - echoes;
+      if (echoes > 0) {
+        lines.push(`the floor gives up its dead — ${echoes === 1 ? 'an echo of you rises' : `${echoes} echoes of you rise`} where the bodies lie`);
+      }
+      if (others > 0) lines.push('the world stirs — something rises in the far dark');
       continue;
     }
     if (event.type === 'ITEM_TAKEN') {
@@ -1240,6 +1258,14 @@ function finish(before: number, head: string): void {
       told.push(cleared
         ? `down. depth ${down.depth} — the floor was yours, and your wounds close on the stairs`
         : `down. depth ${down.depth} — it is colder here`);
+      // The floor before each warden whispers its promise (2, 5, 8) — the
+      // bible keeping its word on the way down.
+      const landed = fold(log, getRef(refs, active).head);
+      const whichPromise = down.depth === 2 ? 0 : down.depth === 5 ? 1 : down.depth === 8 ? 2 : null;
+      if (whichPromise !== null) {
+        const whispered = promiseLine(landed, whichPromise, 'whisper');
+        if (whispered !== null) told.push(whispered);
+      }
       persist();
       say(told);
       render();
@@ -1265,10 +1291,34 @@ function finish(before: number, head: string): void {
     for (const e of events.slice(before)) {
       if (e.type === 'MOVE' && e.payload.entityId === 'player'
           && lying.has(idx(nowState.grid, e.payload.to.x, e.payload.to.y))) {
-        told.push('you find your own body. what that is worth, the world has not yet decided');
+        // The graves' covenant, decided: knowledge, never power. Standing
+        // where you fell borrows that life's eyes — its explored floor joins
+        // your map — and at the bottom, the same dead will rise against you.
+        const lent = borrowDeadEyes(nowState, { x: e.payload.to.x, y: e.payload.to.y });
+        told.push(lent
+          ? 'you stand where you fell. that life lends you its eyes — the floor it knew joins your map'
+          : 'you stand where you fell. its eyes are already yours');
         break;
       }
     }
+  }
+
+  // A warden down is a promise kept (3, 6, 9) — the confirmation beat.
+  if (nowState.depth % 3 === 0) {
+    for (const e of events.slice(before)) {
+      if (e.type !== 'STRIKE' || !e.payload.hit) continue;
+      const victim = nowState.entities.find((x) => x.id === e.payload.targetId);
+      if (victim === undefined || !victim.kind.startsWith('warden') || victim.stats.hp > 0) continue;
+      const kept = promiseLine(nowState, nowState.depth / 3 - 1, 'kept');
+      if (kept !== null) told.push(kept);
+      break;
+    }
+  }
+
+  // The ending, said the moment it happens: heart in hand, standing on the
+  // stair you came down by.
+  if (outcome(nowState) === 'won' && outcome(priorState) !== 'won') {
+    told.push('the heart crosses the threshold. this world is won — it keeps your name');
   }
 
   // Death is handled here rather than inside the step, because it is not a move
@@ -1288,6 +1338,61 @@ function finish(before: number, head: string): void {
   }
   say(told);
   render();
+}
+
+/* ── the promises, kept ──────────────────────────────────────────────────
+ *
+ * The bible's foreshadowings pay out on the way down: a whisper on the
+ * floor before each warden (2, 5, 8), the confirmation when the warden
+ * falls (3, 6, 9). First delivery per world speaks the whole line; a
+ * reborn run re-descending the same world hears nothing again — a promise
+ * repeated on schedule is a recording, not a voice. */
+const BEATS_KEY = 'evolving-rpg/promises-heard/v1';
+
+function heardBeats(): Set<string> {
+  try {
+    const raw = window.localStorage.getItem(BEATS_KEY);
+    return new Set(raw === null ? [] : JSON.parse(raw) as string[]);
+  } catch {
+    return new Set();
+  }
+}
+
+function promiseLine(state: ReturnType<typeof fold>, which: number, phase: 'whisper' | 'kept'): string | null {
+  if (state.bible === null) return null;
+  const p = state.bible.promises[which];
+  if (p === undefined) return null;
+  const key = `${worldRoot() ?? ''}/${String(which)}/${phase}`;
+  const heard = heardBeats();
+  if (heard.has(key)) return null;
+  try {
+    window.localStorage.setItem(BEATS_KEY, JSON.stringify([...heard.add(key)]));
+  } catch { /* quota; it may whisper twice, which is survivable */ }
+  return phase === 'whisper' ? `something below keeps its word — “${p}”` : `the promise holds — “${p}”`;
+}
+
+/* Standing where you fell lends you that life's eyes: the floor as the dead
+ * run knew it joins your map. Knowledge, never power — the graves' whole
+ * covenant — and pure event-sourcing: the dead life's exploring is already
+ * on its timeline, waiting to be read. Session-borrowed, per floor. */
+const borrowedEyes = new Map<string, Set<number>>();
+
+function borrowDeadEyes(state: ReturnType<typeof fold>, at: { x: number; y: number }): boolean {
+  const key = `${worldRoot() ?? ''}/${String(state.depth)}`;
+  for (const ref of listRefs(refs)) {
+    if (!isGrave(ref.name) || !ref.name.startsWith(`${active}†`) || ref.head === null) continue;
+    const gs = fold(log, ref.head);
+    if (gs.depth !== state.depth) continue;
+    const fallen = gs.entities.find((e) => e.kind === 'you');
+    if (fallen === undefined || fallen.pos.x !== at.x || fallen.pos.y !== at.y) continue;
+    const dead = fogAt(log, ref.head, (p) => makeGrid(p.width, p.height, p.tiles));
+    const pool = borrowedEyes.get(key) ?? new Set<number>();
+    const before = pool.size;
+    for (const seen of dead.seen) pool.add(seen);
+    borrowedEyes.set(key, pool);
+    return pool.size > before;
+  }
+  return false;
 }
 
 /** Graves that have already provoked a proposal, so one death asks once —

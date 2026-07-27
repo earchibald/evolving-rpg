@@ -321,6 +321,16 @@ export function wardenAt(depth: number): boolean {
   return depth >= 3 && depth % 3 === 0;
 }
 
+/** How grown the warden arrives. Level 1 on the first boss floor — the
+ *  depth-3 pins were tuned against it — then tracking the floor (depth − 2)
+ *  so the deep's wardens stay wardens: measured at the old floor(depth/3),
+ *  a depth-9 warden rated 63 threat while its own floor's chaff rated 113,
+ *  and the "boss" was the fourth-scariest thing in its own arena. */
+export function wardenLevel(depth: number): number {
+  const d = Math.max(1, Math.floor(depth));
+  return d <= 3 ? 1 : d - 2;
+}
+
 /* ── depth motifs ────────────────────────────────────────────────────────── */
 
 /**
@@ -503,3 +513,36 @@ export function smokeTurns(depth: number): number {
  *  satchel has stopped being a decision and should be redesigned. */
 export const BOT_QUAFF_BELOW = 0.35;
 export const BOT_SMOKE_WITHIN = 3;
+
+/* ── the bottom ──────────────────────────────────────────────────────────── */
+
+/**
+ * The world has a floor, and the floor has a heart.
+ *
+ * GESTALT L4, shaped by what the tradition itself testifies: touching the
+ * prize and instantly winning is the anticlimax DCSS diagnosed in its own
+ * orb run, and the full climb back out is a second game's worth of build.
+ * What carries the meaning is the REVERSAL — after the prize, the world
+ * hunts you — so the ending is a one-floor holdout: the heart lies at the
+ * far end of the ninth floor behind the last warden; seizing it fills your
+ * hands (the satchel is sealed); the world stirs in waves while you carry
+ * it back to the stair you came down by. Reach it, and the world is won.
+ *
+ * Nine floors: wardens stand at 3, 6 and 9, so the bottom is the third
+ * peak — and nine is a run's worth of evenings under rebirth, not 1980's
+ * twenty-six.
+ */
+export const BOTTOM_DEPTH = 9;
+
+/** The one thing the ninth floor keeps. Named per world (the Oracle draws
+ *  from the bible's palette); article-free like every kind. */
+export const HEART_KIND = 'heart';
+
+/** How often the seized world stirs: every this-many turns while the heart
+ *  is carried, something rises. Eight is two or three fights' worth of
+ *  walking on a 48-wide floor — pressure, not a blender. */
+export const WAVE_EVERY = 8;
+
+/** How far from the carrier a stirred thing rises (tiles of flight, cheap
+ *  on purpose): far enough to be a chase, never an ambush out of the air. */
+export const WAVE_DISTANCE = 8;

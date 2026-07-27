@@ -20,7 +20,7 @@ import type { GameState } from '../core/state.js';
 export interface Played {
   readonly position: Position;
   readonly state: GameState;
-  readonly ended: 'dead' | 'escaped' | 'playing';
+  readonly ended: 'dead' | 'escaped' | 'playing' | 'won';
   readonly actions: number;
 }
 

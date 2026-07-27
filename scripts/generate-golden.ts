@@ -36,10 +36,11 @@ if (process.env.ALLOW_GOLDEN_REGEN !== '1') {
 // above.
 //
 // Seed hand-picked by probe (re-picked when the secret-room roll shifted
-// the stream): 10 strikes, a crit, an item equipped, escapes. A golden
+// the stream, and again when the verbs and the provision draw reshaped it):
+// 13 strikes, a crit, an item equipped, a lunge on record, escapes. A golden
 // fixture that never fights leaves the newest and riskiest code untouched
 // by the strongest test in the repo.
-const SEED = 16;
+const SEED = 15;
 const WIDTH = 48;
 const HEIGHT = 32;
 const POLICY = 'brawler';

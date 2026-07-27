@@ -291,6 +291,21 @@ function reduce(state: GameState, event: GameEvent): GameState {
       return { ...state, entities: emptied };
     }
 
+    case 'WORLD_STIRRED': {
+      // The risen join the world exactly as WORLD_INIT seats its seeds:
+      // copied, posted where they stand, ceilinged at their birth hp.
+      const rising = event.payload.opponents.map((s) => ({
+        id: s.id,
+        kind: s.kind,
+        pos: { x: s.pos.x, y: s.pos.y },
+        stats: { ...s.stats },
+        tags: [...s.tags],
+        post: { x: s.pos.x, y: s.pos.y },
+        maxHp: s.stats.hp,
+      }));
+      return { ...state, entities: [...state.entities, ...rising] };
+    }
+
     case 'VIGIL_KEPT': {
       // The warden, home and unwatched, knits shut. Heal to the ceiling in
       // one event: the point is the reset, not a drip — poking a boss and
