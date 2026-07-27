@@ -41,7 +41,21 @@ import type { Answer, Call, Intent, Question, Transport } from './types.js';
 const MAX_TRIES = 3;
 
 function keyOf(question: Question): string {
-  return canonicalJson({ intent: question.intent, subject: question.subject });
+  return canonicalJson({
+    intent: question.intent,
+    subject: question.subject,
+    ...(question.scope === undefined ? {} : { scope: question.scope }),
+  });
+}
+
+/** The scope a canon key was filed under, or undefined for the unscoped era.
+ *  Keys are canonicalJson, so they parse back — the key IS the record. */
+function scopeOfKey(key: string): string | undefined {
+  try {
+    return (JSON.parse(key) as { scope?: string }).scope;
+  } catch {
+    return undefined;
+  }
 }
 
 /**
@@ -101,6 +115,16 @@ export class Oracle {
       // cache hit meant it was never asked again. Dropping them on load lets an
       // already-poisoned save heal itself.
       if (answer.source === 'fallback') continue;
+      // Names from the unscoped era belonged to every world at once — the
+      // exact bleed scoping exists to end. Dropped rather than migrated:
+      // there is no way to know which world a trans-world name was really
+      // about, and pre-RC saves break freely by standing rule.
+      if (scopeOfKey(key) === undefined) {
+        const intent = ((): string => {
+          try { return (JSON.parse(key) as { intent?: string }).intent ?? ''; } catch { return ''; }
+        })();
+        if (intent === 'describe') continue;
+      }
       this.canon.set(key, answer);
     }
   }
@@ -108,6 +132,28 @@ export class Oracle {
   /** What the world already knows, for saving. */
   known(): Record<string, Answer> {
     return Object.fromEntries(this.canon);
+  }
+
+  /** Names already spent in one world. The duplicate guard reads this rather
+   *  than all of canon: two *different* worlds may both know a "slate otter" —
+   *  they never meet — but one world naming two kinds the same is the
+   *  contradiction the register exists to refuse. */
+  private takenIn(scope: string | undefined): string[] {
+    const names: string[] = [];
+    for (const [key, answer] of this.canon) {
+      if (scopeOfKey(key) === scope) names.push(answer.name);
+    }
+    return names;
+  }
+
+  /** Every settled name belonging to one world, for tellers who should not be
+   *  quoting some other world's canon. */
+  namesIn(scope: string): Answer[] {
+    const answers: Answer[] = [];
+    for (const [key, answer] of this.canon) {
+      if (scopeOfKey(key) === scope) answers.push(answer);
+    }
+    return answers;
   }
 
   /** Everything in flight or waiting, oldest first, for showing. */
@@ -235,8 +281,7 @@ export class Oracle {
         const entry = offered.find((o) => o['subject'] === question.subject);
         const name = typeof entry?.['name'] === 'string' ? entry['name'].trim() : '';
         if (name === '') continue;
-        const taken = [...this.canon.values()].map((a) => a.name);
-        if (!assayName(name, taken).sound) continue;
+        if (!assayName(name, this.takenIn(question.scope)).sound) continue;
         this.canon.set(key, {
           name,
           line: typeof entry?.['line'] === 'string' ? entry['line'].trim() : '',
@@ -279,9 +324,12 @@ export class Oracle {
    * This is the veto the design always called for, arriving at the first moment
    * it was actually needed.
    */
-  reject(name: string): boolean {
+  reject(name: string, scope?: string): boolean {
     for (const [key, answer] of this.canon) {
       if (answer.name !== name) continue;
+      // A scoped veto refuses this world's name only. Two worlds may share a
+      // name by coincidence; refusing one is not an opinion about the other.
+      if (scope !== undefined && scopeOfKey(key) !== scope) continue;
       this.canon.delete(key);
       this.tries.delete(key);
       this.onChange();
@@ -333,8 +381,7 @@ export class Oracle {
       // treated as a failed call rather than written into permanent canon.
       // The retry machinery already exists; the world simply tries again.
       if (question.intent === 'describe') {
-        const taken = [...this.canon.values()].map((a) => a.name);
-        const judged = assayName(said.name, taken);
+        const judged = assayName(said.name, this.takenIn(question.scope));
         if (!judged.sound) {
           throw new Error(`the covenant refuses "${said.name}" — ${judged.findings.join('; ')}`);
         }
@@ -455,6 +502,11 @@ export class Oracle {
   }
 }
 
-export function describeQuestion(kind: string, what: string, context: Record<string, unknown>): Question {
-  return { intent: 'describe' as Intent, subject: `${kind}:${what}`, context };
+export function describeQuestion(kind: string, what: string, context: Record<string, unknown>, scope?: string): Question {
+  return {
+    intent: 'describe' as Intent,
+    subject: `${kind}:${what}`,
+    context,
+    ...(scope === undefined ? {} : { scope }),
+  };
 }

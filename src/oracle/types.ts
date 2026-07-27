@@ -23,6 +23,13 @@ export interface Question {
   intent: Intent;
   subject: string;
   context: Record<string, unknown>;
+  /** Which world this fact belongs to — the world's root event id. A name is
+   *  a fact about a *world*, not about the whole install: without the scope,
+   *  a second world inherited the first's "wire hound" despite its own bible.
+   *  Scoped by root id rather than ref name so forks and graves — which share
+   *  their world's history — share its names by construction. Absent on the
+   *  intents that are conversations rather than facts. */
+  scope?: string;
 }
 
 export interface Answer {

@@ -302,6 +302,25 @@ function foundThisWorld(state: ReturnType<typeof fold>, head: string): void {
   });
 }
 
+/** The active world's root event id — its true identity, and the scope its
+ *  names are filed under. Content-addressing does the real work: forks and
+ *  graves share their world's root, so they share its names by construction,
+ *  while a wiped-and-remade world roots differently and names afresh.
+ *  Memoised by head, because item names are asked for on every render. */
+const rootMemo = new Map<string, string>();
+function worldRoot(): string | undefined {
+  const head = getRef(refs, active).head;
+  if (head === null) return undefined;
+  const remembered = rootMemo.get(head);
+  if (remembered !== undefined) return remembered;
+  const root = chain(log, head)[0]?.id;
+  if (root !== undefined) {
+    if (rootMemo.size > 4096) rootMemo.clear();
+    rootMemo.set(head, root);
+  }
+  return root;
+}
+
 function nameWhatIsHere(state: ReturnType<typeof fold>): void {
   // The whole floor, fog or no fog, as ONE batched question. Naming used to
   // wait for line of sight and run one call per kind — and a fast player
@@ -315,9 +334,8 @@ function nameWhatIsHere(state: ReturnType<typeof fold>): void {
   // the most-seen floor, and improvising its canon while the identity is
   // being decided puts off-palette names in the one place the palette
   // matters most. A settled founding — either way — re-renders and releases.
-  const head = getRef(refs, active).head;
-  const root = head === null ? null : chain(log, head)[0]?.id ?? null;
-  if (state.bible === null && root !== null && foundingInFlight.has(root)) return;
+  const root = worldRoot();
+  if (state.bible === null && root !== undefined && foundingInFlight.has(root)) return;
 
   // The bible rides in the context as prompt material — the cache key is
   // intent+subject alone, so a palette-guided name and an improvised one are
@@ -333,10 +351,10 @@ function nameWhatIsHere(state: ReturnType<typeof fold>): void {
       might: e.stats.might,
       speed: e.stats.speed,
       ...palette,
-    }));
+    }, root));
   }
   for (const i of state.items) {
-    questions.push(describeQuestion('item', i.kind, { grants: i.grants, ...palette }));
+    questions.push(describeQuestion('item', i.kind, { grants: i.grants, ...palette }, root));
   }
   oracle.askMany(questions);
 }
@@ -345,7 +363,7 @@ function nameWhatIsHere(state: ReturnType<typeof fold>): void {
 function calledCreature(kind: string, e: { stats: { hp: number; might: number; speed: number } }): string {
   return oracle.ask(describeQuestion('creature', kind, {
     hitPoints: e.stats.hp, might: e.stats.might, speed: e.stats.speed,
-  })).name;
+  }, worldRoot())).name;
 }
 
 /** Everything said, newest last. Restored on load, so a note outlives the tab
@@ -374,7 +392,10 @@ function scene(): Record<string, unknown> {
     underfoot: state.items
       .filter((i) => fog.seen.has(idx(state.grid, i.pos.x, i.pos.y)))
       .map((i) => ({ at: i.pos })),
-    named: Object.values(oracle.known()).filter((a) => a.line !== '').map((a) => a.name),
+    // This world's names only: the gamemaster quoting another world's canon
+    // would be exactly the bleed scoping exists to end.
+    named: (worldRoot() === undefined ? [] : oracle.namesIn(worldRoot()!))
+      .filter((a) => a.line !== '').map((a) => a.name),
   };
 }
 
@@ -559,7 +580,7 @@ function render(): void {
   const wornIn = (slot: string): string => {
     const g = player?.gear?.[slot];
     if (g === undefined) return '—';
-    const called = oracle.ask(describeQuestion('item', g.kind, { grants: g.grants })).name;
+    const called = oracle.ask(describeQuestion('item', g.kind, { grants: g.grants }, worldRoot())).name;
     const parts = [
       g.grants.might === 0 ? '' : `+${g.grants.might} might`,
       g.grants.hp === 0 ? '' : `+${g.grants.hp} hp`,
@@ -723,7 +744,7 @@ function render(): void {
 
   for (const i of state.items) {
     if (!fog.seen.has(idx(state.grid, i.pos.x, i.pos.y))) continue;
-    const called = oracle.ask(describeQuestion('item', i.kind, { grants: i.grants })).name;
+    const called = oracle.ask(describeQuestion('item', i.kind, { grants: i.grants }, worldRoot())).name;
     const li = document.createElement('li');
     li.style.borderLeftColor = 'var(--item)';
     const who = document.createElement('span');
@@ -823,8 +844,8 @@ function render(): void {
   // ── this world, decided whole — the bible, on screen (covenant L1) ─────
   const bibleEl = el('bible');
   bibleEl.textContent = '';
-  const worldRoot = head === null ? null : chain(log, head)[0]?.id ?? null;
-  const judged = worldRoot === null ? undefined : bibleVerdicts.get(worldRoot);
+  const thisRoot = worldRoot();
+  const judged = thisRoot === undefined ? undefined : bibleVerdicts.get(thisRoot);
   const bibleRows: Array<[string, string]> = state.bible === null
     ? [['identity', 'unfounded — the world improvises, name by name']]
     : [
@@ -960,7 +981,9 @@ function render(): void {
   // ── what the world has said, to be read rather than announced ──────────
   const spoken = el('names');
   spoken.textContent = '';
-  const said = Object.values(oracle.known())
+  // This world's voice, not the install's: each world names its own.
+  const spokenScope = worldRoot();
+  const said = (spokenScope === undefined ? [] : oracle.namesIn(spokenScope))
     .filter((a) => a.line !== '')
     .sort((a, b) => a.name.localeCompare(b.name));
   if (said.length === 0) {
@@ -982,7 +1005,7 @@ function render(): void {
       no.textContent = 'no';
       no.title = `forget "${a.name}" and ask again`;
       no.addEventListener('click', () => {
-        oracle.reject(a.name);
+        oracle.reject(a.name, spokenScope);
         say(`“${a.name}” refused — the world will think of something else`);
       });
 
@@ -1075,7 +1098,7 @@ function narrate(fresh: readonly GameEvent[], state: ReturnType<typeof fold>): s
       const slotName = slotOf(event.payload.grants);
       const shed = takerBefore?.gear?.[slotName];
       const swap = shed === undefined ? '' : ` · your ${
-        oracle.ask(describeQuestion('item', shed.kind, { grants: shed.grants })).name
+        oracle.ask(describeQuestion('item', shed.kind, { grants: shed.grants }, worldRoot())).name
       } is set down`;
       lines.push(`you take up ${calledItem(event.payload.itemId, state)} — ${deltas.join(', ')}${swap}`);
       continue;
@@ -1126,7 +1149,7 @@ function named(state: ReturnType<typeof fold>, id: string): string {
 function calledItem(id: string, state: ReturnType<typeof fold>): string {
   const i = state.items.find((x) => x.id === id);
   if (i === undefined) return id;
-  return oracle.ask(describeQuestion('item', i.kind, { grants: i.grants })).name;
+  return oracle.ask(describeQuestion('item', i.kind, { grants: i.grants }, worldRoot())).name;
 }
 
 function finish(before: number, head: string): void {

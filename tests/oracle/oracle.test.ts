@@ -2,7 +2,10 @@ import { Oracle, describeQuestion, fallbackFor } from '../../src/oracle/oracle.j
 import { stubTransport, brokenTransport } from '../../src/oracle/transports.js';
 import type { Question, Transport } from '../../src/oracle/types.js';
 
-const CREATURE: Question = describeQuestion('creature', 'thing', { might: 4, hp: 5 });
+// Scoped, because production always scopes a describe — a name is a fact
+// about one world. Unscoped describe canon is the legacy shape the
+// constructor deliberately drops on load.
+const CREATURE: Question = describeQuestion('creature', 'thing', { might: 4, hp: 5 }, 'root-test');
 
 /** Lets a test decide when an answer arrives, so "never blocks" can be checked
  *  rather than assumed from a promise that happened to be fast. */
@@ -455,9 +458,9 @@ describe('the covenant guards the canon, live', () => {
 
 describe('asking for a whole floor at once', () => {
   const THREE: Question[] = [
-    describeQuestion('creature', 'skirmisher', { might: 2 }),
-    describeQuestion('creature', 'bruiser', { might: 4 }),
-    describeQuestion('item', 'keen edge', { grants: { might: 2 } }),
+    describeQuestion('creature', 'skirmisher', { might: 2 }, 'root-test'),
+    describeQuestion('creature', 'bruiser', { might: 4 }, 'root-test'),
+    describeQuestion('item', 'keen edge', { grants: { might: 2 } }, 'root-test'),
   ];
 
   it('settles every unnamed thing from one transport call', async () => {
@@ -568,5 +571,95 @@ describe('the queue clock', () => {
     const settled = oracle.queue()[0];
     expect(settled?.state).toBe('failed');
     expect(settled?.ms).toBe(3000);
+  });
+});
+
+describe('the scope of a name', () => {
+  it('keeps two worlds apart: one subject, two scopes, two questions', async () => {
+    let asked = 0;
+    const counting: Transport = {
+      name: 'counting',
+      ask() {
+        asked += 1;
+        return Promise.resolve({ name: `spoken-${String(asked)}`, line: '', model: 'm', costUsd: 0 });
+      },
+    };
+    const oracle = new Oracle({ transport: counting });
+
+    oracle.ask(describeQuestion('creature', 'skirmisher', {}, 'root-a'));
+    await tick();
+    oracle.ask(describeQuestion('creature', 'skirmisher', {}, 'root-b'));
+    await tick();
+
+    // Two different worlds, two different facts — the exact bleed this ends:
+    // a second world used to inherit the first's name despite its own bible.
+    expect(asked).toBe(2);
+    expect(oracle.ask(describeQuestion('creature', 'skirmisher', {}, 'root-a')).name).toBe('spoken-1');
+    expect(oracle.ask(describeQuestion('creature', 'skirmisher', {}, 'root-b')).name).toBe('spoken-2');
+  });
+
+  it('guards duplicates within a world, never across worlds', async () => {
+    // The same name offered every time. Landing in two different worlds is
+    // coincidence, not contradiction — they never meet. Landing twice in ONE
+    // world is the contradiction the register refuses.
+    const always: Transport = {
+      name: 'always',
+      ask: () => Promise.resolve({ name: 'slate otter', line: '', model: 'm', costUsd: 0 }),
+    };
+    const oracle = new Oracle({ transport: always });
+
+    oracle.ask(describeQuestion('creature', 'skirmisher', {}, 'root-a'));
+    await tick();
+    oracle.ask(describeQuestion('creature', 'skirmisher', {}, 'root-b'));
+    await tick();
+    expect(oracle.ask(describeQuestion('creature', 'skirmisher', {}, 'root-b')).name).toBe('slate otter');
+
+    oracle.ask(describeQuestion('creature', 'stalker', {}, 'root-a'));
+    await tick();
+    // Refused as a duplicate of root-a's own otter; the fallback stands in.
+    expect(oracle.ask(describeQuestion('creature', 'stalker', {}, 'root-a')).name).toBe('stalker');
+  });
+
+  it('drops the unscoped era on load — those names belonged to every world at once', () => {
+    const said = { line: 'x', source: 'model' as const, model: 'm', ms: 1, costUsd: 0 };
+    const oracle = new Oracle({
+      transport: null,
+      known: {
+        '{"intent":"describe","subject":"creature:thing"}': { ...said, name: 'old bleed' },
+        '{"intent":"describe","scope":"root-1","subject":"creature:thing"}': { ...said, name: 'kept' },
+      },
+    });
+
+    // The legacy trans-world name is gone (fallback answers); the scoped one survives.
+    expect(oracle.ask(describeQuestion('creature', 'thing', {})).name).toBe('thing');
+    expect(oracle.ask(describeQuestion('creature', 'thing', {}, 'root-1')).name).toBe('kept');
+  });
+
+  it('scopes the veto: refusing a name here says nothing about it there', () => {
+    const said = { line: 'x', source: 'model' as const, model: 'm', ms: 1, costUsd: 0 };
+    const oracle = new Oracle({
+      transport: null,
+      known: {
+        '{"intent":"describe","scope":"root-a","subject":"creature:thing"}': { ...said, name: 'slate otter' },
+        '{"intent":"describe","scope":"root-b","subject":"creature:thing"}': { ...said, name: 'slate otter' },
+      },
+    });
+
+    expect(oracle.reject('slate otter', 'root-a')).toBe(true);
+    expect(oracle.ask(describeQuestion('creature', 'thing', {}, 'root-a')).name).toBe('thing');
+    expect(oracle.ask(describeQuestion('creature', 'thing', {}, 'root-b')).name).toBe('slate otter');
+  });
+
+  it('lists one world\'s names and no other\'s', () => {
+    const said = { line: 'seen', source: 'model' as const, model: 'm', ms: 1, costUsd: 0 };
+    const oracle = new Oracle({
+      transport: null,
+      known: {
+        '{"intent":"describe","scope":"root-a","subject":"creature:thing"}': { ...said, name: 'ours' },
+        '{"intent":"describe","scope":"root-b","subject":"creature:thing"}': { ...said, name: 'theirs' },
+      },
+    });
+    expect(oracle.namesIn('root-a').map((a) => a.name)).toEqual(['ours']);
+    expect(oracle.namesIn('root-b').map((a) => a.name)).toEqual(['theirs']);
   });
 });

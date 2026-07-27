@@ -704,3 +704,18 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > grave-walking duplicate is gone. Verified live in a sandbox world: died
 > to a skirmisher at 33,22, began again, and the floorboards said exactly
 > that.
+
+> [!NOTE]
+> **23:2x — Every world names its own**
+> Your open question, decided (you delegated the call): canon is now scoped
+> per world. A name was a fact about the whole install — your second world
+> inherited the first's "wire hound" despite having its own bible, which
+> contradicted the gestalt's founding sentence: two worlds never share one
+> identity. Names are filed under the world's root event — content-addressing
+> already gives every fork and grave of a world the same root, so they share
+> names by construction, while a wiped-and-remade world names afresh. The
+> duplicate guard and the "no" veto scope the same way: two worlds may both
+> know a slate otter (they never meet); one world naming two things the same
+> is still refused. Old trans-world names are dropped on load rather than
+> guessed about — the next floor names itself properly, once, from its own
+> palette. Five new tests pin the seams.
