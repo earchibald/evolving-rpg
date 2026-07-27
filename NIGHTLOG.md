@@ -640,3 +640,41 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > body-gated wits engine still dies to M2 and a modest body-heal trials
 > sound. Golden regenerated for v7 (same 47 actions, same escape — the
 > stream didn't move, only what the birth event says). 655 tests.
+
+> [!NOTE]
+> **19:4x — The first agentic soak: the whole table, played by agents**
+> The loop AGENTS.md promises, run end to end without a browser: the
+> playtester (haiku) swept fresh worlds and your real one; four `npm run
+> loop` runs asked the live Rulesmith for proposals; three rules-wardens
+> (sonnet) judged the survivors adversarially — two of them handed the
+> same pair of rival rest rules from opposite sides, and converged without
+> conferring. What the table found:
+> - **The shape holds.** Brawler 11/12 escapes ≈ the pinned 19/20; rusher
+>   10/12; the four passive policies stall at the cap as always; your real
+>   world plays the same pattern. No drift after the vocabulary widening.
+> - **Three of four proposals answered the same absence** — "waiting is
+>   never worth choosing" — the dead-air lens doing exactly what it is for.
+>   The fourth was an **aftermath clock** (cleared floor + far exit + turn
+>   20+ → lose 1 hp and a line about the quiet). None reached for the new
+>   words: fresh depth-1 worlds have no bodies and one cut, honestly.
+> - **M2 refused a live proposal on its own**: "might +1 per WAIT beside a
+>   creature" exploited to +18 in the trial. The gate works on real model
+>   output, unattended.
+> - **Verdicts for you** (nothing ratified — that button is yours):
+>   1. *Aftermath clock* — warden says **ratify** (runs/loops/
+>      2026-07-27T02-25-26-533Z.rule.json). It also traced the composition
+>      with rule-1: a wounded dawdler on a cleared floor nets +1/turn till
+>      50%, then the clock bites — self-correcting, M1 intact.
+>   2. *Rest when hurt* — **ratify with the band edit**: both wardens
+>      refused the loose 99% twin ("topping-off wearing a heal-1 costume")
+>      and chose the 60% gate; the warden's disjoint-band edit (add
+>      hpAbovePercent 50) kills the guaranteed double-fire with rule-1 —
+>      and I widened its ceiling to 65 because 50–60 is an EMPTY band at
+>      maxHp 10 (no integer hp qualifies; checked). Trialled sound:
+>      **runs/loops/rest-band-50-65.rule.json**.
+>   3. *Rest after any scratch* (99%) — **refuse**, two wardens agreeing
+>      independently.
+> The haiku voice judge misfired once (off-fit for not quoting numbers in
+> prose — a standard that would fail both ratified rules); the warden
+> caught it and overruled with reasons. Its opinion is evidence, the
+> verdict is the warden's — the separation held exactly as designed.
