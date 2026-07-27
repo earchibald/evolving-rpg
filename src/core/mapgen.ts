@@ -1,4 +1,4 @@
-import { FLOOR, WALL, EXIT, makeGrid, idx, isPassable } from './grid.js';
+import { FLOOR, WALL, EXIT, SECRET, makeGrid, idx, isPassable, tileAt } from './grid.js';
 import type { Grid } from './grid.js';
 import { intBetween } from './rng.js';
 import { reachableFrom } from './reachability.js';
@@ -320,4 +320,156 @@ export function withExit(grid: Grid, exit: { x: number; y: number }): Grid {
   const tiles = [...grid.tiles];
   tiles[exit.y * grid.width + exit.x] = EXIT;
   return makeGrid(grid.width, grid.height, tiles);
+}
+
+/** Flood fill that treats undiscovered secrets as the walls they pretend to
+ *  be — the player's-eye reachability, as opposed to reachableFrom's truth. */
+function floodHonest(grid: Grid, start: { x: number; y: number }): Set<number> {
+  const seen = new Set<number>();
+  const passable = (x: number, y: number): boolean => {
+    const t = tileAt(grid, x, y);
+    return t !== WALL && t !== SECRET;
+  };
+  if (!passable(start.x, start.y)) return seen;
+  const stack: Array<[number, number]> = [[start.x, start.y]];
+  seen.add(idx(grid, start.x, start.y));
+  while (stack.length > 0) {
+    const [cx, cy] = stack.pop()!;
+    for (const [nx, ny] of [[cx + 1, cy], [cx - 1, cy], [cx, cy + 1], [cx, cy - 1]] as const) {
+      if (!passable(nx, ny)) continue;
+      const i = idx(grid, nx, ny);
+      if (seen.has(i)) continue;
+      seen.add(i);
+      stack.push([nx, ny]);
+    }
+  }
+  return seen;
+}
+
+/** The walkable tiles in the one-tile band around a room — its doorways. */
+function doorwaysOf(grid: Grid, room: Room): number[] {
+  const out: number[] = [];
+  for (let x = room.x - 1; x <= room.x + room.w; x += 1) {
+    for (const y of [room.y - 1, room.y + room.h]) {
+      if (tileAt(grid, x, y) === FLOOR) out.push(idx(grid, x, y));
+    }
+  }
+  for (let y = room.y; y < room.y + room.h; y += 1) {
+    for (const x of [room.x - 1, room.x + room.w]) {
+      if (tileAt(grid, x, y) === FLOOR) out.push(idx(grid, x, y));
+    }
+  }
+  return out;
+}
+
+const inRoom = (room: Room, x: number, y: number): boolean =>
+  x >= room.x && x < room.x + room.w && y >= room.y && y < room.y + room.h;
+
+/**
+ * Sometimes, a room keeps itself secret.
+ *
+ * Roughly one floor in three, one room's every doorway becomes an illusory
+ * wall: it looks like wall and blocks the fog until walked through, but was
+ * always walkable — walking into it is how it is found. The start and exit
+ * rooms are never sealed, and the seal is committed only if everything
+ * OUTSIDE the room stays reachable without crossing a secret — a corridor
+ * that merely passes through the room may be load-bearing, and sealing a
+ * thoroughfare would hide half the floor rather than one room.
+ *
+ * Every choice is a counted draw, like all generation.
+ */
+export function sealSecretRoom(
+  seed: number,
+  counter: number,
+  grid: Grid,
+  rooms: readonly Room[],
+  start: { x: number; y: number },
+  exit: { x: number; y: number },
+): { grid: Grid; counterAfter: number; sealed: boolean } {
+  let c = counter;
+  if (rooms.length < 3) return { grid, counterAfter: c, sealed: false };
+
+  const roll = intBetween(seed, c, 1, 3); c += 1;
+  if (roll !== 1) return { grid, counterAfter: c, sealed: false };
+
+  const eligible = rooms.filter((r) =>
+    !inRoom(r, start.x, start.y) && !inRoom(r, exit.x, exit.y));
+  if (eligible.length === 0) return { grid, counterAfter: c, sealed: false };
+
+  // A few tries: a drawn room whose sealing would strand the floor is
+  // skipped, not forced.
+  for (let attempt = 0; attempt < Math.min(4, eligible.length); attempt += 1) {
+    const pick = intBetween(seed, c, 0, eligible.length - 1); c += 1;
+    const room = eligible[pick]!;
+    const doors = doorwaysOf(grid, room);
+    if (doors.length === 0) continue;
+
+    const tiles = [...grid.tiles];
+    for (const d of doors) tiles[d] = SECRET;
+    const sealedGrid = makeGrid(grid.width, grid.height, tiles);
+
+    // The player's-eye check: everything outside the room must still be
+    // walkable without knowing any secret.
+    const honest = floodHonest(sealedGrid, start);
+    let stranded = false;
+    for (let i = 0; i < tiles.length && !stranded; i += 1) {
+      if (tiles[i] !== FLOOR && tiles[i] !== EXIT) continue;
+      const x = i % grid.width;
+      const y = Math.floor(i / grid.width);
+      if (inRoom(room, x, y)) continue;
+      if (!honest.has(i)) stranded = true;
+    }
+    if (stranded) continue;
+
+    return { grid: sealedGrid, counterAfter: c, sealed: true };
+  }
+
+  return { grid, counterAfter: c, sealed: false };
+}
+
+/**
+ * The repair rule, stated by the designer: if a map arrives with rooms the
+ * player cannot reach, we do not throw it away — we cut a hidden way in.
+ * Any walkable region the honest flood cannot reach gets one wall on its
+ * boundary turned into a secret passage, until nothing is stranded.
+ *
+ * By construction the generator never produces such a map, so this is
+ * defence in depth — but a sabotaged build once leaked exactly that into a
+ * live session, and the rule is better than the throw. Drawless and
+ * deterministic: the punched wall is the lowest-index candidate.
+ */
+export function repairWithSecret(grid: Grid, start: { x: number; y: number }): { grid: Grid; punched: number } {
+  const tiles = [...grid.tiles];
+  let punched = 0;
+
+  for (let guard = 0; guard < 8; guard += 1) {
+    const current = makeGrid(grid.width, grid.height, tiles);
+    // TRUE disconnection only: reachableFrom walks secrets like the floor
+    // they are, so a deliberately sealed room is already connected and never
+    // "repaired" with a redundant second door. Stranded means no path exists
+    // at all — the sabotage case.
+    const truth = reachableFrom(current, start.x, start.y);
+
+    let hole = -1;
+    outer:
+    for (let i = 0; i < tiles.length; i += 1) {
+      if (tiles[i] !== WALL) continue;
+      const x = i % grid.width;
+      const y = Math.floor(i / grid.width);
+      let touchesReached = false;
+      let touchesStranded = false;
+      for (const [nx, ny] of [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]] as const) {
+        if (!isPassable(current, nx, ny)) continue;
+        if (truth.has(idx(grid, nx, ny))) touchesReached = true;
+        else touchesStranded = true;
+      }
+      if (touchesReached && touchesStranded) { hole = i; break outer; }
+    }
+
+    if (hole === -1) return { grid: current, punched };
+    tiles[hole] = SECRET;
+    punched += 1;
+  }
+
+  return { grid: makeGrid(grid.width, grid.height, tiles), punched };
 }

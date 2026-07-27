@@ -1,4 +1,4 @@
-import { generateMap, pickSpawnPoints, farthestFrom, withExit, walkDistance } from './mapgen.js';
+import { generateMap, pickSpawnPoints, farthestFrom, withExit, walkDistance, sealSecretRoom, repairWithSecret } from './mapgen.js';
 import { inBounds, isPassable } from './grid.js';
 import { findEntity, isAlive } from './entity.js';
 import { intBetween } from './rng.js';
@@ -6,7 +6,7 @@ import { neededToHit, chanceIn20, damageDice, critFloor, WHIFF, BESTIARY, creatu
 import type { Relic } from './tables.js';
 import type { Entity, Stats } from './entity.js';
 import { itemAt } from './item.js';
-import { EXIT, tileAt } from './grid.js';
+import { EXIT, SECRET, tileAt } from './grid.js';
 import { nextActive } from './turns.js';
 import { MAX_RULES } from '../canon/rule.js';
 import type { Rule } from '../canon/rule.js';
@@ -176,11 +176,21 @@ export function createWorld(
   // The way out sits at the far end of the map, so a run has a direction and
   // the journey is the longest one this world affords rather than an accident.
   const exit = farthestFrom(generated.grid, generated.start);
-  const grid = withExit(generated.grid, exit);
+  const opened = withExit(generated.grid, exit);
+
+  // Sometimes a room keeps itself secret — every doorway an illusory wall.
+  // Then the designer's repair rule, defence in depth: a floor that somehow
+  // arrives with truly stranded rooms gets a hidden way cut in rather than
+  // being thrown away. By construction repair never fires; a sabotaged build
+  // once leaked exactly such a floor into a live session, and the rule is
+  // better than the throw.
+  const secret = sealSecretRoom(seed, generated.counterAfter, opened, generated.rooms, generated.start, exit);
+  const repaired = repairWithSecret(secret.grid, generated.start);
+  const grid = repaired.grid;
 
   const walk = walkDistance(grid, generated.start, exit);
 
-  const population = chooseSpawns(seed, generated.counterAfter, depth);
+  const population = chooseSpawns(seed, secret.counterAfter, depth);
 
   // The floor's prizes, drawn from the armory by weight — counted draws like
   // every other choice generation makes. One relic on the first floor; two
@@ -258,6 +268,9 @@ export function createWorld(
   const keeperTile = ([[1, 0], [-1, 0], [0, 1], [0, -1]] as const)
     .map(([dx, dy]) => ({ x: exit.x + dx, y: exit.y + dy }))
     .find((p) => isPassable(grid, p.x, p.y)
+      // Never on an illusory wall: a keeper standing in what paints as wall
+      // gives the secret away, and reads as a haunting.
+      && tileAt(grid, p.x, p.y) !== SECRET
       && !(p.x === generated.start.x && p.y === generated.start.y)
       && !isGuardPost(p));
   const freePoints = spawned.points.filter((p, i) =>
@@ -274,7 +287,9 @@ export function createWorld(
   const story = `${generated.story} · the way out is ${Number.isFinite(walk) ? walk : '?'} steps of walking`
     + ` · a budget of ${spawnBudget(depth)} paid ${spent} for ${population.chosen.length}: ${kinds}`
     + ` · ${watcher} watches the stairs`
-    + ` · ${relics.map((r) => r.kind).join(' and ') || 'nothing'} lies guarded`;
+    + ` · ${relics.map((r) => r.kind).join(' and ') || 'nothing'} lies guarded`
+    + (secret.sealed ? ' · one room keeps itself secret' : '')
+    + (repaired.punched > 0 ? ` · ${repaired.punched} hidden way(s) cut where no way was` : '');
 
   return {
     type: 'WORLD_INIT',

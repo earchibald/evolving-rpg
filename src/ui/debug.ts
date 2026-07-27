@@ -22,7 +22,7 @@ import { cliTransport } from '../oracle/transports.js';
 import { send, loadNotes, saveNotes, NOTES_KEY } from '../channels/channels.js';
 import { CachedCritic } from '../critic/memo.js';
 import type { Channel, Note } from '../channels/channels.js';
-import { WALL, EXIT, idx, makeGrid } from '../core/grid.js';
+import { WALL, EXIT, SECRET, idx, makeGrid, tileAt } from '../core/grid.js';
 import { fogAt } from './fov.js';
 import type { EventLog } from '../log/chain.js';
 import type { Refs } from '../log/refs.js';
@@ -230,6 +230,10 @@ const foundingTried = new Set<string>();
  *  one place the palette matters most. A failed founding clears the root
  *  and the next render names bible-less — the world never blocks. */
 const foundingInFlight = new Set<string>();
+/** What the judge made of each founded bible, by world root. Opinion is
+ *  displayed, never gating: GESTALT §4 — judge the bible once at birth
+ *  rather than every name forever. */
+const bibleVerdicts = new Map<string, string>();
 
 /**
  * Founds an unfounded world: one Worldsmith call deciding its identity whole
@@ -270,6 +274,21 @@ function foundThisWorld(state: ReturnType<typeof fold>, head: string): void {
       persist();
       say(`the world is founded — ${said.name}`);
       render();
+
+      // The judged pass, once per bible rather than once per name forever.
+      // Haiku reads the whole identity against its own stated tone; the
+      // verdict is shown beside the bible and gates nothing.
+      oracle.consult({
+        intent: 'judge',
+        subject: `bible:${world}`,
+        context: {
+          text: [offered.anchor, offered.warden.line, ...offered.promises].join(' '),
+          mechanics: `a dungeon world's founding bible; its own stated tone: ${offered.register.join(', ')}`,
+        },
+      }).then((verdict) => {
+        bibleVerdicts.set(root, `${verdict.name} — ${verdict.line}`);
+        render();
+      }).catch(() => { /* the queue shows the failure; the bible stands unjudged */ });
     } catch {
       // The world it was for no longer exists; the queue already shows the
       // call, and canon was never touched.
@@ -486,6 +505,11 @@ function render(): void {
         else cell.classList.add('foe');
       } else if (tile === WALL) {
         cell.classList.add('wall');
+      } else if (tile === SECRET) {
+        // An illusory wall paints as the wall it pretends to be until the
+        // player has walked through it; after that, a passage, marked so
+        // once found it is never mistaken for wall again.
+        cell.classList.add(fog.revealed.has(at) ? 'passage' : 'wall');
       } else if (tile === EXIT) {
         cell.classList.add('exit');
       } else if (itemAt(state.items, x, y) !== undefined) {
@@ -791,6 +815,8 @@ function render(): void {
   // ── this world, decided whole — the bible, on screen (covenant L1) ─────
   const bibleEl = el('bible');
   bibleEl.textContent = '';
+  const worldRoot = head === null ? null : chain(log, head)[0]?.id ?? null;
+  const judged = worldRoot === null ? undefined : bibleVerdicts.get(worldRoot);
   const bibleRows: Array<[string, string]> = state.bible === null
     ? [['identity', 'unfounded — the world improvises, name by name']]
     : [
@@ -799,6 +825,7 @@ function render(): void {
       ['the warden', `${state.bible.warden.name} — ${state.bible.warden.line}`],
       ...(state.bible.promises.length === 0 ? [] : [['promises', state.bible.promises.join(' · ')] as [string, string]]),
       ...(state.bible.register.length === 0 ? [] : [['tone', state.bible.register.join(' · ')] as [string, string]]),
+      ...(judged === undefined ? [] : [['the judge reads', judged] as [string, string]]),
     ];
   for (const [name, value] of bibleRows) {
     const dt = document.createElement('dt');
@@ -1011,6 +1038,11 @@ function narrate(fresh: readonly GameEvent[], state: ReturnType<typeof fold>): s
       continue;
     }
     if (event.type === 'WAIT') { lines.push('you hold still'); continue; }
+    if (event.type === 'MOVE' && event.payload.entityId === 'player'
+        && tileAt(state.grid, event.payload.to.x, event.payload.to.y) === SECRET) {
+      lines.push('the wall gives way — it was never a wall');
+      continue;
+    }
     if (event.type === 'ITEM_TAKEN') {
       // Naming the change, not just the acquisition. A +2 might edge raises
       // damage per turn by about three quarters and read as nothing at all,

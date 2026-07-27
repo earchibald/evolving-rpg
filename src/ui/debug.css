@@ -127,6 +127,9 @@ kbd {
    glance on a map you are scanning for what killed you. */
 .cell.you-dead { background: #6b4a1c; box-shadow: inset 0 0 0 2px var(--player); }
 .cell.exit { background: var(--exit); }
+/* A found secret passage: floor now and forever, edged so it never reads as
+   the wall it once pretended to be. */
+.cell.passage { background: var(--floor); box-shadow: inset 0 0 0 1px rgba(153, 161, 176, .38); }
 .cell.item { background: var(--item); }
 /* The fog. Never seen: nothing — not even the wall's silhouette, because a
    mapped outline is knowledge too. Seen but out of sight: the geometry and

@@ -3,6 +3,12 @@ export const WALL = 1;
 /** The way out. Walkable like floor — it is a place, not an object, which is
  *  why it lives in the tiles rather than in a list of things. */
 export const EXIT = 2;
+/** An illusory wall: LOOKS like wall and blocks sight until the player has
+ *  trodden it, but was always walkable — walking into it is how it is found.
+ *  Mechanically floor, visually wall, and only the PLAY view is ever fooled:
+ *  creatures and bots path by passability, so everything that lives here
+ *  knows every secret door by construction. */
+export const SECRET = 3;
 
 export interface Grid {
   readonly width: number;

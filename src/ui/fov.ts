@@ -1,4 +1,4 @@
-import { WALL, tileAt, idx, inBounds } from '../core/grid.js';
+import { WALL, SECRET, tileAt, idx, inBounds } from '../core/grid.js';
 import type { Grid } from '../core/grid.js';
 import type { EventLog } from '../log/chain.js';
 import type { GameEvent } from '../core/events.js';
@@ -34,8 +34,24 @@ const OCTANTS: ReadonlyArray<readonly [number, number, number, number]> = [
  * at all. Walls themselves are visible when the sweep reaches them — a wall
  * you can see is how a room reads as a room.
  */
-export function visibleFrom(grid: Grid, ox: number, oy: number, radius = SIGHT): Set<number> {
+export function visibleFrom(
+  grid: Grid,
+  ox: number,
+  oy: number,
+  radius = SIGHT,
+  /** Tiles the player has trodden. A SECRET tile occludes like wall until it
+   *  is in here — an illusory wall has to fool the fog or it fools nobody —
+   *  and never occludes again after. */
+  trodden?: ReadonlySet<number>,
+): Set<number> {
   const out = new Set<number>([idx(grid, ox, oy)]);
+
+  // What stops sight: wall, and any secret not yet walked through.
+  const solid = (x: number, y: number): boolean => {
+    const t = tileAt(grid, x, y);
+    if (t === WALL) return true;
+    return t === SECRET && !(trodden?.has(idx(grid, x, y)) ?? false);
+  };
 
   const scan = (
     xx: number, xy: number, yx: number, yy: number,
@@ -64,13 +80,13 @@ export function visibleFrom(grid: Grid, ox: number, oy: number, radius = SIGHT):
         }
 
         if (blocked) {
-          if (tileAt(grid, x, y) === WALL) {
+          if (solid(x, y)) {
             nextStart = rSlope;
           } else {
             blocked = false;
             startSlope = nextStart;
           }
-        } else if (tileAt(grid, x, y) === WALL && depth < radius) {
+        } else if (solid(x, y) && depth < radius) {
           blocked = true;
           scan(xx, xy, yx, yy, depth + 1, nextStart, lSlope);
           nextStart = rSlope;
@@ -91,23 +107,34 @@ export interface Fog {
   readonly seen: ReadonlySet<number>;
   /** The tile indices in view right now. */
   readonly visible: ReadonlySet<number>;
+  /** Every tile the player has stood on. A secret passage is one of these or
+   *  it is a wall — the render and the fog agree through this one set. */
+  readonly revealed: ReadonlySet<number>;
+}
+
+interface FogAcc {
+  grid: Grid | null;
+  pos: { x: number; y: number } | null;
+  seen: Set<number>;
+  trod: Set<number>;
 }
 
 /** One-slot incremental cache: the usual render extends the last head by a
  *  few events, so the walk back finds it almost immediately. A fork, switch
  *  or rewind misses and rebuilds from the root — which is exactly the case
  *  where knowledge must shrink, and a rebuild is what shrinks it. */
-let cached: { head: string; grid: Grid | null; pos: { x: number; y: number } | null; seen: Set<number> } | null = null;
+let cached: ({ head: string } & FogAcc) | null = null;
 
-function blank(): { grid: Grid | null; pos: { x: number; y: number } | null; seen: Set<number> } {
-  return { grid: null, pos: null, seen: new Set<number>() };
+function blank(): FogAcc {
+  return { grid: null, pos: null, seen: new Set<number>(), trod: new Set<number>() };
 }
 
 /** Applies one event's effect on where the player stands and what that adds
  *  to the seen set. Only three things move a player: being born, walking,
- *  and a rule's shove. */
+ *  and a rule's shove. Every tile stood on joins `trod`, which is what turns
+ *  an illusory wall into a known passage — for the fog and forever. */
 function absorb(
-  acc: { grid: Grid | null; pos: { x: number; y: number } | null; seen: Set<number> },
+  acc: FogAcc,
   event: GameEvent,
   gridOf: (payload: { width: number; height: number; tiles: number[] }) => Grid,
 ): void {
@@ -115,6 +142,7 @@ function absorb(
     acc.grid = gridOf(event.payload);
     acc.pos = { x: event.payload.player.pos.x, y: event.payload.player.pos.y };
     acc.seen = new Set<number>();
+    acc.trod = new Set<number>();
   } else if (event.type === 'MOVE' && event.payload.entityId === 'player') {
     acc.pos = { x: event.payload.to.x, y: event.payload.to.y };
   } else if (event.type === 'RULE_FIRED') {
@@ -125,7 +153,8 @@ function absorb(
     return;
   }
   if (acc.grid !== null && acc.pos !== null) {
-    for (const i of visibleFrom(acc.grid, acc.pos.x, acc.pos.y)) acc.seen.add(i);
+    acc.trod.add(idx(acc.grid, acc.pos.x, acc.pos.y));
+    for (const i of visibleFrom(acc.grid, acc.pos.x, acc.pos.y, SIGHT, acc.trod)) acc.seen.add(i);
   }
 }
 
@@ -140,7 +169,7 @@ export function fogAt(
   head: string | null,
   gridOf: (payload: { width: number; height: number; tiles: number[] }) => Grid,
 ): Fog {
-  if (head === null) return { seen: new Set(), visible: new Set() };
+  if (head === null) return { seen: new Set(), visible: new Set(), revealed: new Set() };
 
   // Walk back to the cached head, or to the root.
   const pending: GameEvent[] = [];
@@ -148,7 +177,7 @@ export function fogAt(
   let acc = blank();
   while (cursor !== null) {
     if (cached !== null && cursor === cached.head) {
-      acc = { grid: cached.grid, pos: cached.pos, seen: new Set(cached.seen) };
+      acc = { grid: cached.grid, pos: cached.pos, seen: new Set(cached.seen), trod: new Set(cached.trod) };
       break;
     }
     const event = log.events.get(cursor);
@@ -158,10 +187,10 @@ export function fogAt(
   }
 
   for (let i = pending.length - 1; i >= 0; i -= 1) absorb(acc, pending[i]!, gridOf);
-  cached = { head, grid: acc.grid, pos: acc.pos, seen: new Set(acc.seen) };
+  cached = { head, grid: acc.grid, pos: acc.pos, seen: new Set(acc.seen), trod: new Set(acc.trod) };
 
   const visible = acc.grid !== null && acc.pos !== null
-    ? visibleFrom(acc.grid, acc.pos.x, acc.pos.y)
+    ? visibleFrom(acc.grid, acc.pos.x, acc.pos.y, SIGHT, acc.trod)
     : new Set<number>();
-  return { seen: acc.seen, visible };
+  return { seen: acc.seen, visible, revealed: acc.trod };
 }

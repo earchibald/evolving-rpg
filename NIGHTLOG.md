@@ -507,3 +507,29 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > second world can inherit the first world's creature names despite its own
 > bible. Per-world canon scoping is the open question this raises.
 > 615 tests; chain with a bible verifies end to end.
+
+> [!IMPORTANT]
+> **17:1x — Increment 7: secret passages. And a confession.**
+> Your inaccessible-rooms floor was **my fault, transiently**: mutation
+> proofs sabotage the generator to check the tests notice, and vite's
+> hot-reload served one sabotaged build to your live tab for a few seconds —
+> your descent recorded a corridor-less floor forever. The shipped generator
+> was never wrong. New practice: the dev server pauses during mutation runs.
+> Your repair idea was better than the throw, so it is now the game:
+> 1. **Illusory walls.** Roughly one floor in three, one room's every
+>    doorway becomes a SECRET tile: paints as wall, blocks the fog until you
+>    walk through it — the move simply succeeds ("the wall gives way — it
+>    was never a wall") — and never fools you again (found passages render
+>    edged, remembered across the whole run).
+> 2. **Creatures were never fooled.** They path and hunt by passability, so
+>    every secret door is known to everything that lives there — zero code,
+>    by construction, exactly as you specified.
+> 3. **Never load-bearing.** A room is sealed only if everything OUTSIDE it
+>    stays walkable by someone who knows no secrets; start and exit rooms
+>    are never sealed. The floor's story says "one room keeps itself secret".
+> 4. **Your repair rule, verbatim**: a floor that truly arrives with
+>    stranded rooms gets a hidden way cut through the wall instead of being
+>    thrown away — defence in depth under the construction guarantee.
+> All three properties mutation-proofed (fog illusion, stranding check,
+> repair). Golden re-picked (seed 14 — fights, crits, equips, escapes).
+> 623 tests. Old saves: broken freely, per your standing rule.
