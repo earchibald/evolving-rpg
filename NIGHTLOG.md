@@ -690,3 +690,17 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > (hidden tabs hold their breath), so the fix arrives next time you reload
 > — and any entry stuck "asking" from before will clear with the reload,
 > since the queue shows work, not history.
+
+> [!NOTE]
+> **20:1x — The body you can stand on is a body you can see**
+> Closing a gap tonight's own work opened: `bodyHere` made your past falls
+> a fact rules can read, but nothing showed them — covenant L1 does not
+> allow a mechanical truth without a human-readable face. Now: the map
+> paints a body where you fell (the quiet echo of your death square —
+> same drained ochre, thinner ring), honestly fogged like everything else
+> that holds still; the gamemaster's floorboards list it ("a body — yours
+> — at 33,22") even while unseen; and the step-on message now reads the
+> same chain-recorded truth as the rules, the bots and the map — the old
+> grave-walking duplicate is gone. Verified live in a sandbox world: died
+> to a skirmisher at 33,22, began again, and the floorboards said exactly
+> that.

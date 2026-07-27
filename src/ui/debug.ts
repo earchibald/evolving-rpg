@@ -2,7 +2,7 @@ import { emptyLog, append, chain, fold, verifyChain } from '../log/chain.js';
 import { emptyRefs, createRef, getRef, setHead, fork, reset, listRefs } from '../log/refs.js';
 import { createWorld, ratifyRule, foundWorld } from '../core/commands.js';
 import { validateBible, isRefusedBible } from '../canon/bible.js';
-import { playerStep, playerWait, runWorldTurns, buryIfDead, beginAgain, descend, isGrave, GRAVE_MARK } from '../play/session.js';
+import { playerStep, playerWait, runWorldTurns, buryIfDead, beginAgain, descend, isGrave } from '../play/session.js';
 import { isAlive } from '../core/entity.js';
 import { outcome, hitChance } from '../core/commands.js';
 import { damageDice, XP_TO_REACH, slotOf, critFloor } from '../core/tables.js';
@@ -473,6 +473,10 @@ function render(): void {
     if (standing === undefined || (!isAlive(standing) && isAlive(e))) occupant.set(key, e);
   }
 
+  // Where earlier runs fell (WORLD_BODIES on the chain). A place rules can
+  // read must be a place the eye can read — covenant L1.
+  const lying = new Set(state.bodies.map((b) => idx(state.grid, b.x, b.y)));
+
   const grid = el('grid');
   grid.style.gridTemplateColumns = `repeat(${state.grid.width}, 15px)`;
   grid.textContent = '';
@@ -514,6 +518,10 @@ function render(): void {
         cell.classList.add('exit');
       } else if (itemAt(state.items, x, y) !== undefined) {
         cell.classList.add('item');
+      } else if (lying.has(at)) {
+        // Bodies hold still like the floor does: remembered once seen,
+        // dimmed out of sight, never vanishing the way creatures do.
+        cell.classList.add('body');
       }
 
       // A guarded prize still needs to read as a prize, so mark the square even
@@ -914,6 +922,13 @@ function render(): void {
     if (!known) li.className = 'idle';
     omni.appendChild(li);
   }
+  for (const b of state.bodies) {
+    const li = document.createElement('li');
+    const known = fog.seen.has(idx(state.grid, b.x, b.y));
+    li.textContent = `a body — yours — at ${b.x},${b.y}${known ? '' : ' · unseen by the player'}`;
+    if (!known) li.className = 'idle';
+    omni.appendChild(li);
+  }
 
   // ── the world's own thinking, never hidden ─────────────────────────────
   // On screen at all times, idle or not. A model working invisibly is exactly
@@ -1167,7 +1182,9 @@ function finish(before: number, head: string): void {
   // undecided — the designer marked that choice for later — and the line
   // says exactly that in the world's own voice, because this is a game
   // whose rules evolve: the Forge may yet be the one to answer it.
-  const lying = bodiesUnderfoot(nowState);
+  // Read from the chain (state.bodies, laid by the rebirth and descent
+  // ceremonies) — the same truth rules, bots and the map read, one source.
+  const lying = new Set(nowState.bodies.map((b) => idx(nowState.grid, b.x, b.y)));
   if (lying.size > 0) {
     for (const e of events.slice(before)) {
       if (e.type === 'MOVE' && e.payload.entityId === 'player'
@@ -1200,26 +1217,6 @@ function finish(before: number, head: string): void {
 /** Graves that have already provoked a proposal, so one death asks once —
  *  renders repeat, and a paid forty-second call must not. */
 const provokedGraves = new Set<string>();
-
-/**
- * Where this world's dead lie, on the floor the player now walks: tile index
- * of each fallen body from this world's grave timelines, at this depth. The
- * same seed rebuilds the same floors, so a body's tile means the same place
- * in the run that walks after it.
- */
-function bodiesUnderfoot(state: ReturnType<typeof fold>): Set<number> {
-  const lying = new Set<number>();
-  for (const ref of listRefs(refs)) {
-    if (!isGrave(ref.name) || !ref.name.startsWith(`${active}${GRAVE_MARK}`)) continue;
-    if (ref.head === null) continue;
-    const gs = fold(log, ref.head);
-    if (gs.depth !== state.depth) continue;
-    const fallen = gs.entities.find((e) => e.kind === 'you');
-    if (fallen === undefined) continue;
-    lying.add(idx(state.grid, fallen.pos.x, fallen.pos.y));
-  }
-  return lying;
-}
 
 /**
  * Dying provokes the world: the run that just killed you is read back and a

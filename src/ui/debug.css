@@ -126,6 +126,10 @@ kbd {
    Keeps the colour you had while alive, drained, and ringed so it reads at a
    glance on a map you are scanning for what killed you. */
 .cell.you-dead { background: #6b4a1c; box-shadow: inset 0 0 0 2px var(--player); }
+/* A body from an earlier run, lying where you fell — the quiet echo of
+   you-dead: same drained ochre, thinner ring. A place rules can now read
+   (bodyHere), so covenant L1 says the eye must be able to read it too. */
+.cell.body { background: #6b4a1c; box-shadow: inset 0 0 0 1px var(--player); }
 .cell.exit { background: var(--exit); }
 /* A found secret passage: floor now and forever, edged so it never reads as
    the wall it once pretended to be. Out of sight the edge goes near-quiet —
