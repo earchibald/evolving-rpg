@@ -186,3 +186,36 @@ walk through is a wall you cannot hunt through, and a corridor fills
 single-file. The bumper policy learned to walk to a wall before bumping it;
 the golden fixture is policy-driven (brawler, seed 25) because no fixed key
 script survives a maze.
+
+## Depth motifs (pass 10 — the tables on paper, per GESTALT L3's gate)
+
+Research (primary source, shipped code): Brogue blends room-shape weights,
+corridor-attach chance (90%→10%) and whole-level cavern odds (29%→67%)
+linearly over depth, unlocks hazards at thresholds (lava at 4), and ramps
+secret doors 0%→67%. Rogue ramps dark rooms 0%→100% by level 11; Moria the
+same by 25. Angband gates room types by min-depth inside weighted profiles;
+NetHack and DCSS swap whole generators per region. Distilled knobs: shape
+mix, connector style, openness, darkness, hazard unlock, special frequency,
+secret density.
+
+Ours, as bounded rows (one file: `src/core/tables.ts`), by depth band. The
+teaching floors keep today's exact shape; the deep draws its motif per floor
+(Brogue's variety, our counted draws):
+
+| band | motif | tiles per room | room w | room h | loops per rooms | secret | sight |
+|---|---|---|---|---|---|---|---|
+| 1–2 | the door | 110 | 4–8 | 3–6 | 1 per 4 | 1 in 4 | 9 |
+| 3–4 | the warren | 90 | 3–6 | 3–4 | 1 per 3 | 1 in 3 | 8 |
+| 5–6 | the halls | 150 | 6–12 | 4–7 | 1 per 6 | 1 in 3 | 8 |
+| 7+ | the deep | draws warren or halls per floor (counted) | | | | 1 in 2 | 7 |
+
+Rationale by lineage: the warren's tight loops are Brogue's chase topology;
+the halls are its big-chamber late-game (room 6–12 ≈ Brogue cross-arm
+widths) and give the keeper an arena; the secret ramp is Brogue's 0→67%
+compressed to our 25%→50%; **sight shrinking 9→7 is Rogue/Moria's darkness
+ramp mapped onto our fog** — gentler than their eventual 100% dark, because
+fog is already the tax. Motif is named in the floor's story (covenant L1).
+
+Bands to re-measure after landing: d1 unchanged by construction; d3 (warren
+density may bite the runner harder — watch the non-domination pin's spread);
+d5 (halls' sparseness vs the quadratic budget — watch [1,10]).

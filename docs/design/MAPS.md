@@ -61,7 +61,29 @@ B-sees-A. We use octant shadowcasting in the play UI only — presentation,
 derived from state, never evented. Creature awareness stays walk-distance
 (§3), so FOV symmetry is not load-bearing.
 
-## 5. Deferred, deliberately
+## 5. Depth motifs (landed — the research)
+
+Primary-source numbers, from shipped code rather than wikis:
+
+| Game | Depth-structural knob | Numbers |
+|---|---|---|
+| Brogue (BrogueCE src) | room-shape blend, corridor-attach, cavern-fill, secrets, hazard unlock | cave-room weight 2%→48% over d1→26; corridor-attach 90%→10%; whole-level cavern 29%→67%; secret doors 0%→67%; lava unlocks d4, brimstone d17 |
+| Rogue 5.4 (rooms.c) | dark rooms | `rnd(10) < level-1`: 0%→100% by L11; maze rooms flat 6.7% |
+| Moria (umoria) | dark tiles + unusual rooms | dark (L−1)/25 → 100% by L25; unusual-shape ≈(L−1)/300 |
+| Angband (dungeon_profile.txt) | profile pool + per-room min-depth | cavern profile impossible <15; pits L5+, lesser vaults L20+, greater L35+ |
+| NetHack (Gazetteer) | wholesale generator per branch | rooms (Doom) vs caverns (Mines) vs mazes (Gehennom) vs hand-built (Sokoban) |
+| DCSS (branch-data.h, layout.des) | per-branch layout weights | D:1–8 rooms-only; D:9+ roguey wins ~56%; Orc/Slime all-cave; `spotty` blob connectors |
+
+What we adopted (tables in BALANCE.md pass 10): banded motifs — the door
+(1–2, today's shape), the warren (3–4: dense, tight, loopy — Brogue's chase
+topology), the halls (5–6: big sparse chambers — the keeper's arena), the
+deep (7+: draws a motif per floor). Secrets ramp 25%→50% (Brogue's ramp,
+compressed); **sight shrinks 9→8→7 with depth** — Rogue/Moria's darkness
+lineage mapped onto our fog. Danger/treasure *feelings* (Angband's other
+lever) noted and not built: our floor story + bible promises already carry
+the signaling layer.
+
+## 6. Deferred, deliberately
 
 - Doors (open/secret/locked) — placement conventions surveyed (NetHack
   closets, Brogue door sites); no mechanics here yet to hang them on.
