@@ -113,9 +113,26 @@ export class Oracle {
   /** Everything in flight or waiting, oldest first, for showing. */
   queue(): Call[] {
     const at = this.now();
+    // Live elapsed only while the call is actually in the air. A settled call
+    // keeps the duration `settle` stamped on it — the panel showed answered
+    // calls still counting, because this recomputed every entry's clock
+    // forever, and the one number whose job had ended never stopped changing.
     return [...this.calls.values()]
-      .map((call) => ({ ...call, ms: at - (this.raisedAt.get(call.id) ?? at) }))
+      .map((call) => (call.state === 'asking' || call.state === 'waiting'
+        ? { ...call, ms: at - (this.raisedAt.get(call.id) ?? at) }
+        : call))
       .sort((a, b) => a.id.localeCompare(b.id));
+  }
+
+  /** Marks a call finished, stamping how long it really took. Every ending
+   *  goes through here, so the clock stops exactly once, at the ending. */
+  private settleCall(id: string, call: Call, state: 'answered' | 'failed', detail: string): void {
+    this.calls.set(id, {
+      ...call,
+      state,
+      ms: this.now() - (this.raisedAt.get(id) ?? this.now()),
+      detail,
+    });
   }
 
   /** True once this subject has a settled name, from any source. */
@@ -209,7 +226,7 @@ export class Oracle {
         context: { things: [...fresh.values()].map((q) => ({ subject: q.subject, known: q.context })) },
       });
       if (era !== this.epoch) {
-        this.calls.set(id, { ...call, state: 'failed', detail: 'asked about a world that was wiped' });
+        this.settleCall(id, call, 'failed', 'asked about a world that was wiped');
         return;
       }
       const offered = Array.isArray(said.data) ? said.data as Array<Record<string, unknown>> : [];
@@ -230,13 +247,12 @@ export class Oracle {
         });
         accepted += 1;
       }
-      this.calls.set(id, {
-        ...call,
-        state: accepted > 0 ? 'answered' : 'failed',
-        detail: `${String(accepted)} of ${String(fresh.size)} named${said.model === null ? '' : ` · ${said.model}`}`,
-      });
+      this.settleCall(
+        id, call, accepted > 0 ? 'answered' : 'failed',
+        `${String(accepted)} of ${String(fresh.size)} named${said.model === null ? '' : ` · ${said.model}`}`,
+      );
     } catch (error) {
-      this.calls.set(id, { ...call, state: 'failed', detail: String(error).slice(0, 80) });
+      this.settleCall(id, call, 'failed', String(error).slice(0, 80));
     } finally {
       for (const key of fresh.keys()) this.inFlight.delete(key);
     }
@@ -336,22 +352,18 @@ export class Oracle {
         // The world it was about no longer exists. Said out loud rather than
         // dropped in silence, because a call that was paid for and discarded
         // is worth seeing.
-        this.calls.set(id, { ...call, state: 'failed', detail: 'asked about a world that was wiped' });
+        this.settleCall(id, call, 'failed', 'asked about a world that was wiped');
       } else {
         // A name, once spoken, is permanent. This overwrites the fallback that
         // was standing in for it — the only time canon is ever rewritten, and
         // only from a placeholder to the real thing.
         this.canon.set(key, answer);
-        this.calls.set(id, {
-          ...call,
-          state: 'answered',
-          detail: `${answer.name}${answer.model === null ? '' : ` · ${answer.model}`}`,
-        });
+        this.settleCall(id, call, 'answered', `${answer.name}${answer.model === null ? '' : ` · ${answer.model}`}`);
       }
     } catch (error) {
       // The fallback already committed, so the world keeps its name and play
       // continues. Only the queue records that the world tried and could not.
-      this.calls.set(id, { ...call, state: 'failed', detail: String(error).slice(0, 80) });
+      this.settleCall(id, call, 'failed', String(error).slice(0, 80));
     } finally {
       this.inFlight.delete(key);
     }
@@ -392,7 +404,7 @@ export class Oracle {
     const started = this.now();
     try {
       const said = await this.transport.ask(question);
-      this.calls.set(id, { ...call, state: 'answered', detail: said.name.slice(0, 60) });
+      this.settleCall(id, call, 'answered', said.name.slice(0, 60));
       this.onChange();
       return {
         name: said.name,
@@ -404,7 +416,7 @@ export class Oracle {
         data: said.data,
       };
     } catch (error) {
-      this.calls.set(id, { ...call, state: 'failed', detail: String(error).slice(0, 80) });
+      this.settleCall(id, call, 'failed', String(error).slice(0, 80));
       this.onChange();
       throw error;
     }

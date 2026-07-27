@@ -678,3 +678,15 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > prose — a standard that would fail both ratified rules); the warden
 > caught it and overruled with reasons. Its opinion is evidence, the
 > verdict is the warden's — the separation held exactly as designed.
+
+> [!NOTE]
+> **19:4x — The gamemaster's clock learns to stop**
+> Your report, run down: answered queries kept counting because the queue
+> recomputed every entry's elapsed time forever — the number whose job had
+> ended was the one that never stopped changing. Now every ending stamps
+> its true duration once (answered and failed alike), and the live clock
+> runs only while a call is genuinely in the air. Two clock tests pin it.
+> One thing to know: your game tab had been quietly deferring its reloads
+> (hidden tabs hold their breath), so the fix arrives next time you reload
+> — and any entry stuck "asking" from before will clear with the reload,
+> since the queue shows work, not history.

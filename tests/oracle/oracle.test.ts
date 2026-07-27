@@ -534,3 +534,39 @@ describe('asking for a whole floor at once', () => {
     expect(oracle.ask(THREE[0]!).source).toBe('cache');
   });
 });
+
+describe('the queue clock', () => {
+  it('freezes an answered call at the moment it settled', async () => {
+    // The gamemaster's screen showed answered calls still counting: the queue
+    // recomputed elapsed time for every entry, settled or not, so the one
+    // number whose job had ended was the one that never stopped changing.
+    let at = 1000;
+    const held = heldTransport();
+    const oracle = new Oracle({ transport: held, now: () => at });
+
+    oracle.ask(CREATURE);
+    at += 5000;
+    expect(oracle.queue()[0]?.ms).toBe(5000); // in flight: the clock runs
+
+    held.release('ash-crawler');
+    await tick();
+    at += 60_000; // a minute of staring at the panel
+    const settled = oracle.queue()[0];
+    expect(settled?.state).toBe('answered');
+    expect(settled?.ms).toBe(5000); // frozen where it finished
+  });
+
+  it('freezes a failed call too', async () => {
+    let at = 0;
+    const held = heldTransport();
+    const oracle = new Oracle({ transport: held, now: () => at });
+    oracle.ask(CREATURE);
+    at += 3000;
+    held.fail('the world is silent');
+    await tick();
+    at += 9000;
+    const settled = oracle.queue()[0];
+    expect(settled?.state).toBe('failed');
+    expect(settled?.ms).toBe(3000);
+  });
+});
