@@ -11,7 +11,7 @@ import { save, load, clear, emptySession } from '../play/store.js';
 import {
   readRule, rangeOf, takesStat, takesMotif, takesNumber, needsTriggers,
   TRIGGERS, STATS, MOTIF_NAMES, CONDITION_KINDS, EFFECT_KINDS,
-  MAX_CONDITIONS, MAX_EFFECTS, MAX_TEXT, MAX_RULES, isRejected,
+  MAX_CONDITIONS, MAX_EFFECTS, MAX_TEXT, MAX_RULES, isRejected, validateRule,
 } from '../canon/rule.js';
 import type { Rule } from '../canon/rule.js';
 import { summariseRun, proposeRule, finalise } from '../canon/rulesmith.js';
@@ -794,9 +794,12 @@ function render(): void {
         const { die, flat } = damageDice(m);
         return `${1 + flat}–${die + flat}`;
       };
+      // A coiled thing's stillness is the tell — the rail says it out loud,
+      // and warns what the spring costs (one damage band harder).
+      const coiled = e.tags.includes('ambush') ? ' · coiled — its first blow lands harder' : '';
       odds.textContent = player === undefined
         ? `hp ${e.stats.hp}`
-        : `hp ${e.stats.hp} · ${away} away · you ${pct(player, e)} ${swing(player.stats.might)} · it ${pct(e, player)} ${swing(e.stats.might)}`;
+        : `hp ${e.stats.hp} · ${away} away · you ${pct(player, e)} ${swing(player.stats.might)} · it ${pct(e, player)} ${swing(e.stats.might)}${coiled}`;
     }
     li.append(who, odds);
     threats.appendChild(li);
@@ -1081,6 +1084,19 @@ function narrate(fresh: readonly GameEvent[], state: ReturnType<typeof fold>): s
       lines.push('the wall gives way — it was never a wall');
       continue;
     }
+    // The coiled thing has committed: its first movement is the tell, and
+    // the tell arrives before any blow can — a spring you were warned about.
+    if (event.type === 'MOVE' && event.payload.entityId !== 'player') {
+      const mover = state.entities.find((x) => x.id === event.payload.entityId);
+      if (mover !== undefined && mover.tags.includes('ambush')) {
+        lines.push(`${named(state, mover.id)} stirs from its stillness`);
+      }
+      continue;
+    }
+    if (event.type === 'VIGIL_KEPT') {
+      lines.push(`${named(state, event.payload.entityId)} resumes its vigil — its wounds knit shut`);
+      continue;
+    }
     if (event.type === 'ITEM_TAKEN') {
       // Naming the change, not just the acquisition. A +2 might edge raises
       // damage per turn by about three quarters and read as nothing at all,
@@ -1130,9 +1146,19 @@ function narrate(fresh: readonly GameEvent[], state: ReturnType<typeof fold>): s
     const roll = `(${p.roll} vs ${p.needed})`;
     // A crit narrates as what it is; the register stays quiet about it.
     const clean = p.crit ? ' — clean through' : '';
+    // The verbs narrate as themselves: the lunge's crossing, the spring's
+    // release, the trample's shove. A mechanic nothing says is a mechanic
+    // nobody feels — the whole reason the bestiary read as identical.
+    const lunged = !mine && p.attackerTo !== undefined && p.targetTo === undefined ? `${them} lunges — ` : '';
+    const sprung = p.ambush === true && !mine ? `${them} springs from its stillness — ` : '';
+    const shoved = p.targetTo !== undefined && p.targetId === 'player'
+      ? ` — the blow drives you back a pace and ${them} lumbers after`
+      : '';
     lines.push(mine
       ? (p.hit ? `you hit ${them} for ${p.damage}${clean} ${roll}` : `you miss ${them} ${roll}`)
-      : (p.hit ? `${them} hits you for ${p.damage}${clean} ${roll}` : `${them} misses you ${roll}`));
+      : (p.hit
+        ? `${sprung}${lunged}${them} hits you for ${p.damage}${clean} ${roll}${shoved}`
+        : `${lunged}${them} misses you ${roll}`));
   }
 
   return lines;
@@ -1271,6 +1297,7 @@ function proposeFromDeath(grave: string): void {
       return;
     }
     pending = got;
+    pendingFromBench = false;
     edited = null;
     el('editor').hidden = true;
     renderForge();
@@ -1518,6 +1545,57 @@ function rulesInForce(): readonly Rule[] {
   return fold(log, getRef(refs, active).head).rules;
 }
 
+/* The wardens' bench: laws proposed by the world during bot runs, trialled
+ * sound, and judged worth offering (runs/endorsed/, served by the dev
+ * server). They arrive as ordinary proposals in the ordinary slot — same
+ * accept / edit… / reject, same finalise gate. The bench earns a hearing,
+ * never a bypass. A refusal is remembered, so a law you turned down does
+ * not knock again on every reload. */
+const BENCH_PASSED_KEY = 'evolving-rpg/bench-passed/v1';
+const bench: Rule[] = [];
+let pendingFromBench = false;
+
+function benchPassed(): Set<string> {
+  try {
+    const raw = window.localStorage.getItem(BENCH_PASSED_KEY);
+    return new Set(raw === null ? [] : JSON.parse(raw) as string[]);
+  } catch {
+    return new Set();
+  }
+}
+
+function passBench(said: string): void {
+  try {
+    window.localStorage.setItem(BENCH_PASSED_KEY, JSON.stringify([...benchPassed().add(said)]));
+  } catch { /* quota; the refusal holds for this session at least */ }
+}
+
+function fetchBench(): void {
+  void fetch('/__endorsed')
+    .then((r) => (r.ok ? r.json() : []))
+    .then((rows: unknown) => {
+      if (!Array.isArray(rows)) return;
+      const passed = benchPassed();
+      const already = new Set(rulesInForce().map((r) => readRule(r)));
+      for (const row of rows) {
+        const rule = validateRule((row as { draft?: unknown }).draft);
+        if (isRejected(rule)) continue;
+        const said = readRule(rule);
+        if (passed.has(said) || already.has(said)) continue;
+        bench.push(rule);
+      }
+      if (bench.length > 0) {
+        say(`the wardens left ${String(bench.length)} law(s) on the bench — the forge (g) will hear them`);
+        // The forge opens when an offer lands — the death-proposal precedent.
+        // Accepting stays a button; arriving does not.
+        renderForge();
+        if (!forge.open) forge.showModal();
+        render();
+      }
+    })
+    .catch(() => { /* no bench, no offers — the game does not care */ });
+}
+
 function renderForge(): void {
   const state = fold(log, getRef(refs, active).head);
   const done = outcome(state);
@@ -1543,6 +1621,20 @@ function renderForge(): void {
       `reading the run back — ${secs}s${secs > 25 ? ', it usually takes about forty' : ''}`;
   }
 
+  // The bench speaks only when nothing else is pending — same slot, same
+  // gate, and a live ask or a death's own proposal always outranks it.
+  if (pending === null && !asking && inForce < MAX_RULES) {
+    const already = new Set(state.rules.map((r) => readRule(r)));
+    let next = bench.shift();
+    while (next !== undefined && already.has(readRule(next))) next = bench.shift();
+    if (next !== undefined) {
+      pending = next;
+      pendingFromBench = true;
+      edited = null;
+      el('editor').hidden = true;
+    }
+  }
+
   const box = el('proposal');
   if (pending === null) { box.hidden = true; return; }
   box.hidden = false;
@@ -1552,8 +1644,9 @@ function renderForge(): void {
   const cites = pending.provenance;
   const lensBit = cites.lenses.length === 0 ? ''
     : ` · citing lens${cites.lenses.length === 1 ? '' : 'es'} ${cites.lenses.map((n) => `#${n}`).join(', ')}`;
-  el('proposal-cites').textContent =
-    `answering ${cites.events.length} event(s) and ${cites.notes.length} of your note(s)${lensBit}`;
+  el('proposal-cites').textContent = pendingFromBench
+    ? 'carried in from the wardens\' bench — proposed by the world over bot runs, trialled sound, endorsed by the rules-warden'
+    : `answering ${cites.events.length} event(s) and ${cites.notes.length} of your note(s)${lensBit}`;
 
   // The trial's cautions, shown beside the proposal. Refusals never get this
   // far — finalise already turned them into a failed ask.
@@ -1789,9 +1882,11 @@ el('ask-rule').addEventListener('click', () => {
   void proposeRule(oracle, lastRun, state.rules, new Date().toISOString()).then((got) => {
     if (isRejected(got)) {
       pending = null;
+      pendingFromBench = false;
       say(`no rule this time — ${got.rejected}`);
     } else {
       pending = got;
+      pendingFromBench = false;
       edited = null;
       el('editor').hidden = true;
     }
@@ -1813,7 +1908,7 @@ el('accept').addEventListener('click', () => {
   log = done.log;
   refs = setHead(refs, active, done.event.id);
 
-  pending = null; edited = null;
+  pending = null; edited = null; pendingFromBench = false;
   el('editor').hidden = true;
   persist();
   say(`ratified — ${readRule(settled)}`);
@@ -1830,6 +1925,9 @@ el('edit').addEventListener('click', () => {
 
 el('reject').addEventListener('click', () => {
   // Writes nothing at all. The veto is meant to be cheaper than the acceptance.
+  // A bench law refused is remembered refused — it does not knock again.
+  if (pendingFromBench && pending !== null) passBench(readRule(pending));
+  pendingFromBench = false;
   pending = null;
   edited = null;
   el('editor').hidden = true;
@@ -1884,3 +1982,8 @@ window.evolve = {
     return { turn: s.turn, depth: s.depth, rules: s.rules.length, outcome: outcome(s) };
   },
 };
+
+// Last, once everything above exists: ask the dev server whether the wardens
+// left anything on the bench. Fire-and-forget — a world with no server, or no
+// bench, plays exactly as before.
+fetchBench();

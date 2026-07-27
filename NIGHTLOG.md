@@ -719,3 +719,26 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > is still refused. Old trans-world names are dropped on load rather than
 > guessed about — the next floor names itself properly, once, from its own
 > palette. Five new tests pin the seams.
+
+> [!NOTE]
+> **23:5x — The bestiary learns its verbs**
+> Your complaint, taken to the tradition and back: four archetypes that
+> differed only in stat rows were invisible at the resolution play happens
+> at. Research (Brogue's source, DCSS's design doctrine, Sil's manual,
+> NetHack's guardian code) chose the verbs — and rejected my first draft's
+> hit-and-run as the tedium the genre already regrets. Now: the **bruiser
+> tramples** (every landed blow drives you back a pace and it lumbers after
+> — atomic, no dice, never through walls or onto the stairs); the
+> **skirmisher lunges** (two tiles and the blow in one motion, the only
+> thing that can — approach is what it punishes); the **stalker lies
+> coiled** (visibly, perfectly still — the dread is the tell — springing
+> when you come within three steps of walking, its first landed blow one
+> damage band harder, spent once); the **warden keeps a vigil** (leashed
+> five steps from its post; leave, and it walks home and its wounds knit
+> shut — poking a boss and running now buys nothing). Every verb narrates
+> itself in the journal and the rail warns of coiled things. The budget
+> pays for verbs (a lunger rents at 1.25×), which mattered immediately:
+> unpriced, depth-5 survival collapsed to 0 of 20; priced, every sawtooth
+> pin holds. The proportion trial now weighs rules against verbless
+> stand-ins — a scale that moved with the bestiary read heal-6-per-kill
+> as weightless. 24 new tests.

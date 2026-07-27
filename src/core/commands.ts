@@ -2,7 +2,7 @@ import { generateMap, pickSpawnPoints, farthestFrom, withExit, walkDistance, sea
 import { inBounds, isPassable } from './grid.js';
 import { findEntity, isAlive } from './entity.js';
 import { intBetween } from './rng.js';
-import { neededToHit, chanceIn20, damageDice, critFloor, WHIFF, BESTIARY, creatureStats, threatOf, spawnBudget, depthBands, wardenAt, ARMORY, relicGrant, slotOf, grantValue, motifAt } from './tables.js';
+import { neededToHit, chanceIn20, damageDice, critFloor, WHIFF, BESTIARY, creatureStats, threatOf, spawnBudget, depthBands, wardenAt, ARMORY, relicGrant, slotOf, grantValue, motifAt, verbOf, AMBUSH_MIGHT_BONUS, AMBUSH_FROM_DEPTH } from './tables.js';
 import type { Relic } from './tables.js';
 import type { Entity, Stats, Pos } from './entity.js';
 import { itemAt } from './item.js';
@@ -66,6 +66,14 @@ export function hitChance(attacker: Entity, target: Entity): number {
   return chanceIn20(toHit(attacker, target));
 }
 
+/** Whether this attacker is a coiled ambusher whose spring is still loaded.
+ *  The tag is written by generation (stalkers born at depth 2+), spent by the
+ *  reducer on the first landed blow — so the gate is the tag, one source of
+ *  truth, and no strike-time depth check can disagree with the floor. */
+function springLoaded(attacker: Entity): boolean {
+  return verbOf(attacker.kind) === 'ambush' && attacker.tags.includes('ambush');
+}
+
 function resolveStrike(
   seed: number,
   counter: number,
@@ -83,7 +91,13 @@ function resolveStrike(
 
   // Drawn either way, so the draw count never depends on the outcome. The
   // crit doubles this same draw rather than taking another.
-  const { die, flat } = damageDice(attacker.stats.might);
+  //
+  // The ambush blow rolls one damage band harder (might + 2 is the band
+  // step): the coiled spring, released. To-hit is untouched — stillness
+  // sharpens the blow, not the aim — and the bonus caps at one band because
+  // a first strike that can kill from full health is a no-warning spike,
+  // and the tradition deleted those.
+  const { die, flat } = damageDice(attacker.stats.might + (springLoaded(attacker) ? AMBUSH_MIGHT_BONUS : 0));
   const rolledDamage = intBetween(seed, counter + 1, 1, die) + flat;
   return { roll, needed, hit, crit, damage: hit ? (crit ? rolledDamage * 2 : rolledDamage) : 0 };
 }
@@ -123,11 +137,11 @@ function chooseSpawns(seed: number, counter: number, depth: number): {
   // the fight is about the warden rather than the crowd it stands in.
   if (wardenAt(depth)) {
     const level = Math.max(1, Math.floor(depth / 3));
-    budget -= Math.floor(threatOf(creatureStats('warden', level)!) / 2);
+    budget -= Math.floor(threatOf(creatureStats('warden', level)!, 'warden') / 2);
   }
 
   const cheapest = (): number => Math.min(
-    ...spawnable.map((a) => threatOf(creatureStats(a.kind, Math.max(1, depth - 1))!)),
+    ...spawnable.map((a) => threatOf(creatureStats(a.kind, Math.max(1, depth - 1))!, a.kind)),
   );
 
   for (let guard = 0; guard < 32 && budget >= cheapest(); guard += 1) {
@@ -149,7 +163,7 @@ function chooseSpawns(seed: number, counter: number, depth: number): {
     }
 
     const stats = creatureStats(arch.kind, level)!;
-    const price = threatOf(stats);
+    const price = threatOf(stats, arch.kind);
     if (price > budget) continue; // rolled above our means; roll again
     budget -= price;
     chosen.push({ kind: level === 1 ? arch.kind : `${arch.kind}-${String(level)}`, level, stats });
@@ -253,7 +267,7 @@ export function createWorld(
   let keeper = -1;
   let keeperThreat = -1;
   population.chosen.forEach((ch, i) => {
-    const t = threatOf(ch.stats);
+    const t = threatOf(ch.stats, ch.kind);
     if (t >= keeperThreat) { keeperThreat = t; keeper = i; }
   });
 
@@ -285,13 +299,17 @@ export function createWorld(
   // shape, the journey, the rent and what it bought, who watches the door,
   // what lies guarded. This is the generation reasoning chain, in the event,
   // so the ledger can read it back for any floor of any run forever.
-  const spent = population.chosen.reduce((n, ch) => n + threatOf(ch.stats), 0);
+  const spent = population.chosen.reduce((n, ch) => n + threatOf(ch.stats, ch.kind), 0);
   const kinds = population.chosen.map((ch) => ch.kind).join(', ');
   const watcher = keeper >= 0 && keeperTile !== undefined ? population.chosen[keeper]!.kind : 'nobody';
+  const coiled = depth >= AMBUSH_FROM_DEPTH
+    ? population.chosen.filter((ch) => verbOf(ch.kind) === 'ambush').length
+    : 0;
   const story = `${cut.motif.name} · ${generated.story} · the way out is ${Number.isFinite(walk) ? walk : '?'} steps of walking`
     + ` · a budget of ${spawnBudget(depth)} paid ${spent} for ${population.chosen.length}: ${kinds}`
     + ` · ${watcher} watches the stairs`
     + ` · ${relics.map((r) => r.kind).join(' and ') || 'nothing'} lies guarded`
+    + (coiled > 0 ? ` · ${coiled} of them lie${coiled === 1 ? 's' : ''} coiled, waiting` : '')
     + (secret.sealed ? ' · one room keeps itself secret' : '')
     + (repaired.punched > 0 ? ` · ${repaired.punched} hidden way(s) cut where no way was` : '');
 
@@ -341,7 +359,11 @@ export function createWorld(
           kind: c.kind,
           pos: { x: post.x, y: post.y },
           stats: { ...c.stats },
-          tags: [],
+          // Stalkers below the teaching floor are born coiled: the spring is
+          // a recorded fact of generation, spent by the first landed blow.
+          // Depth 1 stays springless — the 19-in-20 gentle pin holds about
+          // one death of slack, and an opening band-jump would spend it.
+          tags: verbOf(c.kind) === 'ambush' && depth >= AMBUSH_FROM_DEPTH ? ['ambush'] : [],
         };
       }),
     },
@@ -396,12 +418,36 @@ export function attemptMove(state: GameState, entityId: string, dx: number, dy: 
     }
 
     const outcome = resolveStrike(state.seed, state.rngCounter, mover, occupant);
+
+    // The trample: a bruiser's landed blow shoves the target one tile along
+    // the line of the attack and the bruiser lumbers into the gap — atomic in
+    // this one event, so there is no in-between turn to kite through (the
+    // gap-shove that waits a turn is a self-defeating gap-maker). Every
+    // landed blow shoves; a sometimes-shove is dice noise that takes two
+    // encounters to read instead of one. No shove when the tile behind is
+    // denied (wall, body in the way, the world's edge), when the blow kills
+    // (the dead are not driven anywhere), and never onto the way out —
+    // an exit you can be knocked through is an escape you did not choose.
+    const verbExtras: { attackerTo?: Pos; targetTo?: Pos; ambush?: boolean } = {};
+    if (springLoaded(mover) && outcome.hit) verbExtras.ambush = true;
+    if (verbOf(mover.kind) === 'trample' && outcome.hit && occupant.stats.hp > outcome.damage) {
+      const behind = { x: occupant.pos.x + dx, y: occupant.pos.y + dy };
+      const denied = !inBounds(state.grid, behind.x, behind.y)
+        || !isPassable(state.grid, behind.x, behind.y)
+        || tileAt(state.grid, behind.x, behind.y) === EXIT
+        || state.entities.some((e) => isAlive(e) && e.id !== occupant.id && e.pos.x === behind.x && e.pos.y === behind.y);
+      if (!denied) {
+        verbExtras.targetTo = behind;
+        verbExtras.attackerTo = { x: occupant.pos.x, y: occupant.pos.y };
+      }
+    }
+
     return {
       type: 'STRIKE',
       schemaVersion: SCHEMA_VERSIONS.STRIKE,
       rngCounter: state.rngCounter,
       rngDraws: STRIKE_DRAWS,
-      payload: { attackerId: entityId, targetId: occupant.id, ...outcome },
+      payload: { attackerId: entityId, targetId: occupant.id, ...outcome, ...verbExtras },
     };
   }
 
@@ -428,6 +474,74 @@ export function endsTurn(draft: DraftEvent): boolean {
   // ITEM_TAKEN rides along with the move that reached it, so it must not spend
   // a second turn of its own.
   return draft.type !== 'MOVE_BLOCKED' && draft.type !== 'ITEM_TAKEN';
+}
+
+/**
+ * The lunge: two tiles of ground and the blow, in one motion.
+ *
+ * The skirmisher's verb, and the only actor that can close distance and
+ * strike in the same action — which is what makes it the system's one
+ * anti-kite tooth: with everyone moving one tile a turn, disengaging is
+ * otherwise always free. Normal damage, no bonus; the verb is the tempo,
+ * not the arithmetic. Null when the geometry refuses (not exactly two steps
+ * of walking away, or no free tile on the way) — the caller falls back to
+ * an ordinary step.
+ *
+ * The intermediate tile is chosen in the fixed neighbour order (east, west,
+ * south, north), so a replayed lunge crosses the same tile every time.
+ */
+export function lungeStrike(
+  state: GameState,
+  entityId: string,
+  targetId: string,
+): Extract<DraftEvent, { type: 'STRIKE' }> | null {
+  const mover = findEntity(state.entities, entityId);
+  const target = findEntity(state.entities, targetId);
+  if (mover === undefined || target === undefined || !isAlive(target)) return null;
+  if (!isHostile(mover, target)) return null;
+
+  const away = Math.abs(target.pos.x - mover.pos.x) + Math.abs(target.pos.y - mover.pos.y);
+  if (away !== 2) return null;
+
+  const standable = (x: number, y: number): boolean =>
+    inBounds(state.grid, x, y)
+    && isPassable(state.grid, x, y)
+    && !state.entities.some((e) => isAlive(e) && e.id !== entityId && e.pos.x === x && e.pos.y === y);
+
+  let via: Pos | null = null;
+  for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+    const mid = { x: mover.pos.x + dx, y: mover.pos.y + dy };
+    const closes = Math.abs(target.pos.x - mid.x) + Math.abs(target.pos.y - mid.y) === 1;
+    if (closes && standable(mid.x, mid.y)) { via = mid; break; }
+  }
+  if (via === null) return null;
+
+  const outcome = resolveStrike(state.seed, state.rngCounter, mover, target);
+  return {
+    type: 'STRIKE',
+    schemaVersion: SCHEMA_VERSIONS.STRIKE,
+    rngCounter: state.rngCounter,
+    rngDraws: STRIKE_DRAWS,
+    payload: { attackerId: entityId, targetId, ...outcome, attackerTo: via },
+  };
+}
+
+/**
+ * The vigil kept: a warden at its post, the intruder gone past the leash,
+ * knitting shut. Once per disengagement by construction — after this the
+ * wound is gone, and the condition cannot hold again until someone comes
+ * back and reopens it. This is what closes the poke-and-retreat hole the
+ * leash itself opens: attrition against the stairs' keeper costs the whole
+ * fight each time, not a tenth of one.
+ */
+export function vigilKept(state: GameState, entityId: string): Extract<DraftEvent, { type: 'VIGIL_KEPT' }> {
+  return {
+    type: 'VIGIL_KEPT',
+    schemaVersion: SCHEMA_VERSIONS.VIGIL_KEPT,
+    rngCounter: state.rngCounter,
+    rngDraws: 0,
+    payload: { entityId },
+  };
 }
 
 /**

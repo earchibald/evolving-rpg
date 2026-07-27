@@ -193,19 +193,92 @@ export function creatureStats(kind: string, level: number): Stats | undefined {
   };
 }
 
+/* ── the verbs ───────────────────────────────────────────────────────────── */
+
+/**
+ * What a kind DOES, beyond hitting back. One verb per archetype, because a
+ * bestiary that differs only in stat rows is invisible at the resolution a
+ * player experiences (measured here: four archetypes, one complaint — "no
+ * feeling of difference"). The lineage is the small-bestiary tradition:
+ * DCSS's trample, Brogue's dormant lurkers, Sil's charge, NetHack's
+ * stair-anchored guardians — chosen over hit-and-run and out-of-sight
+ * cleverness, which that same tradition tried and regrets (retreat AI reads
+ * as tedium; invisible sophistication reads as nothing).
+ *
+ * Every verb is deterministic and drawless: triggers are state predicates,
+ * tile choices break ties in the fixed neighbour order. Chance stays where
+ * it always was — in whether the blow lands.
+ */
+export type Verb = 'trample' | 'lunge' | 'ambush' | 'vigil';
+
+const VERBS: Readonly<Record<string, Verb>> = Object.freeze({
+  bruiser: 'trample',
+  skirmisher: 'lunge',
+  stalker: 'ambush',
+  warden: 'vigil',
+});
+
+/** The verb a kind acts by. Kinds carry levels ("bruiser-2"); the verb
+ *  belongs to the archetype under the suffix. */
+export function verbOf(kind: string): Verb | undefined {
+  const base = kind.includes('-') ? kind.slice(0, kind.indexOf('-')) : kind;
+  return VERBS[base];
+}
+
+/** How close (steps of walking) something must come before a coiled stalker
+ *  springs. Three: inside a room it commits before you reach the far door,
+ *  and a corridor gives you exactly one turn of warning. */
+export const LURK_RANGE = 3;
+
+/** The ambush blow lands one damage band harder — might read as +2 for that
+ *  single strike, the band step. Capped at one band on purpose: an alpha
+ *  strike that can kill from full health is a no-warning spike, and the
+ *  tradition deleted those. */
+export const AMBUSH_MIGHT_BONUS = 2;
+
+/** No ambushes on the teaching floor. The depth-1 pin (19 in 20 gentle)
+ *  holds about one death of slack, and a first-blow band jump spends it. */
+export const AMBUSH_FROM_DEPTH = 2;
+
+/** How far (steps of walking) a warden will be drawn from its post. Five
+ *  covers the stair room; past it the warden turns back — the stairs are
+ *  what it is for, and a boss kited across the floor is a boss solved. */
+export const VIGIL_LEASH = 5;
+
 /* ── threat and the spawn budget ─────────────────────────────────────────── */
+
+/**
+ * What a verb is worth, as a multiplier on the stat threat. The verbs made
+ * creatures genuinely scarier — measured immediately: with verbs unpriced,
+ * depth-5 brawler survival collapsed from the pinned [1,10]/20 to 0/20 —
+ * so the budget must pay for them or every deep floor overdraws. The lunge
+ * converts an approach round into a hit round; the spring is a banked
+ * band-jump; the trample is tempo and terrain, cheaper than either. The
+ * vigil prices at par: the leash is the player's favour, the knitting-shut
+ * merely takes back what poking never deserved.
+ */
+export const VERB_THREAT: Readonly<Record<Verb, number>> = Object.freeze({
+  trample: 1.1,
+  lunge: 1.25,
+  ambush: 1.25,
+  vigil: 1.0,
+});
 
 /**
  * One number for "how much creature is this". Offence is mean damage scaled by
  * how often it lands on the *starting* player; defence is hit points weighted
  * below offence because a sponge is less dangerous than a blade. Also the XP a
  * kill pays, which makes the risk/reward symmetry explicit: threat in, XP out.
+ *
+ * Pass the kind so the verb is priced in — spawning and XP must use the same
+ * number or the symmetry breaks. Statless callers (old fixtures) may omit it.
  */
-export function threatOf(stats: Stats): number {
+export function threatOf(stats: Stats, kind?: string): number {
   const landRate = chanceIn20(neededToHit(stats.might, 4)) / 20;
   const offence = meanDamage(stats.might) * landRate * 10;
   const defence = stats.hp * 0.6 + stats.speed * 0.4;
-  return Math.round(offence + defence);
+  const verb = kind === undefined ? undefined : verbOf(kind);
+  return Math.round((offence + defence) * (verb === undefined ? 1 : VERB_THREAT[verb]));
 }
 
 /** The spawn budget a floor may spend on creatures. The linear part is steep

@@ -1,7 +1,12 @@
 node_modules/
 dist/
 .DS_Store
-runs/
+# Run artifacts are disposable — except the wardens' bench, which is design
+# content the Forge serves as standing offers. `runs/*` (not `runs/`) so the
+# negation below can reach inside; git cannot re-include through an ignored
+# parent directory.
+runs/*
+!runs/endorsed/
 
 # Browser-pane render artifacts
 .clearance-rendered-preview-*/

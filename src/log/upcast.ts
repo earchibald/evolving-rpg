@@ -125,6 +125,10 @@ export function upcastEvent(raw: unknown): DraftEvent {
     // v1 → v2: blows learned to be critical. Nothing recorded before crits
     // existed was one, and saying `false` outright is the honest migration —
     // reinterpreting an old natural 20 as a crit would change history's damage.
+    //
+    // v2 → v3: blows learned the verbs — a lunge's crossing, a trample's
+    // shove, the ambush spring (all optional payload fields). Nothing to
+    // rewrite: an old blow moved nobody, and absence already says so.
     const payload = { ...event.payload, crit: event.payload.crit ?? false };
     return {
       type: 'STRIKE',

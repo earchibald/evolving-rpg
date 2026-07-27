@@ -158,13 +158,20 @@ function proportionWorld(worldSeed: number, env: TrialEnvironment = {}): Positio
   const width = 16;
   const tiles = new Array<number>(width).fill(FLOOR);
   tiles[width - 1] = EXIT;
+  // The opposition wears trial-only kinds — verbless stand-ins with the real
+  // archetypes' stat blocks. The proportion trial is an INSTRUMENT: its job
+  // is weighing a rule on a stable scale, and when the fixture wore live
+  // kinds, giving the bestiary verbs re-tuned the scale as a side effect —
+  // measured: the corridor fight tipped into death-both-ways and every
+  // swing, even a heal-6-per-kill, read exactly zero. A scale that moves
+  // with the thing it weighs is not a scale.
   return born(
     width, tiles,
     seed('player', 'you', 0, 0, 12, 3, 3),
     [
-      { id: 'thing-1', kind: 'skirmisher-2', pos: { x: 8, y: 0 }, stats: creatureStats('skirmisher', 2)!, tags: [] },
-      { id: 'thing-2', kind: 'skirmisher', pos: { x: 10, y: 0 }, stats: creatureStats('skirmisher', 1)!, tags: [] },
-      { id: 'thing-3', kind: 'bruiser', pos: { x: 12, y: 0 }, stats: creatureStats('bruiser', 1)!, tags: [] },
+      { id: 'thing-1', kind: 'duelist-2', pos: { x: 8, y: 0 }, stats: creatureStats('skirmisher', 2)!, tags: [] },
+      { id: 'thing-2', kind: 'duelist', pos: { x: 10, y: 0 }, stats: creatureStats('skirmisher', 1)!, tags: [] },
+      { id: 'thing-3', kind: 'brute', pos: { x: 12, y: 0 }, stats: creatureStats('bruiser', 1)!, tags: [] },
     ],
     [],
     worldSeed,

@@ -23,7 +23,7 @@ function creditKills(before: GameState, after: GameState, killerId: string, play
   for (const was of before.entities) {
     if (was.id === playerId || was.stats.hp <= 0) continue;
     const now = after.entities.find((e) => e.id === was.id);
-    if (now !== undefined && now.stats.hp <= 0) gained += threatOf(was.stats);
+    if (now !== undefined && now.stats.hp <= 0) gained += threatOf(was.stats, was.kind);
   }
   if (gained === 0) return after;
 
@@ -73,6 +73,10 @@ function reduce(state: GameState, event: GameEvent): GameState {
         pos: { x: s.pos.x, y: s.pos.y },
         stats: { ...s.stats },
         tags: [...s.tags],
+        // Where it was born — the warden's vigil is anchored here. A
+        // universal fact, not a warden field: every creature has a post,
+        // and only the vigil happens to read it.
+        post: { x: s.pos.x, y: s.pos.y },
         // A creature's ceiling is its birth hp; the player's crossed a floor
         // and may arrive wounded, so the ceiling rides in the payload.
         maxHp: s.id === p.player.id ? (p.playerMaxHp ?? s.stats.hp) : s.stats.hp,
@@ -195,18 +199,53 @@ function reduce(state: GameState, event: GameEvent): GameState {
 
     case 'STRIKE': {
       const p = event.payload;
-      if (!p.hit) return state;
+      // The verbs' movement applies whether or not the blow landed: a lunge
+      // that whiffs still crossed the ground (attackerTo rides on misses for
+      // lunges; trample fields are only ever written on landed, surviving
+      // blows — the command decides, replay applies).
+      const moved = p.attackerTo === undefined && p.targetTo === undefined
+        ? state.entities
+        : state.entities.map((e) => {
+          if (e.id === p.attackerId && p.attackerTo !== undefined) {
+            return { ...e, pos: { x: p.attackerTo.x, y: p.attackerTo.y } };
+          }
+          if (e.id === p.targetId && p.targetTo !== undefined) {
+            return { ...e, pos: { x: p.targetTo.x, y: p.targetTo.y } };
+          }
+          return e;
+        });
+      if (!p.hit) return moved === state.entities ? state : { ...state, entities: moved };
       return creditKills(state, {
         ...state,
-        entities: state.entities.map((e) =>
-          e.id === p.targetId
+        entities: moved.map((e) => {
+          if (e.id === p.targetId) {
             // Clamped at zero: a corpse is dead, not increasingly dead, and
             // letting hp run negative would make "how badly did it lose" a
             // number nothing reads and every display has to special-case.
-            ? { ...e, stats: { ...e.stats, hp: Math.max(0, e.stats.hp - p.damage) } }
+            return { ...e, stats: { ...e.stats, hp: Math.max(0, e.stats.hp - p.damage) } };
+          }
+          if (e.id === p.attackerId && p.ambush === true) {
+            // The spring is spent the moment it lands. One coiled blow per
+            // birth — the tag leaves, and the stalker fights plain after.
+            return { ...e, tags: e.tags.filter((t) => t !== 'ambush') };
+          }
+          return e;
+        }),
+      }, p.attackerId);
+    }
+
+    case 'VIGIL_KEPT': {
+      // The warden, home and unwatched, knits shut. Heal to the ceiling in
+      // one event: the point is the reset, not a drip — poking a boss and
+      // running must buy nothing at all, or the mandatory fight erodes.
+      return {
+        ...state,
+        entities: state.entities.map((e) =>
+          e.id === event.payload.entityId
+            ? { ...e, stats: { ...e.stats, hp: e.maxHp } }
             : e,
         ),
-      }, p.attackerId);
+      };
     }
 
     case 'TURN_ADVANCED':

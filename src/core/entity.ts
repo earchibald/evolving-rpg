@@ -17,6 +17,13 @@ export interface Entity {
   pos: Pos;
   stats: Stats;
   tags: string[];
+  /** Where this entity was born — set at WORLD_INIT for everything, read by
+   *  the warden's vigil (the leash is anchored to the post, not to wherever
+   *  the chase has dragged it). A universal fact rather than a warden field,
+   *  because "where were you placed" is true of every creature and deriving
+   *  it later would mean folding from the root to answer a question the
+   *  state can simply carry. */
+  post?: Pos;
   /**
    * What is worn, by slot. Optional so the many hand-built fixtures that
    * predate equipment stay valid; absent means bare. Replacement arithmetic

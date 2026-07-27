@@ -1,7 +1,7 @@
 import { append, fold, chain } from '../log/chain.js';
 import { getRef, fork, setHead, listRefs } from '../log/refs.js';
 import type { Refs } from '../log/refs.js';
-import { attemptMove, advanceTurn, endsTurn, wait, takeUnderfoot, outcome, ratifyRule, foundWorld, createWorld, recordBodies } from '../core/commands.js';
+import { attemptMove, advanceTurn, endsTurn, wait, takeUnderfoot, outcome, ratifyRule, foundWorld, createWorld, recordBodies, lungeStrike, vigilKept } from '../core/commands.js';
 import { u32 } from '../core/rng.js';
 import { decide } from '../core/ai.js';
 import { fireRules } from '../canon/interpret.js';
@@ -144,6 +144,11 @@ function draftFor(state: GameState, entityId: string, action: Action): DraftEven
   if (action.kind === 'wait') return null;
 
   if (action.kind === 'step') return attemptMove(state, entityId, action.dx, action.dy);
+
+  // The verbs that are their own commands: the skirmisher's two-tiles-and-
+  // the-blow, and the warden's knitting-shut at an unwatched post.
+  if (action.kind === 'lunge') return lungeStrike(state, entityId, action.targetId);
+  if (action.kind === 'mend') return vigilKept(state, entityId);
 
   const self = findEntity(state.entities, entityId);
   const target = findEntity(state.entities, action.targetId);

@@ -1,4 +1,6 @@
 import { execFile } from 'node:child_process';
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import type { Plugin } from 'vite';
 
 /**
@@ -317,6 +319,34 @@ export function oraclePlugin(): Plugin {
   return {
     name: 'evolving-rpg:oracle',
     configureServer(server) {
+      // The wardens' bench: rule drafts that came out of bot runs, were
+      // trialled sound, and were judged worth offering (runs/endorsed/).
+      // Served raw — the browser's Forge puts them through validateRule and
+      // finalise like any other proposal. The bench earns a hearing, never a
+      // bypass.
+      server.middlewares.use('/__endorsed', (req, res) => {
+        if (req.method !== 'GET') {
+          res.statusCode = 405;
+          res.end('GET only');
+          return;
+        }
+        const dir = join(process.cwd(), 'runs', 'endorsed');
+        const offers: Array<{ file: string; draft: unknown }> = [];
+        try {
+          for (const file of readdirSync(dir).filter((f) => f.endsWith('.rule.json')).sort()) {
+            try {
+              offers.push({ file, draft: JSON.parse(readFileSync(join(dir, file), 'utf8')) });
+            } catch {
+              // A malformed draft is skipped, not fatal: the bench is optional.
+            }
+          }
+        } catch {
+          // No bench directory — no offers. The game does not care.
+        }
+        res.setHeader('content-type', 'application/json');
+        res.end(JSON.stringify(offers));
+      });
+
       server.middlewares.use('/__oracle', (req, res) => {
         if (req.method !== 'POST') {
           res.statusCode = 405;

@@ -1,0 +1,39 @@
+{
+  "when": "TURN_PASSED",
+  "require": [
+    {
+      "kind": "creaturesAtMost",
+      "n": 0
+    },
+    {
+      "kind": "exitBeyond",
+      "n": 8
+    },
+    {
+      "kind": "turnAtLeast",
+      "n": 20
+    }
+  ],
+  "then": [
+    {
+      "kind": "harm",
+      "n": 1
+    },
+    {
+      "kind": "speak",
+      "text": "Nothing left here breathes but you. The floor wants its quiet back."
+    }
+  ],
+  "provenance": {
+    "events": [
+      "85988dcb35f9300c0b86f9ead348d0c7648042cebbca521fb081d77ebe3c183a",
+      "7b42a7a6d0106670c76a05ed9b42d5b8224e3d3ca5a853c1767f879b8afaf436",
+      "d3c15c14578cb2ed8fd2a62774528c361fba6c3f89d8e040c494351ce129349c"
+    ],
+    "notes": [],
+    "lenses": [
+      61
+    ],
+    "because": "The run killed all three creatures by the halfway mark and then spent 26 turns walking an empty floor at full health with nothing at stake, so the aftermath needed a clock rather than a new system."
+  }
+}

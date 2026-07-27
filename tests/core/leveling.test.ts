@@ -44,7 +44,7 @@ function played(drafts: DraftEvent[]): { log: EventLog; head: string } {
 describe('experience arrives with the kill', () => {
   it('pays the victim\'s threat value, exactly', () => {
     const p = played([world([{ id: 'a' }]), kill('a', 99)]);
-    expect(fold(p.log, p.head).xp).toBe(threatOf(skirmisher));
+    expect(fold(p.log, p.head).xp).toBe(threatOf(skirmisher, 'skirmisher'));
   });
 
   it('pays nothing for a wound that does not finish', () => {
@@ -67,12 +67,12 @@ describe('experience arrives with the kill', () => {
       },
     } as DraftEvent;
     const done = append(w.log, w.head, fired);
-    expect(fold(done.log, done.event.id).xp).toBe(threatOf({ ...skirmisher, hp: 2 }));
+    expect(fold(done.log, done.event.id).xp).toBe(threatOf({ ...skirmisher, hp: 2 }, 'skirmisher'));
   });
 
   it('does not pay twice for a body', () => {
     const p = played([world([{ id: 'a' }]), kill('a', 99), kill('a', 99)]);
-    expect(fold(p.log, p.head).xp).toBe(threatOf(skirmisher));
+    expect(fold(p.log, p.head).xp).toBe(threatOf(skirmisher, 'skirmisher'));
   });
 });
 

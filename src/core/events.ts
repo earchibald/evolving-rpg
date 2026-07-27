@@ -18,11 +18,12 @@ export const SCHEMA_VERSIONS = {
   MOVE: 2,
   MOVE_BLOCKED: 2,
   TURN_ADVANCED: 2,
-  STRIKE: 2,
+  STRIKE: 3,
   WAIT: 1,
   ITEM_TAKEN: 2,
   RULE_RATIFIED: 1,
   RULE_FIRED: 1,
+  VIGIL_KEPT: 1,
 } as const;
 
 export type EventType = keyof typeof SCHEMA_VERSIONS;
@@ -148,6 +149,28 @@ export interface StrikePayload {
    *  so replay and the Surprise lens read the blow the way it happened. */
   crit: boolean;
   damage: number;
+  /** v3, the verbs. Movement that is part of the blow itself, resolved at
+   *  command time and recorded so replay applies rather than re-decides:
+   *  a lunge carries the attacker to `attackerTo` before the blow lands; a
+   *  trample shoves the target to `targetTo` with the attacker advancing
+   *  into the vacated tile (`attackerTo` again) — atomic, so there is no
+   *  in-between turn to kite through. Absent on ordinary blows. */
+  attackerTo?: Pos;
+  targetTo?: Pos;
+  /** v3. This blow was the coiled spring released — damage rolled one band
+   *  harder, and the reducer uncoils the attacker (removes the ambush tag).
+   *  Recorded so the journal can say so and replay agrees forever. */
+  ambush?: boolean;
+}
+
+/** A warden back at its post with the intruder gone, knitting shut. The heal
+ *  is an event because hit points may only change on the chain — and it is
+ *  its own type rather than a STRIKE special case because "the fight reset"
+ *  is a fact the journal, the lenses and a replay all deserve to read
+ *  plainly. Fires only when the wound and the empty leash coincide, which
+ *  makes it once per disengagement by construction. */
+export interface VigilKeptPayload {
+  entityId: string;
 }
 
 /** Where this world's dead lie on the floor a run is entering. Appended in
@@ -176,6 +199,7 @@ export type DraftEvent =
   | { type: 'WAIT'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: WaitPayload }
   | { type: 'ITEM_TAKEN'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: ItemTakenPayload }
   | { type: 'RULE_RATIFIED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: RuleRatifiedPayload }
-  | { type: 'RULE_FIRED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: RuleFiredPayload };
+  | { type: 'RULE_FIRED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: RuleFiredPayload }
+  | { type: 'VIGIL_KEPT'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: VigilKeptPayload };
 
 export type GameEvent = DraftEvent & { id: string; parent: string | null; seq: number };
