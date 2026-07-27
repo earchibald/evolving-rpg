@@ -2,6 +2,8 @@ import { FLOOR, WALL, EXIT, SECRET, makeGrid, idx, isPassable, tileAt } from './
 import type { Grid } from './grid.js';
 import { intBetween } from './rng.js';
 import { reachableFrom } from './reachability.js';
+import { MOTIFS } from './tables.js';
+import type { Motif } from './tables.js';
 
 export interface SpawnResult {
   points: Array<{ x: number; y: number }>;
@@ -75,17 +77,13 @@ export interface MapGenResult {
   story: string;
 }
 
-/** Interior room sizes. Rogue used a 3x3 grid of rooms on 80x24; Brogue's run
- *  6..12 wide. Ours sit between: wide enough to fight in, small enough that a
- *  48x32 board holds a dozen with corridors between. */
-const ROOM_W = { min: 4, max: 8 } as const;
-const ROOM_H = { min: 3, max: 6 } as const;
-
 /** Boards too small to hold two separated rooms become one open chamber, so
  *  trial worlds and tiny test boards flow through the same generator as the
- *  real game rather than through a fossil kept alive for them. */
-const MIN_ROOMY_WIDTH = ROOM_W.min * 2 + 5;
-const MIN_ROOMY_HEIGHT = ROOM_H.min * 2 + 5;
+ *  real game rather than through a fossil kept alive for them. Judged
+ *  against the smallest motif's rooms, motif-independent — a tiny board is
+ *  a chamber whatever the depth. */
+const MIN_ROOMY_WIDTH = 3 * 2 + 5;
+const MIN_ROOMY_HEIGHT = 3 * 2 + 5;
 
 const center = (r: Room): { x: number; y: number } => ({
   x: r.x + Math.floor(r.w / 2),
@@ -155,6 +153,10 @@ export function generateMap(
   counter: number,
   width: number,
   height: number,
+  /** The depth band's shape (tables.ts MOTIFS). Defaults to the door — the
+   *  shape the game launched with — so every existing caller and test means
+   *  exactly what it meant. */
+  motif: Motif = MOTIFS.door,
 ): MapGenResult {
   let c = counter;
 
@@ -177,14 +179,14 @@ export function generateMap(
 
   const tiles = new Array<number>(width * height).fill(WALL);
 
-  // Rogue put ~9 rooms on 80x24 (one per ~210 tiles); Brogue runs denser. One
-  // per ~110 tiles gives 4 rooms on the old 24x16 and 13 on 48x32.
-  const target = Math.max(3, Math.min(13, Math.round((width * height) / 110)));
+  // Rogue put ~9 rooms on 80x24 (one per ~210 tiles); Brogue runs denser.
+  // The divisor is the motif's: the warren crowds, the halls breathe.
+  const target = Math.max(3, Math.min(16, Math.round((width * height) / motif.tilesPerRoom)));
   const rooms: Room[] = [];
 
   for (let attempt = 0; attempt < target * 10 && rooms.length < target; attempt += 1) {
-    const w = intBetween(seed, c, ROOM_W.min, ROOM_W.max); c += 1;
-    const h = intBetween(seed, c, ROOM_H.min, ROOM_H.max); c += 1;
+    const w = intBetween(seed, c, motif.roomW[0], motif.roomW[1]); c += 1;
+    const h = intBetween(seed, c, motif.roomH[0], motif.roomH[1]); c += 1;
     const x = intBetween(seed, c, 1, width - 1 - w); c += 1;
     const y = intBetween(seed, c, 1, height - 1 - h); c += 1;
     const candidate: Room = { x, y, w, h };
@@ -218,9 +220,10 @@ export function generateMap(
 
   // Loops. A pure tree means every wrong turn is walked twice; a cycle means a
   // route *around* — flight has somewhere to go and a chase has two mouths.
+  // The rate is the motif's: the warren loops hard, the halls barely.
   let loops = 0;
   if (rooms.length >= 3) {
-    const wanted = Math.max(1, Math.floor(rooms.length / 4));
+    const wanted = Math.max(1, Math.floor(rooms.length / motif.loopPer));
     for (let i = 0; i < wanted; i += 1) {
       const a = intBetween(seed, c, 0, rooms.length - 1); c += 1;
       const b = intBetween(seed, c, 0, rooms.length - 1); c += 1;
@@ -385,11 +388,14 @@ export function sealSecretRoom(
   rooms: readonly Room[],
   start: { x: number; y: number },
   exit: { x: number; y: number },
+  /** Odds of sealing: 1 in this. The motif's — the deep keeps more secrets
+   *  (Brogue ramps secret doors 0→67% over its depths; ours band-steps). */
+  secretIn = 3,
 ): { grid: Grid; counterAfter: number; sealed: boolean } {
   let c = counter;
   if (rooms.length < 3) return { grid, counterAfter: c, sealed: false };
 
-  const roll = intBetween(seed, c, 1, 3); c += 1;
+  const roll = intBetween(seed, c, 1, secretIn); c += 1;
   if (roll !== 1) return { grid, counterAfter: c, sealed: false };
 
   const eligible = rooms.filter((r) =>

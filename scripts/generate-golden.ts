@@ -39,7 +39,7 @@ if (process.env.ALLOW_GOLDEN_REGEN !== '1') {
 // the stream): 10 strikes, a crit, an item equipped, escapes. A golden
 // fixture that never fights leaves the newest and riskiest code untouched
 // by the strongest test in the repo.
-const SEED = 14;
+const SEED = 16;
 const WIDTH = 48;
 const HEIGHT = 32;
 const POLICY = 'brawler';

@@ -2,7 +2,7 @@ import { generateMap, pickSpawnPoints, farthestFrom, withExit, walkDistance, sea
 import { inBounds, isPassable } from './grid.js';
 import { findEntity, isAlive } from './entity.js';
 import { intBetween } from './rng.js';
-import { neededToHit, chanceIn20, damageDice, critFloor, WHIFF, BESTIARY, creatureStats, threatOf, spawnBudget, depthBands, wardenAt, ARMORY, relicGrant, slotOf, grantValue } from './tables.js';
+import { neededToHit, chanceIn20, damageDice, critFloor, WHIFF, BESTIARY, creatureStats, threatOf, spawnBudget, depthBands, wardenAt, ARMORY, relicGrant, slotOf, grantValue, motifAt } from './tables.js';
 import type { Relic } from './tables.js';
 import type { Entity, Stats } from './entity.js';
 import { itemAt } from './item.js';
@@ -171,7 +171,11 @@ export function createWorld(
   depth = 1,
   carried?: CarriedPlayer,
 ): Extract<DraftEvent, { type: 'WORLD_INIT' }> {
-  const generated = generateMap(seed, 0, width, height);
+  // The depth cuts the floor to a motif — the door, the warren, the halls,
+  // or the deep's per-floor draw (tables.ts, BALANCE.md pass 10). Drawn
+  // first, so the whole floor is shaped by it.
+  const cut = motifAt(seed, 0, depth);
+  const generated = generateMap(seed, cut.counterAfter, width, height, cut.motif);
 
   // The way out sits at the far end of the map, so a run has a direction and
   // the journey is the longest one this world affords rather than an accident.
@@ -184,7 +188,7 @@ export function createWorld(
   // being thrown away. By construction repair never fires; a sabotaged build
   // once leaked exactly such a floor into a live session, and the rule is
   // better than the throw.
-  const secret = sealSecretRoom(seed, generated.counterAfter, opened, generated.rooms, generated.start, exit);
+  const secret = sealSecretRoom(seed, generated.counterAfter, opened, generated.rooms, generated.start, exit, cut.motif.secretIn);
   const repaired = repairWithSecret(secret.grid, generated.start);
   const grid = repaired.grid;
 
@@ -284,7 +288,7 @@ export function createWorld(
   const spent = population.chosen.reduce((n, ch) => n + threatOf(ch.stats), 0);
   const kinds = population.chosen.map((ch) => ch.kind).join(', ');
   const watcher = keeper >= 0 && keeperTile !== undefined ? population.chosen[keeper]!.kind : 'nobody';
-  const story = `${generated.story} · the way out is ${Number.isFinite(walk) ? walk : '?'} steps of walking`
+  const story = `${cut.motif.name} · ${generated.story} · the way out is ${Number.isFinite(walk) ? walk : '?'} steps of walking`
     + ` · a budget of ${spawnBudget(depth)} paid ${spent} for ${population.chosen.length}: ${kinds}`
     + ` · ${watcher} watches the stairs`
     + ` · ${relics.map((r) => r.kind).join(' and ') || 'nothing'} lies guarded`

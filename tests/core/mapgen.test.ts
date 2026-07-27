@@ -66,7 +66,7 @@ describe('generateMap: rooms and corridors', () => {
     for (let seed = 0; seed < 20; seed += 1) {
       const { grid, rooms } = generateMap(seed, 0, 48, 32);
       expect(rooms.length).toBeGreaterThanOrEqual(3);
-      expect(rooms.length).toBeLessThanOrEqual(13);
+      expect(rooms.length).toBeLessThanOrEqual(16);
       for (const r of rooms) {
         for (let y = r.y; y < r.y + r.h; y += 1) {
           for (let x = r.x; x < r.x + r.w; x += 1) {

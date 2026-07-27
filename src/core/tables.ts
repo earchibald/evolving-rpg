@@ -21,6 +21,7 @@
  */
 
 import type { Stats } from './entity.js';
+import { intBetween } from './rng.js';
 
 /* ── the d20 ─────────────────────────────────────────────────────────────── */
 
@@ -245,6 +246,64 @@ export function depthBands(depth: number): readonly { level: number; weight: num
 /** Every third floor, the stairs are guarded. */
 export function wardenAt(depth: number): boolean {
   return depth >= 3 && depth % 3 === 0;
+}
+
+/* ── depth motifs ────────────────────────────────────────────────────────── */
+
+/**
+ * How a depth band shapes its floors. The research lineage (MAPS.md §5,
+ * BALANCE.md pass 10): Brogue blends room shapes and corridor-attach over
+ * depth and ramps secret doors 0→67%; Rogue and Moria ramp darkness to
+ * total; NetHack and DCSS swap generators per region. Ours is the banded
+ * middle: named motifs as bounded rows, drawn per floor in the deep.
+ */
+export interface Motif {
+  readonly name: string;
+  /** One room per this many tiles — density. */
+  readonly tilesPerRoom: number;
+  readonly roomW: readonly [number, number];
+  readonly roomH: readonly [number, number];
+  /** One extra looping corridor per this many rooms. */
+  readonly loopPer: number;
+  /** Secret-room odds: 1 in this. */
+  readonly secretIn: number;
+}
+
+export const MOTIFS: Readonly<Record<'door' | 'warren' | 'halls', Motif>> = Object.freeze({
+  /** The teaching floors: exactly the shape the game launched with. */
+  door: Object.freeze({ name: 'the door', tilesPerRoom: 110, roomW: [4, 8] as const, roomH: [3, 6] as const, loopPer: 4, secretIn: 4 }),
+  /** Dense, tight, loopy — Brogue's chase topology. */
+  warren: Object.freeze({ name: 'the warren', tilesPerRoom: 90, roomW: [3, 6] as const, roomH: [3, 4] as const, loopPer: 3, secretIn: 3 }),
+  /** Big sparse chambers — the keeper's arena. */
+  halls: Object.freeze({ name: 'the halls', tilesPerRoom: 150, roomW: [6, 12] as const, roomH: [4, 7] as const, loopPer: 6, secretIn: 3 }),
+});
+
+/**
+ * The motif a floor is cut to. Bands 1–6 are fixed — a player learns what
+ * depth feels like; the deep (7+) draws warren or halls per floor (a
+ * counted draw — Brogue's late variety) and keeps more secrets.
+ */
+export function motifAt(seed: number, counter: number, depth: number): { motif: Motif; counterAfter: number } {
+  const d = Math.max(1, Math.floor(depth));
+  if (d <= 2) return { motif: MOTIFS.door, counterAfter: counter };
+  if (d <= 4) return { motif: MOTIFS.warren, counterAfter: counter };
+  if (d <= 6) return { motif: MOTIFS.halls, counterAfter: counter };
+  const base = intBetween(seed, counter, 0, 1) === 0 ? MOTIFS.warren : MOTIFS.halls;
+  return {
+    motif: Object.freeze({ ...base, name: `the deep ${base.name.slice(4)}`, secretIn: 2 }),
+    counterAfter: counter + 1,
+  };
+}
+
+/** How far sight reaches, by depth: Rogue ramped dark rooms to 100% by
+ *  level 11, Moria by 25 — their darkness lineage, mapped gently onto our
+ *  fog. The deep closes in; it never goes fully black, because the fog is
+ *  already the tax. */
+export function sightAt(depth: number): number {
+  const d = Math.max(1, Math.floor(depth));
+  if (d <= 2) return 9;
+  if (d <= 6) return 8;
+  return 7;
 }
 
 /* ── the armory ──────────────────────────────────────────────────────────── */

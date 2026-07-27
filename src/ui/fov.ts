@@ -1,4 +1,5 @@
 import { WALL, SECRET, tileAt, idx, inBounds } from '../core/grid.js';
+import { sightAt } from '../core/tables.js';
 import type { Grid } from '../core/grid.js';
 import type { EventLog } from '../log/chain.js';
 import type { GameEvent } from '../core/events.js';
@@ -117,6 +118,9 @@ interface FogAcc {
   pos: { x: number; y: number } | null;
   seen: Set<number>;
   trod: Set<number>;
+  /** How far this floor lets you see — the depth's darkness (tables.ts
+   *  sightAt): Rogue and Moria ramped rooms to full dark; ours closes in. */
+  sight: number;
 }
 
 /** One-slot incremental cache: the usual render extends the last head by a
@@ -126,7 +130,7 @@ interface FogAcc {
 let cached: ({ head: string } & FogAcc) | null = null;
 
 function blank(): FogAcc {
-  return { grid: null, pos: null, seen: new Set<number>(), trod: new Set<number>() };
+  return { grid: null, pos: null, seen: new Set<number>(), trod: new Set<number>(), sight: SIGHT };
 }
 
 /** Applies one event's effect on where the player stands and what that adds
@@ -143,6 +147,7 @@ function absorb(
     acc.pos = { x: event.payload.player.pos.x, y: event.payload.player.pos.y };
     acc.seen = new Set<number>();
     acc.trod = new Set<number>();
+    acc.sight = sightAt(event.payload.depth ?? 1);
   } else if (event.type === 'MOVE' && event.payload.entityId === 'player') {
     acc.pos = { x: event.payload.to.x, y: event.payload.to.y };
   } else if (event.type === 'RULE_FIRED') {
@@ -154,7 +159,7 @@ function absorb(
   }
   if (acc.grid !== null && acc.pos !== null) {
     acc.trod.add(idx(acc.grid, acc.pos.x, acc.pos.y));
-    for (const i of visibleFrom(acc.grid, acc.pos.x, acc.pos.y, SIGHT, acc.trod)) acc.seen.add(i);
+    for (const i of visibleFrom(acc.grid, acc.pos.x, acc.pos.y, acc.sight, acc.trod)) acc.seen.add(i);
   }
 }
 
@@ -177,7 +182,7 @@ export function fogAt(
   let acc = blank();
   while (cursor !== null) {
     if (cached !== null && cursor === cached.head) {
-      acc = { grid: cached.grid, pos: cached.pos, seen: new Set(cached.seen), trod: new Set(cached.trod) };
+      acc = { grid: cached.grid, pos: cached.pos, seen: new Set(cached.seen), trod: new Set(cached.trod), sight: cached.sight };
       break;
     }
     const event = log.events.get(cursor);
@@ -187,10 +192,10 @@ export function fogAt(
   }
 
   for (let i = pending.length - 1; i >= 0; i -= 1) absorb(acc, pending[i]!, gridOf);
-  cached = { head, grid: acc.grid, pos: acc.pos, seen: new Set(acc.seen), trod: new Set(acc.trod) };
+  cached = { head, grid: acc.grid, pos: acc.pos, seen: new Set(acc.seen), trod: new Set(acc.trod), sight: acc.sight };
 
   const visible = acc.grid !== null && acc.pos !== null
-    ? visibleFrom(acc.grid, acc.pos.x, acc.pos.y, SIGHT, acc.trod)
+    ? visibleFrom(acc.grid, acc.pos.x, acc.pos.y, acc.sight, acc.trod)
     : new Set<number>();
   return { seen: acc.seen, visible, revealed: acc.trod };
 }

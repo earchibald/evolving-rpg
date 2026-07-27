@@ -570,3 +570,24 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > The tradition's delight formula, for whichever you pick: danger, reward
 > that is only what you already earned, continuity. No choice made — §9 of
 > the WALKTHROUGH points here.
+
+> [!IMPORTANT]
+> **18:0x — Increment 8: the depth cuts the floor to a motif**
+> Research first, per your rule — and from shipped source, not wikis:
+> Brogue blends cave-weight 2%→48% and corridor-attach 90%→10% over its 26
+> depths and ramps secret doors 0→67%; Rogue darkened rooms to 100% by
+> level 11, Moria by 25; Angband gates room types by min-depth; NetHack and
+> DCSS swap whole generators per region. MAPS.md §5 holds the numbers.
+> Ours, as bounded rows in tables.ts (BALANCE.md pass 10):
+> | depth | motif | feel |
+> |---|---|---|
+> | 1–2 | **the door** | today's exact shape — the teaching floors |
+> | 3–4 | **the warren** | dense, tight, loopy — Brogue's chase topology |
+> | 5–6 | **the halls** | broad sparse chambers — the keeper's arena |
+> | 7+ | **the deep** | draws warren or halls per floor; secrets 1-in-2 |
+> And **the dark closes in**: sight 9 → 8 → 7 by band — Rogue and Moria's
+> darkness lineage mapped onto our fog, never fully black. Every floor
+> names its motif in its story. Measured after: door 19/20 gentle, warren
+> 12v4 fighter-over-runner, halls 6v0 deep — the sawtooth's shape intact
+> with more character per band; all pins green, both new mutation proofs
+> held (motif ignored, ramp flattened — caught). 631 tests.
