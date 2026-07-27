@@ -787,3 +787,15 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > worlds now; one does, in the tests, every run. Golden regenerated on a
 > livelier seed (13 strikes, a crit, an item, a lunge on record).
 > 707/707 green.
+
+> [!NOTE]
+> **00:3x — MANUAL.md: the game, in plain words**
+> The deliverable you asked for by name: a player's manual and test guide
+> with no machinery words in it. Every term the game uses gets one line
+> (world, cut, relic, satchel, warden, heart, echo, forge, law, bench,
+> founding, grave, body); the four creatures are described by what they
+> DO and the line they say when they do it; the bottom gets its own page;
+> and §9 is the test guide — eighteen do-this-expect-that checks you can
+> run in one sitting, from "walk into a wall" to "carry the heart back
+> out". The old WALKTHROUGH.md stays as the technical companion; GESTALT
+> now says out loud that its ladder is climbed, L1 through L4.

@@ -3,8 +3,15 @@
 A theoretical approach, documented before building: the world's creative and
 mechanical *identity* decided up front in one act, with delegate agents
 filling in detail during play — as an alternative to today's fully on-demand
-decisions. Written 2026-07-26 at the designer's request. Nothing here is
-implemented.
+decisions. Written 2026-07-26 at the designer's request.
+
+**STATUS 2026-07-27: the ladder is climbed.** L1–L2 landed as the
+Worldsmith and WORLD_BIBLE (increments 6–7); L3 as the depth motifs
+(increment 8); L4 — a bottom, a goal, staged reveals — as the ninth
+floor's heart, the holdout, and the promise beats (whisper at 2/5/8,
+kept at each warden's fall). The player-facing account is MANUAL.md §6;
+what remains beyond the ladder (a won world leaving a monument the next
+world's bible can cite) is future work, noted where it belongs.
 
 ## 1. Today: on-demand
 
