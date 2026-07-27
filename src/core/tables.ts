@@ -476,6 +476,10 @@ export interface Relic {
   readonly base: number;
   readonly per: number;
   readonly weight: number;
+  /** What wearing it costs, when it costs. A tradeoff relic is never taken
+   *  by walking — the dominance rule refuses it and the , key accepts it —
+   *  so the price is always a price somebody chose to pay. */
+  readonly costs?: { readonly stat: keyof Stats; readonly amount: number };
 }
 
 export const ARMORY: readonly Relic[] = Object.freeze([
@@ -483,7 +487,41 @@ export const ARMORY: readonly Relic[] = Object.freeze([
   Object.freeze({ kind: 'iron charm', grants: 'hp' as const, base: 3, per: 1, weight: 3 }),
   Object.freeze({ kind: 'fleet boots', grants: 'speed' as const, base: 1, per: 3, weight: 2 }),
   Object.freeze({ kind: 'grey lens', grants: 'wits' as const, base: 1, per: 2, weight: 2 }),
+  // The iconic tradeoff, singular on purpose (the research's cap: one or
+  // two where the flavor does the explaining — "heavy" explains itself).
+  Object.freeze({ kind: 'heavy edge', grants: 'might' as const, base: 3, per: 2, weight: 2, costs: Object.freeze({ stat: 'speed' as const, amount: 1 }) }),
+  // The named properties: one rule-bending trait each, stats deliberately
+  // modest — the property is the point (Brogue's runics, kept to a count
+  // the fold can honor).
+  Object.freeze({ kind: 'sure edge', grants: 'might' as const, base: 2, per: 4, weight: 1 }),
+  Object.freeze({ kind: 'steady boots', grants: 'speed' as const, base: 1, per: 4, weight: 1 }),
 ]);
+
+/** The rule a named relic bends, by kind. Read at the moments the rule
+ *  matters (a crit landing, a trample shoving) — never stored on the
+ *  entity, so replay derives it identically forever. */
+export const RELIC_TRAITS: Readonly<Record<string, 'stagger-crit' | 'hold-ground'>> = Object.freeze({
+  'sure edge': 'stagger-crit',
+  'steady boots': 'hold-ground',
+});
+
+/** Whether an entity's worn gear carries a trait. */
+export function wearsTrait(
+  gear: Readonly<Partial<Record<string, { kind: string }>>> | undefined,
+  trait: 'stagger-crit' | 'hold-ground',
+): boolean {
+  if (gear === undefined) return false;
+  return Object.values(gear).some((g) => g !== undefined && RELIC_TRAITS[g.kind] === trait);
+}
+
+/** Strict upgrade: at least as good on every axis and better in total.
+ *  This is what walking may take unasked; anything less — any tradeoff,
+ *  any sidegrade — waits for a decision. A total order produces zero
+ *  decisions by construction; this is the minimum concession. */
+export function dominates(a: Stats, b: Stats): boolean {
+  return a.hp >= b.hp && a.might >= b.might && a.wits >= b.wits && a.speed >= b.speed
+    && grantValue(a) > grantValue(b);
+}
 
 /**
  * Which slot a relic occupies, by the stat it grants. One slot, one item:
@@ -506,16 +544,14 @@ export function grantValue(grants: Stats): number {
 }
 
 /** The grant a relic gives at a depth. Never zero: a prize that does nothing
- *  is a lie with a guard on it. */
+ *  is a lie with a guard on it. A costed relic's price rides in the same
+ *  Stats, negative — one shape for every reader. */
 export function relicGrant(relic: Relic, depth: number): Stats {
   const d = Math.max(1, Math.floor(depth));
   const amount = relic.base + Math.floor((d - 1) / relic.per);
-  return {
-    hp: relic.grants === 'hp' ? amount : 0,
-    might: relic.grants === 'might' ? amount : 0,
-    wits: relic.grants === 'wits' ? amount : 0,
-    speed: relic.grants === 'speed' ? amount : 0,
-  };
+  const worth = (stat: keyof Stats): number =>
+    (relic.grants === stat ? amount : 0) - (relic.costs?.stat === stat ? relic.costs.amount : 0);
+  return { hp: worth('hp'), might: worth('might'), wits: worth('wits'), speed: worth('speed') };
 }
 
 /* ── the satchel ─────────────────────────────────────────────────────────── */
@@ -545,7 +581,16 @@ export interface Provision {
 export const PROVISIONS: readonly Provision[] = Object.freeze([
   Object.freeze({ kind: 'vital draught', weight: 3 }),
   Object.freeze({ kind: 'still smoke', weight: 2 }),
+  // The information tool: break it and the floor admits its shape to
+  // FLARE_RADIUS paces — layout, never occupants. Third and (per the
+  // research's ceiling) close to last: past four types the satchel is a
+  // checklist, not a dilemma.
+  Object.freeze({ kind: 'tallow flare', weight: 2 }),
 ]);
+
+/** How far the flare's knowledge reaches, in tiles. Wider than sight, less
+ *  than a floor: a room and its neighbours, not the map. */
+export const FLARE_RADIUS = 7;
 
 export function provisionOf(kind: string): Provision | undefined {
   return PROVISIONS.find((p) => p.kind === kind);

@@ -3,10 +3,10 @@ import { emptyRefs, createRef, getRef, setHead, fork, reset, listRefs } from '..
 import { createWorld, ratifyRule, foundWorld } from '../core/commands.js';
 import { validateBible, isRefusedBible } from '../canon/bible.js';
 import { smithName, DEFAULT_WORDS } from '../canon/namesmith.js';
-import { playerStep, playerWait, playerUse, playerShove, playerBrace, runWorldTurns, buryIfDead, beginAgain, descend, isGrave } from '../play/session.js';
+import { playerStep, playerWait, playerUse, playerShove, playerBrace, playerTake, runWorldTurns, buryIfDead, beginAgain, descend, isGrave } from '../play/session.js';
 import { isAlive } from '../core/entity.js';
 import { outcome, hitChance } from '../core/commands.js';
-import { damageDice, XP_TO_REACH, slotOf, critFloor, verbOf, HEART_KIND, SLAM_DAMAGE, VENOM_TURNS } from '../core/tables.js';
+import { damageDice, XP_TO_REACH, slotOf, critFloor, verbOf, provisionOf, HEART_KIND, SLAM_DAMAGE, VENOM_TURNS } from '../core/tables.js';
 import { itemAt } from '../core/item.js';
 import { save, load, clear, emptySession } from '../play/store.js';
 import {
@@ -1226,6 +1226,8 @@ function narrate(fresh: readonly GameEvent[], state: ReturnType<typeof fold>): s
       const drunk = oracle.ask(describeQuestion('item', p.kind, {}, worldRoot())).name;
       if (p.effect.kind === 'draught') {
         lines.push(`you drink ${drunk} — whole again, and your ceiling rises to ${p.effect.ceilingTo}`);
+      } else if (p.effect.kind === 'flare') {
+        lines.push(`${drunk} takes — the floor admits its shape for ${p.effect.radius} paces around`);
       } else {
         lines.push(`${drunk} swallows the floor — the hunts chase where you were${
           p.effect.unfooled.length > 0 ? ', but what stands beside you is not fooled' : ''}`);
@@ -1362,9 +1364,18 @@ function finish(before: number, head: string): void {
     && fresh.some((e) => e.type === 'MOVE' && e.payload.entityId === 'player')
     && !fresh.some((e) => e.type === 'ITEM_TAKEN')) {
     const underfoot = itemAt(nowHere.items, me.pos.x, me.pos.y);
-    const worn = underfoot === undefined ? undefined : me.gear?.[slotOf(underfoot.grants)];
-    if (underfoot !== undefined && worn !== undefined) {
-      told.push(`the ${calledItem(underfoot.id, nowHere)} is no better than your ${worn.kind} — it stays where it lies`);
+    if (underfoot !== undefined
+      && provisionOf(underfoot.kind) === undefined && underfoot.kind !== HEART_KIND) {
+      const g = underfoot.grants;
+      const worn = me.gear?.[slotOf(g)];
+      const allGeq = (a: typeof g, b: typeof g): boolean =>
+        a.hp >= b.hp && a.might >= b.might && a.wits >= b.wits && a.speed >= b.speed;
+      // Two refusals, two truths: strictly-no-better stays a shrug; a
+      // tradeoff is a standing question, and the key that answers it is
+      // said right there.
+      told.push(worn !== undefined && allGeq(worn.grants, g)
+        ? `the ${calledItem(underfoot.id, nowHere)} is no better than your ${worn.kind} — it stays where it lies`
+        : `the ${calledItem(underfoot.id, nowHere)} asks a trade — , takes it deliberately`);
     }
   }
 
@@ -1651,6 +1662,22 @@ function brace(): void {
   finish(before, after.head);
 }
 
+function take(): void {
+  const head = getRef(refs, active).head;
+  if (head === null) return;
+
+  const before = chain(log, head).length;
+  const took = playerTake({ log, head }, 'player');
+  if (took.draft === null) {
+    say('nothing underfoot to take');
+    return;
+  }
+  // Free, like the walking take — no world turn follows a stoop.
+  log = took.position.log;
+  refs = setHead(refs, active, took.position.head);
+  finish(before, took.position.head);
+}
+
 function wire(formId: string, inputId: string, channel: Channel): void {
   const form = el(formId) as HTMLFormElement;
   const input = el(inputId) as HTMLInputElement;
@@ -1681,6 +1708,7 @@ const KEYMAP: ReadonlyArray<{ shown: string; what: string; button?: string }> = 
   { shown: 'q', what: 'use what the satchel holds (this is a turn too)' },
   { shown: 'x, then a direction', what: 'shove — drive what stands beside you one pace; walls hurt, bodies tangle' },
   { shown: 'z', what: 'brace — set against the coming round; a blow that misses you staggers' },
+  { shown: ',', what: 'take what is underfoot, deliberately — tradeoffs and downgrades included' },
   { shown: 'PgUp · PgDn', what: 'read back through the journal' },
   { shown: 't', what: 'talk to the gamemaster — your character, in there', button: 'open-talk' },
   { shown: 'n', what: 'world… — begin again / another / wipe', button: 'open-worlds' },
@@ -1759,6 +1787,12 @@ window.addEventListener('keydown', (event) => {
     event.preventDefault();
     shoveArmed = false;
     brace();
+    return;
+  }
+  if (event.key === ',') {
+    event.preventDefault();
+    shoveArmed = false;
+    take();
     return;
   }
   const move = KEYS[event.key];

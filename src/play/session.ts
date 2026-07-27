@@ -232,6 +232,21 @@ export function playerUse(position: Position, playerId: string): {
   return { position: commit(position, draft, playerId, playerId), draft };
 }
 
+/** Take what is underfoot, deliberately — tradeoffs and downgrades
+ *  included. Free like the walking take: stooping is not a turn;
+ *  deciding was the work. */
+export function playerTake(position: Position, playerId: string): {
+  position: Position;
+  draft: DraftEvent | null;
+} {
+  const state = fold(position.log, position.head);
+  if (outcome(state, playerId) !== 'playing') return { position, draft: null };
+
+  const draft = takeUnderfoot(state, playerId, true);
+  if (draft === null) return { position, draft: null };
+  return { position: commit(position, draft, playerId, playerId), draft };
+}
+
 /** Drive an adjacent hostile one pace. Refuses quietly (no turn) when
  *  nothing hostile stands that way — a mispress, not a decision. */
 export function playerShove(position: Position, playerId: string, dx: number, dy: number): {

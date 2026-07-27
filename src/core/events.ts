@@ -129,7 +129,11 @@ export interface ItemUsedPayload {
   kind: string;
   effect:
     | { kind: 'draught'; healedTo: number; ceilingTo: number }
-    | { kind: 'smoke'; until: number; at: Pos; unfooled: string[] };
+    | { kind: 'smoke'; until: number; at: Pos; unfooled: string[] }
+    // The flare: knowledge, not power. Where it burst and how far the floor
+    // admitted its shape — the fog derivation reads this straight off the
+    // chain, so a rewind un-knows it exactly.
+    | { kind: 'flare'; at: Pos; radius: number };
 }
 
 /** A rule entering play. The rule is carried whole rather than by reference,

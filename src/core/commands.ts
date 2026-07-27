@@ -2,7 +2,7 @@ import { generateMap, pickSpawnPoints, farthestFrom, withExit, walkDistance, sea
 import { inBounds, isPassable } from './grid.js';
 import { findEntity, isAlive } from './entity.js';
 import { intBetween } from './rng.js';
-import { neededToHit, chanceIn20, damageDice, critFloor, WHIFF, BESTIARY, creatureStats, threatOf, spawnBudget, depthBands, wardenAt, ARMORY, relicGrant, slotOf, grantValue, motifAt, verbOf, wardenLevel, AMBUSH_MIGHT_BONUS, AMBUSH_FROM_DEPTH, braceWall, CALL_RISERS, CALL_DISTANCE, PROVISIONS, provisionOf, draughtCeiling, smokeTurns, BOTTOM_DEPTH, HEART_KIND, WAVE_DISTANCE } from './tables.js';
+import { neededToHit, chanceIn20, damageDice, critFloor, WHIFF, BESTIARY, creatureStats, threatOf, spawnBudget, depthBands, wardenAt, ARMORY, relicGrant, slotOf, motifAt, verbOf, wardenLevel, AMBUSH_MIGHT_BONUS, AMBUSH_FROM_DEPTH, braceWall, CALL_RISERS, CALL_DISTANCE, dominates, wearsTrait, FLARE_RADIUS, PROVISIONS, provisionOf, draughtCeiling, smokeTurns, BOTTOM_DEPTH, HEART_KIND, WAVE_DISTANCE } from './tables.js';
 import type { Relic } from './tables.js';
 import type { Entity, Stats, Pos } from './entity.js';
 import { itemAt } from './item.js';
@@ -503,8 +503,9 @@ export function attemptMove(state: GameState, entityId: string, dx: number, dy: 
     const verbExtras: { attackerTo?: Pos; targetTo?: Pos; ambush?: boolean } = {};
     if (springLoaded(mover) && outcome.hit) verbExtras.ambush = true;
     // A braced target holds their ground: the trample lands as a plain blow.
+    // Steady boots hold it always — the named relic's one rule.
     if (verbOf(mover.kind) === 'trample' && outcome.hit && occupant.stats.hp > outcome.damage
-      && !occupant.tags.includes('braced')) {
+      && !occupant.tags.includes('braced') && !wearsTrait(occupant.gear, 'hold-ground')) {
       const behind = { x: occupant.pos.x + dx, y: occupant.pos.y + dy };
       const denied = !inBounds(state.grid, behind.x, behind.y)
         || !isPassable(state.grid, behind.x, behind.y)
@@ -853,6 +854,9 @@ export function wait(state: GameState, entityId: string): Extract<DraftEvent, { 
 export function takeUnderfoot(
   state: GameState,
   entityId: string,
+  /** A chosen take (the , key): accepts tradeoffs and downgrades alike —
+   *  walking only ever takes strict upgrades. */
+  deliberate = false,
 ): Extract<DraftEvent, { type: 'ITEM_TAKEN' }> | null {
   const taker = findEntity(state.entities, entityId);
   if (taker === undefined) return null;
@@ -893,11 +897,16 @@ export function takeUnderfoot(
     };
   }
 
-  // Only an upgrade leaves the floor. A relic no better than what is worn in
-  // its slot stays where it lies — visible, ignorable, and still there if a
-  // rule ever drains what you carry.
+  // Walking takes only what DOMINATES — at least as good on every axis,
+  // better in total. A tradeoff relic (the heavy edge's speed for its blow)
+  // is incomparable by construction, so it waits on the floor for a chosen
+  // take; a strict downgrade waits forever unless chosen too. The old total
+  // order produced zero decisions by definition — this is the smallest
+  // possible concession to there being a choice.
   const worn = taker.gear?.[slotOf(item.grants)];
-  if (worn !== undefined && grantValue(item.grants) <= grantValue(worn.grants)) return null;
+  if (!deliberate && !dominates(item.grants, worn?.grants ?? { hp: 0, might: 0, wits: 0, speed: 0 })) {
+    return null;
+  }
 
   return {
     type: 'ITEM_TAKEN',
@@ -934,6 +943,22 @@ export function useCarried(
       rngCounter: state.rngCounter,
       rngDraws: 0,
       payload: { entityId, kind, effect: { kind: 'draught', healedTo: ceilingTo, ceilingTo } },
+    };
+  }
+
+  // The flare: the floor admits its shape — layout, never occupants. The
+  // whole effect is the fog's to apply; here it is only recorded.
+  if (kind === 'tallow flare') {
+    return {
+      type: 'ITEM_USED',
+      schemaVersion: SCHEMA_VERSIONS.ITEM_USED,
+      rngCounter: state.rngCounter,
+      rngDraws: 0,
+      payload: {
+        entityId,
+        kind,
+        effect: { kind: 'flare', at: { x: user.pos.x, y: user.pos.y }, radius: FLARE_RADIUS },
+      },
     };
   }
 

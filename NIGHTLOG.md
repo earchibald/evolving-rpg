@@ -871,3 +871,21 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > exactly what the smoke is for. Depth 1 stays gentle (16-17/20), depth 3
 > still belongs to the fighter (11 v 4). 757/757 green, golden
 > legitimately untouched — floor one's draws never changed.
+
+> [!NOTE]
+> **16:2x — loot learns to ask questions**
+> The research's bluntest finding: auto-take-the-better-one produces zero
+> decisions BY CONSTRUCTION — a total order is a conveyor belt. So walking
+> now takes only strict upgrades (better or equal on every axis, better in
+> total), and everything else waits on the floor for the , key: a chosen
+> take, tradeoffs and downgrades included. What waits: the heavy edge, the
+> one iconic tradeoff (a bigger blow, a pace of speed — "heavy" explains
+> itself); the sure edge, whose crits send the survivor reeling; the
+> steady boots, which no trample moves. Two named properties, capped low
+> on purpose — twelve great ones beat forty adjectives, and each is a rule
+> replay must honor. The satchel learns a third provision: the tallow
+> flare — break it and the floor admits its shape for seven paces, layout
+> but never occupants, knowledge the fog remembers and a rewind un-knows.
+> The journal now tells a refused pickup from a standing question: "it
+> stays where it lies" versus "asks a trade — , takes it deliberately."
+> 769/769 green.

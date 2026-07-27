@@ -148,6 +148,24 @@ function absorb(
     acc.seen = new Set<number>();
     acc.trod = new Set<number>();
     acc.sight = sightAt(event.payload.depth ?? 1);
+  } else if (event.type === 'ITEM_USED' && event.payload.effect.kind === 'flare'
+    && event.payload.entityId === 'player') {
+    // The flare: the floor admits its shape in a burst — SEEN, never
+    // visible, walls not consulted (light leaks where eyes cannot). Read
+    // straight off the chain, so a rewind un-knows it exactly.
+    if (acc.grid !== null) {
+      const { at, radius } = event.payload.effect;
+      for (let y = at.y - radius; y <= at.y + radius; y += 1) {
+        for (let x = at.x - radius; x <= at.x + radius; x += 1) {
+          const dx = x - at.x;
+          const dy = y - at.y;
+          if (inBounds(acc.grid, x, y) && dx * dx + dy * dy <= radius * radius + radius) {
+            acc.seen.add(idx(acc.grid, x, y));
+          }
+        }
+      }
+    }
+    return;
   } else if (event.type === 'MOVE' && event.payload.entityId === 'player') {
     acc.pos = { x: event.payload.to.x, y: event.payload.to.y };
   } else if (event.type === 'RULE_FIRED') {

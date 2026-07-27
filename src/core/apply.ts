@@ -1,6 +1,6 @@
 import { makeGrid } from './grid.js';
 import { applyResolved } from '../canon/interpret.js';
-import { threatOf, levelForXp, growthAt, slotOf, SLAM_DAMAGE, verbOf, VENOM_TURNS, VENOM_HARM } from './tables.js';
+import { threatOf, levelForXp, growthAt, slotOf, SLAM_DAMAGE, verbOf, VENOM_TURNS, VENOM_HARM, wearsTrait } from './tables.js';
 import { NO_BODIES } from './state.js';
 import type { GameEvent } from './events.js';
 import type { GameState } from './state.js';
@@ -287,9 +287,12 @@ function reduce(state: GameState, event: GameEvent): GameState {
         return after === state.entities ? state : { ...state, entities: after };
       }
       // Whether this landed blow leaves venom behind — derived from the
-      // attacker's kind, which replay reads identically forever.
+      // attacker's kind, which replay reads identically forever. And whether
+      // it lands hard enough to stagger: the sure edge's one rule, a crit
+      // that sends the survivor reeling.
       const attacker = state.entities.find((e) => e.id === p.attackerId);
       const venomous = attacker !== undefined && verbOf(attacker.kind) === 'venom';
+      const surely = p.crit && attacker !== undefined && wearsTrait(attacker.gear, 'stagger-crit');
       return creditKills(state, {
         ...state,
         entities: moved.map((e) => {
@@ -300,9 +303,10 @@ function reduce(state: GameState, event: GameEvent): GameState {
             const hp = Math.max(0, e.stats.hp - p.damage);
             // A surviving, bitten body burns: fresh venom replaces stale —
             // the wound re-opened, never stacked.
-            const tags = venomous && hp > 0
+            let tags = venomous && hp > 0
               ? [...e.tags.filter((t) => !t.startsWith('venom-')), `venom-${String(VENOM_TURNS)}`]
               : e.tags;
+            if (surely && hp > 0) tags = staggered(tags);
             return { ...e, stats: { ...e.stats, hp }, tags };
           }
           if (e.id === p.attackerId && p.ambush === true) {

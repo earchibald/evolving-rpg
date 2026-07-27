@@ -4,7 +4,7 @@ import {
   XP_TO_REACH, levelForXp, growthAt,
   BESTIARY, creatureStats, threatOf, spawnBudget, depthBands, wardenAt,
   NEEDED_FLOOR, NEEDED_CEILING, CRIT, WHIFF,
-  ARMORY, relicGrant, critFloor,
+  ARMORY, relicGrant, critFloor, dominates,
 } from '../../src/core/tables.js';
 
 /**
@@ -188,13 +188,22 @@ describe('the armory', () => {
     }
   });
 
-  it('grants exactly the stat it names', () => {
+  it('grants the stat it names, and charges only its stated price', () => {
     for (const r of ARMORY) {
       const g = relicGrant(r, 4) as unknown as Record<string, number>;
       for (const stat of ['hp', 'might', 'wits', 'speed']) {
         if (stat === r.grants) expect(g[stat]).toBeGreaterThan(0);
+        else if (stat === r.costs?.stat) expect(g[stat]).toBe(-r.costs.amount);
         else expect(g[stat]).toBe(0);
       }
+    }
+  });
+
+  it('keeps every tradeoff out of walking\'s reach', () => {
+    // The dominance rule's premise: anything with a price is incomparable
+    // with bare hands, so only the , key ever pays it.
+    for (const r of ARMORY.filter((x) => x.costs !== undefined)) {
+      expect(dominates(relicGrant(r, 4), { hp: 0, might: 0, wits: 0, speed: 0 })).toBe(false);
     }
   });
 

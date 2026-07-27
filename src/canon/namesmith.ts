@@ -56,8 +56,12 @@ const ITEM_BODIES: Readonly<Record<string, readonly string[]>> = Object.freeze({
   'iron charm': Object.freeze(['charm', 'plate', 'links', 'collar', 'band']),
   'fleet boots': Object.freeze(['boots', 'treads', 'soles', 'shoes']),
   'grey lens': Object.freeze(['lens', 'glass', 'eye', 'prism']),
+  'heavy edge': Object.freeze(['maul', 'cleaver', 'brand', 'axe']),
+  'sure edge': Object.freeze(['needle', 'point', 'sliver', 'awl']),
+  'steady boots': Object.freeze(['greaves', 'clogs', 'anchors', 'stumps']),
   'vital draught': Object.freeze(['draught', 'phial', 'flask', 'vial']),
   'still smoke': Object.freeze(['smoke', 'censer', 'pot', 'ember']),
+  'tallow flare': Object.freeze(['flare', 'taper', 'wick', 'torch']),
   heart: Object.freeze(['heart']),
 });
 
@@ -129,6 +133,22 @@ const ITEM_LINES: Readonly<Record<string, readonly string[]>> = Object.freeze({
   ]),
   heart: Object.freeze([
     'It beats. The floor beats with it.',
+  ]),
+  'heavy edge': Object.freeze([
+    'It swings slow and lands like a verdict.',
+    'You will feel it in your shoulders, and they will feel it more.',
+  ]),
+  'sure edge': Object.freeze([
+    'When it finds the opening, the opening stays found.',
+    'Thin as a promise, and it keeps this one.',
+  ]),
+  'steady boots': Object.freeze([
+    'The ground agrees with whoever wears them.',
+    'Nothing has moved them yet.',
+  ]),
+  'tallow flare': Object.freeze([
+    'Strike it, and the dark files a confession.',
+    'One bright breath, and the floor forgets to hide.',
   ]),
 });
 
