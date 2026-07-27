@@ -556,3 +556,17 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 >    one that decides. Verified live: died behind a secret door, rose, and
 >    had to re-discover the illusory wall to reach the corpse — the fog
 >    honestly forgot it with the fresh run.
+
+> [!NOTE]
+> **17:5x — BONES.md: the body's meaning, researched and left to you**
+> Four decades surveyed — Hack 1.0's bones (1984) through NetHack's cursed
+> piles and ghosts, Shiren's rescues, Souls bloodstains, Diablo's corpse
+> runs (and why D3 cut them), ZAngband player-ghosts, Hollow Knight shades,
+> Spelunky's deliberate nothing, Death Stranding's craters. Distilled into
+> six options in `docs/design/BONES.md`, each with tradition, upside,
+> downside and the concrete shape it takes HERE. Option F is ours alone:
+> **the Forge decides** — death proposals offering body-rules, so the
+> meaning of your corpse becomes something each world ratifies for itself.
+> The tradition's delight formula, for whichever you pick: danger, reward
+> that is only what you already earned, continuity. No choice made — §9 of
+> the WALKTHROUGH points here.
