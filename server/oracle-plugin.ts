@@ -355,7 +355,10 @@ export function oraclePlugin(): Plugin {
               '--output-format',
               'json',
             ],
-            { timeout: TIMEOUT_MS, maxBuffer: 4 * 1024 * 1024 },
+            // SIGKILL, not the default SIGTERM: a hung CLI that ignores the
+            // polite signal left a browser fetch pending 26 minutes — the
+            // callback below never fired, so no response ever went back.
+            { timeout: TIMEOUT_MS, maxBuffer: 4 * 1024 * 1024, killSignal: 'SIGKILL' },
             (error, stdout) => {
               res.setHeader('content-type', 'application/json');
 

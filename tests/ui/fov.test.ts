@@ -1,4 +1,8 @@
 import { visibleFrom, fogAt, SIGHT } from '../../src/ui/fov.js';
+import { createWorld } from '../../src/core/commands.js';
+import { autoplay } from '../../src/play/autoplay.js';
+import { brawler } from '../../src/play/policies.js';
+import type { Grid } from '../../src/core/grid.js';
 import { FLOOR, WALL, makeGrid, idx } from '../../src/core/grid.js';
 import { emptyLog, append } from '../../src/log/chain.js';
 import { SCHEMA_VERSIONS } from '../../src/core/events.js';
@@ -154,5 +158,31 @@ describe('fogAt (what has been seen)', () => {
     const { log, heads } = walked(10);
     const fog = fogAt(log, heads[heads.length - 1]!, gridOf);
     for (const i of fog.visible) expect(fog.seen.has(i)).toBe(true);
+  });
+});
+
+describe('the trodden-neighborhood invariant', () => {
+  it('never marks a tile trodden while any neighbor stays unseen', () => {
+    // The property behind "a passage ring can never float in the void": you
+    // stood there, so you saw around you. A player reported rings in the
+    // veil; auditing their actual chronicle proved the fog sound and the
+    // renderer honest — the contrast was lying, not the sets. This pins the
+    // sets forever anyway.
+    const gridOf = (p: { width: number; height: number; tiles: number[] }): Grid =>
+      makeGrid(p.width, p.height, p.tiles);
+    for (const seed of [4, 9, 13]) {
+      const born = append(emptyLog(), null, createWorld(seed, 48, 32, 'player', 3));
+      const done = autoplay({ log: born.log, head: born.event.id }, brawler, 300);
+      const fog = fogAt(done.position.log, done.position.head, gridOf);
+      for (const r of fog.revealed) {
+        expect(fog.seen.has(r)).toBe(true);
+        const x = r % 48;
+        const y = Math.floor(r / 48);
+        for (const [nx, ny] of [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]] as const) {
+          if (nx < 0 || ny < 0 || nx >= 48 || ny >= 32) continue;
+          expect(fog.seen.has(ny * 48 + nx)).toBe(true);
+        }
+      }
+    }
   });
 });

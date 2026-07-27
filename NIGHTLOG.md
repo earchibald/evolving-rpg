@@ -591,3 +591,23 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > 12v4 fighter-over-runner, halls 6v0 deep — the sawtooth's shape intact
 > with more character per band; all pins green, both new mutation proofs
 > held (motif ignored, ramp flattened — caught). 631 tests.
+
+> [!NOTE]
+> **18:2x — Two bug reports run down**
+> 1. **The stuck queries** ("world:main 1586s"): a hung CLI child ignored
+>    the server's polite SIGTERM, so no response ever went back and the
+>    browser's fetch waited forever — and while a founding hangs, its
+>    world's naming stays gated shut. Two-sided fix: the server now kills
+>    with SIGKILL at the deadline, and the transport carries its own
+>    180-second abort so every ask SETTLES — success or failure, the gates
+>    always clear.
+> 2. **The "draw-outside-visible" rings**: I loaded your actual mirrored
+>    chronicle from runs/latest.json and audited every world — the fog's
+>    sets are sound (your two rings are genuinely trodden secret doorways
+>    at (6,17) and (6,21) of main's depth-3 floor, neighbors genuinely
+>    seen). The liar was contrast: a remembered passage kept its full ring
+>    while its dim surroundings sank to near-veil, reading as marks drawn
+>    in the void. Fixed by widening the veil/dim luminance gap and quieting
+>    the ring to a quarter strength out of sight. The set-level property —
+>    a trodden tile and all its neighbors are always seen — is now a
+>    permanent test, so the honest half can never rot into the lying half.

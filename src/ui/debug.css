@@ -128,15 +128,19 @@ kbd {
 .cell.you-dead { background: #6b4a1c; box-shadow: inset 0 0 0 2px var(--player); }
 .cell.exit { background: var(--exit); }
 /* A found secret passage: floor now and forever, edged so it never reads as
-   the wall it once pretended to be. */
+   the wall it once pretended to be. Out of sight the edge goes near-quiet —
+   a remembered doorway's surroundings dim to near-black, and a full-strength
+   ring out there read as marks drawn in the void (a player reported exactly
+   that; the fog itself was audited sound — presentation was the liar). */
 .cell.passage { background: var(--floor); box-shadow: inset 0 0 0 1px rgba(153, 161, 176, .38); }
+.cell.passage.dim { box-shadow: inset 0 0 0 1px rgba(153, 161, 176, .14); }
 .cell.item { background: var(--item); }
 /* The fog. Never seen: nothing — not even the wall's silhouette, because a
    mapped outline is knowledge too. Seen but out of sight: the geometry and
    the still things, dimmed but *readable* — the first cut sat at 45%
    brightness and the designer ruled that squinting is not a game feature.
    Memory reads clearly; only the living is reserved for the lit. */
-.cell.veil { background: #0e1013; }
+.cell.veil { background: #090b0e; }
 .cell.dim { filter: brightness(.74) saturate(.7); }
 /* Ringed rather than filled, so a creature standing on the prize stays visible
    as a creature while the square still reads as worth taking. */

@@ -68,10 +68,16 @@ export function cliTransport(): Transport {
   return {
     name: 'claude cli',
     async ask(question: Question) {
+      // The browser's own deadline, past the server's: if the dev server
+      // never answers at all (a hung child, a dead middleware), the call
+      // must still FAIL here — an ask that never settles never clears its
+      // in-flight gates, and a founding stuck "asking" for 26 minutes
+      // silently held a whole world's naming shut.
       const response = await fetch('/__oracle', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(question),
+        signal: AbortSignal.timeout(180_000),
       });
 
       if (!response.ok) throw new Error(`oracle ${response.status}: ${await response.text()}`);
