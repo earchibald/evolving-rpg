@@ -1,8 +1,8 @@
 # WALKTHROUGH & TESTING
 
 How to play it, how to test every part of it, and what is still undecided.
-Written 2026-07-26. If something here doesn't match the game, the game changed
-— check `NIGHTLOG.md` and `git log`.
+Rewritten 2026-07-26 evening (increments 5–7 landed). If something here
+doesn't match the game, the game changed — check `NIGHTLOG.md` and `git log`.
 
 ---
 
@@ -14,182 +14,166 @@ npm install        # once
 npm run dev        # open the printed URL
 ```
 
-- Needs the `claude` CLI signed in for names/proposals/judging.
-- Without it: the game still runs. Names show as plain kinds ("skirmisher"),
-  proposals fail visibly. Nothing blocks.
+- Needs the `claude` CLI signed in for founding/names/proposals/judging.
+- Without it: the game still runs. Worlds play unfounded, names show as plain
+  kinds, proposals fail visibly. Nothing blocks.
 
-**First 60 seconds:** wipe to a fresh world (`worlds…` → `wipe everything`),
-walk with arrows/wasd, walk into a creature to fight, kill it, watch xp go up.
+**First 60 seconds:** wipe to a fresh world (`world…` → `wipe everything`),
+watch the Worldsmith found it (~40s — "the world is founded — …"), walk with
+arrows/wasd into the dark, fight the first thing that finds you.
 
 ---
 
-## 2. Controls
+## 2. Controls — everything has a key
 
-| Input | Does |
+| Key | Does |
 |---|---|
 | arrows / wasd | move; into a creature = attack; into a wall = free (no turn) |
-| `.` | hold still (this is a turn) |
-| green square | the way out. Stand on it, then press **descend** |
+| `.` / space | hold still (this is a turn) |
+| `n` | world… — begin again / another world / wipe |
+| `g` | the forge — ask for a rule |
+| `m` | the gamemaster's screen (channels + all machinery) |
+| `r` | begin this world again, straight away |
+| `v` | verify every hash and counter in the chain |
+| `f` | fork a timeline · `b` rewind 10 events |
+| `?` | the keys sheet (this table, live) |
+| PgUp/PgDn | read back through the journal |
+| esc | leave a writing box (draft survives); esc again closes the sheet |
+| `1` / `2` | in the screen: write to the designer / the gamemaster |
 
-Buttons under the map:
-
-| Button | Does |
-|---|---|
-| verify chain | re-checks every hash and counter in the log |
-| fork here | new timeline from this exact moment |
-| back 10 | rewind 10 events (old events stay in the log) |
-| worlds… | new world / wipe everything (modal, wipe is red) |
-| the forge… | ask for a rule, ratify/edit/reject (see §5) |
-| run again | restart this world, keep its rules |
-| descend | next floor down. Only lights up when you stand on the exit |
+There is no descend button: **stairs are stairs** — step on the green square
+and you go down. A cleared floor heals you on the way.
 
 ---
 
 ## 3. Read the screen
 
-| Panel | What it shows |
+Left: the map (fog of war — see §4) and the journal (one fact per line).
+Right, always in view (sticky rail): **you**, the buttons, **what is here**.
+
+| Rail row | Notes |
 |---|---|
-| **you** | run status, hp `7 / 12`, `level 2 · 20/40 xp`, damage range, distance to exit, position, turn, world, depth |
-| **what is here** | every creature + the floor's relic(s), with your hit % and damage vs theirs |
-| top-right line | what the model is thinking about right now (or "not thinking about anything") |
-| status under map | what just happened, one line per fact. Crits say "— clean through" |
-| **game designer** box | message to me/the system about the game. Recorded, feeds the Rulesmith |
-| **gamemaster** box | in-character question to the world. Model answers in fiction |
-| **what the lenses see** | Critic scorecard. #2 Surprise, #61 Interest per-run; #33/#71 show `∴` → run `npm run balance` |
-| **rules this world plays under** | ratified rules, in English, with reasons |
-| **what the world calls things** | names the model gave + a `no` button to reject any |
-| **the world is thinking** | model call queue: asking / answered / failed, with cost |
-| **worlds** | timelines. Click to switch. `†` = a grave (a death, kept) |
-| **under the floorboards** | seed, rng counter, events in chain, events in log |
+| hit points / you deal / might·speed·wits | hover any dotted number for its full derivation with today's values |
+| wielding / wearing | the world's names for your gear ("whetted blade +2 might") |
+| changed values | show before → after (orange → green) for 3 turns |
+
+The **gamemaster's screen** (`m`) holds everything else: the two channels
+(designer = out of world, gamemaster = in it), **this world** (the bible —
+anchor, lexicon, warden, promises, judge's verdict), lenses, rules, names,
+the ask queue, worlds list, the ledger, floorboards, and **through the fog**
+(developer omniscience — everything the fog hides from the play view).
 
 ---
 
-## 4. Core loop (test by playing)
+## 4. The fog, and what lies about it
 
-1. **Fight**: walk into things. Hit chance and damage come from
-   `src/core/tables.ts`. Nat 20 = double damage. Nat 1 = always miss.
-2. **Level**: kills pay xp = the victim's threat value. At a threshold: stats
-   grow, **full heal**, status line announces it.
-3. **Relics**: gold square, always guarded. Floor 1 always has the keen edge
-   (+might). Depth 2+ has two relics from: keen edge, iron charm (+max hp),
-   fleet boots (+speed), grey lens (+wits).
-4. **Descend**: stand on the exit, press descend. You keep stats/xp/level/rules.
-   **If the floor was fully cleared, you descend healed.**
-5. **Depth**: each floor spawns from a threat budget. Level-2+ creatures mix in
-   from depth 2. The **warden** (boss) guards depths 3, 6, 9.
-6. **Die**: your body stays on the map (ringed, gold). A `†` grave world is
-   created. Press **run again** to restart — rules survive death.
-
-Expected difficulty (20 fixed seeds, brawler bot): floor 1 ~85-95% survival,
-depth 5 ~15-25%. If your experience is wildly off that, something broke.
+- Never seen: nothing, not even wall silhouettes.
+- Seen, out of sight: geometry and items dimmed; creatures vanish (they move).
+- **Secret passages** (~1 floor in 3): one room's every doorway paints as
+  wall and blocks sight — until you walk INTO it ("the wall gives way — it
+  was never a wall"). Found passages render edged and never fool you again.
+- Creatures were never fooled: they path through secrets by construction.
+- A floor's story ("under the floorboards") admits "one room keeps itself
+  secret" — the fact is public, the door is not.
 
 ---
 
-## 5. The evolution loop (the point of the game)
+## 5. Core loop (test by playing)
 
-1. Play a run to death or escape.
-2. Open **the forge…** → **ask the world for a rule** (~40-90s, ~$0.25).
-   Spinner + elapsed seconds show in the dialog.
-3. A proposal appears **in English** with: why (its `because`), what it cites
-   (events / your notes / lens findings), and the **assay verdict**.
-4. Buttons: **accept** (writes it into the log) / **edit…** (bounded form,
-   live preview) / **reject** (writes nothing).
-5. Play again — the rule fires with its own status lines.
+1. **Fight**: walk into things. All numbers from `src/core/tables.ts`;
+   hover your stats for the live arithmetic. Crits on 20 (wits widens).
+2. **Level**: kills pay threat-value XP; levels grow stats and heal whole.
+3. **Relics**: violet squares, guarded, slotted (weapon/armor/boots/trinket).
+   Better replaces, with the swap narrated; lesser stays on the floor.
+4. **Descend**: step on the exit. Stats, gear, rules and the bible cross.
+   **The stairs are watched** — the floor's strongest creature stands there;
+   every third floor it is the warden.
+5. **Die**: your body stays; a `†` grave world is kept; **the world reads
+   your death back and proposes a rule, unasked** — the Forge opens when the
+   offer arrives. `r` to rise again (rules and bible survive).
+6. **Find your body** (same world, same floor, later run): the journal says
+   so. What it confers: deliberately undecided — see §9.
+
+Expected difficulty (20 fixed seeds, brawler): floor 1 ~95%, depth 3 ~65%
+fighter vs ~15% runner, depth 5 ≤ 50%. Wildly off that = something broke.
+
+---
+
+## 6. The evolution loop (the point of the game)
+
+1. Die (proposal arrives on its own) — or escape and ask via the forge (`g`).
+2. The proposal shows: the rule in English, why (its `because`), citations
+   (events / notes / lenses), and the **assay verdict** beside it.
+3. **accept** / **edit…** (bounded form, live preview) / **reject**.
+4. Play on — the rule fires with its own status lines.
 
 What protects you:
 
-| Guard | Refuses |
+| Guard | Catches |
 |---|---|
-| validator | anything outside the closed vocabulary or its number ranges |
-| assay: greed trial | stat-minting (e.g. "+1 wits per wait" — the real case) |
-| assay: coward trial | rules that make death impossible while idle |
-| assay: register | shouting, exclamation marks, off-voice text |
-| citation pruning | invented event ids, note timestamps, lens numbers |
-| duplicate check | a rule the world already has |
+| validator | anything outside the closed vocabulary |
+| greed trial (M2) | stat-minting (caught live, twice) |
+| coward trial (M1) | death made impossible while idle |
+| **proportion trial (M6)** | bounded-but-heavy rules — "swings hit points by 4.7, flips 2 outcomes — heavier than a relic" shown beside the offer |
+| register + citation pruning + duplicate check | off-voice text, invented citations, repeats |
 
-A refused proposal shows as a failed ask with the reason. Nothing refused ever
-enters the log.
+The Worldsmith's bible faces its own gate (`validateBible`): register-assayed
+prose, article-free lowercase lexicon, no duplicates — a refused bible means
+the world just plays unfounded.
 
 ---
 
-## 6. Headless testing (no browser)
-
-All from repo root. All deterministic — same seeds, same results.
+## 7. Headless testing (no browser)
 
 ```bash
-npx vitest run                                # 566 tests, ~10s
-npm run play -- --policy all --seeds 12       # bot sweep, table out
-npm run play -- --policy brawler --seeds 20 --floors 3
-npm run balance                               # + lenses #33/#71
+npx vitest run                                # ~620 tests, ~15s
+npm run play -- --policy all --seeds 12       # bot sweep
+npm run balance                               # + lenses #33/#71 (~90s)
 npm run trial -- rule.json                    # assay one rule; exit 0/2/1
 npm run loop -- --seed 7 --rule rule.json     # full cycle, offline
-npm run loop -- --seed 7                      # full cycle, live model
 ```
 
 Quick self-checks:
 
-| Check | Command | Expect |
-|---|---|---|
-| suite green | `npx vitest run` | 566 passed |
-| balance holds | `npx vitest run tests/balance` | 5 passed (band breach = real defect) |
-| assay works | `echo '{"when":"WAIT","require":[],"then":[{"kind":"grant","stat":"wits","n":1}],"provenance":{"events":["e"],"notes":[],"because":"x"}}' > /tmp/r.json && npm run trial -- /tmp/r.json` | `refused`, exit 2 |
-| bots play | `npm run play -- --policy rusher --seeds 5` | mixed escaped/dead, ~1s |
-
-Bot policies: `rusher` (runs for exit), `brawler` (kills everything),
-`coward`, `shuffler`, `bumper`, `sitter` (degenerate — used by the assay).
-
----
-
-## 7. Agent delegation
-
-- `.claude/agents/playtester.md` (haiku) — runs sweeps, reports numbers.
-- `.claude/agents/rules-warden.md` (sonnet) — judges a candidate rule on
-  mechanics AND voice; can call the haiku judge:
-  `POST /__oracle {"intent":"judge","context":{"text":…,"mechanics":…}}`
-  → `sound | off-register | off-fit` (~$0.04).
-- Both personae carry "do not" lists grown from their real confabulations.
-  **Their reports are evidence, not verdicts.**
-- `AGENTS.md` = the map. `src/assay/covenant.ts` = the law.
-
----
-
-## 8. Files that matter
-
-| File | What |
+| Check | Expect |
 |---|---|
-| `NIGHTLOG.md` | timestamped build diary |
-| `docs/design/BALANCE.md` | all combat/level/spawn math + 8-pass tuning log |
-| `src/core/tables.ts` | every tunable number, one file |
-| `src/assay/covenant.ts` | stated invariants (M1-M5 mechanical, T1-T3 thematic) |
-| `tests/balance/sawtooth.test.ts` | difficulty pinned on fixed seeds |
-| `runs/loops/*.md` | every proposal cycle, incl. the ratify-worthy one |
-| `runs/archive/` | auto-backup of any session a wipe would destroy |
+| `npx vitest run` | all green; band breach = real defect |
+| greed refusal | `npm run trial` on a grant-per-wait rule → `refused`, exit 2 |
+| bots play | `npm run play -- --policy rusher --seeds 5` → mixed outcomes |
+
+Bots see through secrets (they path by passability) — sweeps measure
+mechanics, not the fog.
+
+---
+
+## 8. Agent delegation
+
+- `.claude/agents/playtester.md` (haiku) — sweeps, numbers.
+- `.claude/agents/rules-warden.md` (sonnet) — judges rules on both registers.
+- `AGENTS.md` = the map. `src/assay/covenant.ts` = the law (M1–M6, T1–T3,
+  L1 legibility). Subagent reports are evidence, not verdicts.
 
 ---
 
 ## 9. OPEN QUESTIONS — need your call
 
-1. **Ratify the dead-air rule?** Best proposal so far, assay-sound, in
-   `runs/loops/2026-07-26T09-07-28-912Z.md`: *lose 1 hp per turn once the
-   floor is clear, far from exit, turn 10+, above half health.* Ratify from
-   the Forge if you agree.
-2. **Does the dungeon have a bottom?** Right now depth rises forever. A
-   victory floor (fetch-the-thing-and-out, roguelike classic) is unbuilt.
-3. **Level-up choices?** Currently deterministic (might/speed alternate).
-   Could become Forge-proposed choices instead.
-4. **Depth-3 tie.** Fighter and runner currently tie at depth 3 (8v8 on the
-   pinned seeds); fighter wins at depth 5 (5v3). If you want the fighter ahead
-   at 3, the honest knobs are the XP curve or creature growth rows —
-   BALANCE.md "Open question" section.
+1. **What does finding your body confer?** Messaging exists; the meaning is
+   yours to pick. `docs/design/BONES.md` will hold the researched options.
+2. **Canon vs bible scoping.** Names are per-kind and global; a second world
+   inherits the first's creature names despite its own bible. Scope canon
+   per world (cost: renaming per world), or accept kinds as trans-world?
+3. **Level-up choices** — deterministic today; could become Forge choices.
+4. **Depth-5 corridor.** Lens #33 reads the deep as brawler-only. If a
+   runner's line should stay open deep, the knobs are keeper strength or
+   loop count — BALANCE.md pass 9.
+5. **Dead-air rule** — still ratifiable from `runs/loops/…912Z.md`; death
+   proposals now offer similar rest-shaped rules organically.
 
 ## 10. Known gaps (not bugs, just not built)
 
-- Canon consistency judge ("hoarfrost hound from the treeline" class) — the
-  haiku judge exists but isn't auto-run over new names.
-- Forge doesn't display the haiku judge's opinion yet.
-- Old saves from before last night fail verification on load → clean restart
-  with a visible message. Expected, not a bug.
-- Two leftover names may appear in canon from pre-wipe kinds. Harmless.
-- R3 (rules → engine code) and the shareable artifact build: unstarted.
-- Model flake: ~half of live proposals fail (bad nesting / 502). Handled
-  cleanly, raw reply shown, but retry is manual.
+- Depth motifs (GESTALT L3): floors don't yet change shape by depth with
+  intent — research + tables in progress.
+- The judge's bible verdict is session-memory (re-judges on next founding).
+- Model flake retry is manual; a failed founding/proposal just says so.
+- R3 (rules → engine code) and a shareable build: unstarted.
+- Old saves break freely pre-RC, by standing rule.
