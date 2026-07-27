@@ -112,6 +112,15 @@ one call per floor) draws from the lexicon; the gamemaster speaks the tone
 and keeps the promises; the haiku judge reads each bible once. Unfounded
 worlds improvise exactly as before.
 
+**Talking is top-level play**: `t` opens the gamemaster's own sheet (the
+screen behind `m` keeps the designer's pen). Every note on either channel
+is stamped with how the player stood — floor, turn, level, health, burden
+(`statusOf`/`statusLine` in channels.ts); notes older than the stamp derive
+it by refolding their pinned head, memoised. The gamemaster's consult now
+actually receives the standing AND the world's bible (the bible ride-along
+had been dropped between `where` and the consult context since it was
+written — pinned by test).
+
 **Dying provokes the world**: every death fires a proposal read from the
 run that killed you; the Forge opens when the offer lands; the assay still
 gates it (a live death-proposal was refused for stat-minting, autonomously).

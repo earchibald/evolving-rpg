@@ -19,9 +19,9 @@ import { assayRule } from '../assay/ruleAssay.js';
 import type { RunSummary } from '../canon/rulesmith.js';
 import { Oracle, describeQuestion } from '../oracle/oracle.js';
 import { cliTransport } from '../oracle/transports.js';
-import { send, loadNotes, saveNotes, NOTES_KEY } from '../channels/channels.js';
+import { send, loadNotes, saveNotes, notesFor, statusOf, statusLine, NOTES_KEY } from '../channels/channels.js';
 import { CachedCritic } from '../critic/memo.js';
-import type { Channel, Note } from '../channels/channels.js';
+import type { Channel, Note, Status } from '../channels/channels.js';
 import { WALL, EXIT, SECRET, idx, makeGrid, tileAt } from '../core/grid.js';
 import { fogAt } from './fov.js';
 import type { EventLog } from '../log/chain.js';
@@ -370,6 +370,58 @@ function calledCreature(kind: string, e: { stats: { hp: number; might: number; s
  *  it was typed into. */
 const notes: Note[] = loadNotes();
 
+/**
+ * How the player stood when a note was written. New notes carry it; notes
+ * older than the stamp pinned a head instead, and the head still answers —
+ * the log is append-only, so folding it back is exact, and memoised because
+ * it never changes. A wiped world's head no longer folds; that note simply
+ * goes unstamped.
+ */
+const derivedStatus = new Map<string, Status | null>();
+function statusFor(n: Note): Status | null {
+  if (n.status !== null) return n.status;
+  if (n.head === null) return null;
+  if (!derivedStatus.has(n.head)) {
+    let stood: Status | null = null;
+    try {
+      stood = statusOf(fold(log, n.head));
+    } catch { /* the head's world is gone; the words remain */ }
+    derivedStatus.set(n.head, stood);
+  }
+  return derivedStatus.get(n.head) ?? null;
+}
+
+/** One conversation, newest last, each entry stamped with how you stood. */
+function renderNotes(list: HTMLElement, shown: readonly Note[]): void {
+  list.textContent = '';
+  for (const n of shown) {
+    const li = document.createElement('li');
+    li.className = n.channel;
+    const who = document.createElement('span');
+    who.className = 'who';
+    who.textContent = n.channel;
+    const words = document.createElement('span');
+    words.className = 'said';
+    words.textContent = ` “${n.said}”`;
+    li.append(who, words);
+    if (n.reply !== null) li.append(document.createTextNode(` — ${n.reply}`));
+    if (n.trouble !== null) {
+      const bad = document.createElement('span');
+      bad.className = 'trouble';
+      bad.textContent = ` — no reply: ${n.trouble}`;
+      li.append(bad);
+    }
+    const stood = statusFor(n);
+    if (stood !== null) {
+      const when = document.createElement('span');
+      when.className = 'stood';
+      when.textContent = statusLine(stood);
+      li.append(when);
+    }
+    list.appendChild(li);
+  }
+}
+
 /** The lenses, memoised by head — same history, same reading, no recompute. */
 const critic = new CachedCritic();
 
@@ -405,6 +457,9 @@ async function speak(channel: Channel, said: string): Promise<void> {
 
   const note = await send(oracle, channel, said, {
     world: active, head, turn: state.turn, scene: scene(),
+    // How you stand, said once — stamped on the note and told to the
+    // gamemaster in the same words.
+    status: statusOf(state),
     // The gamemaster speaks FOR a world; the bible is which world.
     ...(state.bible === null ? {} : { bible: state.bible }),
   }, new Date().toISOString(), async (n) => {
@@ -1030,27 +1085,13 @@ function render(): void {
   }
 
   // ── what has been said to whom ─────────────────────────────────────────
-  const saidList = el('notes');
-  saidList.textContent = '';
-  for (const n of notes.slice(-6)) {
-    const li = document.createElement('li');
-    li.className = n.channel;
-    const who = document.createElement('span');
-    who.className = 'who';
-    who.textContent = n.channel;
-    const words = document.createElement('span');
-    words.className = 'said';
-    words.textContent = ` “${n.said}”`;
-    li.append(who, words);
-    if (n.reply !== null) li.append(document.createTextNode(` — ${n.reply}`));
-    if (n.trouble !== null) {
-      const bad = document.createElement('span');
-      bad.className = 'trouble';
-      bad.textContent = ` — no reply: ${n.trouble}`;
-      li.append(bad);
-    }
-    saidList.appendChild(li);
-  }
+  // Two conversations, two rooms: the designer's pen stays behind the
+  // screen; the gamemaster listens at the table (its own sheet, one key).
+  // Both are this world's words only — a stamp from another world's floors
+  // would correlate nothing.
+  const ours = notesFor(notes, active);
+  renderNotes(el('notes'), ours.filter((n) => n.channel === 'designer').slice(-6));
+  renderNotes(el('gm-notes'), ours.filter((n) => n.channel === 'gamemaster').slice(-12));
 
   const list = el('refs');
   list.textContent = '';
@@ -1522,10 +1563,11 @@ const KEYMAP: ReadonlyArray<{ shown: string; what: string; button?: string }> = 
   { shown: '. · space', what: 'hold still (this is a turn)' },
   { shown: 'q', what: 'use what the satchel holds (this is a turn too)' },
   { shown: 'PgUp · PgDn', what: 'read back through the journal' },
+  { shown: 't', what: 'talk to the gamemaster — your character, in there', button: 'open-talk' },
   { shown: 'n', what: 'world… — begin again / another / wipe', button: 'open-worlds' },
   { shown: 'g', what: 'the forge — ask the world for a rule', button: 'open-forge' },
-  { shown: 'm', what: 'the gamemaster’s screen — channels, lenses, rules, names, the ledger', button: 'open-screen' },
-  { shown: '1 · 2', what: 'in the screen: write to the designer · to the gamemaster' },
+  { shown: 'm', what: 'the gamemaster’s screen — the founding, lenses, rules, names, the ledger', button: 'open-screen' },
+  { shown: '1', what: 'in the screen: pick up the designer’s pen' },
   { shown: 'r', what: 'begin this world again, straight away', button: 'again' },
   { shown: 'v', what: 'verify every hash and counter in the chain', button: 'verify' },
   { shown: 'f', what: 'fork a new timeline from this moment', button: 'fork' },
@@ -1555,13 +1597,13 @@ window.addEventListener('keydown', (event) => {
 
   // An open sheet owns the keyboard: Escape closes and Enter presses its
   // focused button natively. Game keys through a dialog would be play you
-  // cannot see. The gamemaster's screen adds two of its own: a number picks
-  // up a pen.
+  // cannot see. The gamemaster's screen adds one of its own: a number picks
+  // up the designer's pen.
   if (document.querySelector('dialog[open]') !== null) {
     const screen = el('gm-screen') as HTMLDialogElement;
-    if (screen.open && (event.key === '1' || event.key === '2')) {
+    if (screen.open && event.key === '1') {
       event.preventDefault();
-      el(event.key === '1' ? 'designer-said' : 'gm-said').focus();
+      el('designer-said').focus();
     }
     return;
   }
@@ -2012,12 +2054,19 @@ function watchTheClock(): void {
 
 el('open-forge').addEventListener('click', () => { renderForge(); forge.showModal(); });
 
-// The gamemaster's screen: everything behind the game — the two channels,
-// the lenses, rules, names, the ask queue, worlds, the ledger, the
+// The gamemaster's screen: everything behind the game — the designer's
+// pen, the lenses, rules, names, the ask queue, worlds, the ledger, the
 // floorboards, the fog's other side — one sheet, one key. The play surface
 // keeps the map, the journal and you; the machinery waits behind m.
 el('open-screen').addEventListener('click', () => {
   (el('gm-screen') as HTMLDialogElement).showModal();
+});
+
+// Talking to the world is playing, not machinery — so the gamemaster sits
+// at the top level, one key from the map, pen already in hand.
+el('open-talk').addEventListener('click', () => {
+  (el('gm-talk') as HTMLDialogElement).showModal();
+  el('gm-said').focus();
 });
 
 // Beginning again without having to die for it. The rules stay; everything

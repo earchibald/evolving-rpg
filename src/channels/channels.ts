@@ -1,4 +1,6 @@
 import type { Oracle } from '../oracle/oracle.js';
+import type { GameState } from '../core/state.js';
+import { HEART_KIND } from '../core/tables.js';
 
 /**
  * Two ways to talk, and they are not the same conversation.
@@ -34,6 +36,56 @@ export type Channel = 'designer' | 'gamemaster';
  */
 export type Author = 'player' | 'agent';
 
+/**
+ * How the player stood at the moment a note was written.
+ *
+ * This is the lining-up the module always promised: a note pinned only to a
+ * head can be correlated with play *in principle*, but reading it back means
+ * refolding history. The status carries the answer in the note itself — for
+ * the reader scanning the conversation, for the gamemaster answering it, and
+ * for the Rulesmith weighing "too hard" said at 2 health against "too hard"
+ * said at full.
+ */
+export interface Status {
+  /** Which floor of the nine. */
+  floor: number;
+  turn: number;
+  level: number;
+  hitPoints: number;
+  fullHealth: number;
+  /** What the satchel holds — a provision kind, the heart, or nothing. */
+  carrying: string | null;
+}
+
+/** Reads the player's standing out of a state, or null when there is no
+ *  player to read (a world before its first breath). */
+export function statusOf(state: GameState): Status | null {
+  const you = state.entities.find((e) => e.kind === 'you');
+  if (you === undefined) return null;
+  return {
+    floor: state.depth,
+    turn: state.turn,
+    level: state.level,
+    hitPoints: you.stats.hp,
+    fullHealth: you.maxHp,
+    carrying: you.satchel?.kind ?? null,
+  };
+}
+
+/** One line of plain words for a status — the stamp under a note, and the
+ *  same words a prompt sees, so what the model is told is what you can read. */
+export function statusLine(status: Status): string {
+  const parts = [
+    `floor ${status.floor}`,
+    `turn ${status.turn}`,
+    `level ${status.level}`,
+    status.hitPoints <= 0 ? 'fallen' : `${status.hitPoints}/${status.fullHealth} health`,
+  ];
+  if (status.carrying === HEART_KIND) parts.push('the heart in hand');
+  else if (status.carrying !== null) parts.push(`carrying the ${status.carrying}`);
+  return parts.join(' · ');
+}
+
 export interface Note {
   channel: Channel;
   said: string;
@@ -45,6 +97,9 @@ export interface Note {
   turn: number;
   at: string;
   author: Author;
+  /** How the player stood when this was said. Null on notes older than the
+   *  field — views may still derive it from the head. */
+  status: Status | null;
 }
 
 export const NOTES_KEY = 'evolving-rpg/notes/v1';
@@ -71,6 +126,24 @@ export function readNote(raw: unknown): Note {
     turn: typeof n.turn === 'number' ? n.turn : 0,
     at: typeof n.at === 'string' ? n.at : '',
     author,
+    status: readStatus(n.status),
+  };
+}
+
+/** A status is either whole or absent — a half-read one would stamp a note
+ *  with numbers that were never true together. */
+function readStatus(raw: unknown): Status | null {
+  if (raw === null || typeof raw !== 'object') return null;
+  const s = raw as Partial<Status>;
+  if (typeof s.floor !== 'number' || typeof s.turn !== 'number' || typeof s.level !== 'number'
+    || typeof s.hitPoints !== 'number' || typeof s.fullHealth !== 'number') return null;
+  return {
+    floor: s.floor,
+    turn: s.turn,
+    level: s.level,
+    hitPoints: s.hitPoints,
+    fullHealth: s.fullHealth,
+    carrying: typeof s.carrying === 'string' ? s.carrying : null,
   };
 }
 
@@ -114,6 +187,8 @@ export function notesFor(notes: readonly Note[], world: string, author?: Author)
 const GM_PROMPT = [
   'You are the gamemaster of a cold, quiet, attentive world.',
   'The player is speaking to you in character, about the world around them.',
+  'You are told how they stand — the floor, their wounds, what they carry.',
+  'Let the answer sit in that moment without reciting it back.',
   'Answer in second person, under forty words, concrete and unhurried.',
   'Invent freely, but nothing you say changes the rules or the state of play —',
   'you are describing, not adjudicating.',
@@ -125,6 +200,12 @@ export interface Where {
   turn: number;
   /** Whatever the player can currently see, so the gamemaster is not blind. */
   scene: Record<string, unknown>;
+  /** How the player stands right now. Explicit like `author`, and for the
+   *  same reason: a default is how a stamp quietly becomes a guess. */
+  status: Status | null;
+  /** The world's founding, when it has one — the gamemaster speaks FOR a
+   *  world, and this is which world. */
+  bible?: unknown;
 }
 
 /**
@@ -153,7 +234,15 @@ export async function send(
       const answered = await oracle.consult({
         intent: 'gamemaster',
         subject: said.slice(0, 60),
-        context: { instruction: GM_PROMPT, asked: said, scene: where.scene },
+        context: {
+          instruction: GM_PROMPT,
+          asked: said,
+          scene: where.scene,
+          // The same words the player reads under the note — what the model
+          // is told and what you can check are one line.
+          ...(where.status === null ? {} : { standing: statusLine(where.status) }),
+          ...(where.bible === undefined ? {} : { bible: where.bible }),
+        },
       });
       reply = answered.line === '' ? answered.name : answered.line;
     } catch (error) {
@@ -173,6 +262,7 @@ export async function send(
     // Explicit, with no default. A default is exactly how the distinction
     // erodes: every call site that forgets it silently claims to be the player.
     author,
+    status: where.status,
   };
 
   // Recorded even if the reply failed, and even if recording itself fails —

@@ -53,7 +53,7 @@ const WELL_FORMED = {
 function note(over: Partial<Note> = {}): Note {
   return {
     channel: 'designer', said: 'something', reply: null, trouble: null,
-    world: 'main', head: 'h', turn: 1, at: '2026-07-25T10:00:00.000Z', author: 'player', ...over,
+    world: 'main', head: 'h', turn: 1, at: '2026-07-25T10:00:00.000Z', author: 'player', status: null, ...over,
   };
 }
 

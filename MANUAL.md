@@ -29,8 +29,9 @@ doubt, read the last three lines — they always say what just happened.
 | arrows / wasd | walk — into a creature is an attack, into a wall costs nothing |
 | `.` or space | stand still for a turn |
 | `q` | use what your satchel holds |
+| `t` | talk to the gamemaster — your character speaking, in there |
 | `g` | the forge — where new laws are offered and accepted |
-| `m` | the gamemaster's screen — everything else lives here |
+| `m` | the gamemaster's screen — the founding, your notes to the designer, and everything else |
 | `n` | worlds — begin again, start another, wipe everything |
 | `r` | begin this world again right away |
 | `?` | the keys, on screen |
@@ -132,8 +133,13 @@ what it promises you. Every name in it is drawn from that one identity,
 and no world ever borrows another's names. Wipe it and the next one will
 be someone else entirely.
 
-The gamemaster (`m`, then talk in channel 2) answers from inside the
-world's own fiction. The designer (channel 1) answers from outside it.
+Talk to the gamemaster with `t` — it answers from inside the world's own
+fiction, and it knows how you stand: your floor, your wounds, what you
+carry. Notes to the game designer — you, out here, about the game — live
+in the screen (`m`); the world reads them when it proposes laws. Every
+entry in both conversations keeps the moment it was said: floor, turn,
+level, health, burden. Read an old exchange and you see where you stood
+when you said it.
 
 ---
 
@@ -176,6 +182,8 @@ something else, that is a finding worth reporting.
 | die | body on the map, a † world in the list, and — unasked — a proposed law arrives within a minute |
 | press `r` and walk to where you died | "you stand where you fell" — and the floor that life explored joins your map |
 | open the forge on a fresh world | the bench: two waiting laws about rest and the aftermath, each with its trial verdict |
+| press `t`, ask the world a question | an answer in the world's voice — and under the entry, the moment it was said: floor, turn, level, health |
+| take a wound, ask again, then read both entries | each keeps its own moment; the old one does not change |
 | descend to floor two | a whispered promise in the journal |
 | kill the floor-three warden | "the promise holds — …" |
 | reach floor nine, take the heart | satchel sealed, waves begin, echoes rise if you ever died there |

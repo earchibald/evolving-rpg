@@ -27,6 +27,7 @@
           <dl id="vitals" class="vitals"></dl>
         </section>
         <div class="turn-controls">
+          <button id="open-talk" type="button" class="ghost">talk&hellip; <kbd>t</kbd></button>
           <button id="open-worlds" type="button" class="ghost">world&hellip; <kbd>n</kbd></button>
           <button id="open-forge" type="button" class="ghost">the forge&hellip; <kbd>g</kbd></button>
           <button id="open-screen" type="button" class="ghost">the screen&hellip; <kbd>m</kbd></button>
@@ -44,7 +45,7 @@
 
     <dialog id="gm-screen" class="sheet screen">
       <h2>the gamemaster&rsquo;s screen</h2>
-      <p class="sheet-line">everything behind the game &middot; <kbd>1</kbd> write to the designer &middot; <kbd>2</kbd> the gamemaster &middot; <kbd>esc</kbd> back to play</p>
+      <p class="sheet-line">everything behind the game &middot; <kbd>1</kbd> write to the designer &middot; <kbd>esc</kbd> back to play</p>
 
       <section>
         <h2>this world</h2>
@@ -56,10 +57,6 @@
           <form id="designer-form" class="channel designer">
             <label for="designer-said">to the <strong>game designer</strong> &mdash; you, out here, about the game</label>
             <input id="designer-said" type="text" autocomplete="off" placeholder="the wall bump feels bad" />
-          </form>
-          <form id="gm-form" class="channel gamemaster">
-            <label for="gm-said">to the <strong>gamemaster</strong> &mdash; your character, in there, about the world</label>
-            <input id="gm-said" type="text" autocomplete="off" placeholder="what does the ash smell like?" />
           </form>
         </div>
         <ul id="notes" class="notes scrolls"></ul>
@@ -111,6 +108,16 @@
 
       <form method="dialog">
         <menu><button value="cancel" class="ghost">close <kbd>esc</kbd></button></menu>
+      </form>
+    </dialog>
+
+    <dialog id="gm-talk" class="sheet talk">
+      <h2>the gamemaster</h2>
+      <p class="sheet-line">your character, in there, about the world &middot; every word keeps the moment it was said &middot; <kbd>esc</kbd> back to play</p>
+      <ul id="gm-notes" class="notes scrolls"></ul>
+      <form id="gm-form" class="channel gamemaster">
+        <label for="gm-said">speak &mdash; the world describes; it never adjudicates</label>
+        <input id="gm-said" type="text" autocomplete="off" placeholder="what does the ash smell like?" />
       </form>
     </dialog>
 

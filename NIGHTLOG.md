@@ -799,3 +799,23 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > run in one sitting, from "walk into a wall" to "carry the heart back
 > out". The old WALKTHROUGH.md stays as the technical companion; GESTALT
 > now says out loud that its ladder is climbed, L1 through L4.
+
+> [!NOTE]
+> **14:4x — the conversations know where you were standing**
+> Two of your asks, landed. First: every entry in both chats now carries
+> the moment it was said — floor, turn, level, health, and what you were
+> carrying — stamped on new notes at write time, and derived for every
+> OLD note by refolding the head it pinned (the Note docstring promised
+> "lined up against what was happening later" since the day it was
+> written; today it happens). The gamemaster is told the same standing
+> line you can read, so its answers sit in your situation instead of
+> floating. Second: talking to the gamemaster is top-level play now —
+> `t` opens its own sheet, pen in hand; the screen behind `m` keeps the
+> designer's channel. Found and fixed in passing: the world's founding
+> was never actually reaching the gamemaster (the bible ride-along was
+> dropped between the call site and the consult since the day it was
+> plumbed — the comment claimed otherwise). Live-checked in the pane:
+> asked the pane's sandbox world "what waits below this floor?" and it answered
+> with the warden's pacing, stamped `floor 1 · turn 4 · level 1 ·
+> 10/10 health`; stripped the stamps from storage, reloaded, and they
+> came back derived. 713/713 green.

@@ -44,6 +44,7 @@ function gamemasterPrompt(context: Record<string, unknown>): string {
     ]),
     '',
     `What is around you: ${JSON.stringify(context.scene ?? {})}`,
+    ...(typeof context.standing === 'string' ? [`How the player stands: ${context.standing}`] : []),
     `The player says: ${String(context.asked ?? '')}`,
     '',
     'Reply with ONLY a JSON object, no prose around it, no code fence:',

@@ -274,6 +274,14 @@ h2 {
 .notes .gamemaster .who { color: var(--gamemaster); }
 .notes .said { color: var(--ink); }
 .notes .trouble { color: var(--foe); }
+/* The stamp: how you stood when you said it. Quiet on purpose — it is
+   context for the words, never louder than them. */
+.notes .stood { display: block; font-size: .72rem; color: var(--faint); letter-spacing: .03em; }
+
+/* The gamemaster at the table: a taller conversation than the screen's
+   six-line designer log, input at the bottom where a conversation ends. */
+.sheet.talk { width: min(46rem, 92vw); }
+.sheet.talk .notes { height: 16rem; max-width: none; }
 
 /* ── true, but not urgent, and still on screen ────────────────────────── */
 

@@ -13,7 +13,7 @@ import type { Note } from '../../src/channels/channels.js';
  * evolves towards whatever a test fixture happened to say.
  */
 
-const WHERE = { world: 'main', head: 'abc123', turn: 7, scene: {} };
+const WHERE = { world: 'main', head: 'abc123', turn: 7, scene: {}, status: null };
 const AT = '2026-07-25T00:00:00.000Z';
 
 function sink(): { post: (n: Note) => Promise<void>; written: Note[] } {
@@ -76,7 +76,7 @@ describe('who wrote it', () => {
 describe('surviving a reload', () => {
   const note = (over: Partial<Note> = {}): Note => ({
     channel: 'designer', said: 'something', reply: null, trouble: null,
-    world: 'main', head: 'h', turn: 1, at: AT, author: 'player', ...over,
+    world: 'main', head: 'h', turn: 1, at: AT, author: 'player', status: null, ...over,
   });
 
   it('comes back after the page is closed', () => {
@@ -107,7 +107,7 @@ describe('surviving a reload', () => {
 describe('which world a note belongs to', () => {
   const note = (world: string, said: string, author: 'player' | 'agent' = 'player'): Note => ({
     channel: 'designer', said, reply: null, trouble: null,
-    world, head: 'h', turn: 1, at: AT, author,
+    world, head: 'h', turn: 1, at: AT, author, status: null,
   });
 
   it('picks out one world\'s notes, in the order they were written', () => {
@@ -129,7 +129,7 @@ describe('wiping', () => {
     // clear it.
     saveNotes([{
       channel: 'designer', said: 'still here?', reply: null, trouble: null,
-      world: 'main', head: null, turn: 1, at: AT, author: 'player',
+      world: 'main', head: null, turn: 1, at: AT, author: 'player', status: null,
     }]);
     expect(loadNotes()).toHaveLength(1);
 
