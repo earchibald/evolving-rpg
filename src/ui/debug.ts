@@ -3,10 +3,10 @@ import { emptyRefs, createRef, getRef, setHead, fork, reset, listRefs } from '..
 import { createWorld, ratifyRule, foundWorld } from '../core/commands.js';
 import { validateBible, isRefusedBible } from '../canon/bible.js';
 import { smithName, DEFAULT_WORDS } from '../canon/namesmith.js';
-import { playerStep, playerWait, playerUse, runWorldTurns, buryIfDead, beginAgain, descend, isGrave } from '../play/session.js';
+import { playerStep, playerWait, playerUse, playerShove, playerBrace, runWorldTurns, buryIfDead, beginAgain, descend, isGrave } from '../play/session.js';
 import { isAlive } from '../core/entity.js';
 import { outcome, hitChance } from '../core/commands.js';
-import { damageDice, XP_TO_REACH, slotOf, critFloor, HEART_KIND } from '../core/tables.js';
+import { damageDice, XP_TO_REACH, slotOf, critFloor, HEART_KIND, SLAM_DAMAGE } from '../core/tables.js';
 import { itemAt } from '../core/item.js';
 import { save, load, clear, emptySession } from '../play/store.js';
 import {
@@ -1168,7 +1168,26 @@ function narrate(fresh: readonly GameEvent[], state: ReturnType<typeof fold>): s
       lines.push(`blocked: ${event.payload.reason} — no turn spent`);
       continue;
     }
-    if (event.type === 'WAIT') { lines.push('you hold still'); continue; }
+    if (event.type === 'WAIT') {
+      // A creature's wait only ever reaches the chain as a spent stagger —
+      // ordinary creature waits are silence by design (draftFor).
+      lines.push(event.payload.entityId === 'player'
+        ? 'you hold still'
+        : `${named(state, event.payload.entityId)} reels, and recovers`);
+      continue;
+    }
+    if (event.type === 'BRACED') {
+      lines.push('you set yourself against the coming round');
+      continue;
+    }
+    if (event.type === 'SHOVE') {
+      const p = event.payload;
+      const them = named(state, p.targetId);
+      if (p.slammed) lines.push(`you drive ${them} into the wall — it takes ${SLAM_DAMAGE} and reels`);
+      else if (p.struckId !== null) lines.push(`you drive ${them} into ${named(state, p.struckId)} — both reel`);
+      else lines.push(`you drive ${them} back a pace`);
+      continue;
+    }
     if (event.type === 'MOVE' && event.payload.entityId === 'player'
         && tileAt(state.grid, event.payload.to.x, event.payload.to.y) === SECRET) {
       lines.push('the wall gives way — it was never a wall');
@@ -1277,11 +1296,16 @@ function narrate(fresh: readonly GameEvent[], state: ReturnType<typeof fold>): s
     const shoved = p.targetTo !== undefined && p.targetId === 'player'
       ? ` — the blow drives you back a pace and ${them} lumbers after`
       : '';
+    // The brace's tooth, said out loud: a miss against a set guard reels.
+    const countered = !mine && !p.hit
+      && state.entities.find((x) => x.id === 'player')?.tags.includes('braced') === true
+      ? ' — it breaks on your set guard and reels'
+      : '';
     lines.push(mine
       ? (p.hit ? `you hit ${them} for ${p.damage}${clean} ${roll}` : `you miss ${them} ${roll}`)
       : (p.hit
         ? `${sprung}${lunged}${them} hits you for ${p.damage}${clean} ${roll}${shoved}`
-        : `${lunged}${them} misses you ${roll}`));
+        : `${lunged}${them} misses you ${roll}${countered}`));
   }
 
   return lines;
@@ -1571,6 +1595,42 @@ function use(): void {
   finish(before, after.head);
 }
 
+/** Armed by x: the next direction key shoves instead of steps. Any other
+ *  key stands down — a mode you can be trapped in is a mode that walks you
+ *  into something. */
+let shoveArmed = false;
+
+function shove(dx: number, dy: number): void {
+  const head = getRef(refs, active).head;
+  if (head === null) return;
+
+  const before = chain(log, head).length;
+  const pushed = playerShove({ log, head }, 'player', dx, dy);
+  if (pushed.draft === null) {
+    say('nothing hostile stands that way — no turn spent');
+    return;
+  }
+  const after = runWorldTurns(pushed.position, 'player');
+  log = after.log;
+  refs = setHead(refs, active, after.head);
+
+  finish(before, after.head);
+}
+
+function brace(): void {
+  const head = getRef(refs, active).head;
+  if (head === null) return;
+
+  const before = chain(log, head).length;
+  const set = playerBrace({ log, head }, 'player');
+  if (set.draft === null) return;
+  const after = runWorldTurns(set.position, 'player');
+  log = after.log;
+  refs = setHead(refs, active, after.head);
+
+  finish(before, after.head);
+}
+
 function wire(formId: string, inputId: string, channel: Channel): void {
   const form = el(formId) as HTMLFormElement;
   const input = el(inputId) as HTMLInputElement;
@@ -1599,6 +1659,8 @@ const KEYMAP: ReadonlyArray<{ shown: string; what: string; button?: string }> = 
   { shown: '← ↑ → ↓ · wasd', what: 'move — into a creature is a strike, into a wall is free' },
   { shown: '. · space', what: 'hold still (this is a turn)' },
   { shown: 'q', what: 'use what the satchel holds (this is a turn too)' },
+  { shown: 'x, then a direction', what: 'shove — drive what stands beside you one pace; walls hurt, bodies tangle' },
+  { shown: 'z', what: 'brace — set against the coming round; a blow that misses you staggers' },
   { shown: 'PgUp · PgDn', what: 'read back through the journal' },
   { shown: 't', what: 'talk to the gamemaster — your character, in there', button: 'open-talk' },
   { shown: 'n', what: 'world… — begin again / another / wipe', button: 'open-worlds' },
@@ -1657,20 +1719,40 @@ window.addEventListener('keydown', (event) => {
 
   if (event.key === '.' || event.key === ' ') {
     event.preventDefault();
+    shoveArmed = false;
     hold();
     return;
   }
   if (event.key === 'q') {
     event.preventDefault();
+    shoveArmed = false;
     use();
+    return;
+  }
+  if (event.key === 'x') {
+    event.preventDefault();
+    shoveArmed = true;
+    say('shove — which way?');
+    return;
+  }
+  if (event.key === 'z') {
+    event.preventDefault();
+    shoveArmed = false;
+    brace();
     return;
   }
   const move = KEYS[event.key];
   if (move !== undefined) {
     event.preventDefault();
-    step(move[0], move[1]);
+    if (shoveArmed) {
+      shoveArmed = false;
+      shove(move[0], move[1]);
+    } else {
+      step(move[0], move[1]);
+    }
     return;
   }
+  shoveArmed = false;
 
   const pressed = BUTTON_KEYS[event.key];
   if (pressed !== undefined) {

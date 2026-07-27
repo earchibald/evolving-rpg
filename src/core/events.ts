@@ -26,6 +26,8 @@ export const SCHEMA_VERSIONS = {
   RULE_FIRED: 1,
   VIGIL_KEPT: 1,
   WORLD_STIRRED: 1,
+  SHOVE: 1,
+  BRACED: 1,
 } as const;
 
 export type EventType = keyof typeof SCHEMA_VERSIONS;
@@ -189,6 +191,35 @@ export interface StrikePayload {
   ambush?: boolean;
 }
 
+/**
+ * The player's shove: position as a weapon, dice not invited.
+ *
+ * Fully deterministic — displacement never misses (Into the Breach's rule:
+ * a tool you reason with cannot be a tool that gambles). Three endings,
+ * resolved at command time and recorded whole: driven into open ground
+ * (`to`), driven into a wall or the door frame (`slammed` — SLAM_DAMAGE and
+ * a stagger; the wall is the argument), or driven into another body
+ * (`struckId` — both reel, nobody moves). Consumes zero draws.
+ */
+export interface ShovePayload {
+  shoverId: string;
+  targetId: string;
+  /** Where the target ends up, or null when something denied the ground. */
+  to: Pos | null;
+  /** The wall (or the door frame) stopped them: SLAM_DAMAGE, staggered. */
+  slammed: boolean;
+  /** The body they were driven into, staggered along with them. */
+  struckId: string | null;
+}
+
+/** The player set against the coming round. The stance is a tag the reducer
+ *  writes and the player's next action of any kind removes — recorded as an
+ *  event because standing guard is a decision that spends the turn, and the
+ *  chronicle should tell it apart from simply standing. */
+export interface BracedPayload {
+  entityId: string;
+}
+
 /** A warden back at its post with the intruder gone, knitting shut. The heal
  *  is an event because hit points may only change on the chain — and it is
  *  its own type rather than a STRIKE special case because "the fight reset"
@@ -237,6 +268,8 @@ export type DraftEvent =
   | { type: 'RULE_RATIFIED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: RuleRatifiedPayload }
   | { type: 'RULE_FIRED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: RuleFiredPayload }
   | { type: 'VIGIL_KEPT'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: VigilKeptPayload }
-  | { type: 'WORLD_STIRRED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: WorldStirredPayload };
+  | { type: 'WORLD_STIRRED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: WorldStirredPayload }
+  | { type: 'SHOVE'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: ShovePayload }
+  | { type: 'BRACED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: BracedPayload };
 
 export type GameEvent = DraftEvent & { id: string; parent: string | null; seq: number };

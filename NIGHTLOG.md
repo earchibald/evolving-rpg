@@ -839,3 +839,19 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > the dying world sneak names into the fresh canon (invisible before only
 > because the model was slow). The founding now asks for ~40 palette words
 > instead of 20, per the research's repetition math. 732/732 green.
+
+> [!NOTE]
+> **16:0x — the player gets verbs: shove and brace**
+> The research's sharpest line: the monsters got verbs and the player got
+> none, and no amount of loot fixes that asymmetry. So now — press x and a
+> direction to SHOVE: drive what stands beside you one pace, no dice (a
+> tool you position with cannot gamble — Into the Breach's rule, adopted
+> whole). Open ground displaces; a wall slams (one harm and it reels); a
+> body behind means both tangle and reel. Press z to BRACE: set against
+> the coming round — harder to hit by two-plus-half-your-wits, a trample
+> cannot drive you back, a coiled spring breaks on the guard, and any blow
+> that misses a set guard staggers the attacker. Staggered things lose
+> their next action, said in the journal as a reel. Wits finally earns its
+> keep on defense. Zero new dice anywhere; bots don't use either yet, so
+> the golden replay passed bit-identical and every balance pin held
+> without retuning. 746/746 green.

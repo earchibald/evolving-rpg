@@ -1,9 +1,10 @@
 import { makeGrid } from './grid.js';
 import { applyResolved } from '../canon/interpret.js';
-import { threatOf, levelForXp, growthAt, slotOf } from './tables.js';
+import { threatOf, levelForXp, growthAt, slotOf, SLAM_DAMAGE } from './tables.js';
 import { NO_BODIES } from './state.js';
 import type { GameEvent } from './events.js';
 import type { GameState } from './state.js';
+import type { Entity } from './entity.js';
 
 /**
  * Experience, paid at the moment of the kill.
@@ -53,6 +54,21 @@ function creditKills(before: GameState, after: GameState, killerId: string, play
   }
 
   return { ...after, xp, level, entities };
+}
+
+/** A stance ends the moment its holder acts. Every event with an actor runs
+ *  its actor through here; BRACED itself is the only writer of the tag. */
+function unbraced(entities: readonly Entity[], actorId: string): readonly Entity[] {
+  const held = entities.find((e) => e.id === actorId);
+  if (held === undefined || !held.tags.includes('braced')) return entities;
+  return entities.map((e) =>
+    e.id === actorId ? { ...e, tags: e.tags.filter((t) => t !== 'braced') } : e,
+  );
+}
+
+/** Reeling, at most once — a second stagger on a staggered thing is spent. */
+function staggered(tags: string[]): string[] {
+  return tags.includes('staggered') ? tags : [...tags, 'staggered'];
 }
 
 /**
@@ -152,7 +168,7 @@ function reduce(state: GameState, event: GameEvent): GameState {
       const p = event.payload;
       return {
         ...state,
-        entities: state.entities.map((e) =>
+        entities: unbraced(state.entities, p.entityId).map((e) =>
           e.id === p.entityId ? { ...e, pos: { x: p.to.x, y: p.to.y } } : e,
         ),
       };
@@ -161,11 +177,26 @@ function reduce(state: GameState, event: GameEvent): GameState {
     case 'MOVE_BLOCKED':
       return state;
 
-    // Waiting changes nothing by itself. It exists so that passing time is a
-    // choice a player can make rather than something only walls impose on them
-    // — and so the chronicle can tell "held position" apart from "had no move".
-    case 'WAIT':
-      return state;
+    // Waiting changes almost nothing by itself. It exists so that passing
+    // time is a choice a player can make rather than something only walls
+    // impose on them — and so the chronicle can tell "held position" apart
+    // from "had no move". What it does spend: a stagger reels itself out on
+    // the skipped action, and a stance is an action's worth of standing.
+    case 'WAIT': {
+      const p = event.payload;
+      const me = state.entities.find((e) => e.id === p.entityId);
+      if (me === undefined || (!me.tags.includes('staggered') && !me.tags.includes('braced'))) {
+        return state;
+      }
+      return {
+        ...state,
+        entities: state.entities.map((e) =>
+          e.id === p.entityId
+            ? { ...e, tags: e.tags.filter((t) => t !== 'staggered' && t !== 'braced') }
+            : e,
+        ),
+      };
+    }
 
     case 'ITEM_TAKEN': {
       const p = event.payload;
@@ -225,13 +256,19 @@ function reduce(state: GameState, event: GameEvent): GameState {
 
     case 'STRIKE': {
       const p = event.payload;
+      // Whether the blow found a set guard — read before anything moves,
+      // because it is the state the blow was thrown into.
+      const guarded = state.entities.find((e) => e.id === p.targetId)?.tags.includes('braced') === true;
+      // The attacker's own stance (a player striking out of a brace) ends
+      // with the action.
+      const acted = unbraced(state.entities, p.attackerId);
       // The verbs' movement applies whether or not the blow landed: a lunge
       // that whiffs still crossed the ground (attackerTo rides on misses for
       // lunges; trample fields are only ever written on landed, surviving
       // blows — the command decides, replay applies).
       const moved = p.attackerTo === undefined && p.targetTo === undefined
-        ? state.entities
-        : state.entities.map((e) => {
+        ? acted
+        : acted.map((e) => {
           if (e.id === p.attackerId && p.attackerTo !== undefined) {
             return { ...e, pos: { x: p.attackerTo.x, y: p.attackerTo.y } };
           }
@@ -240,7 +277,15 @@ function reduce(state: GameState, event: GameEvent): GameState {
           }
           return e;
         });
-      if (!p.hit) return moved === state.entities ? state : { ...state, entities: moved };
+      if (!p.hit) {
+        // Missing a set guard is overcommitment: the attacker reels. This is
+        // the brace's tooth — derived from the tag the blow was thrown at,
+        // so replay reads it the same forever.
+        const after = guarded
+          ? moved.map((e) => (e.id === p.attackerId ? { ...e, tags: staggered(e.tags) } : e))
+          : moved;
+        return after === state.entities ? state : { ...state, entities: after };
+      }
       return creditKills(state, {
         ...state,
         entities: moved.map((e) => {
@@ -260,12 +305,43 @@ function reduce(state: GameState, event: GameEvent): GameState {
       }, p.attackerId);
     }
 
+    case 'SHOVE': {
+      const p = event.payload;
+      const after = unbraced(state.entities, p.shoverId).map((e) => {
+        if (e.id === p.targetId) {
+          const reels = p.slammed || p.struckId !== null;
+          return {
+            ...e,
+            pos: p.to === null ? e.pos : { x: p.to.x, y: p.to.y },
+            stats: { ...e.stats, hp: p.slammed ? Math.max(0, e.stats.hp - SLAM_DAMAGE) : e.stats.hp },
+            tags: reels ? staggered(e.tags) : e.tags,
+          };
+        }
+        if (p.struckId !== null && e.id === p.struckId) return { ...e, tags: staggered(e.tags) };
+        return e;
+      });
+      // A slam can finish a wounded thing; the kill pays like any other.
+      return creditKills(state, { ...state, entities: after }, p.shoverId);
+    }
+
+    case 'BRACED': {
+      const p = event.payload;
+      return {
+        ...state,
+        entities: state.entities.map((e) =>
+          e.id === p.entityId && !e.tags.includes('braced')
+            ? { ...e, tags: [...e.tags, 'braced'] }
+            : e,
+        ),
+      };
+    }
+
     case 'ITEM_USED': {
       // The satchel spent. Effects were resolved when the command ran and
       // are applied verbatim — replay never re-decides how much a draught
       // mended or who the smoke fooled.
       const p = event.payload;
-      const emptied = state.entities.map((e) => {
+      const emptied = unbraced(state.entities, p.entityId).map((e) => {
         if (e.id !== p.entityId) return e;
         const { satchel: _spent, ...rest } = e;
         if (p.effect.kind === 'draught') {

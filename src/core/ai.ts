@@ -112,6 +112,10 @@ export function decide(state: GameState, entityId: string): Action {
   const self = findEntity(state.entities, entityId);
   if (self === undefined || !isAlive(self)) return { kind: 'wait' };
 
+  // Reeling spends the action. The wait it decides is the event that clears
+  // the tag — one stagger, one lost turn, no bookkeeping anywhere else.
+  if (self.tags.includes('staggered')) return { kind: 'wait' };
+
   const quarry = state.entities.find((e) => e.kind === 'you' && isAlive(e));
   if (quarry === undefined) return { kind: 'wait' };
 

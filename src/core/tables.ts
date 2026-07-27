@@ -240,6 +240,26 @@ export const AMBUSH_MIGHT_BONUS = 2;
  *  holds about one death of slack, and a first-blow band jump spends it. */
 export const AMBUSH_FROM_DEPTH = 2;
 
+/* ── the player's verbs ─────────────────────────────────────────────────── */
+
+/**
+ * The brace: set against the next blow. The monsters got verbs and the
+ * player got none — that asymmetry was the gap the research kept pointing
+ * at (Into the Breach's answer-every-telegraph discipline). Braced, you are
+ * harder to hit by 2 + wits/2 — wits is the stat that sees the blow coming
+ * — a trample cannot drive you back, a coiled spring breaks on the guard,
+ * and anything that MISSES a set guard staggers, having overcommitted.
+ * One round only: your next action of any kind drops the stance, so brace
+ * is a read of the coming turn, never a place to live.
+ */
+export function braceWall(wits: number): number {
+  return 2 + Math.floor(Math.max(0, wits) / 2);
+}
+
+/** What a body driven into a wall takes. One point: the shove is a tool of
+ *  position, not a damage source — the wall is the argument. */
+export const SLAM_DAMAGE = 1;
+
 /** How far (steps of walking) a warden will be drawn from its post. Five
  *  covers the stair room; past it the warden turns back — the stairs are
  *  what it is for, and a boss kited across the floor is a boss solved. */

@@ -1,7 +1,7 @@
 import { append, fold, chain } from '../log/chain.js';
 import { getRef, fork, setHead, listRefs } from '../log/refs.js';
 import type { Refs } from '../log/refs.js';
-import { attemptMove, advanceTurn, endsTurn, wait, takeUnderfoot, outcome, ratifyRule, foundWorld, createWorld, recordBodies, lungeStrike, vigilKept, useCarried, stirWorld, heartHeld } from '../core/commands.js';
+import { attemptMove, advanceTurn, endsTurn, wait, takeUnderfoot, outcome, ratifyRule, foundWorld, createWorld, recordBodies, lungeStrike, vigilKept, useCarried, stirWorld, heartHeld, shoveAt, braceSelf } from '../core/commands.js';
 import { BOTTOM_DEPTH, WAVE_EVERY } from '../core/tables.js';
 import { u32 } from '../core/rng.js';
 import { decide } from '../core/ai.js';
@@ -153,8 +153,14 @@ function passTurn(position: Position, playerId: string): Position {
  * separate path would let their combat drift away from the player's. One rule,
  * one code path, whoever is swinging.
  */
-function draftFor(state: GameState, entityId: string, action: Action): DraftEvent | null {
-  if (action.kind === 'wait') return null;
+export function draftFor(state: GameState, entityId: string, action: Action): DraftEvent | null {
+  if (action.kind === 'wait') {
+    // Ordinary waits are silence, not history. A staggered thing's wait is
+    // different: the reel spends itself on this skipped action, and only an
+    // event can clear the tag — so this one wait is a fact on the chain.
+    const reeling = findEntity(state.entities, entityId)?.tags.includes('staggered') === true;
+    return reeling ? wait(state, entityId) : null;
+  }
 
   if (action.kind === 'step') return attemptMove(state, entityId, action.dx, action.dy);
 
@@ -221,6 +227,32 @@ export function playerUse(position: Position, playerId: string): {
 
   const draft = useCarried(state, playerId);
   if (draft === null) return { position, draft: null };
+  return { position: commit(position, draft, playerId, playerId), draft };
+}
+
+/** Drive an adjacent hostile one pace. Refuses quietly (no turn) when
+ *  nothing hostile stands that way — a mispress, not a decision. */
+export function playerShove(position: Position, playerId: string, dx: number, dy: number): {
+  position: Position;
+  draft: DraftEvent | null;
+} {
+  const state = fold(position.log, position.head);
+  if (outcome(state, playerId) !== 'playing') return { position, draft: null };
+
+  const draft = shoveAt(state, playerId, dx, dy);
+  if (draft === null) return { position, draft: null };
+  return { position: commit(position, draft, playerId, playerId), draft };
+}
+
+/** Set against the coming round. Always a turn — a stance is a decision. */
+export function playerBrace(position: Position, playerId: string): {
+  position: Position;
+  draft: DraftEvent | null;
+} {
+  const state = fold(position.log, position.head);
+  if (outcome(state, playerId) !== 'playing') return { position, draft: null };
+
+  const draft = braceSelf(state, playerId);
   return { position: commit(position, draft, playerId, playerId), draft };
 }
 

@@ -2,7 +2,7 @@ import { generateMap, pickSpawnPoints, farthestFrom, withExit, walkDistance, sea
 import { inBounds, isPassable } from './grid.js';
 import { findEntity, isAlive } from './entity.js';
 import { intBetween } from './rng.js';
-import { neededToHit, chanceIn20, damageDice, critFloor, WHIFF, BESTIARY, creatureStats, threatOf, spawnBudget, depthBands, wardenAt, ARMORY, relicGrant, slotOf, grantValue, motifAt, verbOf, wardenLevel, AMBUSH_MIGHT_BONUS, AMBUSH_FROM_DEPTH, PROVISIONS, provisionOf, draughtCeiling, smokeTurns, BOTTOM_DEPTH, HEART_KIND, WAVE_DISTANCE } from './tables.js';
+import { neededToHit, chanceIn20, damageDice, critFloor, WHIFF, BESTIARY, creatureStats, threatOf, spawnBudget, depthBands, wardenAt, ARMORY, relicGrant, slotOf, grantValue, motifAt, verbOf, wardenLevel, AMBUSH_MIGHT_BONUS, AMBUSH_FROM_DEPTH, braceWall, PROVISIONS, provisionOf, draughtCeiling, smokeTurns, BOTTOM_DEPTH, HEART_KIND, WAVE_DISTANCE } from './tables.js';
 import type { Relic } from './tables.js';
 import type { Entity, Stats, Pos } from './entity.js';
 import { itemAt } from './item.js';
@@ -81,7 +81,11 @@ function resolveStrike(
   target: Entity,
 ): { roll: number; needed: number; hit: boolean; damage: number; crit: boolean } {
   const roll = intBetween(seed, counter, 1, 20);
-  const needed = toHit(attacker, target);
+  // The set guard raises the bar: harder to hit by 2 + wits/2 — wits is the
+  // stat that reads the incoming blow. Baked into `needed` so the recorded
+  // event and every tooltip say the truth the roll actually faced.
+  const needed = toHit(attacker, target)
+    + (target.tags.includes('braced') ? braceWall(target.stats.wits) : 0);
 
   // The naturals outrank the arithmetic: the crit band always lands and
   // doubles, a 1 always misses. Wits widens the band — the one mechanical job
@@ -96,8 +100,10 @@ function resolveStrike(
   // step): the coiled spring, released. To-hit is untouched — stillness
   // sharpens the blow, not the aim — and the bonus caps at one band because
   // a first strike that can kill from full health is a no-warning spike,
-  // and the tradition deleted those.
-  const { die, flat } = damageDice(attacker.stats.might + (springLoaded(attacker) ? AMBUSH_MIGHT_BONUS : 0));
+  // and the tradition deleted those. A braced guard breaks the spring: the
+  // bonus is absorbed, the coil still spends itself.
+  const sprung = springLoaded(attacker) && !target.tags.includes('braced');
+  const { die, flat } = damageDice(attacker.stats.might + (sprung ? AMBUSH_MIGHT_BONUS : 0));
   const rolledDamage = intBetween(seed, counter + 1, 1, die) + flat;
   return { roll, needed, hit, crit, damage: hit ? (crit ? rolledDamage * 2 : rolledDamage) : 0 };
 }
@@ -490,7 +496,9 @@ export function attemptMove(state: GameState, entityId: string, dx: number, dy: 
     // an exit you can be knocked through is an escape you did not choose.
     const verbExtras: { attackerTo?: Pos; targetTo?: Pos; ambush?: boolean } = {};
     if (springLoaded(mover) && outcome.hit) verbExtras.ambush = true;
-    if (verbOf(mover.kind) === 'trample' && outcome.hit && occupant.stats.hp > outcome.damage) {
+    // A braced target holds their ground: the trample lands as a plain blow.
+    if (verbOf(mover.kind) === 'trample' && outcome.hit && occupant.stats.hp > outcome.damage
+      && !occupant.tags.includes('braced')) {
       const behind = { x: occupant.pos.x + dx, y: occupant.pos.y + dy };
       const denied = !inBounds(state.grid, behind.x, behind.y)
         || !isPassable(state.grid, behind.x, behind.y)
@@ -583,6 +591,66 @@ export function lungeStrike(
     rngCounter: state.rngCounter,
     rngDraws: STRIKE_DRAWS,
     payload: { attackerId: entityId, targetId, ...outcome, attackerTo: via },
+  };
+}
+
+/**
+ * The player's shove: drive an adjacent hostile one tile along the push.
+ *
+ * Deterministic on purpose — no roll, no draws. A tool you position with
+ * cannot be a tool that gambles (Into the Breach's rule, adopted whole).
+ * Open ground displaces; a wall or the door frame slams (SLAM_DAMAGE and a
+ * stagger — the wall is the argument); another body means collision — both
+ * reel, nobody moves. Null when there is nothing hostile to shove that way:
+ * a mispress, not a turn.
+ */
+export function shoveAt(
+  state: GameState,
+  entityId: string,
+  dx: number,
+  dy: number,
+): Extract<DraftEvent, { type: 'SHOVE' }> | null {
+  const mover = findEntity(state.entities, entityId);
+  if (mover === undefined) return null;
+  const at = { x: mover.pos.x + dx, y: mover.pos.y + dy };
+  const target = state.entities.find(
+    (e) => e.id !== entityId && isAlive(e) && e.pos.x === at.x && e.pos.y === at.y,
+  );
+  if (target === undefined || !isHostile(mover, target)) return null;
+
+  const behind = { x: target.pos.x + dx, y: target.pos.y + dy };
+  const payload = ((): { to: Pos | null; slammed: boolean; struckId: string | null } => {
+    // The world's edge and the way out stop a body the way a wall does.
+    if (!inBounds(state.grid, behind.x, behind.y)
+      || !isPassable(state.grid, behind.x, behind.y)
+      || tileAt(state.grid, behind.x, behind.y) === EXIT) {
+      return { to: null, slammed: true, struckId: null };
+    }
+    const inTheWay = state.entities.find(
+      (e) => e.id !== target.id && isAlive(e) && e.pos.x === behind.x && e.pos.y === behind.y,
+    );
+    if (inTheWay !== undefined) return { to: null, slammed: false, struckId: inTheWay.id };
+    return { to: behind, slammed: false, struckId: null };
+  })();
+
+  return {
+    type: 'SHOVE',
+    schemaVersion: SCHEMA_VERSIONS.SHOVE,
+    rngCounter: state.rngCounter,
+    rngDraws: 0,
+    payload: { shoverId: entityId, targetId: target.id, ...payload },
+  };
+}
+
+/** The player set against the coming round. Costs the turn; the stance
+ *  lasts until their next action of any kind. */
+export function braceSelf(state: GameState, entityId: string): Extract<DraftEvent, { type: 'BRACED' }> {
+  return {
+    type: 'BRACED',
+    schemaVersion: SCHEMA_VERSIONS.BRACED,
+    rngCounter: state.rngCounter,
+    rngDraws: 0,
+    payload: { entityId },
   };
 }
 
