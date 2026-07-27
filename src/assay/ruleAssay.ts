@@ -302,8 +302,15 @@ export function assayRule(rule: Rule): RuleAssay {
   const meanSwing = hpSwing / PROPORTION_SEEDS.length;
   if (Math.abs(meanSwing) >= 4 || flips >= 3) {
     const direction = meanSwing >= 0 ? 'in the player\'s favour' : 'against the player';
+    // A body-gated rule was weighed on a floor strewn with bodies — the gate
+    // stood open the whole run. Said beside the number, because a ratifier
+    // reading "heavier than a relic" deserves to know it was the heaviest
+    // case, not the typical one.
+    const strewn = env.body === true
+      ? ' (weighed on a floor strewn with bodies — the heaviest case, not the typical one)'
+      : '';
     findings.push(
-      `caution (M6): across ${String(PROPORTION_SEEDS.length)} rerolled fights this rule swings hit points left by ${meanSwing.toFixed(1)} and flips ${String(flips)} outcome(s) ${direction} — heavier than a relic; weigh it before ratifying`,
+      `caution (M6): across ${String(PROPORTION_SEEDS.length)} rerolled fights this rule swings hit points left by ${meanSwing.toFixed(1)} and flips ${String(flips)} outcome(s) ${direction} — heavier than a relic; weigh it before ratifying${strewn}`,
     );
   }
 

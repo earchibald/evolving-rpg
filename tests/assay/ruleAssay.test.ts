@@ -262,6 +262,10 @@ describe('the trials meet the rule where it lives (VOCABULARY.md §2)', () => {
     }));
     expect(got.verdict).toBe('sound');
     expect(got.neverFired).toBe(false);
+    // If proportion weighs it, the caution says the floor was strewn — the
+    // ratifier must know the swing is the heaviest case, not the typical one.
+    const m6 = got.findings.find((f) => f.includes('M6'));
+    if (m6 !== undefined) expect(m6).toMatch(/strewn with bodies/);
   });
 
   it('still cautions honestly when the gate is one no trial can open', () => {
