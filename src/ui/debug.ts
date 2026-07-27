@@ -6,7 +6,7 @@ import { smithName, DEFAULT_WORDS } from '../canon/namesmith.js';
 import { playerStep, playerWait, playerUse, playerShove, playerBrace, runWorldTurns, buryIfDead, beginAgain, descend, isGrave } from '../play/session.js';
 import { isAlive } from '../core/entity.js';
 import { outcome, hitChance } from '../core/commands.js';
-import { damageDice, XP_TO_REACH, slotOf, critFloor, HEART_KIND, SLAM_DAMAGE } from '../core/tables.js';
+import { damageDice, XP_TO_REACH, slotOf, critFloor, verbOf, HEART_KIND, SLAM_DAMAGE, VENOM_TURNS } from '../core/tables.js';
 import { itemAt } from '../core/item.js';
 import { save, load, clear, emptySession } from '../play/store.js';
 import {
@@ -718,6 +718,13 @@ function render(): void {
     ...(state.smoke !== null && state.turn < state.smoke.until
       ? [['the air', `smoke holds for ${state.smoke.until - state.turn} more turn(s) — hunts chase where you were`, 'good'] as [string, string, string]]
       : []),
+    // Venom in you: named, counted down, colored like the wound it is.
+    ...((): [string, string, string][] => {
+      const burning = player?.tags.find((t) => t.startsWith('venom-'));
+      return burning === undefined
+        ? []
+        : [['your blood', `venom burns for ${burning.slice('venom-'.length)} more round(s) — 1 each`, 'bad']];
+    })(),
     ['the way out', toExit, done === 'escaped' ? 'good' : ''],
     ['standing at', player === undefined ? '—' : `${player.pos.x}, ${player.pos.y}`, ''],
     ['turn', String(state.turn), ''],
@@ -901,9 +908,11 @@ function render(): void {
       // A coiled thing's stillness is the tell — the rail says it out loud,
       // and warns what the spring costs (one damage band harder).
       const coiled = e.tags.includes('ambush') ? ' · coiled — its first blow lands harder' : '';
+      const crying = e.tags.includes('call') ? ' · unspent voice — it will wake the floor' : '';
+      const bites = verbOf(e.kind) === 'venom' ? ' · venomed teeth — its wounds keep burning' : '';
       odds.textContent = player === undefined
         ? `hp ${e.stats.hp}`
-        : `hp ${e.stats.hp} · ${away} away · you ${pct(player, e)} ${swing(player.stats.might)} · it ${pct(e, player)} ${swing(e.stats.might)}${coiled}`;
+        : `hp ${e.stats.hp} · ${away} away · you ${pct(player, e)} ${swing(player.stats.might)} · it ${pct(e, player)} ${swing(e.stats.might)}${coiled}${crying}${bites}`;
     }
     li.append(who, odds);
     threats.appendChild(li);
@@ -1180,6 +1189,12 @@ function narrate(fresh: readonly GameEvent[], state: ReturnType<typeof fold>): s
       lines.push('you set yourself against the coming round');
       continue;
     }
+    if (event.type === 'CALLED') {
+      const n = event.payload.opponents.length;
+      lines.push(`${named(state, event.payload.callerId)} cries out — and the floor answers: ${
+        n === 1 ? 'something stirs' : `${n} things stir`} in the far dark`);
+      continue;
+    }
     if (event.type === 'SHOVE') {
       const p = event.payload;
       const them = named(state, p.targetId);
@@ -1301,10 +1316,15 @@ function narrate(fresh: readonly GameEvent[], state: ReturnType<typeof fold>): s
       && state.entities.find((x) => x.id === 'player')?.tags.includes('braced') === true
       ? ' — it breaks on your set guard and reels'
       : '';
+    // The bite that keeps costing, named the moment it lands.
+    const bit = !mine && p.hit
+      && verbOf(state.entities.find((x) => x.id === p.attackerId)?.kind ?? '') === 'venom'
+      ? ` — the bite burns: venom, ${VENOM_TURNS} rounds`
+      : '';
     lines.push(mine
       ? (p.hit ? `you hit ${them} for ${p.damage}${clean} ${roll}` : `you miss ${them} ${roll}`)
       : (p.hit
-        ? `${sprung}${lunged}${them} hits you for ${p.damage}${clean} ${roll}${shoved}`
+        ? `${sprung}${lunged}${them} hits you for ${p.damage}${clean} ${roll}${shoved}${bit}`
         : `${lunged}${them} misses you ${roll}${countered}`));
   }
 

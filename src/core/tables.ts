@@ -147,6 +147,10 @@ export interface Archetype {
   readonly growth: Stats;
   /** Spawn weight within a band; the warden's zero means "never random". */
   readonly weight: number;
+  /** Shallowest floor this kind may spawn on. Absent means anywhere. The
+   *  teaching floor stays teachable: lingering harm and floor-waking do not
+   *  belong in the first lesson (the ambush tag's depth gate, generalized). */
+  readonly fromDepth?: number;
 }
 
 export const BESTIARY: readonly Archetype[] = Object.freeze([
@@ -167,6 +171,25 @@ export const BESTIARY: readonly Archetype[] = Object.freeze([
     base: Object.freeze({ hp: 3, might: 3, wits: 2, speed: 4 }),
     growth: Object.freeze({ hp: 1, might: 1, wits: 1, speed: 1 }),
     weight: 2,
+  }),
+  // The stinger: weak blows that keep costing after the fight breaks off.
+  // Its weapon is the retreat math — venom is the reason to answer it now.
+  Object.freeze({
+    kind: 'stinger',
+    base: Object.freeze({ hp: 3, might: 2, wits: 2, speed: 3 }),
+    growth: Object.freeze({ hp: 1, might: 1, wits: 1, speed: 1 }),
+    weight: 2,
+    fromDepth: 2,
+  }),
+  // The caller: frail and loud. It does not fight you; it makes the floor
+  // fight you — the fight stops being this monster and becomes this room,
+  // and the clock (the goblin-conjurer lineage, distilled).
+  Object.freeze({
+    kind: 'caller',
+    base: Object.freeze({ hp: 3, might: 1, wits: 3, speed: 2 }),
+    growth: Object.freeze({ hp: 2, might: 0, wits: 1, speed: 0 }),
+    weight: 1,
+    fromDepth: 3,
   }),
   Object.freeze({
     kind: 'warden',
@@ -209,13 +232,15 @@ export function creatureStats(kind: string, level: number): Stats | undefined {
  * tile choices break ties in the fixed neighbour order. Chance stays where
  * it always was — in whether the blow lands.
  */
-export type Verb = 'trample' | 'lunge' | 'ambush' | 'vigil';
+export type Verb = 'trample' | 'lunge' | 'ambush' | 'vigil' | 'venom' | 'call';
 
 const VERBS: Readonly<Record<string, Verb>> = Object.freeze({
   bruiser: 'trample',
   skirmisher: 'lunge',
   stalker: 'ambush',
   warden: 'vigil',
+  stinger: 'venom',
+  caller: 'call',
 });
 
 /** The verb a kind acts by. Kinds carry levels ("bruiser-2"); the verb
@@ -239,6 +264,20 @@ export const AMBUSH_MIGHT_BONUS = 2;
 /** No ambushes on the teaching floor. The depth-1 pin (19 in 20 gentle)
  *  holds about one death of slack, and a first-blow band jump spends it. */
 export const AMBUSH_FROM_DEPTH = 2;
+
+/** How long a venomed wound burns, in rounds, and what each round costs.
+ *  Three and one: enough to change the retreat math (breaking off does not
+ *  end the fight), never enough to be a death sentence on its own. */
+export const VENOM_TURNS = 3;
+export const VENOM_HARM = 1;
+
+/** How close (steps of walking) prey must come before a caller cries out —
+ *  and how far from the prey the answered things rise. The riser distance
+ *  matches the wave doctrine: pressure arrives as a chase, never out of
+ *  the air beside you. */
+export const CALL_RANGE = 6;
+export const CALL_RISERS = 2;
+export const CALL_DISTANCE = 6;
 
 /* ── the player's verbs ─────────────────────────────────────────────────── */
 
@@ -282,6 +321,11 @@ export const VERB_THREAT: Readonly<Record<Verb, number>> = Object.freeze({
   lunge: 1.25,
   ambush: 1.25,
   vigil: 1.0,
+  // The venom's blows keep costing after the fight breaks off; the call is
+  // worth more than the caller — it spends the floor's budget on a body
+  // that buys two more.
+  venom: 1.2,
+  call: 1.3,
 });
 
 /**

@@ -1,6 +1,6 @@
 import { isPassable } from './grid.js';
 import { findEntity, isAlive } from './entity.js';
-import { verbOf, LURK_RANGE, VIGIL_LEASH } from './tables.js';
+import { verbOf, LURK_RANGE, VIGIL_LEASH, CALL_RANGE } from './tables.js';
 import { walkDistance } from './mapgen.js';
 import type { Entity, Pos } from './entity.js';
 import type { GameState } from './state.js';
@@ -13,6 +13,7 @@ import type { GameState } from './state.js';
 export const AWARENESS = 8;
 
 export type Action =
+  | { kind: 'call' }
   | { kind: 'strike'; targetId: string }
   | { kind: 'step'; dx: number; dy: number }
   | { kind: 'lunge'; targetId: string }
@@ -152,6 +153,15 @@ export function decide(state: GameState, entityId: string): Action {
   if (verb === 'ambush' && self.tags.includes('ambush')) {
     const near = walkDistance(state.grid, self.pos, scent) <= LURK_RANGE;
     if (!near) return { kind: 'wait' };
+  }
+
+  // The voice, before the teeth: a caller with its cry unspent cries out
+  // the moment prey walks into range, and hunts like anything else after.
+  // It cries at the scent — a smoked floor gets called down on where you
+  // were, which is exactly what the smoke is for.
+  if (verb === 'call' && self.tags.includes('call')
+    && walkDistance(state.grid, self.pos, scent) <= CALL_RANGE) {
+    return { kind: 'call' };
   }
 
   // A fooled hunter cannot strike or lunge at what it has lost — it walks

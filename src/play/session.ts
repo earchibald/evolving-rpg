@@ -1,7 +1,7 @@
 import { append, fold, chain } from '../log/chain.js';
 import { getRef, fork, setHead, listRefs } from '../log/refs.js';
 import type { Refs } from '../log/refs.js';
-import { attemptMove, advanceTurn, endsTurn, wait, takeUnderfoot, outcome, ratifyRule, foundWorld, createWorld, recordBodies, lungeStrike, vigilKept, useCarried, stirWorld, heartHeld, shoveAt, braceSelf } from '../core/commands.js';
+import { attemptMove, advanceTurn, endsTurn, wait, takeUnderfoot, outcome, ratifyRule, foundWorld, createWorld, recordBodies, lungeStrike, vigilKept, useCarried, stirWorld, heartHeld, shoveAt, braceSelf, callOut } from '../core/commands.js';
 import { BOTTOM_DEPTH, WAVE_EVERY } from '../core/tables.js';
 import { u32 } from '../core/rng.js';
 import { decide } from '../core/ai.js';
@@ -165,9 +165,11 @@ export function draftFor(state: GameState, entityId: string, action: Action): Dr
   if (action.kind === 'step') return attemptMove(state, entityId, action.dx, action.dy);
 
   // The verbs that are their own commands: the skirmisher's two-tiles-and-
-  // the-blow, and the warden's knitting-shut at an unwatched post.
+  // the-blow, the warden's knitting-shut at an unwatched post, the caller's
+  // one cry into the dark.
   if (action.kind === 'lunge') return lungeStrike(state, entityId, action.targetId);
   if (action.kind === 'mend') return vigilKept(state, entityId);
+  if (action.kind === 'call') return callOut(state, entityId);
 
   const self = findEntity(state.entities, entityId);
   const target = findEntity(state.entities, action.targetId);

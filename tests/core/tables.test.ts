@@ -92,9 +92,13 @@ describe('experience', () => {
 });
 
 describe('the bestiary', () => {
-  it('holds three spawnable archetypes and one boss that never rolls', () => {
-    expect(BESTIARY.filter((a) => a.weight > 0)).toHaveLength(3);
+  it('holds five spawnable archetypes and one boss that never rolls', () => {
+    expect(BESTIARY.filter((a) => a.weight > 0)).toHaveLength(5);
     expect(BESTIARY.find((a) => a.kind === 'warden')?.weight).toBe(0);
+    // The teaching floor's gate: the two verbs that punish ignorance —
+    // lingering harm and floor-waking — wait past the first lesson.
+    expect(BESTIARY.find((a) => a.kind === 'stinger')?.fromDepth).toBe(2);
+    expect(BESTIARY.find((a) => a.kind === 'caller')?.fromDepth).toBe(3);
   });
 
   it('scales every archetype upward with its level', () => {

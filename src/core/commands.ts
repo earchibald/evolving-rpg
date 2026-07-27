@@ -2,7 +2,7 @@ import { generateMap, pickSpawnPoints, farthestFrom, withExit, walkDistance, sea
 import { inBounds, isPassable } from './grid.js';
 import { findEntity, isAlive } from './entity.js';
 import { intBetween } from './rng.js';
-import { neededToHit, chanceIn20, damageDice, critFloor, WHIFF, BESTIARY, creatureStats, threatOf, spawnBudget, depthBands, wardenAt, ARMORY, relicGrant, slotOf, grantValue, motifAt, verbOf, wardenLevel, AMBUSH_MIGHT_BONUS, AMBUSH_FROM_DEPTH, braceWall, PROVISIONS, provisionOf, draughtCeiling, smokeTurns, BOTTOM_DEPTH, HEART_KIND, WAVE_DISTANCE } from './tables.js';
+import { neededToHit, chanceIn20, damageDice, critFloor, WHIFF, BESTIARY, creatureStats, threatOf, spawnBudget, depthBands, wardenAt, ARMORY, relicGrant, slotOf, grantValue, motifAt, verbOf, wardenLevel, AMBUSH_MIGHT_BONUS, AMBUSH_FROM_DEPTH, braceWall, CALL_RISERS, CALL_DISTANCE, PROVISIONS, provisionOf, draughtCeiling, smokeTurns, BOTTOM_DEPTH, HEART_KIND, WAVE_DISTANCE } from './tables.js';
 import type { Relic } from './tables.js';
 import type { Entity, Stats, Pos } from './entity.js';
 import { itemAt } from './item.js';
@@ -135,7 +135,7 @@ function chooseSpawns(seed: number, counter: number, depth: number): {
   counterAfter: number;
 } {
   const chosen: { kind: string; level: number; stats: Stats }[] = [];
-  const spawnable = BESTIARY.filter((a) => a.weight > 0);
+  const spawnable = BESTIARY.filter((a) => a.weight > 0 && depth >= (a.fromDepth ?? 1));
   let budget = spawnBudget(depth);
   let c = counter;
 
@@ -429,7 +429,13 @@ export function createWorld(
           // a recorded fact of generation, spent by the first landed blow.
           // Depth 1 stays springless — the 19-in-20 gentle pin holds about
           // one death of slack, and an opening band-jump would spend it.
-          tags: verbOf(c.kind) === 'ambush' && depth >= AMBUSH_FROM_DEPTH ? ['ambush'] : [],
+          tags: ((): string[] => {
+            // Born loaded: the coil's one spring, the caller's one voice.
+            // Tags are the single source of truth for spent-or-not.
+            if (verbOf(c.kind) === 'ambush' && depth >= AMBUSH_FROM_DEPTH) return ['ambush'];
+            if (verbOf(c.kind) === 'call') return ['call'];
+            return [];
+          })(),
         };
       }),
     },
@@ -756,6 +762,72 @@ export function stirWorld(state: GameState, playerId = 'player'): Extract<DraftE
     rngCounter: state.rngCounter,
     rngDraws: c - state.rngCounter,
     payload: { opponents: risen },
+  };
+}
+
+/**
+ * The call answered: a caller crying out, and the floor sending bodies.
+ *
+ * Everything is drawn and recorded here — kinds at the floor's shallowest
+ * band, tiles at least CALL_DISTANCE of straight ground from the prey — so
+ * replay wakes the same things in the same places forever. Callers never
+ * call callers: one voice per floor is a clock, a chain of voices is a
+ * fork bomb. Null when the floor has nowhere to answer from.
+ */
+export function callOut(state: GameState, entityId: string, preyId = 'player'): Extract<DraftEvent, { type: 'CALLED' }> | null {
+  const caller = findEntity(state.entities, entityId);
+  const prey = findEntity(state.entities, preyId);
+  if (caller === undefined || prey === undefined) return null;
+
+  const risen: { id: string; kind: string; pos: Pos; stats: Stats; tags: string[] }[] = [];
+  let c = state.rngCounter;
+
+  const answering = BESTIARY.filter((a) =>
+    a.weight > 0 && state.depth >= (a.fromDepth ?? 1) && verbOf(a.kind) !== 'call');
+  const archTotal = answering.reduce((n, a) => n + a.weight, 0);
+
+  const stood = (x: number, y: number): boolean =>
+    state.entities.some((e) => isAlive(e) && e.pos.x === x && e.pos.y === y)
+    || risen.some((r) => r.pos.x === x && r.pos.y === y);
+
+  for (let i = 0; i < CALL_RISERS; i += 1) {
+    let pick = intBetween(state.seed, c, 1, archTotal); c += 1;
+    let arch = answering[0]!;
+    for (const a of answering) {
+      pick -= a.weight;
+      if (pick <= 0) { arch = a; break; }
+    }
+
+    const candidates: Pos[] = [];
+    for (let y = 0; y < state.grid.height; y += 1) {
+      for (let x = 0; x < state.grid.width; x += 1) {
+        if (!isPassable(state.grid, x, y)) continue;
+        if (tileAt(state.grid, x, y) === EXIT) continue;
+        if (Math.abs(x - prey.pos.x) + Math.abs(y - prey.pos.y) < CALL_DISTANCE) continue;
+        if (stood(x, y)) continue;
+        candidates.push({ x, y });
+      }
+    }
+    if (candidates.length === 0) break;
+    const at = intBetween(state.seed, c, 0, candidates.length - 1); c += 1;
+    const tile = candidates[at]!;
+    risen.push({
+      id: `called-${String(state.turn)}-${String(i)}`,
+      kind: arch.kind,
+      pos: { x: tile.x, y: tile.y },
+      // Answered at the floor's first band: the call buys bodies, not elites.
+      stats: creatureStats(arch.kind, 1)!,
+      tags: [],
+    });
+  }
+
+  if (risen.length === 0) return null;
+  return {
+    type: 'CALLED',
+    schemaVersion: SCHEMA_VERSIONS.CALLED,
+    rngCounter: state.rngCounter,
+    rngDraws: c - state.rngCounter,
+    payload: { callerId: entityId, opponents: risen },
   };
 }
 

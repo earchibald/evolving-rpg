@@ -1,6 +1,6 @@
 import { makeGrid } from './grid.js';
 import { applyResolved } from '../canon/interpret.js';
-import { threatOf, levelForXp, growthAt, slotOf, SLAM_DAMAGE } from './tables.js';
+import { threatOf, levelForXp, growthAt, slotOf, SLAM_DAMAGE, verbOf, VENOM_TURNS, VENOM_HARM } from './tables.js';
 import { NO_BODIES } from './state.js';
 import type { GameEvent } from './events.js';
 import type { GameState } from './state.js';
@@ -286,6 +286,10 @@ function reduce(state: GameState, event: GameEvent): GameState {
           : moved;
         return after === state.entities ? state : { ...state, entities: after };
       }
+      // Whether this landed blow leaves venom behind — derived from the
+      // attacker's kind, which replay reads identically forever.
+      const attacker = state.entities.find((e) => e.id === p.attackerId);
+      const venomous = attacker !== undefined && verbOf(attacker.kind) === 'venom';
       return creditKills(state, {
         ...state,
         entities: moved.map((e) => {
@@ -293,7 +297,13 @@ function reduce(state: GameState, event: GameEvent): GameState {
             // Clamped at zero: a corpse is dead, not increasingly dead, and
             // letting hp run negative would make "how badly did it lose" a
             // number nothing reads and every display has to special-case.
-            return { ...e, stats: { ...e.stats, hp: Math.max(0, e.stats.hp - p.damage) } };
+            const hp = Math.max(0, e.stats.hp - p.damage);
+            // A surviving, bitten body burns: fresh venom replaces stale —
+            // the wound re-opened, never stacked.
+            const tags = venomous && hp > 0
+              ? [...e.tags.filter((t) => !t.startsWith('venom-')), `venom-${String(VENOM_TURNS)}`]
+              : e.tags;
+            return { ...e, stats: { ...e.stats, hp }, tags };
           }
           if (e.id === p.attackerId && p.ambush === true) {
             // The spring is spent the moment it lands. One coiled blow per
@@ -396,8 +406,52 @@ function reduce(state: GameState, event: GameEvent): GameState {
       };
     }
 
-    case 'TURN_ADVANCED':
-      return { ...state, turn: event.payload.turn, activeEntityId: event.payload.activeEntityId };
+    case 'TURN_ADVANCED': {
+      const advanced = { ...state, turn: event.payload.turn, activeEntityId: event.payload.activeEntityId };
+      // Venom burns on the round, not on the activation — once each time the
+      // turn wraps. Deterministic arithmetic on tags already on the chain
+      // (the creditKills precedent: derived, silent, replay-exact).
+      if (event.payload.turn === state.turn) return advanced;
+      if (!state.entities.some((e) => e.tags.some((t) => t.startsWith('venom-')))) return advanced;
+      return {
+        ...advanced,
+        entities: advanced.entities.map((e) => {
+          const burning = e.tags.find((t) => t.startsWith('venom-'));
+          if (burning === undefined || e.stats.hp <= 0) return e;
+          const left = Number(burning.slice('venom-'.length)) - 1;
+          return {
+            ...e,
+            stats: { ...e.stats, hp: Math.max(0, e.stats.hp - VENOM_HARM) },
+            tags: left <= 0
+              ? e.tags.filter((t) => !t.startsWith('venom-'))
+              : e.tags.map((t) => (t.startsWith('venom-') ? `venom-${String(left)}` : t)),
+          };
+        }),
+      };
+    }
+
+    case 'CALLED': {
+      const p = event.payload;
+      // The floor answers; the voice is spent. Risers arrive exactly as
+      // recorded — kinds, stats and tiles were all drawn at command time.
+      return {
+        ...state,
+        entities: [
+          ...state.entities.map((e) =>
+            e.id === p.callerId ? { ...e, tags: e.tags.filter((t) => t !== 'call') } : e,
+          ),
+          ...p.opponents.map((o) => ({
+            id: o.id,
+            kind: o.kind,
+            pos: { x: o.pos.x, y: o.pos.y },
+            stats: { ...o.stats },
+            tags: [...o.tags],
+            post: { x: o.pos.x, y: o.pos.y },
+            maxHp: o.stats.hp,
+          })),
+        ],
+      };
+    }
 
     default: {
       // Exhaustive at compile time — the never assignment is what proves it —

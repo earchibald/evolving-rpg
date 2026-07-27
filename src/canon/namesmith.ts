@@ -43,6 +43,8 @@ const CREATURE_BODIES: Readonly<Record<string, readonly string[]>> = Object.free
   bruiser: Object.freeze(['ox', 'ram', 'hulk', 'mule', 'boar']),
   stalker: Object.freeze(['adder', 'mantis', 'spider', 'leech', 'cat']),
   warden: Object.freeze(['warden', 'keeper', 'porter', 'sentinel']),
+  stinger: Object.freeze(['wasp', 'asp', 'midge', 'thorn', 'fly']),
+  caller: Object.freeze(['crier', 'piper', 'herald', 'bell', 'horn']),
   echo: Object.freeze(['echo', 'shade', 'double']),
 });
 
@@ -87,6 +89,16 @@ const CREATURE_LINES: Readonly<Record<string, readonly string[]>> = Object.freez
   echo: Object.freeze([
     'It walks the way you walk. That is the worst part.',
     'It remembers being you, and it is not sentimental about it.',
+  ]),
+  stinger: Object.freeze([
+    'Its bite is small. Its bite is not the problem.',
+    'What it leaves in the wound outstays the fight.',
+    'Kill it now or pay for it later, a little at a time.',
+  ]),
+  caller: Object.freeze([
+    'It does not want to fight you. It wants you heard.',
+    'Its voice carries further than your reach.',
+    'Silence it first. Everything else is negotiable.',
   ]),
 });
 

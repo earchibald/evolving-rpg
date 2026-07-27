@@ -28,6 +28,7 @@ export const SCHEMA_VERSIONS = {
   WORLD_STIRRED: 1,
   SHOVE: 1,
   BRACED: 1,
+  CALLED: 1,
 } as const;
 
 export type EventType = keyof typeof SCHEMA_VERSIONS;
@@ -220,6 +221,15 @@ export interface BracedPayload {
   entityId: string;
 }
 
+/** A caller crying out, once, and the floor answering. The risers are fully
+ *  resolved at command time (kinds, stats, tiles all drawn and recorded), so
+ *  replay wakes the same things in the same places forever. The reducer
+ *  spends the caller's voice — one call per life. */
+export interface CalledPayload {
+  callerId: string;
+  opponents: EntitySeed[];
+}
+
 /** A warden back at its post with the intruder gone, knitting shut. The heal
  *  is an event because hit points may only change on the chain — and it is
  *  its own type rather than a STRIKE special case because "the fight reset"
@@ -270,6 +280,7 @@ export type DraftEvent =
   | { type: 'VIGIL_KEPT'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: VigilKeptPayload }
   | { type: 'WORLD_STIRRED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: WorldStirredPayload }
   | { type: 'SHOVE'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: ShovePayload }
-  | { type: 'BRACED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: BracedPayload };
+  | { type: 'BRACED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: BracedPayload }
+  | { type: 'CALLED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: CalledPayload };
 
 export type GameEvent = DraftEvent & { id: string; parent: string | null; seq: number };

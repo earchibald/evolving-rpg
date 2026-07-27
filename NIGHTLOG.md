@@ -855,3 +855,19 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > keep on defense. Zero new dice anywhere; bots don't use either yet, so
 > the golden replay passed bit-identical and every balance pin held
 > without retuning. 746/746 green.
+
+> [!NOTE]
+> **16:1x — two more verbs walk in: the stinger and the caller**
+> The bestiary grows the way the research said it should — by what things
+> DO. The stinger's bite is small and is not the problem: venom burns one
+> hit point a round for three rounds after, so breaking off a fight no
+> longer ends it, and the draught is suddenly worth more. The caller does
+> not want to fight you at all — it wants you heard: one cry (once per
+> life, said on the rail as an unspent voice) and the floor answers, two
+> more things rising at a chase's distance. Kill it first or fight the
+> room. Both wait past the teaching floor (stinger from 2, caller from 3
+> — the ambush gate, generalized), both are priced into threat and XP,
+> and the caller cries at your SMOKE trail if you fooled it, which is
+> exactly what the smoke is for. Depth 1 stays gentle (16-17/20), depth 3
+> still belongs to the fighter (11 v 4). 757/757 green, golden
+> legitimately untouched — floor one's draws never changed.
