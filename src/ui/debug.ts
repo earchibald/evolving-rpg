@@ -3,6 +3,7 @@ import { emptyRefs, createRef, getRef, setHead, fork, reset, listRefs } from '..
 import { createWorld, ratifyRule, foundWorld } from '../core/commands.js';
 import { validateBible, isRefusedBible } from '../canon/bible.js';
 import { smithName, DEFAULT_WORDS } from '../canon/namesmith.js';
+import { strikeLine, crossings } from './words.js';
 import { playerStep, playerWait, playerUse, playerShove, playerBrace, playerTake, runWorldTurns, buryIfDead, beginAgain, descend, isGrave } from '../play/session.js';
 import { isAlive } from '../core/entity.js';
 import { outcome, hitChance } from '../core/commands.js';
@@ -1303,8 +1304,10 @@ function narrate(fresh: readonly GameEvent[], state: ReturnType<typeof fold>): s
     const mine = p.attackerId === 'player';
     const them = named(state, mine ? p.targetId : p.attackerId);
     const roll = `(${p.roll} vs ${p.needed})`;
-    // A crit narrates as what it is; the register stays quiet about it.
-    const clean = p.crit ? ' — clean through' : '';
+    const target = state.entities.find((x) => x.id === p.targetId);
+    const tier = !p.hit ? 'miss'
+      : target !== undefined && target.stats.hp - p.damage <= 0 ? 'kill'
+        : p.crit ? 'crit' : 'hit';
     // The verbs narrate as themselves: the lunge's crossing, the spring's
     // release, the trample's shove. A mechanic nothing says is a mechanic
     // nobody feels — the whole reason the bestiary read as identical.
@@ -1319,15 +1322,26 @@ function narrate(fresh: readonly GameEvent[], state: ReturnType<typeof fold>): s
       ? ' — it breaks on your set guard and reels'
       : '';
     // The bite that keeps costing, named the moment it lands.
-    const bit = !mine && p.hit
+    const bit = !mine && tier !== 'miss' && tier !== 'kill'
       && verbOf(state.entities.find((x) => x.id === p.attackerId)?.kind ?? '') === 'venom'
       ? ` — the bite burns: venom, ${VENOM_TURNS} rounds`
       : '';
-    lines.push(mine
-      ? (p.hit ? `you hit ${them} for ${p.damage}${clean} ${roll}` : `you miss ${them} ${roll}`)
-      : (p.hit
-        ? `${sprung}${lunged}${them} hits you for ${p.damage}${clean} ${roll}${shoved}${bit}`
-        : `${lunged}${them} misses you ${roll}${countered}`));
+
+    const told = strikeLine({
+      mine,
+      attackerKind: state.entities.find((x) => x.id === p.attackerId)?.kind ?? '',
+      them, damage: p.damage, roll, tier, seq: event.seq,
+    });
+    lines.push(mine ? told : `${sprung}${lunged}${told}${shoved}${countered}${bit}`);
+
+    // The thresholds, said the moment they are crossed — first blood, below
+    // half, nearly spent. Events of their own, not a dimension of every
+    // line (which is how word pools become spam).
+    if (!mine && p.hit && target !== undefined && p.targetId === 'player') {
+      for (const crossing of crossings(target.stats.hp, target.stats.hp - p.damage, target.maxHp)) {
+        lines.push(crossing);
+      }
+    }
   }
 
   return lines;

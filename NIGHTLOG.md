@@ -889,3 +889,17 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > The journal now tells a refused pickup from a standing question: "it
 > stays where it lies" versus "asks a trade — , takes it deliberately."
 > 769/769 green.
+
+> [!NOTE]
+> **16:2x — the journal finds its voice**
+> Combat text now comes from pools instead of one fixed sentence per
+> case: four tiers (miss, hit, clean-through, kill — a kill finally SAYS
+> it is a kill), shared templates with one swing-word injected per verb —
+> a bruiser slams, a skirmisher cuts, a stinger bites — so six words buy
+> what thirty bespoke lines would. Picks hash off the event itself (never
+> a counted draw — the vocabulary can grow forever without touching
+> replay), a no-repeat rule keeps frequent lines from stuttering, and the
+> dice stay on every line, because legible numbers are words too. And the
+> thresholds now speak, once, as they are crossed: "first blood — yours",
+> "below half — mind the arithmetic", "nearly spent — one wrong step ends
+> this". 779/779 green.
