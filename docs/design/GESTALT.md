@@ -9,9 +9,21 @@ decisions. Written 2026-07-26 at the designer's request.
 Worldsmith and WORLD_BIBLE (increments 6–7); L3 as the depth motifs
 (increment 8); L4 — a bottom, a goal, staged reveals — as the ninth
 floor's heart, the holdout, and the promise beats (whisper at 2/5/8,
-kept at each warden's fall). The player-facing account is MANUAL.md §6;
-what remains beyond the ladder (a won world leaving a monument the next
-world's bible can cite) is future work, noted where it belongs.
+kept at each warden's fall). The player-facing account is MANUAL.md §6.
+
+**STATUS 2026-07-27, later: naming left the model entirely.** §2's "a
+lesser model can name from a palette" undershot — the namesmith
+(src/canon/namesmith.ts) composes every creature and relic name in CODE
+from the founding's lexicon, instantly and free, behind the same register
+guard. The bible ask now requests ~40 palette words. The one model call
+per world IS the founding; everything downstream of it is arithmetic.
+
+Future work, noted in one place: a won world leaving a monument the next
+world's bible can cite; the full reliquary (the research caps it at ~12
+named properties — 2 shipped); terrain hazards (the research's strongest
+pushback: shove wants chasms and fire to shove INTO — wall-slams and
+body-tangles ship first); bots learning the player verbs (until then the
+golden stays bit-identical by abstention).
 
 ## 1. Today: on-demand
 

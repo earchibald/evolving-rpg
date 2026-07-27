@@ -903,3 +903,18 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > thresholds now speak, once, as they are crossed: "first blood — yours",
 > "below half — mind the arithmetic", "nearly spent — one wrong step ends
 > this". 779/779 green.
+
+> [!NOTE]
+> **16:3x — the depth goal, closed out**
+> The books brought current with everything the afternoon built: the
+> manual now teaches six creatures, three provisions, the shove, the
+> brace, the deliberate take and the trade rule, with seven new checks in
+> its test guide; AGENTS carries the machinery truth (player verbs, the
+> dominance rule, the namesmith, the two new archetypes); GESTALT records
+> that naming left the model entirely, and keeps the future-work list in
+> one place — the monument, the fuller reliquary, terrain hazards to
+> shove things INTO, bots learning the player's verbs. Ensemble after
+> everything: depth 1 gentle as pinned (16-17/20), depth 3 the fighter's
+> floor still (9 v 2, decisive), every suite green at 779. Live in the
+> pane: brace, shove-arm, and the free refusal all speak their lines;
+> no console errors. Six commits this goal.

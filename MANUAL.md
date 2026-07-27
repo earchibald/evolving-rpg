@@ -28,7 +28,10 @@ doubt, read the last three lines — they always say what just happened.
 |---|---|
 | arrows / wasd | walk — into a creature is an attack, into a wall costs nothing |
 | `.` or space | stand still for a turn |
+| `x`, then a direction | shove — drive whatever stands beside you one pace |
+| `z` | brace — set yourself against the coming round |
 | `q` | use what your satchel holds |
+| `,` | take what is underfoot on purpose — trades and downgrades included |
 | `t` | talk to the gamemaster — your character speaking, in there |
 | `g` | the forge — where new laws are offered and accepted |
 | `m` | the gamemaster's screen — the founding, your notes to the designer, and everything else |
@@ -51,6 +54,11 @@ That is the whole game. Everything else is reading.
 | **satchel** | one carried thing, spent with `q`. Walking over another swaps them and leaves the old one lying there |
 | **vital draught** | drink it: healed whole, and your health ceiling rises for good. Early or late, never wasted |
 | **still smoke** | break it: for a few turns every hunt chases where you *were*. Useless against anything already beside you |
+| **tallow flare** | strike it: the floor admits its shape for seven paces around — walls and ways, never what stands in them |
+| **shove** | your push. It never misses: open ground moves them, a wall hurts them, another body tangles both. The wall is the argument |
+| **brace** | your guard, for one round: harder to hit, no trample can move you, a coiled spring breaks on it — and whatever misses you reels |
+| **reeling** | what a staggered thing does: it loses its next turn. Shoves into walls, tangles, and blows that break on a set guard all cause it |
+| **venom** | some bites keep costing: one point a round for three rounds after. Breaking off a fight no longer ends it |
 | **warden** | the boss. Stands at the stairs every third floor and will not be drawn far from them. Run away and its wounds close — a boss poked is a boss unpoked |
 | **the heart** | what beats at the bottom of the ninth floor. Taking it is not the end — carrying it out is |
 | **echo** | one of your past selves, risen. Only at the bottom, only where your bodies lie |
@@ -71,10 +79,15 @@ explains itself — what you need to roll, what you deal, what it deals.
 **Level** by killing. Each level heals you whole and makes you more.
 
 **Gear up.** Every floor guards a relic or two. The guard is the price.
+Walking over a relic takes it only when it is better in every way; anything
+that asks a trade — the heavy blade that costs you a pace of speed, a
+sidegrade, even a downgrade you have reasons for — waits on the floor until
+you take it on purpose with `,`. The journal always says which kind of
+refusal you are looking at.
 
 **Carry one thing.** Every floor also leaves one provision lying somewhere
-off the path, free — the draught or the smoke. Which one to carry, and when
-to spend it, is yours to get wrong.
+off the path, free — the draught, the smoke, or the flare. Which one to
+carry, and when to spend it, is yours to get wrong.
 
 **Descend** by stepping on the green square. The strongest thing on the
 floor watches it. Clear the whole floor first and you descend healed.
@@ -87,7 +100,7 @@ last time is lying where you left it.
 
 ---
 
-## 5. The four creatures
+## 5. The six creatures
 
 They do not differ by numbers. They differ by what they *do*:
 
@@ -96,10 +109,14 @@ They do not differ by numbers. They differ by what they *do*:
 | **bruiser** | its blows knock you back a pace, and it lumbers after you | "the blow drives you back a pace" |
 | **skirmisher** | crosses two tiles and strikes in one motion — approaching it carelessly *is* the mistake | "it lunges" |
 | **stalker** | lies perfectly still, in plain sight, until you come three steps too close. Its first blow lands harder | "it stirs from its stillness" |
+| **stinger** | its bite is small; the venom in it is not. Three rounds of burning after every landed bite | "the bite burns" |
+| **caller** | frail, and it does not want to fight you — it wants you heard. One cry and the floor sends two more | "it cries out — and the floor answers" |
 | **warden** | holds its post and cannot be lured away. Flee past its leash and it walks home and knits shut | "it resumes its vigil" |
 
 A thing standing eerily still in an open room is not decoration. The rail
-says *coiled* next to its name. Believe it.
+says *coiled* next to its name. A caller's rail line says *unspent voice*.
+Believe both. And you have moves of your own now: shove them into walls
+and into each other, brace when you have read what is coming.
 
 ---
 
@@ -169,7 +186,7 @@ something else, that is a finding worth reporting.
 
 | Do | Expect |
 |---|---|
-| start a fresh world (`n` → wipe) | within a minute: "the world is founded — …" and things start getting real names |
+| start a fresh world (`n` → wipe) | within a minute: "the world is founded — …" and every name arrives at once, instantly, in the founding's own words |
 | read the founding (`m` → this world) | a story, a word-list, a named warden, two or three promises |
 | walk into a wall | "blocked" — and no turn passes |
 | walk into a creature | a to-hit line with real numbers; hover the rail to see the same numbers explained |
@@ -179,6 +196,12 @@ something else, that is a finding worth reporting.
 | press `q` holding the draught while hurt | healed whole, ceiling raised, one turn spent |
 | press `q` holding the smoke mid-chase | pursuers walk to where you *were*; anything adjacent keeps fighting |
 | fight the warden, then run five+ steps away | it goes home; its wounds visibly close |
+| press `x` and a direction at something beside a wall | it is driven into the wall, takes 1, and loses its next turn |
+| press `z`, then let a bruiser swing | its shove fails against your stance; if it misses you, it reels |
+| let a stinger bite you, then walk away | the venom burns 1 a round for 3 rounds — the rail counts it down |
+| walk toward a *caller* | one cry, and two more things rise far off — kill it first next time |
+| walk over the heavy blade | it stays put and the journal says it asks a trade; `,` takes it, speed and all |
+| strike a flare in a corridor | the map fills in for seven paces around — shape only, nothing that stands in it |
 | die | body on the map, a † world in the list, and — unasked — a proposed law arrives within a minute |
 | press `r` and walk to where you died | "you stand where you fell" — and the floor that life explored joins your map |
 | open the forge on a fresh world | the bench: two waiting laws about rest and the aftermath, each with its trial verdict |
@@ -196,8 +219,8 @@ something else, that is a finding worth reporting.
 
 | It says | It means |
 |---|---|
-| plain names like "skirmisher" everywhere | the naming model isn't reachable. The game plays on; names arrive when it returns |
-| "the worldsmith's offer was refused" | the model wrote a bad founding. The world simply plays unfounded — start another if you want the full voice |
+| plain names like "skirmisher" for a minute | the founding is still being decided; names land all at once the moment it does. Names are made by the game itself now — no waiting on a model, ever |
+| "the worldsmith's offer was refused" | the model wrote a bad founding. The world plays on and names itself from a stock palette — start another if you want a voice of its own |
 | "no rule this time" | the world read your run and found nothing worth proposing. That is an answer, not an error |
 | a queue entry stuck "asking" for minutes | that call failed quietly; reload the tab and it clears. Anything answered is already saved |
 | the same world twice feels identical | it is meant to — same world, same floors, forever. *Different* worlds must feel different |

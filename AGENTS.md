@@ -74,17 +74,49 @@ runner ~2, depth 5 in [1,10].
 **The bestiary acts by verbs** (tables.ts VERBS; the tradition chose them):
 bruisers trample (shove + follow, atomic in the blow), skirmishers lunge
 (two tiles + strike in one action), stalkers lie visibly coiled and spring
-one band harder once (depth 2+), the warden keeps a vigil (leashed to its
-post, knits shut when you flee past the leash). Verbs are PRICED into
-threat (×1.1–1.25) — unpriced they collapsed depth-5 survival to 0/20 —
-and the M6 proportion trial weighs rules against verbless stand-ins so the
-scale cannot move with the bestiary.
+one band harder once (depth 2+), stingers envenom (landed bites burn
+VENOM_HARM per round for VENOM_TURNS after — ticked in TURN_ADVANCED's
+apply, the creditKills precedent), callers cry once (CALLED v1: two risers
+drawn at the floor's first band, ≥ CALL_DISTANCE from the prey; callers
+never call callers) and the warden keeps a vigil (leashed to its post,
+knits shut when you flee past the leash). Stinger from depth 2, caller
+from depth 3 (Archetype.fromDepth — the teaching floor stays teachable).
+Verbs are PRICED into threat (×1.1–1.3) — unpriced they collapsed depth-5
+survival to 0/20 — and the M6 proportion trial weighs rules against
+verbless stand-ins so the scale cannot move with the bestiary.
+
+**The player has verbs too** (SHOVE v1 / BRACED v1, zero draws): x+dir
+shoves an adjacent hostile one pace — open ground displaces, walls and the
+door frame slam (SLAM_DAMAGE + stagger), a body behind tangles both;
+z braces one round — +braceWall(wits) to be hit, tramples hold, the coiled
+spring is absorbed, and a miss against the set guard staggers the
+attacker. Staggered things spend their next action as a recorded WAIT
+(the only creature wait that reaches the chain — draftFor). Bots use
+neither yet, which is why the golden replays bit-identical.
 
 **The satchel carries one thing, used with q**: vital draught (heal whole +
-permanent ceiling raise by band) or still smoke (hunts chase your stale
-position 6/8/10 turns; adjacent creatures are recorded unfooled). Walk-over
-swaps and leaves the old one lying. One provision per floor, unguarded, off
-the path — the armory pays for fighting, the satchel pays for scouting.
+permanent ceiling raise by band), still smoke (hunts chase your stale
+position 6/8/10 turns; adjacent creatures are recorded unfooled) or tallow
+flare (a recorded burst: the fog derivation marks a FLARE_RADIUS circle
+SEEN — shape, never occupants; rewind un-knows it). Walk-over swaps and
+leaves the old one lying. One provision per floor, unguarded, off the path
+— the armory pays for fighting, the satchel pays for scouting.
+
+**Loot obeys the dominance rule**: walking takes only strict upgrades
+(≥ every axis, > in total — tables.dominates); tradeoffs, sidegrades and
+downgrades wait for the , key (takeUnderfoot's deliberate flag). The
+armory holds one iconic tradeoff (heavy edge: Relic.costs rides negative
+in the same Stats) and two named properties read off worn kinds
+(RELIC_TRAITS: sure edge staggers crit survivors, steady boots refuse the
+trample's shove). Cap the property table hard — every trait is a rule
+replay must honor.
+
+**Names come from the namesmith, not a model** (src/canon/namesmith.ts):
+world word + silhouette head noun, deterministic per world root, same
+register guard, veto-aware (Oracle.refusals persists so determinism cannot
+un-reject). With a namer installed, describe intents NEVER reach the
+transport; the founding gate holds the smith too, so floor one waits for
+its own words. The founding is the only naming-adjacent model call left.
 
 **The world has a bottom** (GESTALT L4): depth 9, said out loud on floor 1.
 The heart lies at the far end of the ninth floor behind the last warden;
