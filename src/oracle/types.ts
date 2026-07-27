@@ -37,8 +37,10 @@ export interface Answer {
   line: string;
   /** Where this came from. Recorded because a name produced by the fallback is
    *  not the same kind of fact as one the world actually chose, and a later
-   *  Critic reading canon deserves to know which it is looking at. */
-  source: 'model' | 'fallback' | 'cache';
+   *  Critic reading canon deserves to know which it is looking at. `smith` is
+   *  the namesmith: composed in code from the world's palette — permanent
+   *  canon like a model's answer, but instant and free. */
+  source: 'model' | 'fallback' | 'cache' | 'smith';
   /** The model that actually ran, which is not always the one requested — fast
    *  mode and tier gating can substitute a smaller one. Recorded because a run
    *  half-served by a different model is a determinism problem, not a billing
@@ -70,3 +72,11 @@ export interface Transport {
   readonly name: string;
   ask(question: Question): Promise<{ name: string; line: string; model: string | null; costUsd: number; data?: unknown }>;
 }
+
+/**
+ * A code-side answerer for describe questions, tried before any transport.
+ * Handed the names already spent (this world's canon plus this question's
+ * own refusals) so composition can steer around them. Null concedes the
+ * question to the transport — or to the fallback, when there is none.
+ */
+export type Namer = (question: Question, taken: readonly string[]) => { name: string; line: string } | null;

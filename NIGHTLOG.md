@@ -819,3 +819,23 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > with the warden's pacing, stamped `floor 1 · turn 4 · level 1 ·
 > 10/10 health`; stripped the stamps from storage, reloaded, and they
 > came back derived. 713/713 green.
+
+> [!NOTE]
+> **15:5x — the namesmith: names come from code now**
+> Your call, and the research agreed with you: the model was never adding
+> value at the name level — the world's identity lives in its PALETTE (the
+> founding's word-list, one model call), not in which words got glued
+> together. So the gluing is code. Every creature and relic name is now
+> composed on the spot: the world supplies the modifier from its lexicon,
+> the code supplies the head noun from what the thing IS (a lunger ends in
+> hound or cur, a blade in knife or edge), the same register guard the
+> model faced gets the final say, and the same veto works — refusals are
+> remembered so the deterministic smith can't re-offer what you refused.
+> Founded worlds name in their own words the instant the founding lands
+> ("ochre cur", "silt knife" in tonight's pane world); unfounded worlds
+> improvise from a shipped default palette; the model is out of the naming
+> business entirely — no cost, no forty-second wait, no off-palette names.
+> Found and fixed while proving it: wiping used to let one last render of
+> the dying world sneak names into the fresh canon (invisible before only
+> because the model was slow). The founding now asks for ~40 palette words
+> instead of 20, per the research's repetition math. 732/732 green.

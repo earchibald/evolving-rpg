@@ -36,7 +36,10 @@ export function isRefusedBible(b: Bible | RefusedBible): b is RefusedBible {
 }
 
 const MAX_ANCHOR = 400;
-const MAX_LEXICON = 24;
+// Grown from 24 when the namesmith arrived: composition reuses each word
+// across ~30 names, and the research line is that a word visibly recurring
+// more than two or three times reads as same-y. Forty gives ~1.5 uses each.
+const MAX_LEXICON = 48;
 const MAX_WORD = 18;
 const MAX_PROMISES = 3;
 const MAX_LINE = 160;

@@ -2,6 +2,7 @@ import { emptyLog, append, chain, fold, verifyChain } from '../log/chain.js';
 import { emptyRefs, createRef, getRef, setHead, fork, reset, listRefs } from '../log/refs.js';
 import { createWorld, ratifyRule, foundWorld } from '../core/commands.js';
 import { validateBible, isRefusedBible } from '../canon/bible.js';
+import { smithName, DEFAULT_WORDS } from '../canon/namesmith.js';
 import { playerStep, playerWait, playerUse, runWorldTurns, buryIfDead, beginAgain, descend, isGrave } from '../play/session.js';
 import { isAlive } from '../core/entity.js';
 import { outcome, hitChance } from '../core/commands.js';
@@ -187,6 +188,7 @@ function persist(): void {
  * keeps the cost proportional to novelty rather than to how long you play.
  */
 const CANON_KEY = 'evolving-rpg/canon/v1';
+const REFUSED_KEY = 'evolving-rpg/refused-names/v1';
 
 function rememberedCanon(): Record<string, never> {
   try {
@@ -197,12 +199,41 @@ function rememberedCanon(): Record<string, never> {
   }
 }
 
+function rememberedRefusals(): Record<string, never> {
+  try {
+    const raw = window.localStorage.getItem(REFUSED_KEY);
+    return raw === null ? {} : JSON.parse(raw);
+  } catch {
+    return {};
+  }
+}
+
+/** Naming palettes by world root — each world's lexicon once founded. The
+ *  namesmith reads through here so names are composed in the world's own
+ *  words, and in the default words until (or unless) it has any. */
+const palettes = new Map<string, readonly string[]>();
+
 const oracle = new Oracle({
   transport: cliTransport(),
   known: rememberedCanon(),
+  refused: rememberedRefusals(),
+  // Names come from code now. The founding still costs one model call; the
+  // gluing of its words into names costs nothing and arrives before the
+  // frame does. While a founding is in the air the smith holds its tongue —
+  // floor one must not wear default words for the forty seconds the
+  // identity takes to arrive — and the settled founding re-renders and
+  // releases everything at once, in the world's own words.
+  namer: (q, taken) => {
+    if (q.scope !== undefined && foundingInFlight.has(q.scope)) return null;
+    return smithName(
+      q, taken,
+      (q.scope === undefined ? undefined : palettes.get(q.scope)) ?? DEFAULT_WORDS,
+    );
+  },
   onChange: () => {
     try {
       window.localStorage.setItem(CANON_KEY, JSON.stringify(oracle.known()));
+      window.localStorage.setItem(REFUSED_KEY, JSON.stringify(oracle.refusals()));
     } catch { /* quota; the world keeps its names for this session at least */ }
     render();
     watchTheClock();
@@ -536,6 +567,12 @@ function render(): void {
   const head = getRef(refs, active).head;
   const state = fold(log, head);
   const player = state.entities[0];
+
+  // The namesmith's palette, kept current: the moment a founding lands,
+  // naming starts speaking this world's words. An unfounded world stays
+  // absent here and the smith improvises from the default palette.
+  const root = worldRoot();
+  if (root !== undefined && state.bible !== null) palettes.set(root, state.bible.lexicon);
 
   // The fog: what this timeline's player has seen, and sees. Derived from
   // the chain, so a rewind un-sees and a descent starts dark — plus whatever
@@ -1691,13 +1728,18 @@ el('open-worlds').addEventListener('click', () => { sheet.showModal(); });
 
 el('wipe').addEventListener('click', () => {
   const worlds = listRefs(refs).length;
-  // In memory first, then on disk. The other order does not work: the Oracle
-  // keeps its names in memory, so anything that clears only storage gets them
-  // written straight back by the next ask.
+  // The new world FIRST, then the forgetting. unlearn() re-renders through
+  // onChange, and a render while the old refs still stand folds the dying
+  // world one last time — which the namesmith, being instant, would name
+  // into the freshly emptied canon. The model path never showed this hole:
+  // its answers arrived seconds later and the epoch guard dropped them.
+  freshWorld();
+  // In memory before disk. The other order does not work either: the Oracle
+  // keeps its names in memory, so anything that clears only storage gets
+  // them written straight back by the next ask.
   oracle.unlearn();
   notes.length = 0;
   clear(CANON_KEY, NOTES_KEY);
-  freshWorld();
   lastSaved = '';
   persist();
   say(`wiped — ${worlds} world(s) and every name discarded, back to one`);

@@ -1,6 +1,6 @@
 import { canonicalJson } from '../log/canonical.js';
 import { assayName } from '../assay/register.js';
-import type { Answer, Call, Intent, Question, Transport } from './types.js';
+import type { Answer, Call, Intent, Namer, Question, Transport } from './types.js';
 
 /**
  * The Oracle.
@@ -87,13 +87,25 @@ export interface OracleOptions {
   now?: () => number;
   /** Canon recovered from a previous session. */
   known?: Record<string, Answer>;
+  /** Answers describe questions in code, before any transport is bothered.
+   *  The namesmith lives here; naming stops costing time or money. */
+  namer?: Namer;
+  /** Vetoed names by canon key, recovered from a previous session — the
+   *  namer is deterministic, so without the history of refusals a rejected
+   *  name would simply compose itself again after a reload. */
+  refused?: Record<string, readonly string[]>;
 }
 
 export class Oracle {
   private readonly transport: Transport | null;
+  private readonly namer: Namer | null;
   private readonly onChange: () => void;
   private readonly now: () => number;
   private readonly canon = new Map<string, Answer>();
+  /** Names the player has vetoed, by canon key. Composition steers around
+   *  them; without this the deterministic namer would re-offer the exact
+   *  name the veto refused. */
+  private readonly refused = new Map<string, string[]>();
   private readonly calls = new Map<string, Call>();
   private readonly raisedAt = new Map<string, number>();
   /** Keys with a question currently out, so a re-render does not ask again. */
@@ -107,8 +119,14 @@ export class Oracle {
 
   constructor(options: OracleOptions) {
     this.transport = options.transport;
+    this.namer = options.namer ?? null;
     this.onChange = options.onChange ?? ((): void => {});
     this.now = options.now ?? ((): number => Date.now());
+    for (const [key, names] of Object.entries(options.refused ?? {})) {
+      if (Array.isArray(names) && names.every((n) => typeof n === 'string')) {
+        this.refused.set(key, [...names]);
+      }
+    }
     for (const [key, answer] of Object.entries(options.known ?? {})) {
       // Placeholders are never canon. An older build stored them, and a failed
       // call then looked exactly like a settled name — permanently, because a
@@ -197,6 +215,15 @@ export class Oracle {
     const remembered = this.canon.get(key);
     if (remembered !== undefined) return { ...remembered, source: 'cache' };
 
+    // The namesmith answers describe questions on the spot — permanent canon,
+    // no call, no wait. With a namer installed, describe never reaches the
+    // transport at all: a smith that holds its tongue (a founding still in
+    // the air) means "not yet", not "ask the slow way" — the placeholder
+    // stands until the smith is ready.
+    const smithed = this.smith(key, question);
+    if (smithed !== null) return smithed;
+    if (this.namer !== null && question.intent === 'describe') return fallbackFor(question);
+
     // The fallback is returned but NOT remembered. Storing it made a failed
     // call permanent: the next ask found it in canon, returned it as settled,
     // and never tried again — so one dropped call meant a thing kept its
@@ -212,6 +239,30 @@ export class Oracle {
     return fallbackFor(question);
   }
 
+  /** Tries the namer on one describe question, writing canon on success. */
+  private smith(key: string, question: Question): Answer | null {
+    if (this.namer === null || question.intent !== 'describe') return null;
+    const offered = this.namer(question, [
+      ...this.takenIn(question.scope),
+      ...(this.refused.get(key) ?? []),
+    ]);
+    if (offered === null) return null;
+    // The same guard the model faces. The smith should never fail it — its
+    // heads are concrete by construction — but "should" is not a covenant.
+    if (!assayName(offered.name, this.takenIn(question.scope)).sound) return null;
+    const answer: Answer = {
+      name: offered.name,
+      line: offered.line,
+      source: 'smith',
+      model: null,
+      ms: 0,
+      costUsd: 0,
+    };
+    this.canon.set(key, answer);
+    this.onChange();
+    return answer;
+  }
+
   /**
    * Asks for every unnamed thing at once — one call, one voice.
    *
@@ -225,16 +276,22 @@ export class Oracle {
    * count, and the ordinary per-kind ask remains as the retry path.
    */
   askMany(questions: readonly Question[]): void {
-    if (this.transport === null) return;
-
     const fresh = new Map<string, Question>();
     for (const q of questions) {
       const key = keyOf(q);
       if (this.canon.has(key) || this.inFlight.has(key) || fresh.has(key)) continue;
       if ((this.tries.get(key) ?? 0) >= MAX_TRIES) continue;
+      // The smith first: what it answers never reaches the batch at all —
+      // which, with a working smith, is everything.
+      if (this.smith(key, q) !== null) continue;
       fresh.set(key, q);
     }
-    if (fresh.size === 0) return;
+    // With a namer installed the model is out of the naming business
+    // entirely — what the smith declined now, it will answer when its
+    // palette settles, and a paid batch in the meantime would write the
+    // off-palette canon the founding gate exists to prevent.
+    if (this.namer !== null) return;
+    if (this.transport === null || fresh.size === 0) return;
     if (fresh.size === 1) {
       for (const q of fresh.values()) this.ask(q);
       return;
@@ -332,10 +389,19 @@ export class Oracle {
       if (scope !== undefined && scopeOfKey(key) !== scope) continue;
       this.canon.delete(key);
       this.tries.delete(key);
+      // Remembered forever: the namer is deterministic, and a veto it can
+      // forget is a veto that un-happens on the next ask.
+      const kept = this.refused.get(key) ?? [];
+      if (!kept.includes(name)) this.refused.set(key, [...kept, name]);
       this.onChange();
       return true;
     }
     return false;
+  }
+
+  /** Every vetoed name by canon key, for saving beside the canon. */
+  refusals(): Record<string, readonly string[]> {
+    return Object.fromEntries(this.refused);
   }
 
   /** Forgets past failures so the next ask tries afresh. */
@@ -487,6 +553,9 @@ export class Oracle {
     this.calls.clear();
     this.raisedAt.clear();
     this.inFlight.clear();
+    // The vetoes go with the worlds they were about — a wiped world's
+    // grievances should not steer a newborn one's names.
+    this.refused.clear();
     this.onChange();
   }
 

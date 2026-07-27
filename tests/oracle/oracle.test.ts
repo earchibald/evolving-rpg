@@ -663,3 +663,114 @@ describe('the scope of a name', () => {
     expect(oracle.namesIn('root-b').map((a) => a.name)).toEqual(['theirs']);
   });
 });
+
+describe('the namesmith at the door', () => {
+  const smith = (q: Question, taken: readonly string[]): { name: string; line: string } | null => {
+    if (q.intent !== 'describe') return null;
+    // A tiny deterministic namer: enough to prove the plumbing without
+    // dragging the real palette in. Steers around taken like the real one.
+    for (const name of ['pale hound', 'rust hound', 'lead hound']) {
+      if (!taken.includes(name)) return { name, line: 'it waits' };
+    }
+    return null;
+  };
+
+  it('names instantly, without a transport, and the name is canon', () => {
+    const oracle = new Oracle({ transport: null, namer: smith });
+    const asked = oracle.ask(CREATURE);
+    expect(asked.name).toBe('pale hound');
+    expect(asked.source).toBe('smith');
+    expect(asked.costUsd).toBe(0);
+    // Settled: the second ask reads canon, not the namer.
+    expect(oracle.ask(CREATURE).source).toBe('cache');
+    expect(oracle.settled(CREATURE)).toBe(true);
+  });
+
+  it('survives a reload, unlike a fallback', () => {
+    const first = new Oracle({ transport: null, namer: smith });
+    first.ask(CREATURE);
+    const second = new Oracle({ transport: null, known: first.known() });
+    expect(second.ask(CREATURE).name).toBe('pale hound');
+    expect(second.ask(CREATURE).source).toBe('cache');
+  });
+
+  it('spares the transport entirely when it can answer', () => {
+    let batched = 0;
+    const counting: Transport = {
+      name: 'counting',
+      ask() {
+        batched += 1;
+        return Promise.resolve({ name: 'never', line: '', model: null, costUsd: 0 });
+      },
+    };
+    const oracle = new Oracle({ transport: counting, namer: smith });
+    oracle.askMany([
+      describeQuestion('creature', 'one', {}, 'root-test'),
+      describeQuestion('creature', 'two', {}, 'root-test'),
+      describeQuestion('creature', 'three', {}, 'root-test'),
+    ]);
+    expect(batched).toBe(0);
+    expect(oracle.namesIn('root-test')).toHaveLength(3);
+  });
+
+  it('never composes a name the world already uses', () => {
+    const oracle = new Oracle({ transport: null, namer: smith });
+    oracle.ask(describeQuestion('creature', 'one', {}, 'root-test'));
+    oracle.ask(describeQuestion('creature', 'two', {}, 'root-test'));
+    const names = oracle.namesIn('root-test').map((a) => a.name);
+    expect(new Set(names).size).toBe(2);
+  });
+
+  it('honors a veto: the refused name never comes back', () => {
+    const oracle = new Oracle({ transport: null, namer: smith });
+    expect(oracle.ask(CREATURE).name).toBe('pale hound');
+    expect(oracle.reject('pale hound', 'root-test')).toBe(true);
+    expect(oracle.ask(CREATURE).name).toBe('rust hound');
+  });
+
+  it('remembers vetoes across a reload — determinism cannot un-reject', () => {
+    const first = new Oracle({ transport: null, namer: smith });
+    first.ask(CREATURE);
+    first.reject('pale hound', 'root-test');
+    // Canon carries the replacement; drop it to force recomposition, the
+    // way a fresh tab replaying old refusals would.
+    const second = new Oracle({ transport: null, namer: smith, refused: first.refusals() });
+    expect(second.ask(CREATURE).name).toBe('rust hound');
+  });
+
+  it('wipes vetoes with everything else', () => {
+    const oracle = new Oracle({ transport: null, namer: smith });
+    oracle.ask(CREATURE);
+    oracle.reject('pale hound', 'root-test');
+    oracle.unlearn();
+    expect(oracle.refusals()).toEqual({});
+    expect(oracle.ask(CREATURE).name).toBe('pale hound');
+  });
+
+  it('keeps the model out of naming entirely, even when it has nothing yet', () => {
+    // A smith that holds its tongue (founding in the air) means "not yet",
+    // not "ask the slow way": the placeholder stands, no call is raised,
+    // and the smith answers when its palette settles.
+    let raised = 0;
+    const counting: Transport = {
+      name: 'counting',
+      ask() {
+        raised += 1;
+        return Promise.resolve({ name: 'never', line: '', model: null, costUsd: 0 });
+      },
+    };
+    let ready = false;
+    const oracle = new Oracle({
+      transport: counting,
+      namer: () => (ready ? { name: 'pale hound', line: 'it waits' } : null),
+    });
+
+    expect(oracle.ask(CREATURE).source).toBe('fallback');
+    oracle.askMany([CREATURE]);
+    expect(raised).toBe(0);
+
+    ready = true;
+    expect(oracle.ask(CREATURE).source).toBe('smith');
+    expect(raised).toBe(0);
+  });
+});
