@@ -1,8 +1,8 @@
 import { WALL, makeGrid } from './grid.js';
 import type { Grid } from './grid.js';
-import type { Entity } from './entity.js';
+import type { Entity, Pos } from './entity.js';
 import type { Item } from './item.js';
-import type { Rule } from '../canon/rule.js';
+import type { Rule, MotifName } from '../canon/rule.js';
 import type { Bible } from '../canon/bible.js';
 
 /** `readonly` throughout, matching `Grid`'s convention, because `apply()` is
@@ -32,6 +32,15 @@ export interface GameState {
   /** The generator's plain-words account of this floor's shape — covenant L1.
    *  Empty for logs that predate the telling. */
   readonly story: string;
+  /** The cut this floor was shaped to, recorded at birth (WORLD_INIT v7), or
+   *  null on floors that never said — old floors do not retroactively acquire
+   *  a shape, so `motifIs` is simply false there. */
+  readonly motif: MotifName | null;
+  /** Where this world's dead lie on this floor — the player's past falls,
+   *  recorded by WORLD_BODIES when a run is born or descends. What standing
+   *  there CONFERS is deliberately undecided (BONES.md); this makes it
+   *  *expressible*, so the Forge can be the one to answer. */
+  readonly bodies: readonly Pos[];
   /** The world's identity, decided whole at birth (GESTALT.md), or null for
    *  a world playing without one — every consumer degrades to on-demand. */
   readonly bible: Bible | null;
@@ -40,6 +49,7 @@ export interface GameState {
 const NO_ENTITIES: readonly Entity[] = Object.freeze([]);
 const NO_ITEMS: readonly Item[] = Object.freeze([]);
 const NO_RULES: readonly Rule[] = Object.freeze([]);
+export const NO_BODIES: readonly Pos[] = Object.freeze([]);
 
 /** What a fold starts from. A WORLD_INIT event replaces it wholesale.
  *  Frozen as well as typed readonly: every fold in the process shares this one
@@ -58,5 +68,7 @@ export const EMPTY_STATE: GameState = Object.freeze({
   level: 1,
   depth: 1,
   story: '',
+  motif: null,
+  bodies: NO_BODIES,
   bible: null,
 });

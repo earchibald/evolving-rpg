@@ -1,5 +1,5 @@
 import { emptyLog, append, fold, chain } from '../log/chain.js';
-import { ratifyRule } from '../core/commands.js';
+import { ratifyRule, recordBodies } from '../core/commands.js';
 import { FLOOR, EXIT } from '../core/grid.js';
 import { autoplay } from '../play/autoplay.js';
 import { sitter, shuffler, bumper, brawler } from '../play/policies.js';
@@ -7,7 +7,7 @@ import { assayLine } from './register.js';
 import { creatureStats } from '../core/tables.js';
 import type { Policy } from '../play/policies.js';
 import type { Position } from '../play/session.js';
-import type { Rule, StatName } from '../canon/rule.js';
+import type { Rule, StatName, MotifName } from '../canon/rule.js';
 import { SCHEMA_VERSIONS } from '../core/events.js';
 import type { DraftEvent, EntitySeed } from '../core/events.js';
 import type { Item } from '../core/item.js';
@@ -66,16 +66,57 @@ export interface RuleAssay {
 const seed = (id: string, kind: string, x: number, y: number, hp: number, might: number, speed: number): EntitySeed =>
   ({ id, kind, pos: { x, y }, stats: { hp, might, wits: 1, speed }, tags: [] });
 
+/**
+ * The world-shape a rule's conditions need before they can hold at all:
+ * depth, the floor's cut, a body to stand on. The trials meet the rule where
+ * it lives (VOCABULARY.md — simulate before ratifying, *honestly*): a
+ * `depthAtLeast 3` rule trialled only at depth 1 reads as dead weight and is
+ * not. Both sides of every marginal comparison get the same environment, so
+ * nothing here tilts a trial — it only unlocks the door the rule stands
+ * behind.
+ */
+interface TrialEnvironment {
+  readonly depth?: number;
+  readonly motif?: MotifName;
+  readonly body?: boolean;
+}
+
+function environmentFor(rule: Rule): TrialEnvironment {
+  let depth: number | undefined;
+  let motif: MotifName | undefined;
+  let body = false;
+  for (const c of rule.require) {
+    if (c.kind === 'depthAtLeast') depth = Math.max(depth ?? 1, c.n);
+    if (c.kind === 'motifIs') motif = c.motif;
+    if (c.kind === 'bodyHere') body = true;
+  }
+  return { depth, motif, body };
+}
+
 function born(
   width: number, tiles: number[], player: EntitySeed, opponents: EntitySeed[], items: Item[],
-  worldSeed = 7, progress?: { xp: number; level: number },
+  worldSeed = 7, progress?: { xp: number; level: number }, env: TrialEnvironment = {},
 ): Position {
   const init = {
     type: 'WORLD_INIT', schemaVersion: SCHEMA_VERSIONS.WORLD_INIT, rngCounter: 0, rngDraws: 0,
-    payload: { width, height: 1, tiles, seed: worldSeed, items, player, opponents, ...(progress ?? {}) },
+    payload: {
+      width, height: 1, tiles, seed: worldSeed, items, player, opponents,
+      ...(progress ?? {}),
+      ...(env.depth === undefined ? {} : { depth: env.depth }),
+      ...(env.motif === undefined ? {} : { motif: env.motif }),
+    },
   } as DraftEvent;
   const w = append(emptyLog(), null, init);
-  return { log: w.log, head: w.event.id };
+  let at: Position = { log: w.log, head: w.event.id };
+  if (env.body === true) {
+    // A body on every open tile: the exploiter trials measure a body-gated
+    // rule at its most exploitable, which is the trials' whole posture —
+    // a munchkin who found one body would stand on it all day anyway.
+    const lying = tiles.flatMap((t, x) => (t === FLOOR ? [{ x, y: 0 }] : []));
+    const done = append(at.log, at.head, recordBodies(fold(at.log, at.head), lying));
+    at = { log: done.log, head: done.event.id };
+  }
+  return at;
 }
 
 /** A friendly corridor for greed: room to shuffle, a wall to bump, an item to
@@ -83,7 +124,7 @@ function born(
  *  STRIKE and KILLED have something to spend themselves on. The seed varies
  *  only the dice, never the geometry — which is what lets the proportion
  *  trial reroll the same fight. */
-function greedWorld(worldSeed = 7): Position {
+function greedWorld(worldSeed = 7, env: TrialEnvironment = {}): Position {
   // One open row. An earlier draft put a wall mid-corridor for the bumper to
   // hit and thereby cut the creatures off from the brawler entirely — KILLED
   // could never fire and read as unexploitable. The map edge bumps just as
@@ -101,6 +142,8 @@ function greedWorld(worldSeed = 7): Position {
     })),
     [{ id: 'item-0', kind: 'edge', pos: { x: 2, y: 0 }, grants: { hp: 0, might: 1, wits: 0, speed: 0 } }],
     worldSeed,
+    undefined,
+    env,
   );
 }
 
@@ -111,7 +154,7 @@ function greedWorld(worldSeed = 7): Position {
  *  mid-level (xp 41, next threshold at 72; three kills pay ~27) because the
  *  level-up's full heal otherwise lands in BOTH runs and launders whatever
  *  blood the rule saved — measured: every swing read exactly zero. */
-function proportionWorld(worldSeed: number): Position {
+function proportionWorld(worldSeed: number, env: TrialEnvironment = {}): Position {
   const width = 16;
   const tiles = new Array<number>(width).fill(FLOOR);
   tiles[width - 1] = EXIT;
@@ -126,6 +169,7 @@ function proportionWorld(worldSeed: number): Position {
     [],
     worldSeed,
     { xp: 41, level: 3 },
+    env,
   );
 }
 
@@ -140,7 +184,7 @@ function proportionWorld(worldSeed: number): Position {
  * Against a heavier aggressor, crits pierce any heal and the trial could never
  * fire at all.
  */
-function cowardWorld(): Position {
+function cowardWorld(env: TrialEnvironment = {}): Position {
   const width = 6;
   const tiles = new Array<number>(width).fill(FLOOR);
   tiles[width - 1] = EXIT;
@@ -150,6 +194,9 @@ function cowardWorld(): Position {
     seed('player', 'you', 0, 0, 10, 3, 3),
     [{ id: 'brute', kind: 'bruiser', pos: { x: 1, y: 0 }, stats: { ...bruiser, hp: 99 }, tags: [] }],
     [],
+    undefined,
+    undefined,
+    env,
   );
 }
 
@@ -202,9 +249,13 @@ export function assayRule(rule: Rule): RuleAssay {
   // The game now grows the player honestly — items grant might, kills pay XP
   // and levels raise stats — and an assay that billed a rule for a level-up
   // would refuse every rule in a world where fighting works.
+  // The same environment on both sides of every marginal pair: the rule's
+  // world-shape gates are unlocked, never weighed.
+  const env = environmentFor(rule);
+
   const exploiter = exploiterFor(rule);
-  const greedy = autoplay(withRule(greedWorld(), rule), exploiter, TRIAL_ACTIONS);
-  const honest = autoplay(greedWorld(), exploiter, TRIAL_ACTIONS);
+  const greedy = autoplay(withRule(greedWorld(7, env), rule), exploiter, TRIAL_ACTIONS);
+  const honest = autoplay(greedWorld(7, env), exploiter, TRIAL_ACTIONS);
   fired += firings(greedy.position, rule.id);
 
   for (const stat of STATS_TO_WATCH) {
@@ -217,11 +268,11 @@ export function assayRule(rule: Rule): RuleAssay {
   }
 
   // ── trial of the coward (M1) ───────────────────────────────────────────
-  const cornered = withRule(cowardWorld(), rule);
+  const cornered = withRule(cowardWorld(env), rule);
   const cowardRun = autoplay(cornered, sitter, TRIAL_ACTIONS);
   fired += firings(cowardRun.position, rule.id);
 
-  const baseline = autoplay(cowardWorld(), sitter, TRIAL_ACTIONS);
+  const baseline = autoplay(cowardWorld(env), sitter, TRIAL_ACTIONS);
   if (baseline.ended === 'dead' && cowardRun.ended !== 'dead') {
     findings.push(
       'refused (M1): a brute that kills an idle player in a handful of turns no longer can — death has stopped being possible while holding still',
@@ -242,8 +293,8 @@ export function assayRule(rule: Rule): RuleAssay {
   let hpSwing = 0;
   let flips = 0;
   for (const s of PROPORTION_SEEDS) {
-    const ruled = autoplay(withRule(proportionWorld(s), rule), brawler, TRIAL_ACTIONS);
-    const bare = autoplay(proportionWorld(s), brawler, TRIAL_ACTIONS);
+    const ruled = autoplay(withRule(proportionWorld(s, env), rule), brawler, TRIAL_ACTIONS);
+    const bare = autoplay(proportionWorld(s, env), brawler, TRIAL_ACTIONS);
     fired += firings(ruled.position, rule.id);
     hpSwing += statOf(ruled.state, 'hp') - statOf(bare.state, 'hp');
     if ((ruled.ended === 'dead') !== (bare.ended === 'dead')) flips += 1;
@@ -264,7 +315,7 @@ export function assayRule(rule: Rule): RuleAssay {
   // four times in real sweeps while the assay called it dead weight.) A
   // fighter's honest pass through the same world covers that class.
   if (fired === 0) {
-    const honest = autoplay(withRule(greedWorld(), rule), brawler, TRIAL_ACTIONS * 2);
+    const honest = autoplay(withRule(greedWorld(7, env), rule), brawler, TRIAL_ACTIONS * 2);
     fired += firings(honest.position, rule.id);
   }
   const neverFired = fired === 0;

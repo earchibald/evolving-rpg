@@ -9,8 +9,8 @@ import { damageDice, XP_TO_REACH, slotOf, critFloor } from '../core/tables.js';
 import { itemAt } from '../core/item.js';
 import { save, load, clear, emptySession } from '../play/store.js';
 import {
-  readRule, rangeOf, takesStat, takesNumber, needsTriggers,
-  TRIGGERS, STATS, CONDITION_KINDS, EFFECT_KINDS,
+  readRule, rangeOf, takesStat, takesMotif, takesNumber, needsTriggers,
+  TRIGGERS, STATS, MOTIF_NAMES, CONDITION_KINDS, EFFECT_KINDS,
   MAX_CONDITIONS, MAX_EFFECTS, MAX_TEXT, MAX_RULES, isRejected,
 } from '../canon/rule.js';
 import type { Rule } from '../canon/rule.js';
@@ -1584,6 +1584,18 @@ function control(
     }
     statSel.addEventListener('change', () => { onChange({ ...current, stat: statSel.value }); });
     row.appendChild(statSel);
+  }
+
+  if (takesMotif(kind)) {
+    const motifSel = document.createElement('select');
+    for (const m of MOTIF_NAMES) {
+      const opt = document.createElement('option');
+      opt.value = m; opt.textContent = m;
+      if (m === current['motif']) opt.selected = true;
+      motifSel.appendChild(opt);
+    }
+    motifSel.addEventListener('change', () => { onChange({ ...current, motif: motifSel.value }); });
+    row.appendChild(motifSel);
   }
 
   if (kind === 'speak') {

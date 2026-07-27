@@ -1,4 +1,5 @@
 import { MOTIFS, motifAt, sightAt } from '../../src/core/tables.js';
+import { MOTIF_NAMES } from '../../src/canon/rule.js';
 import { generateMap } from '../../src/core/mapgen.js';
 import { createWorld } from '../../src/core/commands.js';
 import { visibleFrom, fogAt } from '../../src/ui/fov.js';
@@ -115,5 +116,32 @@ describe('the deep is darker', () => {
     const g = makeGrid(24, 3, open(24, 3));
     expect(visibleFrom(g, 2, 1, 7).has(idx(g, 11, 1))).toBe(false);
     expect(visibleFrom(g, 2, 1, 9).has(idx(g, 11, 1))).toBe(true);
+  });
+});
+
+describe('the cut is vocabulary (VOCABULARY.md §3)', () => {
+  it('pins the rule tokens to the tables — one list, two homes', () => {
+    expect([...MOTIF_NAMES].sort()).toEqual(Object.keys(MOTIFS).sort());
+    for (const [k, m] of Object.entries(MOTIFS)) expect(m.key).toBe(k);
+  });
+
+  it('keeps the base key in the deep, where only the name grows', () => {
+    for (const seed of [1, 7, 23, 41]) {
+      const { motif } = motifAt(seed, 0, 9);
+      expect(['warren', 'halls']).toContain(motif.key);
+      expect(motif.name).toMatch(/^the deep /);
+    }
+  });
+
+  it('records the cut in the birth event, matching the band', () => {
+    // The payload token and the band function must never drift: a rule reads
+    // the recorded cut, a player reads the story's name, and they are the
+    // same fact or the game is lying to one of them.
+    for (const depth of [1, 3, 5, 7]) {
+      for (const seed of [7, 23]) {
+        const born = createWorld(seed, 48, 32, 'player', depth);
+        expect(born.payload.motif).toBe(motifAt(seed, 0, depth).motif.key);
+      }
+    }
   });
 });

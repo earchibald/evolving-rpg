@@ -223,3 +223,52 @@ describe('the function trial plays well before it cautions (M3)', () => {
     expect(got.neverFired).toBe(true);
   });
 });
+
+describe('the trials meet the rule where it lives (VOCABULARY.md §2)', () => {
+  it('lets a depth-gated rule fire instead of reading it as dead weight', () => {
+    // Before the environment, this drew a false M3 caution: the trial worlds
+    // were all depth 1, so `depthAtLeast 5` never held and a legitimate rule
+    // read as dead. The trial is born at the depth the rule names.
+    const got = assayRule(rule({ require: [{ kind: 'depthAtLeast', n: 5 }] }));
+    expect(got.neverFired).toBe(false);
+    expect(got.findings.join(' ')).not.toMatch(/M3/);
+  });
+
+  it('lets a cut-gated rule fire', () => {
+    const got = assayRule(rule({ require: [{ kind: 'motifIs', motif: 'halls' }] }));
+    expect(got.neverFired).toBe(false);
+  });
+
+  it('lets a body-gated rule fire, and still refuses the engine it gates', () => {
+    // The gate opens (bodies lie on the trial floor) and then M2 does its
+    // ordinary work: standing on your own grave minting wits is an engine,
+    // however poetic the gate.
+    const got = assayRule(rule({
+      require: [{ kind: 'bodyHere' }],
+      then: [{ kind: 'grant', stat: 'wits', n: 1 }],
+    }));
+    expect(got.neverFired).toBe(false);
+    expect(got.verdict).toBe('refused');
+    expect(got.findings.join(' ')).toMatch(/M2/);
+  });
+
+  it('allows a modest body-gated heal, the BONES option F shape', () => {
+    // "When you stand where you fell, recover" — the kind of rule a death
+    // proposal can now offer. Bounded by the health ceiling like any heal.
+    const got = assayRule(rule({
+      when: 'MOVE',
+      require: [{ kind: 'bodyHere' }],
+      then: [{ kind: 'heal', n: 2 }],
+    }));
+    expect(got.verdict).toBe('sound');
+    expect(got.neverFired).toBe(false);
+  });
+
+  it('still cautions honestly when the gate is one no trial can open', () => {
+    // The environment unlocks world-shape, never time: turnAtLeast 999 stays
+    // out of reach and the caution stays true.
+    const got = assayRule(rule({ require: [{ kind: 'turnAtLeast', n: 999 }] }));
+    expect(got.neverFired).toBe(true);
+    expect(got.findings.join(' ')).toMatch(/M3/);
+  });
+});

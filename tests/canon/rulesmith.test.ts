@@ -75,7 +75,7 @@ function state(rules: Rule[] = []): GameState {
       { id: 'player', kind: 'you', pos: { x: 0, y: 0 }, stats: { hp: 8, might: 3, wits: 1, speed: 4 }, tags: [], maxHp: 10 },
       { id: 'thing-1', kind: 'thing', pos: { x: 2, y: 0 }, stats: { hp: 2, might: 4, wits: 1, speed: 3 }, tags: [], maxHp: 5 },
     ],
-    items: [], turn: 12, activeEntityId: 'player', seed: 1, rngCounter: 0, rules, xp: 0, level: 1, depth: 1, story: '', bible: null,
+    items: [], turn: 12, activeEntityId: 'player', seed: 1, rngCounter: 0, rules, xp: 0, level: 1, depth: 1, story: '', motif: null, bodies: [], bible: null,
   };
 }
 

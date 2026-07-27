@@ -44,6 +44,12 @@ export type Trigger = (typeof TRIGGERS)[number];
 export const STATS = ['might', 'speed', 'wits', 'maxHp'] as const;
 export type StatName = (typeof STATS)[number];
 
+/** The cuts a floor can be shaped to (tables.ts MOTIFS — a test pins the two
+ *  lists together). Base cuts only: the deep is depth's business, said by
+ *  composition (`motifIs warren` + `depthAtLeast 7`), not by a fourth name. */
+export const MOTIF_NAMES = ['door', 'warren', 'halls'] as const;
+export type MotifName = (typeof MOTIF_NAMES)[number];
+
 export type Condition =
   | { readonly kind: 'hpAtMost'; readonly n: number }
   | { readonly kind: 'hpAtLeast'; readonly n: number }
@@ -56,7 +62,10 @@ export type Condition =
   | { readonly kind: 'exitWithin'; readonly n: number }
   | { readonly kind: 'exitBeyond'; readonly n: number }
   | { readonly kind: 'turnAtLeast'; readonly n: number }
+  | { readonly kind: 'depthAtLeast'; readonly n: number }
   | { readonly kind: 'statAtLeast'; readonly stat: StatName; readonly n: number }
+  | { readonly kind: 'motifIs'; readonly motif: MotifName }
+  | { readonly kind: 'bodyHere' }
   | { readonly kind: 'blowLanded' }
   | { readonly kind: 'blowMissed' };
 
@@ -115,6 +124,7 @@ const RANGES: Record<string, readonly [number, number]> = {
   exitWithin: [1, 40], exitBeyond: [1, 40],
   creaturesAtMost: [0, 20], creaturesAtLeast: [0, 20],
   turnAtLeast: [1, 999],
+  depthAtLeast: [1, 99],
   statAtLeast: [1, 20],
 };
 
@@ -125,6 +135,9 @@ export const BLOW_CONDITIONS = ['blowLanded', 'blowMissed'] as const;
 /** Kinds that name a stat as well as a number. */
 export const STAT_KINDS = ['statAtLeast', 'grant', 'drain'] as const;
 
+/** Kinds that name a floor's cut, and nothing else. */
+export const MOTIF_KINDS = ['motifIs'] as const;
+
 /** The range a kind's `n` must fall in, or undefined for kinds that take none.
  *  Exported so the Forge's editor can build controls that cannot produce an
  *  invalid rule in the first place, rather than ones that get rejected after. */
@@ -134,6 +147,10 @@ export function rangeOf(kind: string): readonly [number, number] | undefined {
 
 export function takesStat(kind: string): boolean {
   return (STAT_KINDS as readonly string[]).includes(kind);
+}
+
+export function takesMotif(kind: string): boolean {
+  return (MOTIF_KINDS as readonly string[]).includes(kind);
 }
 
 export function takesNumber(kind: string): boolean {
@@ -152,7 +169,8 @@ export function needsTriggers(kind: string): readonly Trigger[] | undefined {
 export const CONDITION_KINDS: readonly ConditionKind[] = [
   'hpAtMost', 'hpAtLeast', 'hpBelowPercent', 'hpAbovePercent',
   'creatureWithin', 'noCreatureWithin', 'creaturesAtMost', 'creaturesAtLeast',
-  'exitWithin', 'exitBeyond', 'turnAtLeast', 'statAtLeast',
+  'exitWithin', 'exitBeyond', 'turnAtLeast', 'depthAtLeast', 'statAtLeast',
+  'motifIs', 'bodyHere',
   'blowLanded', 'blowMissed',
 ];
 
@@ -221,7 +239,13 @@ function validateCondition(raw: unknown): Condition | Rejected {
   const kind: unknown = raw['kind'];
   if (!oneOf(CONDITION_KINDS, kind)) return reject(`require: unknown condition "${show(kind)}"`);
 
-  if (oneOf(BLOW_CONDITIONS, kind)) return Object.freeze({ kind });
+  if (oneOf(BLOW_CONDITIONS, kind) || kind === 'bodyHere') return Object.freeze({ kind });
+
+  if (kind === 'motifIs') {
+    const motif: unknown = raw['motif'];
+    if (!oneOf(MOTIF_NAMES, motif)) return reject(`require: unknown motif "${show(motif)}" — the cuts are ${MOTIF_NAMES.join(', ')}`);
+    return Object.freeze({ kind, motif });
+  }
 
   if (kind === 'statAtLeast') {
     const stat: unknown = raw['stat'];
@@ -303,6 +327,17 @@ function blowConditionsFit(when: Trigger, require: readonly Condition[]): string
   return `require: "${require.find((c) => oneOf(BLOW_CONDITIONS, c.kind))!.kind}" needs a blow — use it with STRIKE or STRUCK, not ${when}`;
 }
 
+/** A floor has one cut. Two different `motifIs` conditions validate cleanly,
+ *  read plausibly, and can never both hold — a rule that looks ratifiable and
+ *  then silently does nothing forever, which is the lie the validator exists
+ *  to prevent (VOCABULARY.md: the unresolvable case gets its legal exit). */
+function motifsFit(require: readonly Condition[]): string | null {
+  const cuts = new Set(require.flatMap((c) => (c.kind === 'motifIs' ? [c.motif] : [])));
+  if (cuts.size <= 1) return null;
+  const [a, b] = [...cuts];
+  return `require: the floor cannot be both "${a!}" and "${b!}" — a rule that can never fire is not a rule`;
+}
+
 /** Effects reaching for "the other party" need there to be one. */
 function otherEffectsFit(when: Trigger, then: readonly Effect[]): string | null {
   const needsOther = then.find((e) => e.kind === 'harmOther' || e.kind === 'push');
@@ -362,6 +397,8 @@ export function validateRule(raw: unknown): Rule | Rejected {
   // malformed one: it looks ratifiable and then silently does nothing.
   const blowProblem = blowConditionsFit(when, require);
   if (blowProblem !== null) return reject(blowProblem);
+  const motifProblem = motifsFit(require);
+  if (motifProblem !== null) return reject(motifProblem);
   const otherProblem = otherEffectsFit(when, then);
   if (otherProblem !== null) return reject(otherProblem);
 
@@ -398,6 +435,10 @@ const STAT_TEXT: Record<StatName, string> = {
   might: 'might', speed: 'speed', wits: 'wits', maxHp: 'your health ceiling',
 };
 
+const MOTIF_TEXT: Record<MotifName, string> = {
+  door: 'the door', warren: 'the warren', halls: 'the halls',
+};
+
 /** What a rule says, in English. The Forge shows this and not the object: a
  *  player ratifying a rule they cannot read is not ratifying anything. */
 export function readRule(rule: Rule): string {
@@ -416,7 +457,10 @@ export function readRule(rule: Rule): string {
       case 'exitWithin': return `the way out within ${plural(c.n, 'square')}`;
       case 'exitBeyond': return `the way out more than ${plural(c.n, 'square')} off`;
       case 'turnAtLeast': return `turn ${c.n} or later`;
+      case 'depthAtLeast': return `the run ${c.n === 1 ? `${c.n} floor` : `${c.n} floors`} deep or deeper`;
       case 'statAtLeast': return `your ${STAT_TEXT[c.stat]} at ${c.n} or above`;
+      case 'motifIs': return `the floor cut as ${MOTIF_TEXT[c.motif]}`;
+      case 'bodyHere': return 'your own body lying where you stand';
       case 'blowLanded': return 'the blow landing';
       case 'blowMissed': return 'the blow missing';
       default: {

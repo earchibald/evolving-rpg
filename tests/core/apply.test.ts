@@ -188,3 +188,42 @@ describe('apply', () => {
     expect(JSON.stringify(a)).toBe(JSON.stringify(b));
   });
 });
+
+describe('apply WORLD_BODIES, and the recorded cut', () => {
+  it('reads the cut when the floor said one, and null when it never did', () => {
+    expect(started.motif).toBeNull();
+    const cut: GameEvent = {
+      id: 'c0', parent: null, seq: 0,
+      type: 'WORLD_INIT', schemaVersion: SCHEMA_VERSIONS.WORLD_INIT, rngCounter: 0, rngDraws: 0,
+      payload: {
+        width: 2, height: 1, tiles: [FLOOR, FLOOR], seed: 1, motif: 'warren', items: [], opponents: [],
+        player: { id: 'player', kind: 'you', pos: { x: 0, y: 0 }, stats: { hp: 5, might: 1, wits: 1, speed: 1 }, tags: [] },
+      },
+    };
+    expect(apply(EMPTY_STATE, cut).motif).toBe('warren');
+  });
+
+  it('lays the dead into state, copied, drawing nothing', () => {
+    const lying = [{ x: 1, y: 0 }, { x: 2, y: 1 }];
+    const haunted: GameEvent = {
+      id: 'e1', parent: 'e0', seq: 1,
+      type: 'WORLD_BODIES', schemaVersion: SCHEMA_VERSIONS.WORLD_BODIES, rngCounter: 128, rngDraws: 0,
+      payload: { bodies: lying },
+    };
+    const after = apply(started, haunted);
+    expect(after.bodies).toEqual(lying);
+    // Copied out of the payload — the event is frozen and shared by forks.
+    expect(after.bodies[0]).not.toBe(lying[0]);
+    expect(after.rngCounter).toBe(128);
+  });
+
+  it('is reset by the next WORLD_INIT: every floor is born empty', () => {
+    const haunted: GameEvent = {
+      id: 'e1', parent: 'e0', seq: 1,
+      type: 'WORLD_BODIES', schemaVersion: SCHEMA_VERSIONS.WORLD_BODIES, rngCounter: 128, rngDraws: 0,
+      payload: { bodies: [{ x: 1, y: 0 }] },
+    };
+    const reborn = apply(apply(started, haunted), { ...worldInit, id: 'e2', parent: 'e1', seq: 2 });
+    expect(reborn.bodies).toEqual([]);
+  });
+});

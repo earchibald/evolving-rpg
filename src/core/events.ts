@@ -1,4 +1,4 @@
-import type { Rule } from '../canon/rule.js';
+import type { Rule, MotifName } from '../canon/rule.js';
 import type { Bible } from '../canon/bible.js';
 import type { Resolved } from '../canon/interpret.js';
 import type { Pos, Stats } from './entity.js';
@@ -12,8 +12,9 @@ import type { Item } from './item.js';
  *  payload — a special case that could not survive any second consumer of
  *  randomness, and combat is one. */
 export const SCHEMA_VERSIONS = {
-  WORLD_INIT: 6,
+  WORLD_INIT: 7,
   WORLD_BIBLE: 1,
+  WORLD_BODIES: 1,
   MOVE: 2,
   MOVE_BLOCKED: 2,
   TURN_ADVANCED: 2,
@@ -57,6 +58,10 @@ export interface WorldInitPayload {
    *  L1. Recorded rather than derived, because "what generation decided" is a
    *  fact about this world's birth and the log is where facts live. */
   story?: string;
+  /** v7. The cut this floor was shaped to — same philosophy as `story`: the
+   *  motif is what generation decided, so the log says it. Older floors never
+   *  said, and stay unsaid; `motifIs` reads absence as false, not as door. */
+  motif?: MotifName;
   player: EntitySeed;
   /** v4. What is worth a detour. The way out is not here — it is a tile, and
    *  recording a place twice gives two things that can disagree. */
@@ -145,6 +150,15 @@ export interface StrikePayload {
   damage: number;
 }
 
+/** Where this world's dead lie on the floor a run is entering. Appended in
+ *  the rebirth and descent ceremonies (identity, then the dead, then law) —
+ *  never by WORLD_INIT itself, because the bodies are the graveyard's fact,
+ *  not generation's: the same floor is born empty the first time and haunted
+ *  the next, and the *world* did not change — the world's history did. */
+export interface WorldBodiesPayload {
+  bodies: Pos[];
+}
+
 /** An event before it has been hashed and linked into a chain.
  *
  *  `rngCounter` is the generator's counter *before* the command ran.
@@ -154,6 +168,7 @@ export interface StrikePayload {
 export type DraftEvent =
   | { type: 'WORLD_INIT'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: WorldInitPayload }
   | { type: 'WORLD_BIBLE'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: WorldBiblePayload }
+  | { type: 'WORLD_BODIES'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: WorldBodiesPayload }
   | { type: 'MOVE'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: MovePayload }
   | { type: 'MOVE_BLOCKED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: MoveBlockedPayload }
   | { type: 'TURN_ADVANCED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: TurnAdvancedPayload }

@@ -93,6 +93,11 @@ export function upcastEvent(raw: unknown): DraftEvent {
       payload.story = payload.story ?? 'scattered walls (before rooms)';
     }
 
+    // v6 → v7: worlds record the cut they were shaped to (payload.motif).
+    // Older floors never said, and stay unsaid — absence folds to null and
+    // `motifIs` reads it as false, rather than a migration inventing a shape
+    // for floors cut before motifs existed. Nothing to rewrite.
+
     return {
       type: 'WORLD_INIT',
       schemaVersion: current,

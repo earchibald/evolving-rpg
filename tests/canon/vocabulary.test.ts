@@ -40,7 +40,7 @@ function being(id: string, x: number, y: number, hp: number, maxHp = hp) {
 }
 
 /** An 8×1 corridor unless told otherwise, so pushing has room to run. */
-function world(entities = [being('player', 0, 0, 5, 10)], opts: { exitAt?: number; wallAt?: number; turn?: number; rules?: Rule[] } = {}): GameState {
+function world(entities = [being('player', 0, 0, 5, 10)], opts: { exitAt?: number; wallAt?: number; turn?: number; rules?: Rule[]; depth?: number; motif?: GameState['motif']; bodies?: GameState['bodies'] } = {}): GameState {
   const tiles = new Array<number>(8).fill(FLOOR);
   if (opts.exitAt !== undefined) tiles[opts.exitAt] = EXIT;
   if (opts.wallAt !== undefined) tiles[opts.wallAt] = WALL;
@@ -50,8 +50,10 @@ function world(entities = [being('player', 0, 0, 5, 10)], opts: { exitAt?: numbe
     rules: opts.rules ?? [],
     xp: 0,
     level: 1,
-    depth: 1,
+    depth: opts.depth ?? 1,
     story: '', bible: null,
+    motif: opts.motif ?? null,
+    bodies: opts.bodies ?? [],
   };
 }
 
@@ -258,6 +260,93 @@ describe('shapes that must stay refused', () => {
   });
 });
 
+describe('the world-shape words (VOCABULARY.md §3)', () => {
+  it('reads the depth of the run', () => {
+    const deep = world([being('player', 0, 0, 5, 10)], { depth: 5 });
+    expect(holds({ kind: 'depthAtLeast', n: 5 }, deep, 'player')).toBe(true);
+    expect(holds({ kind: 'depthAtLeast', n: 6 }, deep, 'player')).toBe(false);
+    // The first floor is depth 1, so 1 holds everywhere — harmless, not wrong.
+    expect(holds({ kind: 'depthAtLeast', n: 1 }, world(), 'player')).toBe(true);
+  });
+
+  it('reads the floor\'s cut, and an unrecorded cut as no cut at all', () => {
+    const warren = world([being('player', 0, 0, 5, 10)], { motif: 'warren' });
+    expect(holds({ kind: 'motifIs', motif: 'warren' }, warren, 'player')).toBe(true);
+    expect(holds({ kind: 'motifIs', motif: 'halls' }, warren, 'player')).toBe(false);
+    // Logs from before floors recorded their cut: the condition is false,
+    // never a guess — old floors do not retroactively acquire a shape.
+    expect(holds({ kind: 'motifIs', motif: 'door' }, world(), 'player')).toBe(false);
+  });
+
+  it('knows where you fell', () => {
+    const haunted = world([being('player', 2, 0, 5, 10)], { bodies: [{ x: 2, y: 0 }, { x: 5, y: 0 }] });
+    expect(holds({ kind: 'bodyHere' }, haunted, 'player')).toBe(true);
+    const beside = world([being('player', 1, 0, 5, 10)], { bodies: [{ x: 2, y: 0 }] });
+    expect(holds({ kind: 'bodyHere' }, beside, 'player')).toBe(false);
+    expect(holds({ kind: 'bodyHere' }, world(), 'player')).toBe(false);
+  });
+
+  it('holds the new words to their shapes', () => {
+    expect(() => rule({ require: [{ kind: 'depthAtLeast', n: 99 }] })).not.toThrow();
+    expect(refused({ require: [{ kind: 'depthAtLeast', n: 0 }] })).toMatch(/1–99/);
+    expect(refused({ require: [{ kind: 'depthAtLeast', n: 100 }] })).toMatch(/1–99/);
+    expect(() => rule({ require: [{ kind: 'motifIs', motif: 'door' }] })).not.toThrow();
+    expect(() => rule({ require: [{ kind: 'motifIs', motif: 'halls' }] })).not.toThrow();
+    expect(refused({ require: [{ kind: 'motifIs', motif: 'cave' }] })).toMatch(/motif/);
+    expect(refused({ require: [{ kind: 'motifIs' }] })).toMatch(/motif/);
+    expect(() => rule({ require: [{ kind: 'bodyHere' }] })).not.toThrow();
+  });
+
+  it('works under any trigger, unlike the blow words', () => {
+    for (const when of TRIGGERS) {
+      expect(isRejected(validateRule({
+        id: 'r', when,
+        require: [{ kind: 'bodyHere' }, { kind: 'depthAtLeast', n: 2 }, { kind: 'motifIs', motif: 'warren' }],
+        then: [{ kind: 'speak', text: 'so it goes' }],
+        provenance: { events: ['e'], notes: [], because: 'y' }, ratifiedAt: 'now',
+      }))).toBe(false);
+    }
+  });
+
+  it('refuses a floor asked to be two shapes at once', () => {
+    // Two different cuts can never both hold: the rule validates, reads
+    // plausibly, and does nothing forever — the exact lie the validator
+    // exists to prevent (VOCABULARY.md: the unresolvable case has its exit).
+    expect(refused({ require: [{ kind: 'motifIs', motif: 'door' }, { kind: 'motifIs', motif: 'warren' }] }))
+      .toMatch(/cannot .*both|never fire/);
+    // The same cut twice is redundant, not contradictory.
+    expect(() => rule({ require: [{ kind: 'motifIs', motif: 'door' }, { kind: 'motifIs', motif: 'door' }] })).not.toThrow();
+  });
+
+  it('drops extra keys on the new shapes', () => {
+    const r = validateRule({
+      id: 'r', when: 'MOVE',
+      require: [{ kind: 'bodyHere', sneaky: 1 }, { kind: 'motifIs', motif: 'door', also: 2 }, { kind: 'depthAtLeast', n: 3, ride: 3 }],
+      then: [{ kind: 'heal', n: 1 }],
+      provenance: { events: ['e'], notes: [], because: 'y' }, ratifiedAt: 'now',
+    });
+    if (isRejected(r)) throw new Error(r.rejected);
+    expect(Object.keys(r.require[0]!)).toEqual(['kind']);
+    expect(Object.keys(r.require[1]!).sort()).toEqual(['kind', 'motif']);
+    expect(Object.keys(r.require[2]!).sort()).toEqual(['kind', 'n']);
+    expect(JSON.stringify(r)).not.toContain('sneaky');
+  });
+
+  it('fires through the interpreter, composed', () => {
+    // The three words together, gating a heal on MOVE: the full path from
+    // validated rule to RULE_FIRED, not just the predicate in isolation.
+    const r = rule({ when: 'MOVE', require: [
+      { kind: 'bodyHere' }, { kind: 'depthAtLeast', n: 3 }, { kind: 'motifIs', motif: 'warren' },
+    ] });
+    const fires = world([being('player', 2, 0, 5, 10)],
+      { depth: 3, motif: 'warren', bodies: [{ x: 2, y: 0 }], rules: [r] });
+    expect(fireRules(fires, 'MOVE', 'player')).toHaveLength(1);
+    const wrongFloor = world([being('player', 2, 0, 5, 10)],
+      { depth: 3, motif: 'halls', bodies: [{ x: 2, y: 0 }], rules: [r] });
+    expect(fireRules(wrongFloor, 'MOVE', 'player')).toHaveLength(0);
+  });
+});
+
 describe('every shape reads as English', () => {
   it('renders each trigger, condition and effect without falling over', () => {
     const conditions: Condition[] = [
@@ -267,6 +356,8 @@ describe('every shape reads as English', () => {
       { kind: 'creaturesAtMost', n: 1 }, { kind: 'creaturesAtLeast', n: 2 },
       { kind: 'exitWithin', n: 4 }, { kind: 'exitBeyond', n: 20 },
       { kind: 'turnAtLeast', n: 30 }, { kind: 'statAtLeast', stat: 'wits', n: 2 },
+      { kind: 'depthAtLeast', n: 3 }, { kind: 'motifIs', motif: 'warren' },
+      { kind: 'bodyHere' },
     ];
     for (const c of conditions) {
       const said = readRule(rule({ require: [c] }));

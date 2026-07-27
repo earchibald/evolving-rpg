@@ -4,7 +4,7 @@ import { findEntity, isAlive } from './entity.js';
 import { intBetween } from './rng.js';
 import { neededToHit, chanceIn20, damageDice, critFloor, WHIFF, BESTIARY, creatureStats, threatOf, spawnBudget, depthBands, wardenAt, ARMORY, relicGrant, slotOf, grantValue, motifAt } from './tables.js';
 import type { Relic } from './tables.js';
-import type { Entity, Stats } from './entity.js';
+import type { Entity, Stats, Pos } from './entity.js';
 import { itemAt } from './item.js';
 import { EXIT, SECRET, tileAt } from './grid.js';
 import { nextActive } from './turns.js';
@@ -308,6 +308,9 @@ export function createWorld(
       tiles: [...grid.tiles],
       seed,
       story,
+      // The cut, as a token beside the story's prose — same fact, one for
+      // rules to read and one for players.
+      motif: cut.motif.key,
       depth,
       xp: carried?.xp ?? 0,
       level: carried?.level ?? 1,
@@ -509,6 +512,22 @@ export function ratifyRule(state: GameState, rule: Rule): Extract<DraftEvent, { 
     // load-bearing guarantee rather than an accident.
     rngDraws: 0,
     payload: { rule },
+  };
+}
+
+/**
+ * Writes where this world's dead lie on the floor a run is entering. Appended
+ * by the rebirth and descent ceremonies (identity, then the dead, then law),
+ * never by generation — the bodies are the graveyard's fact, not the floor's.
+ * Draws nothing: the dead are where they fell, not where dice put them.
+ */
+export function recordBodies(state: GameState, bodies: readonly Pos[]): Extract<DraftEvent, { type: 'WORLD_BODIES' }> {
+  return {
+    type: 'WORLD_BODIES',
+    schemaVersion: SCHEMA_VERSIONS.WORLD_BODIES,
+    rngCounter: state.rngCounter,
+    rngDraws: 0,
+    payload: { bodies: bodies.map((b) => ({ x: b.x, y: b.y })) },
   };
 }
 

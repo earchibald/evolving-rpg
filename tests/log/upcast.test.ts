@@ -29,6 +29,23 @@ describe('upcastEvent', () => {
     expect(upcastEvent(move).rngDraws).toBe(0);
   });
 
+  it('walks a v6 WORLD_INIT to v7 without inventing a cut', () => {
+    // v7 added payload.motif. Floors recorded before motifs existed never
+    // said their cut, and stay unsaid — absence folds to null and `motifIs`
+    // reads it as false, rather than a migration guessing "door".
+    const v6 = {
+      type: 'WORLD_INIT', schemaVersion: 6, rngCounter: 0, rngDraws: 3,
+      payload: {
+        width: 2, height: 1, tiles: [0, 0], seed: 9, story: 'two tiles', depth: 1,
+        items: [], opponents: [],
+        player: { id: 'player', kind: 'you', pos: { x: 0, y: 0 }, stats: { hp: 5, might: 1, wits: 1, speed: 1 }, tags: [] },
+      },
+    };
+    const up = upcastEvent(v6);
+    expect(up.schemaVersion).toBe(SCHEMA_VERSIONS.WORLD_INIT);
+    expect('motif' in up.payload).toBe(false);
+  });
+
   it('passes a current-version event through untouched', () => {
     const already = {
       type: 'MOVE',

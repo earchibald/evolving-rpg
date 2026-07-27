@@ -108,7 +108,12 @@ export function holds(condition: Condition, state: GameState, actorId: string, b
     case 'exitWithin': return stepsToExit(state, actor.pos) <= condition.n;
     case 'exitBeyond': return stepsToExit(state, actor.pos) > condition.n;
     case 'turnAtLeast': return state.turn >= condition.n;
+    case 'depthAtLeast': return state.depth >= condition.n;
     case 'statAtLeast': return statOf(actor, condition.stat) >= condition.n;
+    // A floor that never recorded its cut has none — old logs make this false
+    // rather than guessing, the same honesty as an absent blow.
+    case 'motifIs': return state.motif === condition.motif;
+    case 'bodyHere': return state.bodies.some((b) => b.x === actor.pos.x && b.y === actor.pos.y);
     case 'blowLanded': return blow.hit === true;
     case 'blowMissed': return blow.hit === false;
     default: {

@@ -1,7 +1,7 @@
 import { append, fold, chain } from '../log/chain.js';
 import { getRef, fork, setHead, listRefs } from '../log/refs.js';
 import type { Refs } from '../log/refs.js';
-import { attemptMove, advanceTurn, endsTurn, wait, takeUnderfoot, outcome, ratifyRule, foundWorld, createWorld } from '../core/commands.js';
+import { attemptMove, advanceTurn, endsTurn, wait, takeUnderfoot, outcome, ratifyRule, foundWorld, createWorld, recordBodies } from '../core/commands.js';
 import { u32 } from '../core/rng.js';
 import { decide } from '../core/ai.js';
 import { fireRules } from '../canon/interpret.js';
@@ -246,6 +246,34 @@ export function isGrave(name: string): boolean {
   return name.includes(GRAVE_MARK);
 }
 
+/**
+ * Where this world's dead lie at one depth: each grave timeline of `world`,
+ * folded, yields the fallen player's tile if that run ended at this depth.
+ * The same seed rebuilds the same floors, so a body's tile means the same
+ * place in the run that walks after it. Deduplicated — two deaths on one
+ * tile are one body to stand on, not a stack.
+ */
+export function fallenBodies(
+  log: EventLog,
+  refs: Refs,
+  world: string,
+  depth: number,
+): { x: number; y: number }[] {
+  const lying: { x: number; y: number }[] = [];
+  for (const ref of listRefs(refs)) {
+    if (!isGrave(ref.name) || !ref.name.startsWith(`${world}${GRAVE_MARK}`)) continue;
+    if (ref.head === null) continue;
+    const gs = fold(log, ref.head);
+    if (gs.depth !== depth) continue;
+    const fallen = gs.entities.find((e) => e.kind === 'you');
+    if (fallen === undefined) continue;
+    if (!lying.some((b) => b.x === fallen.pos.x && b.y === fallen.pos.y)) {
+      lying.push({ x: fallen.pos.x, y: fallen.pos.y });
+    }
+  }
+  return lying;
+}
+
 export interface Burial {
   /** Beginning again appends the world's rules onto the fresh chain, so the
    *  log grows — the caller must take this back, not just the refs. */
@@ -298,10 +326,16 @@ export function beginAgain(
 
   let current = log;
   let head = root.id;
-  // Identity first, then law: the world is still itself before it re-agrees
-  // to anything.
+  // Identity, then the dead, then law: the world is still itself before it
+  // re-agrees to anything, and the graveyard is fact before rules can read it.
   if (was.bible !== null) {
     const done = append(current, head, foundWorld(fold(current, head), was.bible));
+    current = done.log;
+    head = done.event.id;
+  }
+  const lying = fallenBodies(current, refs, active, fold(current, head).depth);
+  if (lying.length > 0) {
+    const done = append(current, head, recordBodies(fold(current, head), lying));
     current = done.log;
     head = done.event.id;
   }
@@ -365,6 +399,13 @@ export function descend(
   // pattern exactly: the floor changes, what the world is does not.
   if (state.bible !== null) {
     const done = append(current.log, current.head, foundWorld(fold(current.log, current.head), state.bible));
+    current = { log: done.log, head: done.event.id };
+  }
+  // The dead of the floor below: an earlier run that made it this deep and
+  // fell leaves a body the descending run can stand on.
+  const lying = fallenBodies(current.log, refs, active, nextDepth);
+  if (lying.length > 0) {
+    const done = append(current.log, current.head, recordBodies(fold(current.log, current.head), lying));
     current = { log: done.log, head: done.event.id };
   }
   for (const rule of state.rules) {

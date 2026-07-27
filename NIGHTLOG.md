@@ -611,3 +611,32 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 >    the ring to a quarter strength out of sight. The set-level property —
 >    a trodden tile and all its neighbors are always seen — is now a
 >    permanent test, so the honest half can never rot into the lying half.
+
+> [!IMPORTANT]
+> **19:2x — The vocabulary grows for the first time, under written law**
+> The research on self-amending rule systems came home (Nomic's immutable
+> core and win-by-paradox, Fluxx's categories, MtG's evergreen discipline,
+> the mutator menus, Baba's legibility budget, Ludii, and a 2025 paper on
+> LLM Nomic where identical proposers collude 0.87 and diverse ones argue) —
+> distilled into **docs/design/VOCABULARY.md**: nine standing principles for
+> widening a closed rule language, each mapped to machinery we already have.
+> Then the first widening under them, three conditions:
+> - **`bodyHere`** — "your own body lying where you stand." BONES option F
+>   unblocked *without deciding it*: the fact is now expressible, so a death
+>   proposal can offer what your fall site is worth and the Forge decides.
+>   Bodies ride the chain as a new WORLD_BODIES event, appended when a run
+>   is born or descends (identity, then the dead, then law) — replay, bots
+>   and trials all see the same truth. One consequence said plainly: dying
+>   the same way twice now digs two graves, because the second run walked a
+>   haunted floor — genuinely different history, however identical the keys.
+> - **`depthAtLeast`** — rules can finally know how far down the run is.
+> - **`motifIs door|warren|halls`** — rules read the floor's cut, recorded
+>   in WORLD_INIT (v7) beside the story; the deep stays depth's business,
+>   said by composition. Two different cuts in one rule are refused at the
+>   door — a rule that can never fire is not a rule.
+> The assay learned to **meet a rule where it lives**: trial worlds are born
+> at the depth, cut, and hauntedness the rule names (both sides of every
+> marginal pair), so "never fired" stays an honest caution — while a
+> body-gated wits engine still dies to M2 and a modest body-heal trials
+> sound. Golden regenerated for v7 (same 47 actions, same escape — the
+> stream didn't move, only what the birth event says). 655 tests.

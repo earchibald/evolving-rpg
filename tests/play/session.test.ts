@@ -1,5 +1,7 @@
 import { emptyLog, append, chain, fold } from '../../src/log/chain.js';
-import { playerStep, playerWait, runWorldTurns } from '../../src/play/session.js';
+import { playerStep, playerWait, runWorldTurns, descend } from '../../src/play/session.js';
+import { emptyRefs, createRef, getRef } from '../../src/log/refs.js';
+import type { DraftEvent } from '../../src/core/events.js';
 import { createWorld, outcome } from '../../src/core/commands.js';
 import { farthestFrom } from '../../src/core/mapgen.js';
 import { EXIT, FLOOR } from '../../src/core/grid.js';
@@ -252,5 +254,53 @@ describe('a pocketed creature cannot freeze the world', () => {
     const state = fold(position.log, position.head);
     expect(state.turn).toBeGreaterThanOrEqual(5);
     expect(state.activeEntityId).toBe('player');
+  });
+});
+
+describe('the dead ride the stairs down', () => {
+  // Hand-built worlds: what matters is the ceremony, not the floors. A run
+  // stands on the way out at depth 1; two graves of the same world lie below,
+  // one at depth 2 and one at depth 3.
+  const init = (depth: number, px: number): DraftEvent => ({
+    type: 'WORLD_INIT', schemaVersion: SCHEMA_VERSIONS.WORLD_INIT, rngCounter: 0, rngDraws: 0,
+    payload: {
+      width: 4, height: 1, tiles: [FLOOR, FLOOR, FLOOR, EXIT], seed: 5, depth,
+      items: [], opponents: [],
+      player: { id: 'player', kind: 'you', pos: { x: px, y: 0 }, stats: { hp: 8, might: 3, wits: 1, speed: 2 }, tags: [] },
+    },
+  });
+
+  it('records the bodies of the depth being entered, and only that depth', () => {
+    let done = append(emptyLog(), null, init(1, 3));
+    let log = done.log;
+    let refs = createRef(emptyRefs(), 'main', done.event.id, 0, 'about to descend');
+
+    done = append(log, null, init(2, 1));
+    log = done.log;
+    refs = createRef(refs, 'main†1', done.event.id, 0, 'fell at depth 2');
+    done = append(log, null, init(3, 2));
+    log = done.log;
+    refs = createRef(refs, 'main†2', done.event.id, 0, 'fell at depth 3');
+
+    const down = descend(log, refs, 'main', { width: 24, height: 16 });
+    expect(down).not.toBeNull();
+    expect(down!.depth).toBe(2);
+
+    const state = fold(down!.log, getRef(down!.refs, 'main').head);
+    expect(state.depth).toBe(2);
+    // The depth-2 body rides; the depth-3 one waits for the next stairs.
+    expect(state.bodies).toEqual([{ x: 1, y: 0 }]);
+    // And the ceremony wrote it as an event, replayable like everything else.
+    expect(chain(down!.log, getRef(down!.refs, 'main').head).some((e) => e.type === 'WORLD_BODIES')).toBe(true);
+  });
+
+  it('appends no bodies event when nothing lies below', () => {
+    const done = append(emptyLog(), null, init(1, 3));
+    const refs = createRef(emptyRefs(), 'main', done.event.id, 0, 'clean world');
+    const down = descend(done.log, refs, 'main', { width: 24, height: 16 });
+    expect(down).not.toBeNull();
+    const events = chain(down!.log, getRef(down!.refs, 'main').head);
+    expect(events.some((e) => e.type === 'WORLD_BODIES')).toBe(false);
+    expect(fold(down!.log, getRef(down!.refs, 'main').head).bodies).toEqual([]);
   });
 });

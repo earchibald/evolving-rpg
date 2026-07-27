@@ -121,7 +121,7 @@ function fixture(extra: Entity[] = []): GameState {
     xp: 0,
     level: 1,
     depth: 1,
-    story: '', bible: null,
+    story: '', motif: null, bodies: [], bible: null,
   };
 }
 
@@ -264,7 +264,7 @@ describe('striking', () => {
       xp: 0,
       level: 1,
       depth: 1,
-    story: '', bible: null,
+    story: '', motif: null, bodies: [], bible: null,
     };
   }
 

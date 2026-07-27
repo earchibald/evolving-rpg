@@ -258,6 +258,11 @@ export function wardenAt(depth: number): boolean {
  * middle: named motifs as bounded rows, drawn per floor in the deep.
  */
 export interface Motif {
+  /** The vocabulary token for this cut (canon/rule.ts MOTIF_NAMES — a test
+   *  pins the lists together). The deep's per-floor draw wraps warren or
+   *  halls and keeps the base key: a deep warren is still a warren to a rule,
+   *  and the deep itself is depth's business. */
+  readonly key: 'door' | 'warren' | 'halls';
   readonly name: string;
   /** One room per this many tiles — density. */
   readonly tilesPerRoom: number;
@@ -271,11 +276,11 @@ export interface Motif {
 
 export const MOTIFS: Readonly<Record<'door' | 'warren' | 'halls', Motif>> = Object.freeze({
   /** The teaching floors: exactly the shape the game launched with. */
-  door: Object.freeze({ name: 'the door', tilesPerRoom: 110, roomW: [4, 8] as const, roomH: [3, 6] as const, loopPer: 4, secretIn: 4 }),
+  door: Object.freeze({ key: 'door' as const, name: 'the door', tilesPerRoom: 110, roomW: [4, 8] as const, roomH: [3, 6] as const, loopPer: 4, secretIn: 4 }),
   /** Dense, tight, loopy — Brogue's chase topology. */
-  warren: Object.freeze({ name: 'the warren', tilesPerRoom: 90, roomW: [3, 6] as const, roomH: [3, 4] as const, loopPer: 3, secretIn: 3 }),
+  warren: Object.freeze({ key: 'warren' as const, name: 'the warren', tilesPerRoom: 90, roomW: [3, 6] as const, roomH: [3, 4] as const, loopPer: 3, secretIn: 3 }),
   /** Big sparse chambers — the keeper's arena. */
-  halls: Object.freeze({ name: 'the halls', tilesPerRoom: 150, roomW: [6, 12] as const, roomH: [4, 7] as const, loopPer: 6, secretIn: 3 }),
+  halls: Object.freeze({ key: 'halls' as const, name: 'the halls', tilesPerRoom: 150, roomW: [6, 12] as const, roomH: [4, 7] as const, loopPer: 6, secretIn: 3 }),
 });
 
 /**

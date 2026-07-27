@@ -106,8 +106,23 @@ describe('dying', () => {
   it('sends the world back to the beginning when you ask it to', () => {
     const begun = beginAgain(played.log, buried.refs, 'main');
     const head = getRef(begun.refs, 'main').head;
-    expect(chain(begun.log, head)).toHaveLength(1);
+    // Root, then the dead: rebirth is no longer a bare rewind — the grave
+    // you just filled rides onto the fresh chain as a WORLD_BODIES fact.
+    const events = chain(begun.log, head);
+    expect(events).toHaveLength(2);
+    expect(events[1]?.type).toBe('WORLD_BODIES');
     expect(outcome(fold(begun.log, head))).toBe('playing');
+  });
+
+  it('leaves your body on the floor of the run that walks after you', () => {
+    const grave = fold(played.log, getRef(buried.refs, buried.grave ?? '').head);
+    const fell = grave.entities.find((e) => e.kind === 'you')!.pos;
+
+    const begun = beginAgain(played.log, buried.refs, 'main');
+    const reborn = fold(begun.log, getRef(begun.refs, 'main').head);
+    expect(reborn.bodies).toEqual([{ x: fell.x, y: fell.y }]);
+    // What standing there confers is deliberately undecided (BONES.md) —
+    // the fact is on the chain so the Forge can be the one to decide.
   });
 
   it('deletes nothing — the log is exactly as long as it was', () => {
@@ -148,25 +163,36 @@ describe('dying', () => {
     expect(graves.map((g) => g.name).sort()).toEqual(['main†1', 'main†2']);
   });
 
-  it('treats an identical death as the death it already buried', () => {
-    // Events are content-addressed, so walking the same path to the same end
-    // produces the same ids and lands on the same head. There is only one such
-    // timeline, and giving it a second name would be two graves for one body.
+  it('digs a second grave for the same path walked after a death, because the world is not the same', () => {
+    // This used to converge: same keypresses, same content-addressed ids, same
+    // head, one grave. The bodies ended that on purpose — a rebirth carries
+    // WORLD_BODIES, so the second walk is a run through a haunted floor, a
+    // genuinely different history however identical the fingers were. The
+    // one-grave-per-death property lives on at the head level (see "does not
+    // dig a second grave"), and the map still shows one body: fallenBodies
+    // deduplicates the tile.
     const restarted = beginAgain(played.log, buried.refs, 'main');
     const same = untilDead({ log: restarted.log, refs: restarted.refs });
     const second = buryIfDead(same.log, same.refs, 'main');
 
-    expect(second.grave).toBe(buried.grave);
-    expect(listRefs(second.refs).filter((r) => isGrave(r.name))).toHaveLength(1);
+    expect(second.grave).not.toBe(buried.grave);
+    expect(listRefs(second.refs).filter((r) => isGrave(r.name))).toHaveLength(2);
+
+    // Two deaths on one tile are still one body to stand on.
+    const begun = beginAgain(same.log, second.refs, 'main');
+    const reborn = fold(begun.log, getRef(begun.refs, 'main').head);
+    expect(reborn.bodies).toHaveLength(1);
   });
 
   it('lets the rewound world walk the same path again without complaint', () => {
     // Convergent history: the reset world repeats moves whose ids already exist.
     // append is idempotent for exactly this, and this is the case that proves it
-    // was worth making so.
-    const head = getRef(beginAgain(played.log, buried.refs, 'main').refs, 'main').head;
+    // was worth making so. (The rebirth's own log, not the stale one — the
+    // bodies event the ceremony appended has to be under the head it named.)
+    const begun = beginAgain(played.log, buried.refs, 'main');
+    const head = getRef(begun.refs, 'main').head;
     expect(head).not.toBeNull();
-    expect(() => playerStep({ log: played.log, head: head ?? '' }, 'player', 1, 0)).not.toThrow();
+    expect(() => playerStep({ log: begun.log, head: head ?? '' }, 'player', 1, 0)).not.toThrow();
   });
 
   it('does nothing at all while you are alive', () => {

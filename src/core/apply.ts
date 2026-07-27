@@ -1,6 +1,7 @@
 import { makeGrid } from './grid.js';
 import { applyResolved } from '../canon/interpret.js';
 import { threatOf, levelForXp, growthAt, slotOf } from './tables.js';
+import { NO_BODIES } from './state.js';
 import type { GameEvent } from './events.js';
 import type { GameState } from './state.js';
 
@@ -100,6 +101,10 @@ function reduce(state: GameState, event: GameEvent): GameState {
         level: p.level ?? 1,
         depth: p.depth ?? 1,
         story: p.story ?? '',
+        motif: p.motif ?? null,
+        // The floor is born empty; the graveyard speaks separately, via
+        // WORLD_BODIES in the rebirth and descent ceremonies.
+        bodies: NO_BODIES,
         // Identity resets with the floor; descend re-appends WORLD_BIBLE
         // right after, the way it re-ratifies rules. Null, never undefined:
         // the carry guards test `!== null`, and an undefined slipping through
@@ -128,6 +133,12 @@ function reduce(state: GameState, event: GameEvent): GameState {
       // to null, and descend re-appends it — the rules pattern exactly: the
       // world changes, what it has agreed to does not).
       return { ...state, bible: event.payload.bible };
+    }
+
+    case 'WORLD_BODIES': {
+      // Copied out of the payload, like WORLD_INIT's seeds: the event is
+      // frozen and shared by every fork that descends from it.
+      return { ...state, bodies: event.payload.bodies.map((b) => ({ x: b.x, y: b.y })) };
     }
 
     case 'MOVE': {
