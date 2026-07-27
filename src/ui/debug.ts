@@ -1741,7 +1741,15 @@ function fetchBench(): void {
       const passed = benchPassed();
       const already = new Set(rulesInForce().map((r) => readRule(r)));
       for (const row of rows) {
-        const rule = validateRule((row as { draft?: unknown }).draft);
+        const { file, draft } = row as { file?: unknown; draft?: unknown };
+        // Bench files are bare drafts (the loop writes rules without
+        // identity); the validator demands one. Named for their file, with
+        // a fixed stamp — accept re-finalises with the real moment anyway.
+        const rule = validateRule({
+          id: `bench:${typeof file === 'string' ? file.replace(/\.rule\.json$/u, '') : 'law'}`,
+          ratifiedAt: '2026-07-27T00:00:00.000Z',
+          ...(typeof draft === 'object' && draft !== null ? draft : {}),
+        });
         if (isRejected(rule)) continue;
         const said = readRule(rule);
         if (passed.has(said) || already.has(said)) continue;
