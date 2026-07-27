@@ -533,3 +533,26 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > All three properties mutation-proofed (fog illusion, stranding check,
 > repair). Golden re-picked (seed 14 — fights, crits, equips, escapes).
 > 623 tests. Old saves: broken freely, per your standing rule.
+
+> [!IMPORTANT]
+> **17:3x — Dying provokes the world. And your body waits.**
+> 1. **Every death proposes a rule, unasked.** The run that killed you is
+>    read back at the moment of burial; the Forge opens on its own when the
+>    offer arrives. Verified by dying twice, live:
+>    - Death one: the world saw a run of futile waiting and offered rest —
+>      *hold still, nothing living within 4, below full health → recover 1*
+>      — citing the dead-air lens. A genuinely good offer.
+>    - Death two: the world offered a stat-minting engine and **the assay
+>      refused it before it ever reached the screen** ("might climbed 18
+>      past what the same play earns"). The whole gauntlet — death →
+>      proposal → trial → refusal — ran without a hand on it.
+>    One paid call per death (~40-90s); the one exception to "asking happens
+>    when you press the button": you ruled that a death is the button.
+> 2. **Finding your own body says so**: walk onto the tile where a previous
+>    run of this world fell (same floor — the same seed rebuilds it) and the
+>    journal says *"you find your own body. what that is worth, the world
+>    has not yet decided."* What it CONFERS is deliberately undecided, per
+>    your call — and the line leaves the door open for the Forge to be the
+>    one that decides. Verified live: died behind a secret door, rose, and
+>    had to re-discover the illusory wall to reach the corpse — the fog
+>    honestly forgot it with the fresh run.

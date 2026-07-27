@@ -2,7 +2,7 @@ import { emptyLog, append, chain, fold, verifyChain } from '../log/chain.js';
 import { emptyRefs, createRef, getRef, setHead, fork, reset, listRefs } from '../log/refs.js';
 import { createWorld, ratifyRule, foundWorld } from '../core/commands.js';
 import { validateBible, isRefusedBible } from '../canon/bible.js';
-import { playerStep, playerWait, runWorldTurns, buryIfDead, beginAgain, descend, isGrave } from '../play/session.js';
+import { playerStep, playerWait, runWorldTurns, buryIfDead, beginAgain, descend, isGrave, GRAVE_MARK } from '../play/session.js';
 import { isAlive } from '../core/entity.js';
 import { outcome, hitChance } from '../core/commands.js';
 import { damageDice, XP_TO_REACH, slotOf, critFloor } from '../core/tables.js';
@@ -1163,6 +1163,21 @@ function finish(before: number, head: string): void {
     told.push(`you are level ${nowState.level}. your wounds close; something settles into place`);
   }
 
+  // Finding your own body says so. What finding it CONFERS is deliberately
+  // undecided — the designer marked that choice for later — and the line
+  // says exactly that in the world's own voice, because this is a game
+  // whose rules evolve: the Forge may yet be the one to answer it.
+  const lying = bodiesUnderfoot(nowState);
+  if (lying.size > 0) {
+    for (const e of events.slice(before)) {
+      if (e.type === 'MOVE' && e.payload.entityId === 'player'
+          && lying.has(idx(nowState.grid, e.payload.to.x, e.payload.to.y))) {
+        told.push('you find your own body. what that is worth, the world has not yet decided');
+        break;
+      }
+    }
+  }
+
   // Death is handled here rather than inside the step, because it is not a move
   // — it is what the world does about a move that went badly.
   const burial = buryIfDead(log, refs, active);
@@ -1175,9 +1190,73 @@ function finish(before: number, head: string): void {
     // longer restarts out from under you — you are lying on the map, and
     // beginning again is something you choose.
     told.push(`you die, and stay where you fell. kept as ${burial.grave} — press “run again” when you are ready`);
+    told.push('the world is reading your death back');
+    proposeFromDeath(burial.grave);
   }
   say(told);
   render();
+}
+
+/** Graves that have already provoked a proposal, so one death asks once —
+ *  renders repeat, and a paid forty-second call must not. */
+const provokedGraves = new Set<string>();
+
+/**
+ * Where this world's dead lie, on the floor the player now walks: tile index
+ * of each fallen body from this world's grave timelines, at this depth. The
+ * same seed rebuilds the same floors, so a body's tile means the same place
+ * in the run that walks after it.
+ */
+function bodiesUnderfoot(state: ReturnType<typeof fold>): Set<number> {
+  const lying = new Set<number>();
+  for (const ref of listRefs(refs)) {
+    if (!isGrave(ref.name) || !ref.name.startsWith(`${active}${GRAVE_MARK}`)) continue;
+    if (ref.head === null) continue;
+    const gs = fold(log, ref.head);
+    if (gs.depth !== state.depth) continue;
+    const fallen = gs.entities.find((e) => e.kind === 'you');
+    if (fallen === undefined) continue;
+    lying.add(idx(state.grid, fallen.pos.x, fallen.pos.y));
+  }
+  return lying;
+}
+
+/**
+ * Dying provokes the world: the run that just killed you is read back and a
+ * rule is proposed, unasked. The one exception to "asking happens when you
+ * press the button" — the designer ruled that a death is the button. The
+ * summary is taken AT death, so beginning again while the world thinks
+ * cannot blur which run it is reading; the Forge opens on its own only when
+ * the offer actually arrives, so you stare at your corpse in peace first.
+ */
+function proposeFromDeath(grave: string): void {
+  if (provokedGraves.has(grave) || asking) return;
+  provokedGraves.add(grave);
+
+  const head = getRef(refs, active).head;
+  const state = fold(log, head);
+  if (state.rules.length >= MAX_RULES) return;
+
+  asking = true;
+  askingSince = Date.now();
+  lastRun = summariseRun(chain(log, head), state, notes, active);
+
+  void proposeRule(oracle, lastRun, state.rules, new Date().toISOString()).then((got) => {
+    asking = false;
+    if (isRejected(got)) {
+      pending = null;
+      say(`no rule from this death — ${got.rejected}`);
+      renderForge();
+      render();
+      return;
+    }
+    pending = got;
+    edited = null;
+    el('editor').hidden = true;
+    renderForge();
+    if (!forge.open) forge.showModal();
+    render();
+  });
 }
 
 function step(dx: number, dy: number): void {
@@ -1428,7 +1507,7 @@ function renderForge(): void {
     ? `This world holds all ${MAX_RULES} rules it can. Fork it to keep going.`
     : done === 'playing'
       ? `This run is still going. The world proposes when a run ends — ${inForce} rule(s) in force.`
-      : `This run ended: ${done}. The world can read it back and propose one rule — ${inForce} in force.`;
+      : `This run ended: ${done}. A death is read back on its own; you can also ask — ${inForce} in force.`;
 
   const ask = el('ask-rule') as HTMLButtonElement;
   ask.disabled = asking || done === 'playing' || inForce >= MAX_RULES;
