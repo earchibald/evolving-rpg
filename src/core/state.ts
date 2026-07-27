@@ -44,6 +44,11 @@ export interface GameState {
   /** The world's identity, decided whole at birth (GESTALT.md), or null for
    *  a world playing without one — every consumer degrades to on-demand. */
   readonly bible: Bible | null;
+  /** Smoke in the air: until this turn, hunts path to `at` — where you stood
+   *  when it rose — instead of to you. `unfooled` are the creatures that had
+   *  you in their claws when it rose (adjacent then), recorded so replay and
+   *  the brain can never disagree about who was fooled. Null air is clear. */
+  readonly smoke: { readonly until: number; readonly at: Pos; readonly unfooled: readonly string[] } | null;
 }
 
 const NO_ENTITIES: readonly Entity[] = Object.freeze([]);
@@ -71,4 +76,5 @@ export const EMPTY_STATE: GameState = Object.freeze({
   motif: null,
   bodies: NO_BODIES,
   bible: null,
+  smoke: null,
 });

@@ -36,7 +36,7 @@ function room(entities: Entity[], opts: { walls?: Array<[number, number]>; exit?
     xp: 0,
     level: 1,
     depth: 3,
-    story: '', motif: null, bodies: [], bible: null,
+    story: '', motif: null, bodies: [], bible: null, smoke: null,
   };
 }
 

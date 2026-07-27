@@ -2,7 +2,7 @@ import { emptyLog, append, chain, fold, verifyChain } from '../log/chain.js';
 import { emptyRefs, createRef, getRef, setHead, fork, reset, listRefs } from '../log/refs.js';
 import { createWorld, ratifyRule, foundWorld } from '../core/commands.js';
 import { validateBible, isRefusedBible } from '../canon/bible.js';
-import { playerStep, playerWait, runWorldTurns, buryIfDead, beginAgain, descend, isGrave } from '../play/session.js';
+import { playerStep, playerWait, playerUse, runWorldTurns, buryIfDead, beginAgain, descend, isGrave } from '../play/session.js';
 import { isAlive } from '../core/entity.js';
 import { outcome, hitChance } from '../core/commands.js';
 import { damageDice, XP_TO_REACH, slotOf, critFloor } from '../core/tables.js';
@@ -614,6 +614,14 @@ function render(): void {
       { key: 'boots', text: wornIn('boots') },
       { key: 'trinket', text: wornIn('trinket') },
     ], ''],
+    // The satchel: carried, not worn — under the world's name for it, with
+    // the one thing to know (q spends it) said right there.
+    ['satchel', player?.satchel === undefined ? 'empty' : `${
+      oracle.ask(describeQuestion('item', player.satchel.kind, {}, worldRoot())).name
+    } — q to use`, ''],
+    ...(state.smoke !== null && state.turn < state.smoke.until
+      ? [['the air', `smoke holds for ${state.smoke.until - state.turn} more turn(s) — hunts chase where you were`, 'good'] as [string, string, string]]
+      : []),
     ['the way out', toExit, done === 'escaped' ? 'good' : ''],
     ['standing at', player === undefined ? '—' : `${player.pos.x}, ${player.pos.y}`, ''],
     ['turn', String(state.turn), ''],
@@ -625,7 +633,7 @@ function render(): void {
   // then what it is (green) — "1–4 → 3–6" — so a pickup or a level explains
   // itself in place. Only rows that change rarely; position and the turn
   // counter change every step, and a glow that is always on means nothing.
-  const NOTABLE = ['hit points', 'level', 'you deal', 'might · speed · wits', 'wielding', 'wearing', 'depth'];
+  const NOTABLE = ['hit points', 'level', 'you deal', 'might · speed · wits', 'wielding', 'wearing', 'satchel', 'depth'];
   const remember = (key: string, value: string): { lit: boolean; was: string } => {
     const prior = lastVitals.get(key);
     if (prior === undefined) {
@@ -1097,6 +1105,25 @@ function narrate(fresh: readonly GameEvent[], state: ReturnType<typeof fold>): s
       lines.push(`${named(state, event.payload.entityId)} resumes its vigil — its wounds knit shut`);
       continue;
     }
+    if (event.type === 'ITEM_USED') {
+      const p = event.payload;
+      const drunk = oracle.ask(describeQuestion('item', p.kind, {}, worldRoot())).name;
+      if (p.effect.kind === 'draught') {
+        lines.push(`you drink ${drunk} — whole again, and your ceiling rises to ${p.effect.ceilingTo}`);
+      } else {
+        lines.push(`${drunk} swallows the floor — the hunts chase where you were${
+          p.effect.unfooled.length > 0 ? ', but what stands beside you is not fooled' : ''}`);
+      }
+      continue;
+    }
+    if (event.type === 'ITEM_TAKEN' && event.payload.satchel !== undefined) {
+      const swapped = event.payload.satchel.swappedOut;
+      lines.push(`${calledItem(event.payload.itemId, state)} goes into your satchel${
+        swapped === null ? '' : ` — your ${
+          oracle.ask(describeQuestion('item', swapped, {}, worldRoot())).name
+        } stays where this one lay`}`);
+      continue;
+    }
     if (event.type === 'ITEM_TAKEN') {
       // Naming the change, not just the acquisition. A +2 might edge raises
       // damage per turn by about three quarters and read as nothing at all,
@@ -1336,6 +1363,31 @@ function hold(): void {
   finish(before, after.head);
 }
 
+function use(): void {
+  const head = getRef(refs, active).head;
+  if (head === null) return;
+
+  const state = fold(log, head);
+  const you = state.entities.find((e) => e.kind === 'you');
+  if (you?.satchel === undefined) {
+    say('your satchel is empty');
+    return;
+  }
+
+  const before = chain(log, head).length;
+  const spent = playerUse({ log, head }, 'player');
+  if (spent.draft === null) {
+    // Held, but not a tool — the heart, most likely.
+    say(`what you carry is not a thing you use`);
+    return;
+  }
+  const after = runWorldTurns(spent.position, 'player');
+  log = after.log;
+  refs = setHead(refs, active, after.head);
+
+  finish(before, after.head);
+}
+
 function wire(formId: string, inputId: string, channel: Channel): void {
   const form = el(formId) as HTMLFormElement;
   const input = el(inputId) as HTMLInputElement;
@@ -1363,6 +1415,7 @@ wire('gm-form', 'gm-said', 'gamemaster');
 const KEYMAP: ReadonlyArray<{ shown: string; what: string; button?: string }> = [
   { shown: '← ↑ → ↓ · wasd', what: 'move — into a creature is a strike, into a wall is free' },
   { shown: '. · space', what: 'hold still (this is a turn)' },
+  { shown: 'q', what: 'use what the satchel holds (this is a turn too)' },
   { shown: 'PgUp · PgDn', what: 'read back through the journal' },
   { shown: 'n', what: 'world… — begin again / another / wipe', button: 'open-worlds' },
   { shown: 'g', what: 'the forge — ask the world for a rule', button: 'open-forge' },
@@ -1421,6 +1474,11 @@ window.addEventListener('keydown', (event) => {
   if (event.key === '.' || event.key === ' ') {
     event.preventDefault();
     hold();
+    return;
+  }
+  if (event.key === 'q') {
+    event.preventDefault();
+    use();
     return;
   }
   const move = KEYS[event.key];

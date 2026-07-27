@@ -1,5 +1,6 @@
 import { EXIT, WALL, tileAt, isPassable } from '../core/grid.js';
 import { isAlive, findEntity } from '../core/entity.js';
+import { BOT_QUAFF_BELOW, BOT_SMOKE_WITHIN } from '../core/tables.js';
 import type { GameState } from '../core/state.js';
 import type { Entity, Pos } from '../core/entity.js';
 
@@ -20,7 +21,7 @@ import type { Entity, Pos } from '../core/entity.js';
  */
 
 export interface Wish {
-  readonly kind: 'step' | 'wait';
+  readonly kind: 'step' | 'wait' | 'use';
   readonly dx: number;
   readonly dy: number;
 }
@@ -28,6 +29,7 @@ export interface Wish {
 export type Policy = (state: GameState, playerId: string) => Wish;
 
 const WAIT: Wish = { kind: 'wait', dx: 0, dy: 0 };
+const USE: Wish = { kind: 'use', dx: 0, dy: 0 };
 const step = (dx: number, dy: number): Wish => ({ kind: 'step', dx, dy });
 
 function you(state: GameState, playerId: string): Entity | undefined {
@@ -80,11 +82,22 @@ export function firstStepToward(state: GameState, from: Pos, goal: (p: Pos) => b
   return step(Math.sign(at.x - from.x), Math.sign(at.y - from.y));
 }
 
+/** The fixed-threshold satchel reflex the fighters share: drink the draught
+ *  when bleeding past the table's line. Deliberately dumb — these thresholds
+ *  are the collapse canary (tables.ts): a bot that plays the satchel as well
+ *  as a person means the satchel stopped being a decision. */
+function quaffWish(me: Entity): Wish | null {
+  if (me.satchel?.kind !== 'vital draught') return null;
+  return me.stats.hp < me.maxHp * BOT_QUAFF_BELOW ? USE : null;
+}
+
 /** Heads for the way out, fighting through whatever stands in the path. */
 export const rusher: Policy = (state, playerId) => {
   const me = you(state, playerId);
   if (me === undefined) return WAIT;
-  return firstStepToward(state, me.pos, (p) => tileAt(state.grid, p.x, p.y) === EXIT) ?? WAIT;
+  return quaffWish(me)
+    ?? firstStepToward(state, me.pos, (p) => tileAt(state.grid, p.x, p.y) === EXIT)
+    ?? WAIT;
 };
 
 /** Hunts the nearest living thing and keeps swinging until nothing is left,
@@ -92,6 +105,8 @@ export const rusher: Policy = (state, playerId) => {
 export const brawler: Policy = (state, playerId) => {
   const me = you(state, playerId);
   if (me === undefined) return WAIT;
+  const drink = quaffWish(me);
+  if (drink !== null) return drink;
   const prey = livingOthers(state, playerId);
   if (prey.length === 0) return rusher(state, playerId);
   return firstStepToward(state, me.pos, (p) => prey.some((e) => e.pos.x === p.x && e.pos.y === p.y)) ?? WAIT;
@@ -106,6 +121,14 @@ export const coward: Policy = (state, playerId) => {
   if (threats.length === 0) return WAIT;
 
   const near = Math.min(...threats.map((e) => steps(me.pos, e.pos)));
+
+  // The coward's one trick: smoke when the chase closes but before it
+  // touches — adjacent smoke fools nobody (they have you by touch).
+  if (me.satchel?.kind === 'still smoke' && near > 1 && near <= BOT_SMOKE_WITHIN
+      && (state.smoke === null || state.turn >= state.smoke.until)) {
+    return USE;
+  }
+
   if (near > 6) return WAIT;
 
   let best: Wish = WAIT;

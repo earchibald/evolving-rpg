@@ -98,6 +98,11 @@ export function upcastEvent(raw: unknown): DraftEvent {
     // `motifIs` reads it as false, rather than a migration inventing a shape
     // for floors cut before motifs existed. Nothing to rewrite.
 
+    // v7 → v8: the satchel crosses the stairs (payload.playerSatchel), and
+    // floors are born holding one provision. Old floors had neither; empty
+    // hands and a bare floor are what absence already says. Nothing to
+    // rewrite.
+
     return {
       type: 'WORLD_INIT',
       schemaVersion: current,
@@ -112,6 +117,9 @@ export function upcastEvent(raw: unknown): DraftEvent {
     // into slots in v2. The shape passes through; the version records that a
     // v1 log's folded stats may differ under this engine, which is the honest
     // limit of a semantic migration.
+    //
+    // v2 → v3: takes may ride in the satchel (payload.satchel). An old take
+    // never did; absence already says so. Nothing to rewrite.
     return {
       type: 'ITEM_TAKEN',
       schemaVersion: current,

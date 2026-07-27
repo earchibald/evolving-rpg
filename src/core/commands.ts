@@ -2,7 +2,7 @@ import { generateMap, pickSpawnPoints, farthestFrom, withExit, walkDistance, sea
 import { inBounds, isPassable } from './grid.js';
 import { findEntity, isAlive } from './entity.js';
 import { intBetween } from './rng.js';
-import { neededToHit, chanceIn20, damageDice, critFloor, WHIFF, BESTIARY, creatureStats, threatOf, spawnBudget, depthBands, wardenAt, ARMORY, relicGrant, slotOf, grantValue, motifAt, verbOf, AMBUSH_MIGHT_BONUS, AMBUSH_FROM_DEPTH } from './tables.js';
+import { neededToHit, chanceIn20, damageDice, critFloor, WHIFF, BESTIARY, creatureStats, threatOf, spawnBudget, depthBands, wardenAt, ARMORY, relicGrant, slotOf, grantValue, motifAt, verbOf, AMBUSH_MIGHT_BONUS, AMBUSH_FROM_DEPTH, PROVISIONS, provisionOf, draughtCeiling, smokeTurns } from './tables.js';
 import type { Relic } from './tables.js';
 import type { Entity, Stats, Pos } from './entity.js';
 import { itemAt } from './item.js';
@@ -110,6 +110,7 @@ export interface CarriedPlayer {
   xp: number;
   level: number;
   gear?: Record<string, { kind: string; grants: Stats }>;
+  satchel?: { kind: string };
 }
 
 /**
@@ -240,14 +241,28 @@ export function createWorld(
     pool.splice(pool.indexOf(picked), 1);
   }
 
+  // The floor's one provision, drawn by weight like everything else and laid
+  // at the last drawn point — far from the door, unguarded on purpose. The
+  // armory pays for fighting; the satchel pays for scouting: a guarded
+  // consumable would just be a fifth relic, and an on-path one is not a
+  // detour, it is a toll both already collected.
+  const provTotal = PROVISIONS.reduce((n, p) => n + p.weight, 0);
+  let provRoll = intBetween(seed, c, 1, provTotal); c += 1;
+  let provision = PROVISIONS[0]!;
+  for (const p of PROVISIONS) {
+    provRoll -= p.weight;
+    if (provRoll <= 0) { provision = p; break; }
+  }
+
   const spawned = pickSpawnPoints(
     seed,
     c,
     grid,
     generated.start,
-    population.chosen.length,
+    population.chosen.length + 1,
     OPPONENT_MIN_DISTANCE,
   );
+  const provisionTile = spawned.points[spawned.points.length - 1] ?? exit;
 
   // Placed on creatures' tiles: a prize is guarded, so taking it means going
   // through something. An item you can pick up for free is not a choice.
@@ -292,7 +307,8 @@ export function createWorld(
       && !(p.x === generated.start.x && p.y === generated.start.y)
       && !isGuardPost(p));
   const freePoints = spawned.points.filter((p, i) =>
-    i >= relics.length && !(keeperTile !== undefined && p.x === keeperTile.x && p.y === keeperTile.y));
+    i >= relics.length && i < spawned.points.length - 1
+    && !(keeperTile !== undefined && p.x === keeperTile.x && p.y === keeperTile.y));
   let nextFree = 0;
 
   // The floor's whole account, recorded where facts live — covenant L1: the
@@ -309,6 +325,7 @@ export function createWorld(
     + ` · a budget of ${spawnBudget(depth)} paid ${spent} for ${population.chosen.length}: ${kinds}`
     + ` · ${watcher} watches the stairs`
     + ` · ${relics.map((r) => r.kind).join(' and ') || 'nothing'} lies guarded`
+    + ` · ${provision.kind} lies where the path does not go`
     + (coiled > 0 ? ` · ${coiled} of them lie${coiled === 1 ? 's' : ''} coiled, waiting` : '')
     + (secret.sealed ? ' · one room keeps itself secret' : '')
     + (repaired.punched > 0 ? ` · ${repaired.punched} hidden way(s) cut where no way was` : '');
@@ -334,12 +351,21 @@ export function createWorld(
       level: carried?.level ?? 1,
       ...(carried === undefined ? {} : { playerMaxHp: carried.maxHp }),
       ...(carried?.gear === undefined ? {} : { playerGear: carried.gear }),
-      items: relics.map((r, i) => ({
-        id: `relic-${String(i + 1)}`,
-        kind: r.kind,
-        pos: { x: guardPosts[i]!.x, y: guardPosts[i]!.y },
-        grants: relicGrant(r, depth),
-      })),
+      ...(carried?.satchel === undefined ? {} : { playerSatchel: { kind: carried.satchel.kind } }),
+      items: [
+        ...relics.map((r, i) => ({
+          id: `relic-${String(i + 1)}`,
+          kind: r.kind,
+          pos: { x: guardPosts[i]!.x, y: guardPosts[i]!.y },
+          grants: relicGrant(r, depth),
+        })),
+        {
+          id: 'provision-1',
+          kind: provision.kind,
+          pos: { x: provisionTile.x, y: provisionTile.y },
+          grants: { hp: 0, might: 0, wits: 0, speed: 0 },
+        },
+      ],
       player: {
         id: playerId,
         kind: 'you',
@@ -573,6 +599,25 @@ export function takeUnderfoot(
   const item = itemAt(state.items, taker.pos.x, taker.pos.y);
   if (item === undefined) return null;
 
+  // A provision rides in the satchel, not on the body. Walking over one with
+  // full hands swaps — the old one stays on this tile, permanently, so the
+  // choice is reversible by one step back. No "better one" exists to prefer:
+  // that is the point, and why this must not reuse the relics' upgrade rule.
+  if (provisionOf(item.kind) !== undefined) {
+    const carried = taker.satchel?.kind ?? null;
+    // Same for same is nothing at all; and hands sealed by something that is
+    // not a provision (the heart) do not open for one.
+    if (carried === item.kind) return null;
+    if (carried !== null && provisionOf(carried) === undefined) return null;
+    return {
+      type: 'ITEM_TAKEN',
+      schemaVersion: SCHEMA_VERSIONS.ITEM_TAKEN,
+      rngCounter: state.rngCounter,
+      rngDraws: 0,
+      payload: { entityId, itemId: item.id, grants: { ...item.grants }, satchel: { swappedOut: carried } },
+    };
+  }
+
   // Only an upgrade leaves the floor. A relic no better than what is worn in
   // its slot stays where it lies — visible, ignorable, and still there if a
   // rule ever drains what you carry.
@@ -585,6 +630,56 @@ export function takeUnderfoot(
     rngCounter: state.rngCounter,
     rngDraws: 0,
     payload: { entityId, itemId: item.id, grants: { ...item.grants } },
+  };
+}
+
+/**
+ * Spends what the satchel holds. Effects resolve HERE — how much the draught
+ * mends, who the smoke fools — and the event records the resolution, so
+ * replay applies rather than re-decides. Null when the hands are empty or
+ * hold something that is not a tool (the heart seals the satchel).
+ */
+export function useCarried(
+  state: GameState,
+  entityId: string,
+): Extract<DraftEvent, { type: 'ITEM_USED' }> | null {
+  const user = findEntity(state.entities, entityId);
+  if (user === undefined) return null;
+  const kind = user.satchel?.kind;
+  if (kind === undefined || provisionOf(kind) === undefined) return null;
+
+  if (kind === 'vital draught') {
+    // Brogue's answer to the pure-heal no-brainer: the mend and a permanent
+    // raise in one swallow. Drunk early it banks the ceiling; drunk late it
+    // banks the blood; no timing wastes it.
+    const ceilingTo = user.maxHp + draughtCeiling(state.depth);
+    return {
+      type: 'ITEM_USED',
+      schemaVersion: SCHEMA_VERSIONS.ITEM_USED,
+      rngCounter: state.rngCounter,
+      rngDraws: 0,
+      payload: { entityId, kind, effect: { kind: 'draught', healedTo: ceilingTo, ceilingTo } },
+    };
+  }
+
+  // The smoke: for a while, every hunt chases where you WERE. Whatever is
+  // already in your claws' reach is not fooled — it has you by touch, not by
+  // trail — which is also what keeps the smoke from powering hit-and-run
+  // whittling: it must rise BEFORE they reach you, or not at all.
+  const unfooled = state.entities
+    .filter((e) => e.id !== entityId && isAlive(e) && isHostile(user, e)
+      && Math.abs(e.pos.x - user.pos.x) + Math.abs(e.pos.y - user.pos.y) === 1)
+    .map((e) => e.id);
+  return {
+    type: 'ITEM_USED',
+    schemaVersion: SCHEMA_VERSIONS.ITEM_USED,
+    rngCounter: state.rngCounter,
+    rngDraws: 0,
+    payload: {
+      entityId,
+      kind,
+      effect: { kind: 'smoke', until: state.turn + smokeTurns(state.depth), at: { x: user.pos.x, y: user.pos.y }, unfooled },
+    },
   };
 }
 

@@ -1,6 +1,6 @@
 import { fold } from '../log/chain.js';
 import { outcome } from '../core/commands.js';
-import { playerStep, playerWait, runWorldTurns } from './session.js';
+import { playerStep, playerWait, playerUse, runWorldTurns } from './session.js';
 import type { Position } from './session.js';
 import type { Policy } from './policies.js';
 import type { GameState } from '../core/state.js';
@@ -37,7 +37,11 @@ export function autoplay(start: Position, policy: Policy, maxActions = 200, play
 
     position = wish.kind === 'wait'
       ? playerWait(position, playerId).position
-      : playerStep(position, playerId, wish.dx, wish.dy).position;
+      : wish.kind === 'use'
+        // An empty satchel makes 'use' a no-op that never passes the turn —
+        // acceptable only because no policy wishes it with empty hands.
+        ? playerUse(position, playerId).position
+        : playerStep(position, playerId, wish.dx, wish.dy).position;
 
     position = runWorldTurns(position, playerId);
   }

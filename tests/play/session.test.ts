@@ -55,17 +55,25 @@ describe('the world a run starts in', () => {
     expect(farthestFrom(state.grid, player.pos)).toEqual(exit);
   });
 
-  it('leaves something worth having, guarded', () => {
-    expect(state.items).toHaveLength(1);
-    const item = state.items[0];
-    if (item === undefined) throw new Error('no item');
+  it('leaves something worth having, guarded — and one provision, free', () => {
+    // A relic and a provision: the armory pays for fighting, the satchel
+    // pays for scouting.
+    expect(state.items).toHaveLength(2);
+    const relic = state.items.find((i) => i.id.startsWith('relic'));
+    const provision = state.items.find((i) => i.id.startsWith('provision'));
+    if (relic === undefined || provision === undefined) throw new Error('missing spoils');
 
     // On a creature's tile: taking it means going through something. An item
     // you can pick up for free is not a choice.
     // Population is the budget's business; guarding is this test's.
     const guards = state.entities.filter((e) => e.kind !== 'you');
     expect(guards.length).toBeGreaterThanOrEqual(1);
-    expect(guards.some((g) => g.pos.x === item.pos.x && g.pos.y === item.pos.y)).toBe(true);
+    expect(guards.some((g) => g.pos.x === relic.pos.x && g.pos.y === relic.pos.y)).toBe(true);
+
+    // The provision is deliberately unguarded — a guarded consumable would
+    // just be a fifth relic — and grants nothing by being held.
+    expect(guards.some((g) => g.pos.x === provision.pos.x && g.pos.y === provision.pos.y)).toBe(false);
+    expect(provision.grants).toEqual({ hp: 0, might: 0, wits: 0, speed: 0 });
   });
 });
 

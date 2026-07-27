@@ -51,7 +51,7 @@ function world(entities = [being('player', 0, 0, 5, 10)], opts: { exitAt?: numbe
     xp: 0,
     level: 1,
     depth: opts.depth ?? 1,
-    story: '', bible: null,
+    story: '', bible: null, smoke: null,
     motif: opts.motif ?? null,
     bodies: opts.bodies ?? [],
   };

@@ -31,6 +31,11 @@ export interface Entity {
    */
   gear?: Readonly<Partial<Record<string, { kind: string; grants: Stats }>>>;
   /**
+   * The one thing carried to use rather than wear. Absent means empty hands.
+   * Walk-over swaps (the old one stays on the tile); one key spends it.
+   */
+  satchel?: { readonly kind: string };
+  /**
    * The most hit points this entity can hold.
    *
    * Derived, never carried in an event: it is `stats.hp` at WORLD_INIT, raised

@@ -12,7 +12,7 @@ import type { Item } from './item.js';
  *  payload — a special case that could not survive any second consumer of
  *  randomness, and combat is one. */
 export const SCHEMA_VERSIONS = {
-  WORLD_INIT: 7,
+  WORLD_INIT: 8,
   WORLD_BIBLE: 1,
   WORLD_BODIES: 1,
   MOVE: 2,
@@ -20,7 +20,8 @@ export const SCHEMA_VERSIONS = {
   TURN_ADVANCED: 2,
   STRIKE: 3,
   WAIT: 1,
-  ITEM_TAKEN: 2,
+  ITEM_TAKEN: 3,
+  ITEM_USED: 1,
   RULE_RATIFIED: 1,
   RULE_FIRED: 1,
   VIGIL_KEPT: 1,
@@ -51,6 +52,9 @@ export interface WorldInitPayload {
    *  map resets each floor and the next identical relic stacks — the exact
    *  bug slots exist to prevent, reborn on every descent. */
   playerGear?: Record<string, { kind: string; grants: { hp: number; might: number; wits: number; speed: number } }>;
+  /** v8. What rides in the satchel across the stairs — same reason as gear:
+   *  a floor is new, what you carry is not. */
+  playerSatchel?: { kind: string };
   width: number;
   height: number;
   tiles: number[];
@@ -101,6 +105,27 @@ export interface ItemTakenPayload {
   entityId: string;
   itemId: string;
   grants: Stats;
+  /** v3. This item rides in the satchel rather than being worn — and if a
+   *  kind is named here, that is what was carried BEFORE, now set down on
+   *  the tile the new thing was lifted from (the walk-over swap). Recorded
+   *  rather than derived because the swap invents a floor item, and replay
+   *  must mint the same one forever. */
+  satchel?: { swappedOut: string | null };
+}
+
+/**
+ * The satchel spent: one carried thing, used up, its effects resolved at
+ * command time and applied verbatim forever after. The two shapes are the
+ * two provisions — a draught's mend-and-raise, a smoke's stale scent. One
+ * payload with a kind discriminant rather than two event types, because
+ * "the satchel was spent" is one fact about the turn whichever it held.
+ */
+export interface ItemUsedPayload {
+  entityId: string;
+  kind: string;
+  effect:
+    | { kind: 'draught'; healedTo: number; ceilingTo: number }
+    | { kind: 'smoke'; until: number; at: Pos; unfooled: string[] };
 }
 
 /** A rule entering play. The rule is carried whole rather than by reference,
@@ -198,6 +223,7 @@ export type DraftEvent =
   | { type: 'STRIKE'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: StrikePayload }
   | { type: 'WAIT'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: WaitPayload }
   | { type: 'ITEM_TAKEN'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: ItemTakenPayload }
+  | { type: 'ITEM_USED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: ItemUsedPayload }
   | { type: 'RULE_RATIFIED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: RuleRatifiedPayload }
   | { type: 'RULE_FIRED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: RuleFiredPayload }
   | { type: 'VIGIL_KEPT'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: VigilKeptPayload };

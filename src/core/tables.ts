@@ -443,3 +443,63 @@ export function relicGrant(relic: Relic, depth: number): Stats {
     speed: relic.grants === 'speed' ? amount : 0,
   };
 }
+
+/* ── the satchel ─────────────────────────────────────────────────────────── */
+
+/**
+ * What the satchel may carry: one thing, used once, chosen over and over.
+ *
+ * The research lineage is specific about what this must NOT be: a pure heal
+ * collapses to "carry heal, drink at low health" (DCSS calls that a
+ * no-brainer; Slay the Spire's potion-hoarding is the same failure with
+ * three slots), and this game's stair-heal and level-heal already saturate
+ * attrition. So the draught is Brogue's answer — potion of *life*, not of
+ * healing: the mend and a permanent raise in one swallow, so drinking early
+ * banks the ceiling and drinking late banks the blood, and neither timing
+ * is wasted. The smoke is the fog-and-chase game's own escape: the hunt
+ * loses the truth of you, which is the one story this AI can tell best.
+ *
+ * One satchel slot, walk-over swap (the old one stays on the tile, taking
+ * it back is one step), one key to use. No farming surface: one provision
+ * per floor, fixed at generation, counted like everything else.
+ */
+export interface Provision {
+  readonly kind: string;
+  readonly weight: number;
+}
+
+export const PROVISIONS: readonly Provision[] = Object.freeze([
+  Object.freeze({ kind: 'vital draught', weight: 3 }),
+  Object.freeze({ kind: 'still smoke', weight: 2 }),
+]);
+
+export function provisionOf(kind: string): Provision | undefined {
+  return PROVISIONS.find((p) => p.kind === kind);
+}
+
+/** The draught's permanent raise to the health ceiling, by depth band —
+ *  deeper floors owe stronger blood. Small on purpose: it compounds only as
+ *  fast as floors go by, one per floor at most. */
+export function draughtCeiling(depth: number): number {
+  const d = Math.max(1, Math.floor(depth));
+  if (d <= 3) return 2;
+  if (d <= 6) return 3;
+  return 4;
+}
+
+/** How many turns the smoke holds — hunts chase where you WERE when it rose,
+ *  then stand puzzled. Deeper floors buy longer, because deeper floors have
+ *  more to run from. */
+export function smokeTurns(depth: number): number {
+  const d = Math.max(1, Math.floor(depth));
+  if (d <= 3) return 6;
+  if (d <= 6) return 8;
+  return 10;
+}
+
+/** When the archetypal players reach for the satchel (play/policies.ts) —
+ *  fixed thresholds, deliberately dumb. They are also the collapse canary:
+ *  if a bot drinking at 35% plays the satchel as well as a person, the
+ *  satchel has stopped being a decision and should be redesigned. */
+export const BOT_QUAFF_BELOW = 0.35;
+export const BOT_SMOKE_WITHIN = 3;

@@ -1,7 +1,7 @@
 import { append, fold, chain } from '../log/chain.js';
 import { getRef, fork, setHead, listRefs } from '../log/refs.js';
 import type { Refs } from '../log/refs.js';
-import { attemptMove, advanceTurn, endsTurn, wait, takeUnderfoot, outcome, ratifyRule, foundWorld, createWorld, recordBodies, lungeStrike, vigilKept } from '../core/commands.js';
+import { attemptMove, advanceTurn, endsTurn, wait, takeUnderfoot, outcome, ratifyRule, foundWorld, createWorld, recordBodies, lungeStrike, vigilKept, useCarried } from '../core/commands.js';
 import { u32 } from '../core/rng.js';
 import { decide } from '../core/ai.js';
 import { fireRules } from '../canon/interpret.js';
@@ -194,6 +194,20 @@ export function playerWait(position: Position, playerId: string): {
   if (outcome(state, playerId) !== 'playing') return { position, draft: null };
 
   const draft = wait(state, playerId);
+  return { position: commit(position, draft, playerId, playerId), draft };
+}
+
+/** Spend what the satchel holds. Refusing quietly when it holds nothing —
+ *  the keypress simply does not become a turn. */
+export function playerUse(position: Position, playerId: string): {
+  position: Position;
+  draft: DraftEvent | null;
+} {
+  const state = fold(position.log, position.head);
+  if (outcome(state, playerId) !== 'playing') return { position, draft: null };
+
+  const draft = useCarried(state, playerId);
+  if (draft === null) return { position, draft: null };
   return { position: commit(position, draft, playerId, playerId), draft };
 }
 
@@ -396,6 +410,7 @@ export function descend(
     {
       stats: { ...you.stats, hp }, maxHp: you.maxHp, xp: state.xp, level: state.level,
       ...(you.gear === undefined ? {} : { gear: { ...you.gear } as Record<string, { kind: string; grants: typeof you.stats }> }),
+      ...(you.satchel === undefined ? {} : { satchel: { kind: you.satchel.kind } }),
     },
   ));
 

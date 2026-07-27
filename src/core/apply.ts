@@ -81,6 +81,7 @@ function reduce(state: GameState, event: GameEvent): GameState {
         // and may arrive wounded, so the ceiling rides in the payload.
         maxHp: s.id === p.player.id ? (p.playerMaxHp ?? s.stats.hp) : s.stats.hp,
         ...(s.id === p.player.id && p.playerGear !== undefined ? { gear: p.playerGear } : {}),
+        ...(s.id === p.player.id && p.playerSatchel !== undefined ? { satchel: { kind: p.playerSatchel.kind } } : {}),
       }));
       return {
         grid: makeGrid(p.width, p.height, p.tiles),
@@ -114,6 +115,8 @@ function reduce(state: GameState, event: GameEvent): GameState {
         // the carry guards test `!== null`, and an undefined slipping through
         // appended a bible-of-nothing to the chain.
         bible: null,
+        // New floor, clear air.
+        smoke: null,
       };
     }
 
@@ -165,12 +168,35 @@ function reduce(state: GameState, event: GameEvent): GameState {
       return state;
 
     case 'ITEM_TAKEN': {
+      const p = event.payload;
+      const item = state.items.find((i) => i.id === p.itemId);
+
+      // The satchel's take: carried, not worn. The swap is recorded in the
+      // payload (v3) because it MINTS a floor item — what was carried lies
+      // where the new thing lay — and replay must mint the same one forever.
+      if (p.satchel !== undefined) {
+        const droppedKind = p.satchel.swappedOut;
+        return {
+          ...state,
+          entities: state.entities.map((e) =>
+            e.id === p.entityId ? { ...e, satchel: { kind: item?.kind ?? 'carried' } } : e,
+          ),
+          items: [
+            ...state.items.filter((i) => i.id !== p.itemId),
+            ...(droppedKind === null || item === undefined ? [] : [{
+              id: `drop-${p.itemId}`,
+              kind: droppedKind,
+              pos: { x: item.pos.x, y: item.pos.y },
+              grants: { hp: 0, might: 0, wits: 0, speed: 0 },
+            }]),
+          ],
+        };
+      }
+
       // Equipment, not accumulation. The item goes into its slot; whatever was
       // worn there comes off, its grants subtracted, before the new grants
       // apply. Derived from state rather than recorded in the payload, so the
       // event's shape never changed — replay just re-derives the same swap.
-      const p = event.payload;
-      const item = state.items.find((i) => i.id === p.itemId);
       const slot = slotOf(p.grants);
 
       return {
@@ -232,6 +258,37 @@ function reduce(state: GameState, event: GameEvent): GameState {
           return e;
         }),
       }, p.attackerId);
+    }
+
+    case 'ITEM_USED': {
+      // The satchel spent. Effects were resolved when the command ran and
+      // are applied verbatim — replay never re-decides how much a draught
+      // mended or who the smoke fooled.
+      const p = event.payload;
+      const emptied = state.entities.map((e) => {
+        if (e.id !== p.entityId) return e;
+        const { satchel: _spent, ...rest } = e;
+        if (p.effect.kind === 'draught') {
+          return {
+            ...rest,
+            maxHp: p.effect.ceilingTo,
+            stats: { ...e.stats, hp: p.effect.healedTo },
+          };
+        }
+        return rest;
+      });
+      if (p.effect.kind === 'smoke') {
+        return {
+          ...state,
+          entities: emptied,
+          smoke: {
+            until: p.effect.until,
+            at: { x: p.effect.at.x, y: p.effect.at.y },
+            unfooled: [...p.effect.unfooled],
+          },
+        };
+      }
+      return { ...state, entities: emptied };
     }
 
     case 'VIGIL_KEPT': {

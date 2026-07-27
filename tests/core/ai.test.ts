@@ -22,7 +22,7 @@ function room(entities: Entity[], walls: Array<[number, number]> = []): GameStat
     xp: 0,
     level: 1,
     depth: 1,
-    story: '', motif: null, bodies: [], bible: null,
+    story: '', motif: null, bodies: [], bible: null, smoke: null,
   };
 }
 

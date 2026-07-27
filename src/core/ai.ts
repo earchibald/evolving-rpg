@@ -115,12 +115,21 @@ export function decide(state: GameState, entityId: string): Action {
   const quarry = state.entities.find((e) => e.kind === 'you' && isAlive(e));
   if (quarry === undefined) return { kind: 'wait' };
 
+  // Smoke in the air: a fooled hunter chases where you WERE when it rose.
+  // Whoever had you in claws' reach then (recorded in the event) still has
+  // you — and if you never moved, the stale trail still ends at your feet,
+  // which is exactly what standing in your own smoke deserves.
+  const fooled = state.smoke !== null
+    && state.turn < state.smoke.until
+    && !state.smoke.unfooled.includes(entityId);
+  const scent: Pos = fooled && state.smoke !== null ? state.smoke.at : quarry.pos;
+
   const verb = verbOf(self.kind);
 
   // The vigil, before anything else: a warden's world is its post.
   if (verb === 'vigil') {
     const post = self.post ?? self.pos;
-    const intruderNear = walkDistance(state.grid, post, quarry.pos) <= VIGIL_LEASH;
+    const intruderNear = walkDistance(state.grid, post, scent) <= VIGIL_LEASH;
     if (!intruderNear) {
       const home = self.pos.x === post.x && self.pos.y === post.y;
       if (home) {
@@ -137,17 +146,21 @@ export function decide(state: GameState, entityId: string): Action {
   // Coiled: perfectly still until the quarry is close enough to commit to.
   // The stillness is in plain sight — that is the tell, and the dread.
   if (verb === 'ambush' && self.tags.includes('ambush')) {
-    const near = walkDistance(state.grid, self.pos, quarry.pos) <= LURK_RANGE;
+    const near = walkDistance(state.grid, self.pos, scent) <= LURK_RANGE;
     if (!near) return { kind: 'wait' };
   }
 
-  if (manhattan(self, quarry) === 1) return { kind: 'strike', targetId: quarry.id };
+  // A fooled hunter cannot strike or lunge at what it has lost — it walks
+  // its stale trail. Only the unfooled fight as if they can see.
+  if (!fooled) {
+    if (manhattan(self, quarry) === 1) return { kind: 'strike', targetId: quarry.id };
 
-  // The skirmisher's tooth: close two tiles and strike in the same action.
-  if (verb === 'lunge' && canLunge(state, self, quarry)) {
-    return { kind: 'lunge', targetId: quarry.id };
+    // The skirmisher's tooth: close two tiles and strike in the same action.
+    if (verb === 'lunge' && canLunge(state, self, quarry)) {
+      return { kind: 'lunge', targetId: quarry.id };
+    }
   }
 
-  const step = firstStep(state, entityId, self.pos, quarry.pos);
+  const step = firstStep(state, entityId, self.pos, scent);
   return step === null ? { kind: 'wait' } : { kind: 'step', dx: step.dx, dy: step.dy };
 }

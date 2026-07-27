@@ -742,3 +742,24 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > pin holds. The proportion trial now weighs rules against verbless
 > stand-ins — a scale that moved with the bestiary read heal-6-per-kill
 > as weightless. 24 new tests.
+
+> [!NOTE]
+> **00:0x — The satchel: the first thing you use on purpose**
+> "No choices, just monsters to bonk" — the research convicted my first
+> draft here too: a plain healing potion is a solved non-decision (drink
+> at low health, always), and this game's stair-heal and level-heal
+> already pay for attrition. So the two provisions are built not to
+> collapse: the **vital draught** mends you whole AND permanently raises
+> your ceiling (+2/+3/+4 by depth) — drunk early it banks the ceiling,
+> drunk late it banks the blood, no timing wastes it; the **still smoke**
+> makes every hunt chase where you WERE for 6/8/10 turns — except
+> whatever already has you in claws' reach, so it must rise before they
+> arrive, never after. One satchel slot; walking over a provision swaps
+> and leaves the old one lying there (one step back un-decides it); `q`
+> spends it and spends the turn. One provision per floor, unguarded, far
+> from the path — the armory pays for fighting, the satchel pays for
+> scouting. The smoke is also the deep runner's answer: a scarce,
+> spendable way past what lens #33 said only brawlers survive. Bots got
+> deliberately dumb reflexes (drink under 35%, smoke at 3 tiles) — they
+> are the canary: if a fixed threshold plays the satchel as well as you
+> do, the design has failed and we will hear it. 28 new tests.
