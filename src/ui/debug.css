@@ -111,6 +111,36 @@ kbd {
 }
 .now.busy { color: var(--player); }
 
+/* ── the witness ──────────────────────────────────────────────────────── */
+
+/* The recording indicator, which is also the button. Off: present but dim —
+   a control you can find without a control that nags. On: the dot goes the
+   world's own red and breathes, because a live microphone must never be
+   ambiguous. The key (c) clicks this button; one code path. */
+.witness {
+  background: none; border: 1px solid var(--rule); border-radius: 3px;
+  color: var(--faint); font: inherit; font-size: .8rem; padding: 0 .5rem;
+  cursor: pointer; display: inline-flex; align-items: center; gap: .4rem;
+  opacity: .55;
+}
+.witness:hover { opacity: .85; }
+.witness .dot {
+  width: .55em; height: .55em; border-radius: 50%;
+  background: var(--faint); flex: none;
+}
+.witness.on {
+  opacity: 1; color: var(--ink);
+  border-color: rgba(181, 72, 60, .6);
+}
+.witness.on .dot {
+  background: var(--foe);
+  animation: witness-glow 1.6s ease-in-out infinite;
+}
+@keyframes witness-glow {
+  0%, 100% { box-shadow: 0 0 3px 1px rgba(181, 72, 60, .45); }
+  50% { box-shadow: 0 0 9px 3px rgba(181, 72, 60, .9); }
+}
+
 /* ── the board and the panel ──────────────────────────────────────────── */
 
 .play { grid-column: 1; }

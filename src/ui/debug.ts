@@ -24,6 +24,8 @@ import type { RunSummary } from '../canon/rulesmith.js';
 import { Oracle, describeQuestion } from '../oracle/oracle.js';
 import { cliTransport } from '../oracle/transports.js';
 import { send, loadNotes, saveNotes, notesFor, statusOf, statusLine, NOTES_KEY } from '../channels/channels.js';
+import { createWitness } from './witness.js';
+import type { Standing } from '../witness/trace.js';
 import { CachedCritic } from '../critic/memo.js';
 import type { Channel, Note, Status } from '../channels/channels.js';
 import { WALL, EXIT, SECRET, idx, makeGrid, tileAt } from '../core/grid.js';
@@ -459,6 +461,32 @@ function renderNotes(list: HTMLElement, shown: readonly Note[]): void {
 /** The lenses, memoised by head — same history, same reading, no recompute. */
 const critic = new CachedCritic();
 
+/** Where the run stands right now — the stamp on every witness mark. */
+function standing(): Standing {
+  const head = getRef(refs, active).head;
+  const stood = fold(log, head);
+  return {
+    world: active,
+    turn: stood.turn,
+    depth: stood.depth,
+    seq: head === null ? 0 : log.events.get(head)?.seq ?? 0,
+  };
+}
+
+/**
+ * The witness: the microphone that listens while you play, and the trace
+ * that stamps every beat — mic on or off — with wall clock, turn and seq.
+ * The indicator in the header is its button; c presses that button. All
+ * failure lands in the journal; mechanics never wait on it.
+ */
+const witness = createWitness({
+  say,
+  onState: (recording): void => {
+    const button = el('witness');
+    button.classList.toggle('on', recording);
+    button.setAttribute('aria-pressed', String(recording));
+  },
+});
 
 /** What the player can currently see, so the gamemaster is not answering
  *  blind — and only what they can see, so it is not answering psychic. The
@@ -564,6 +592,10 @@ function say(message: string | string[]): void {
     box.appendChild(row);
   });
   if (following) box.scrollTop = box.scrollHeight;
+
+  // Every journal line is a beat the witness can stamp — the narrated view,
+  // beside the raw event types finish() marks.
+  witness.heard(lines, standing());
 }
 
 function render(): void {
@@ -1373,6 +1405,10 @@ function finish(before: number, head: string): void {
   const priorState = priorEvent === undefined ? fold(log, head) : fold(log, priorEvent.id);
   const told = narrate(events.slice(before), priorState);
 
+  // The machine's view of the same beat: raw event types, silent MOVEs
+  // included — which is what makes hesitation measurable in the trace.
+  witness.acted(events.slice(before).map((e) => e.type), standing());
+
   // A prize refused, explained. Stepping onto a relic no better than what you
   // hold produces no event at all — the one case where the engine's silence
   // reads as a bug ("why would I not pick this up?"), so the view says the
@@ -1865,6 +1901,7 @@ const KEYMAP: ReadonlyArray<{ shown: string; what: string; button?: string }> = 
   { shown: 'x, then a direction', what: 'shove — drive what stands beside you one pace; walls hurt, bodies tangle' },
   { shown: 'z', what: 'brace — set against the coming round; a blow that misses you staggers' },
   { shown: ',', what: 'take what is underfoot, deliberately — tradeoffs and downgrades included' },
+  { shown: 'c', what: 'the witness — speak while you play; the mic listens, stamped to the turn', button: 'witness' },
   { shown: 'PgUp · PgDn', what: 'read back through the journal' },
   { shown: 't', what: 'talk to the gamemaster — your character, in there', button: 'open-talk' },
   { shown: 'n', what: 'world… — begin again / another / wipe', button: 'open-worlds' },
@@ -2013,12 +2050,56 @@ el('rewind').addEventListener('click', () => {
   render();
 });
 
+// The indicator is the button; the key clicks it. A live microphone must
+// never be ambiguous, so all state shows on the one element in the header.
+el('witness').addEventListener('click', () => { witness.toggle(standing()); });
+
+/**
+ * The listener's moment: any new-game action ends a run, and an ended run is
+ * evidence. The snapshot is taken BEFORE the world mutates — a wipe destroys
+ * what this reads — and the world never waits on the network: the submit is
+ * fire-and-forget, its outcome a journal line either way. If the mic is
+ * live, the take is flushed first so the words spoken during this run ride
+ * with it, and a fresh page turns after.
+ */
+function submitToListener(reason: 'begin-again' | 'another-world' | 'wipe'): void {
+  const head = getRef(refs, active).head;
+  if (head === null) return;
+  const state = fold(log, head);
+  // An unplayed, unspoken run reads as nothing; the listener is not asked.
+  if (state.turn === 0 && !witness.hasVoice()) return;
+  const run = summariseRun(chain(log, head), state, notes, active);
+  say('the listener takes this run away to read');
+  void witness.submitSnapshot(standing())
+    .then(({ takes, marks }) => fetch('/__listener', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        reason, world: active, ended: run.ended, turns: run.turns,
+        depth: state.depth, level: state.level,
+        happened: run.happened, said: run.said, measured: run.measured,
+        inForce: run.inForce, takes, marks,
+      }),
+    }))
+    .then(async (r) => {
+      if (!r.ok) throw new Error(await r.text());
+      return r.json() as Promise<{ name: string; line: string; file: string }>;
+    })
+    .then((got) => {
+      say(`the listener has read the run — “${got.line}” — the full reading: ${got.file}`);
+    })
+    .catch(() => {
+      say('the listener could not be reached — the run is kept, unread');
+    });
+}
+
 // Wiping is a separate, deliberate act, and it says what it destroys. Folding
 // it into "new world" is how you lose a graveyard by accident.
 const sheet = el('worlds-dialog') as HTMLDialogElement;
 el('open-worlds').addEventListener('click', () => { sheet.showModal(); });
 
 el('wipe').addEventListener('click', () => {
+  submitToListener('wipe');
   const worlds = listRefs(refs).length;
   // The new world FIRST, then the forgetting. unlearn() re-renders through
   // onChange, and a render while the old refs still stand folds the dying
@@ -2040,6 +2121,7 @@ el('wipe').addEventListener('click', () => {
 });
 
 el('newrun').addEventListener('click', () => {
+  submitToListener('another-world');
   const name = anotherWorld();
   persist();
   say(`${name} — a different map, alongside the others, nothing discarded`);
@@ -2407,6 +2489,7 @@ el('open-talk').addEventListener('click', () => {
 // else goes back to the start. Lives in the world sheet, but the `r` key
 // presses it directly — dying is frequent enough to deserve one keystroke.
 el('again').addEventListener('click', () => {
+  submitToListener('begin-again');
   const kept = fold(log, getRef(refs, active).head).rules.length;
   const begun = beginAgain(log, refs, active);
   log = begun.log;

@@ -32,6 +32,7 @@ doubt, read the last three lines — they always say what just happened.
 | `z` | brace — set yourself against the coming round |
 | `q` | use what your satchel holds |
 | `,` | take what is underfoot on purpose — trades and downgrades included |
+| `c` | the witness — the microphone listens while you play; again to stop |
 | `t` | talk to the gamemaster — your character speaking, in there |
 | `g` | the forge — where new laws are offered and accepted |
 | `m` | the gamemaster's screen — the founding, your notes to the designer, and everything else |
@@ -69,6 +70,8 @@ That is the whole game. Everything else is reading.
 | **grave** | a run that ended. Kept forever, marked with a **†** in the worlds list |
 | **body** | where you fell, still lying there in later runs. Stand on it and that life shows you the floor as it knew it |
 | **the stone** | every ended run is written down. A one-line stone is cut the instant you fall; endings that matter — a first life, a new deepest floor, a warden's kill, a win — get the world's fuller words a little later. The full words are only ever read in one place: standing where the body lies |
+| **the witness** | the small indicator at the top. Dim: off. Red and breathing: the microphone is keeping your words, stamped to the turn you said them on. `c` or a click toggles it |
+| **the listener** | the reader every submitted run goes to — what happened, what you typed, what you *said out loud* — reporting on where the fun lives and where it breaks. Its reports pile up in `runs/feedback/` |
 
 ---
 
@@ -184,7 +187,30 @@ makes death impossible, is refused before you ever see it.
 
 ---
 
-## 9. Try this — the test guide
+## 9. Say it out loud — the witness and the listener
+
+The game cannot feel itself being played. You can. So: press `c` (or click
+the dim indicator at the top), allow the microphone once, and just talk
+while you play — *"why would I ever shove"*, *"this floor drags"*, the
+sigh before a door. The dot burns red while it listens. Press `c` again to
+stop; your words are written down on your own machine, by the machine —
+nothing leaves it.
+
+When you end a run — begin again, another world, or a wipe — the run is
+taken away and read: everything that happened, everything you typed, and
+everything you said, lined up on one clock, silences included. A minute
+later the journal prints the verdict in one line, and the full reading —
+your words quoted back, tied to the exact turns, with recommendations —
+lands in `runs/feedback/`. Dying does not trigger this; *choosing to be
+done* does.
+
+You do not have to speak. A silent run still gets read. But the spoken
+words are the sharpest instrument this game has for finding out why it
+is not fun *yet* — say the quiet part into the microphone.
+
+---
+
+## 10. Try this — the test guide
 
 Each line is one check. Do the thing; expect the thing. If the game does
 something else, that is a finding worth reporting.
@@ -219,10 +245,14 @@ something else, that is a finding worth reporting.
 | reach floor nine, take the heart | satchel sealed, waves begin, echoes rise if you ever died there |
 | carry it back to the entry stairs | **won** |
 | press `v` any time | "chain verified" — the whole history checks out |
+| press `c`, allow the microphone | the indicator burns red and breathes; "the witness listens" in the journal |
+| say "this fight is boring" mid-fight, press `c` again | "the witness has your words — …s, being written down" |
+| end the run (`r`, or `n` → any option) | "the listener takes this run away to read" — and about a minute later, its one-line verdict and a path under `runs/feedback/` |
+| open that report | your words quoted verbatim, tied to the turns you said them at, and recommendations that name the mechanism |
 
 ---
 
-## 10. When something looks wrong
+## 11. When something looks wrong
 
 | It says | It means |
 |---|---|
@@ -231,6 +261,8 @@ something else, that is a finding worth reporting.
 | "no rule this time" | the world read your run and found nothing worth proposing. That is an answer, not an error |
 | a queue entry stuck "asking" for minutes | that call failed quietly; reload the tab and it clears. Anything answered is already saved |
 | the same world twice feels identical | it is meant to — same world, same floors, forever. *Different* worlds must feel different |
+| "the witness cannot hear" | the browser refused the microphone, or the permission prompt was never answered. Click the indicator and allow it; the game plays on either way |
+| "the listener could not be reached" | no dev server, or the reading failed. The run itself is safe — nothing about play depends on the listener |
 
 ---
 

@@ -943,3 +943,47 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > finding the one detail code would never think to say. That is the
 > value-add, and it cost one call, off the clock, after the end.
 > 796/796 green.
+
+> [!IMPORTANT]
+> **12:0x — The witness and the listener: the feedback factory opens**
+> Your goal, built end to end: the game can now hear you play. Press
+> <kbd>c</kbd> (or click the new indicator in the header — dim off, red
+> and breathing on) and the microphone keeps your words while every game
+> beat is trace-marked beside them: wall clock, turn, head seq, and a
+> sample-accurate offset into the take. Marks land mic-on or mic-off, so
+> the silences between actions are data too. Stopping encodes a WAV in
+> the page and hands it to the dev server, which transcribes it ON THIS
+> MACHINE: `scripts/transcribe.swift` on SpeechAnalyzer (macOS 26+'s own
+> engine — Swift-only API, which is why your hoped-for Python route
+> cannot exist; PyObjC reaches only the legacy recogniser), compiled
+> once, sub-second, then ~12x real-time per take. No model call, no fee,
+> nothing leaves the machine — measured before designed.
+> Ending a run — begin again, another world, a wipe; *choosing to be
+> done*, never death, which already provokes the Forge — snapshots it
+> BEFORE the world mutates and sends it to the **listener**: chain facts
+> (summariseRun, the death-proposal machinery reused), your typed notes,
+> the lens readings, and the woven timeline, speech interleaved with
+> play, long pauses said out loud. Its report lands in `runs/feedback/`
+> (git-tracked now — reports are design content, the bench precedent)
+> with a one-line verdict in the journal and an index line for trends.
+> A persona (`.claude/agents/listener.md`) can re-read any kept packet
+> headless, or many at once for what recurs.
+> Two things the live pass caught that the design had wrong:
+> 1. The report rode INSIDE the reply's JSON and died to one unescaped
+>    quote at position 6535 — a real sixty-second call, spent teaching
+>    the contract its shape: one line of JSON, a divider, raw markdown.
+>    The raw reply is kept on any parse failure now, the loop's lesson.
+> 2. `getUserMedia` can hang FOREVER on a prompt nobody answers (found
+>    in an embedded pane) — the button wedged silently. An eight-second
+>    race stands it down honestly: "the witness cannot hear — the
+>    microphone was refused, or never answered."
+> Verified live twice: a voiced packet ("I think the warden fight is too
+> easy… the shove never feels worth using") came back with the quote tied
+> nine turns before the death it preceded — *"the danger is real and
+> entirely invisible"* — two Forge-ready sketches and a table pointer;
+> and a real silent 128-turn run submitted from the browser closed the
+> whole loop in the journal. The chain is untouched by all of it: the
+> trace is a sidecar, the golden replay bit-identical. 815/815 green.
+>
+> **Try it:** `npm run dev`, press <kbd>c</kbd>, complain out loud, die
+> or don't, press <kbd>r</kbd> — then read what lands in `runs/feedback/`.

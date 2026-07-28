@@ -42,6 +42,11 @@ model; `--rule` runs the loop offline.
 - **rules-warden** (sonnet) — judges a candidate rule on both registers:
   mechanical (via the trial, then past it) and textual/thematic (voice, fit,
   whether it answers anything). Use before any ratification that matters.
+- **listener** — reads submitted human runs for FUN: the chain's facts and
+  the player's spoken words woven on one clock. The dev server runs it live
+  on every run submit; dispatch the persona headless to re-read a
+  `runs/witness/listener-*.packet.json` deeper, or across many packets for
+  trends. Its reports are evidence for design changes, never changes.
 
 The overseer stays the strongest model in the session: it dispatches these,
 reads their reports critically, and owns the verdict. A subagent's report is
@@ -56,6 +61,22 @@ evidence, not a decision.
 5. `npm run play` again — did the numbers move the way the rule promised.
 6. Everything notable goes in a commit message or `runs/loops/`; the user
    checks polish and direction, not mechanics.
+
+## The feedback factory (the witness & the listener)
+
+The human channel the loop above cannot synthesise. In the browser, `c`
+toggles a microphone (the header indicator: dim off, red-glowing on);
+speech is kept locally, transcribed locally (SpeechAnalyzer via
+`scripts/transcribe.swift`, compiled once by the dev server), and every
+game beat is trace-marked — mic on or off — so words, actions and the
+silences between correlate on one clock. Ending a run (begin-again /
+another world / wipe) submits it to the **listener**, whose report lands
+in `runs/feedback/<stamp>.md` (git-tracked) with a one-line verdict in
+`runs/feedback/index.jsonl`; raw packets and audio sit in `runs/witness/`
+(disposable). Agents: read `runs/feedback/` before proposing design
+changes — a spoken complaint that recurs across readings outranks any
+single sweep — and dispatch the listener persona over old packets for
+trends. Nothing in this path touches the chain; replay stays exact.
 
 ## Known shape of the game (updated 2026-07-26, increment 7)
 
