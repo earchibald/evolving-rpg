@@ -410,6 +410,11 @@ function reduce(state: GameState, event: GameEvent): GameState {
       };
     }
 
+    // The remembrance changes nothing: it exists to be read, and it arrives
+    // after the last turn a run will ever take. State passes through whole.
+    case 'WORLD_REMEMBERED':
+      return state;
+
     case 'TURN_ADVANCED': {
       const advanced = { ...state, turn: event.payload.turn, activeEntityId: event.payload.activeEntityId };
       // Venom burns on the round, not on the activation — once each time the

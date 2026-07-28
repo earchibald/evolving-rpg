@@ -138,6 +138,46 @@ function proposePrompt(context: Record<string, unknown>): string {
  * structural checks in src/assay/register.ts — and run on a small model,
  * because taste at this granularity does not need the big one.
  */
+/**
+ * The Chronicler's prompt: a run's end, set down in the world's voice.
+ *
+ * Facts in, remembrance out. The rules learned from every other prompt
+ * here: demand brevity in numbers not adjectives, forbid what the register
+ * forbids, require the facts to survive into the text (a remembrance that
+ * contradicts the chain is worse than silence), and give the voice one
+ * strong anchor to stand in.
+ */
+function chroniclePrompt(context: Record<string, unknown>): string {
+  const facts = Array.isArray(context.facts) ? context.facts as string[] : [];
+  const avoid = Array.isArray(context.avoidOpenings) ? context.avoidOpenings as string[] : [];
+  const won = context.occasion === 'won';
+  return [
+    'You are the voice of a cold, quiet, attentive world, engraving what',
+    won
+      ? 'happened in the life that just won it — the one whose name it keeps.'
+      : 'happened in a life that just ended in it. The dead stay where they fall here.',
+    typeof context.anchor === 'string' ? `The world: ${context.anchor}` : '',
+    Array.isArray(context.register) ? `Its tone: ${(context.register as string[]).join(', ')}` : '',
+    '',
+    'What actually happened, in order:',
+    ...facts.map((f) => `- ${f}`),
+    '',
+    'Engrave the remembrance: 2 to 4 short sentences, under 60 words, third',
+    'person past tense, the voice of a stone slab — laconic, understated,',
+    'never grand. "The one who" or "the third life", never "you".',
+    won ? 'This is the world\'s closing inscription; let one phrase of the world\'s own description above return in it.' : '',
+    'Use at least two of the specific names and numbers above, exactly as',
+    'given. Invent nothing the facts do not say; order them, never explain',
+    'them. No exclamation marks, no moral, no comfort. Never use: tapestry,',
+    'testament, legacy, brave, valiant, epic. End on something concrete.',
+    avoid.length > 0 ? `Do not begin with any of these openings: ${avoid.map((a) => `"${a}"`).join(' · ')}` : '',
+    '',
+    'Reply with ONLY a JSON object, no prose around it, no code fence:',
+    '{"name": "<four words or fewer, a title for this remembrance>",',
+    ' "line": "<the remembrance itself>"}',
+  ].filter((l) => l !== '').join('\n');
+}
+
 function judgePrompt(context: Record<string, unknown>): string {
   return [
     'You judge the voice of a cold, quiet, attentive world. Second person,',
@@ -387,7 +427,8 @@ export function oraclePlugin(): Plugin {
                   : intent === 'judge' ? judgePrompt(context)
                     : intent === 'describe-batch' ? batchPrompt(context)
                       : intent === 'worldsmith' ? worldsmithPrompt(context)
-                        : prompt(subject, context),
+                        : intent === 'chronicle' ? chroniclePrompt(context)
+                          : prompt(subject, context),
               '--output-format',
               'json',
             ],

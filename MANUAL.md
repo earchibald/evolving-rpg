@@ -68,6 +68,7 @@ That is the whole game. Everything else is reading.
 | **founding** | a new world deciding what it *is* — its story, its words, who its warden is, what it promises. Takes about forty seconds, once |
 | **grave** | a run that ended. Kept forever, marked with a **†** in the worlds list |
 | **body** | where you fell, still lying there in later runs. Stand on it and that life shows you the floor as it knew it |
+| **the stone** | every ended run is written down. A one-line stone is cut the instant you fall; endings that matter — a first life, a new deepest floor, a warden's kill, a win — get the world's fuller words a little later. The full words are only ever read in one place: standing where the body lies |
 
 ---
 
@@ -93,10 +94,14 @@ carry, and when to spend it, is yours to get wrong.
 floor watches it. Clear the whole floor first and you descend healed.
 
 **Die** and the world keeps your fall: the run becomes a grave, your body
-stays where it dropped, and the world — unasked — reads your death back
-and proposes a law about it. Press `r` to rise and go again. Laws and the
-world's identity survive; the floors are rebuilt exactly; your body from
-last time is lying where you left it.
+stays where it dropped, a one-line stone is cut on the spot — floor, turn,
+what struck the blow — and the world, unasked, reads your death back and
+proposes a law about it. If the death was not ordinary, the world takes a
+minute and writes more; the journal tells you the words exist, but they
+are only read out where the body lies. Press `r` to rise and go again.
+Laws and the world's identity survive; the floors are rebuilt exactly;
+your body from last time is lying where you left it, and walking back to
+it is how you hear what the world remembers of you.
 
 ---
 
@@ -202,8 +207,10 @@ something else, that is a finding worth reporting.
 | walk toward a *caller* | one cry, and two more things rise far off — kill it first next time |
 | walk over the heavy blade | it stays put and the journal says it asks a trade; `,` takes it, speed and all |
 | strike a flare in a corridor | the map fills in for seven paces around — shape only, nothing that stands in it |
-| die | body on the map, a † world in the list, and — unasked — a proposed law arrives within a minute |
-| press `r` and walk to where you died | "you stand where you fell" — and the floor that life explored joins your map |
+| die | body on the map, a † world in the list, "the stone is cut" with the real floor, turn and killer — and, unasked, a proposed law within a minute |
+| die a death that matters (a first life, a new deepest floor, a warden) | a minute later: "the world has set … down in full" — first words only, the rest withheld |
+| press `r` and walk to where you died | "you stand where you fell" — that life's floor joins your map, and the world recites its full words for that life, right there |
+| hover a "remembered" grave in the worlds list | the stone's words, whole |
 | open the forge on a fresh world | the bench: two waiting laws about rest and the aftermath, each with its trial verdict |
 | press `t`, ask the world a question | an answer in the world's voice — and under the entry, the moment it was said: floor, turn, level, health |
 | take a wound, ask again, then read both entries | each keeps its own moment; the old one does not change |

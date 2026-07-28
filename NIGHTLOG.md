@@ -918,3 +918,28 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > floor still (9 v 2, decisive), every suite green at 779. Live in the
 > pane: brace, shove-arm, and the free refusal all speak their lines;
 > no console errors. Six commits this goal.
+
+> [!NOTE]
+> **19:5x — the chronicler: the world sets its dead down in words**
+> Your gift goal, and the research question underneath it: where does an
+> agent EARN its seat, given latency, cost, and everything the namesmith
+> taught us about where it doesn't? The answer the precedents gave —
+> NetHack's bones, Dwarf Fortress's memorial slabs, King of Dragon Pass's
+> saga, Qud's rationalized histories — is the moment a finished chain
+> becomes a story. So: every ended run now gets a one-line stone cut
+> INSTANTLY by code (floor, turn, the killer by the world's own name — no
+> grave is ever mute), and endings that matter — a first life, a new
+> deepest floor, a warden's kill, every win — get the world's fuller
+> words: a model reads the run's code-built facts and engraves two to
+> four slab-voiced sentences onto the dead run's own chain, gated hard
+> (register, length, slop blocklist, must-name-the-facts, must-not-open-
+> like-the-last-stone). The journal announces first words only; the full
+> text is read in exactly one place — standing where the body lies,
+> fused to the borrowed-eyes beat. Found beats served.
+> Live, tonight, the first stone of the pane's world: "Six hundred
+> sixty-two turns on floor 1 of 9. Nothing slain. The worst blow it took
+> dealt 2, and the ochre cur finished the rest. The wedge draught was
+> still unbroached in its hand." The unbroached draught — the model
+> finding the one detail code would never think to say. That is the
+> value-add, and it cost one call, off the clock, after the end.
+> 796/796 green.

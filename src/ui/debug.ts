@@ -4,6 +4,8 @@ import { createWorld, ratifyRule, foundWorld } from '../core/commands.js';
 import { validateBible, isRefusedBible } from '../canon/bible.js';
 import { smithName, DEFAULT_WORDS } from '../canon/namesmith.js';
 import { strikeLine, crossings } from './words.js';
+import { storyOf, remember, rememberedOn, epitaphOf, notable } from '../canon/chronicler.js';
+import { SCHEMA_VERSIONS } from '../core/events.js';
 import { playerStep, playerWait, playerUse, playerShove, playerBrace, playerTake, runWorldTurns, buryIfDead, beginAgain, descend, isGrave } from '../play/session.js';
 import { isAlive } from '../core/entity.js';
 import { outcome, hitChance } from '../core/commands.js';
@@ -1144,8 +1146,12 @@ function render(): void {
   list.textContent = '';
   for (const ref of listRefs(refs)) {
     const li = document.createElement('li');
-    const kind = isGrave(ref.name) ? ' · a grave' : '';
+    const stone = remembranceAt(ref.head);
+    const kind = isGrave(ref.name)
+      ? (stone === null ? ' · a grave' : ' · a grave, remembered')
+      : (stone === null ? '' : ' · won, remembered');
     li.textContent = `${ref.name === active ? '▸ ' : '  '}${ref.name}${kind}`;
+    if (stone !== null) li.title = stone.text;
     if (ref.name === active) li.classList.add('here');
     if (isGrave(ref.name)) li.classList.add('grave');
     li.style.cursor = 'pointer';
@@ -1441,10 +1447,17 @@ function finish(before: number, head: string): void {
         // The graves' covenant, decided: knowledge, never power. Standing
         // where you fell borrows that life's eyes — its explored floor joins
         // your map — and at the bottom, the same dead will rise against you.
-        const lent = borrowDeadEyes(nowState, { x: e.payload.to.x, y: e.payload.to.y });
-        told.push(lent
+        const borrowed = borrowDeadEyes(nowState, { x: e.payload.to.x, y: e.payload.to.y });
+        told.push(borrowed.lent
           ? 'you stand where you fell. that life lends you its eyes — the floor it knew joins your map'
           : 'you stand where you fell. its eyes are already yours');
+        // And if the world set that life down, the words are read here, at
+        // the body — found, not served: the remembrance's second telling
+        // belongs to the one who walks back.
+        const stone = borrowed.grave === null
+          ? null
+          : remembranceAt(getRef(refs, borrowed.grave).head);
+        if (stone !== null) told.push(`the world remembers this one: “${stone.text}”`);
         break;
       }
     }
@@ -1463,9 +1476,10 @@ function finish(before: number, head: string): void {
   }
 
   // The ending, said the moment it happens: heart in hand, standing on the
-  // stair you came down by.
+  // stair you came down by — and the world starts writing your name down.
   if (outcome(nowState) === 'won' && outcome(priorState) !== 'won') {
     told.push('the heart crosses the threshold. this world is won — it keeps your name');
+    rememberRun(active, 'won');
   }
 
   // Death is handled here rather than inside the step, because it is not a move
@@ -1482,6 +1496,7 @@ function finish(before: number, head: string): void {
     told.push(`you die, and stay where you fell. kept as ${burial.grave} — press “run again” when you are ready`);
     told.push('the world is reading your death back');
     proposeFromDeath(burial.grave);
+    rememberRun(burial.grave, 'fallen');
   }
   say(told);
   render();
@@ -1524,7 +1539,10 @@ function promiseLine(state: ReturnType<typeof fold>, which: number, phase: 'whis
  * on its timeline, waiting to be read. Session-borrowed, per floor. */
 const borrowedEyes = new Map<string, Set<number>>();
 
-function borrowDeadEyes(state: ReturnType<typeof fold>, at: { x: number; y: number }): boolean {
+function borrowDeadEyes(
+  state: ReturnType<typeof fold>,
+  at: { x: number; y: number },
+): { lent: boolean; grave: string | null } {
   const key = `${worldRoot() ?? ''}/${String(state.depth)}`;
   for (const ref of listRefs(refs)) {
     if (!isGrave(ref.name) || !ref.name.startsWith(`${active}†`) || ref.head === null) continue;
@@ -1537,14 +1555,138 @@ function borrowDeadEyes(state: ReturnType<typeof fold>, at: { x: number; y: numb
     const before = pool.size;
     for (const seen of dead.seen) pool.add(seen);
     borrowedEyes.set(key, pool);
-    return pool.size > before;
+    return { lent: pool.size > before, grave: ref.name };
   }
-  return false;
+  return { lent: false, grave: null };
 }
 
 /** Graves that have already provoked a proposal, so one death asks once —
  *  renders repeat, and a paid forty-second call must not. */
 const provokedGraves = new Set<string>();
+
+/* ── the chronicler ──────────────────────────────────────────────────────
+ *
+ * The world setting an ended run down in words. This is the model doing
+ * what code cannot: the namesmith proved composition is arithmetic, and
+ * this is the opposite of arithmetic — a finished chain read back as a
+ * story, in the world's voice, with the world's own names in it. Latency
+ * is free (the run is over), the cost is one call per ending, and the
+ * text enters the log only through the register gate. The remembrance is
+ * appended to the ENDED run's own chain, so it survives exactly as long
+ * as the grave does — which is forever.
+ */
+const rememberedRuns = new Set<string>();
+/** Remembrances by chain head, so lists and recitations never re-walk. */
+const rememberedMemo = new Map<string, { text: string; occasion: 'fallen' | 'won' } | null>();
+
+function remembranceAt(head: string | null): { text: string; occasion: 'fallen' | 'won' } | null {
+  if (head === null) return null;
+  if (!rememberedMemo.has(head)) rememberedMemo.set(head, rememberedOn(chain(log, head)));
+  return rememberedMemo.get(head) ?? null;
+}
+
+/** Lays one remembrance on a run's chain, if the run still stands exactly
+ *  where it stood — a remembrance of one run must never land on another. */
+function engrave(runRef: string, at: string, text: string, occasion: 'fallen' | 'won'): boolean {
+  try {
+    const ref = getRef(refs, runRef);
+    if (ref.head !== at) return false;
+    const counter = fold(log, at).rngCounter;
+    const done = append(log, at, {
+      type: 'WORLD_REMEMBERED',
+      schemaVersion: SCHEMA_VERSIONS.WORLD_REMEMBERED,
+      rngCounter: counter,
+      rngDraws: 0,
+      payload: { text, occasion },
+    });
+    log = done.log;
+    refs = setHead(refs, runRef, done.event.id);
+    rememberedMemo.set(done.event.id, { text, occasion });
+    persist();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** The first words of every stone this world already carries, so the next
+ *  one cannot open the same way (the twenty-identical-eulogies failure). */
+function priorStoneOpenings(): string[] {
+  const openings: string[] = [];
+  for (const ref of listRefs(refs)) {
+    if (!isGrave(ref.name)) continue;
+    const stone = remembranceAt(ref.head);
+    if (stone !== null) openings.push(stone.text.split(/\s+/u).slice(0, 4).join(' '));
+  }
+  return openings;
+}
+
+function rememberRun(runRef: string, occasion: 'fallen' | 'won'): void {
+  if (rememberedRuns.has(runRef)) return;
+  rememberedRuns.add(runRef);
+
+  const at = getRef(refs, runRef).head;
+  if (at === null) return;
+  const events = chain(log, at);
+  const state = fold(log, at);
+  const root = events[0]?.id;
+  const name = (family: 'creature' | 'item') => (kind: string): string =>
+    oracle.ask(describeQuestion(family, kind, {}, root)).name;
+
+  // Which life this was, and how deep any before it reached — both read
+  // from the graves that already stand.
+  const priorGraves = listRefs(refs).filter((r) => isGrave(r.name) && r.name.startsWith(`${active}†`) && r.name !== runRef);
+  const life = priorGraves.length + 1;
+  const deepestPrior = priorGraves.reduce((deepest, r) => {
+    if (r.head === null) return deepest;
+    return Math.max(deepest, fold(log, r.head).depth);
+  }, 0);
+
+  const story = storyOf(events, state, active, occasion, life, {
+    creature: name('creature'),
+    item: name('item'),
+  });
+
+  // The floor, laid instantly and for nothing: every ended run gets the
+  // deterministic epitaph the moment it ends. No grave is ever mute — the
+  // namesmith lesson, applied to grief.
+  const epitaph = epitaphOf(story);
+  const stoneAt = ((): string | null => {
+    const laid = engrave(runRef, at, epitaph, occasion);
+    return laid ? getRef(refs, runRef).head : null;
+  })();
+  if (stoneAt !== null && occasion === 'fallen') {
+    say(`the stone is cut: “${epitaph}”`);
+  }
+
+  // The ceiling, only where the ending earned it: the Chronicler's fuller
+  // telling for first lives, new depths, warden kills, the deep floors and
+  // every win. Routine deaths keep the epitaph — twenty model eulogies for
+  // twenty floor-two deaths converge into slop, and the tradition says the
+  // one-line stone is already a story.
+  if (!notable(story, deepestPrior)) return;
+
+  say(occasion === 'won'
+    ? 'the world is writing its closing inscription'
+    : 'this death was not ordinary — the world is finding its words');
+
+  void remember(oracle, story, priorStoneOpenings()).then((got) => {
+    if ('refused' in got) {
+      // The epitaph already stands; the queue shows what was tried.
+      return;
+    }
+    if (stoneAt === null) return;
+    const laid = engrave(runRef, stoneAt, got.text, occasion);
+    if (!laid) return;
+    // Announced, not spent: the journal gets the fact and the first words —
+    // the full text waits where the body lies. Found beats served.
+    const first = `${got.text.split(/\s+/u).slice(0, 6).join(' ')}…`;
+    say(occasion === 'won'
+      ? [`the world has set your name down. its closing words begin: “${first}”`]
+      : [`the world has set ${runRef} down in full. the stone begins: “${first}” — the rest waits where the body lies`]);
+    render();
+  });
+}
 
 /**
  * Dying provokes the world: the run that just killed you is read back and a

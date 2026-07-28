@@ -153,13 +153,27 @@ actually receives the standing AND the world's bible (the bible ride-along
 had been dropped between `where` and the consult context since it was
 written — pinned by test).
 
+**Ended runs are set down** (src/canon/chronicler.ts — the model kept
+where it earns its seat, the namesmith's mirror image): every ended run
+gets a deterministic one-line epitaph engraved INSTANTLY on its own chain
+(WORLD_REMEMBERED v1, apply no-op — the one event that exists to be read);
+notable ends (first life, new deepest floor, warden kill, depth ≥ 7, every
+win — chronicler.notable) also get the Chronicler's fuller telling: a
+model reads storyOf's code-built facts and writes 2-4 slab-voiced
+sentences, gated by validateRemembrance (register + length + slop
+blocklist + must-mention fact tokens + no-repeat openings across the
+world's stones). Delivery is the research's shape: the journal announces
+first words only; the full text is RECITED where the body lies (the
+borrowDeadEyes moment); worlds list marks "a grave, remembered" with the
+text on hover. Failure = the epitaph stands; no grave is ever mute.
+
 **Dying provokes the world**: every death fires a proposal read from the
 run that killed you; the Forge opens when the offer lands; the assay still
 gates it (a live death-proposal was refused for stat-minting, autonomously).
 The trial of proportion (Covenant M6) measures every proposal's outcome
 swing across six rerolled fights and says it beside the offer. Finding your
-own body narrates; what it confers is deliberately undecided (designer's
-deferral — see docs/design/BONES.md when it lands).
+own body lends you its eyes and reads you its stone (BONES.md, decided —
+knowledge and words, never stats).
 
 The Covenant now spans M1–M6, T1–T3 and L1 (legibility: every system ships
 with its human-readable exposure — floor stories in WORLD_INIT, the ledger,

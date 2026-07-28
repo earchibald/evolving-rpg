@@ -29,6 +29,7 @@ export const SCHEMA_VERSIONS = {
   SHOVE: 1,
   BRACED: 1,
   CALLED: 1,
+  WORLD_REMEMBERED: 1,
 } as const;
 
 export type EventType = keyof typeof SCHEMA_VERSIONS;
@@ -234,6 +235,20 @@ export interface CalledPayload {
   opponents: EntitySeed[];
 }
 
+/**
+ * The world setting a run down in words — the Chronicler's remembrance,
+ * written by a model that read the whole chain and validated hard before it
+ * touched the log (the WORLD_BIBLE precedent: model text may enter history
+ * only through a gate). Appended once at a run's end, after the last turn:
+ * it changes no state and no draw, so replay is untouched — it is the one
+ * event that exists purely to be read.
+ */
+export interface WorldRememberedPayload {
+  /** The remembrance itself, in the world's voice. */
+  text: string;
+  occasion: 'fallen' | 'won';
+}
+
 /** A warden back at its post with the intruder gone, knitting shut. The heal
  *  is an event because hit points may only change on the chain — and it is
  *  its own type rather than a STRIKE special case because "the fight reset"
@@ -285,6 +300,7 @@ export type DraftEvent =
   | { type: 'WORLD_STIRRED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: WorldStirredPayload }
   | { type: 'SHOVE'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: ShovePayload }
   | { type: 'BRACED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: BracedPayload }
-  | { type: 'CALLED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: CalledPayload };
+  | { type: 'CALLED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: CalledPayload }
+  | { type: 'WORLD_REMEMBERED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: WorldRememberedPayload };
 
 export type GameEvent = DraftEvent & { id: string; parent: string | null; seq: number };
