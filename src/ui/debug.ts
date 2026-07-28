@@ -2215,10 +2215,13 @@ function fetchBench(): void {
       }
       if (bench.length > 0) {
         say(`the wardens left ${String(bench.length)} law(s) on the bench — the forge (g) will hear them`);
-        // The forge opens when an offer lands — the death-proposal precedent.
-        // Accepting stays a button; arriving does not.
+        // The journal line is the whole announcement. This used to fling the
+        // forge open on every page load — but the death-proposal precedent
+        // ("the forge opens when the offer lands") is about an offer arriving
+        // MID-PLAY, unasked. A standing bench met at the door is not an
+        // event; it is furniture, and furniture does not ambush. The offers
+        // are preloaded so g shows them instantly.
         renderForge();
-        if (!forge.open) forge.showModal();
         render();
       }
     })
