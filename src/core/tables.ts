@@ -279,6 +279,13 @@ export const CALL_RANGE = 6;
 export const CALL_RISERS = 2;
 export const CALL_DISTANCE = 6;
 
+/** How far a loosed shot reaches, as the sight disc counts (dx²+dy² ≤ r²+r,
+ *  the fog's own rounding) — inside the deepest floor's sight (7), so nothing
+ *  shoots out of the dark. Adjacency is refused separately: the bump owns
+ *  range 1, and the sling wants the ground the sword owns. One reach for
+ *  every distance weapon until a weapon earns its own. */
+export const SHOT_RANGE = 5;
+
 /* ── the player's verbs ─────────────────────────────────────────────────── */
 
 /**
