@@ -1449,6 +1449,16 @@ function finish(before: number, head: string): void {
     && fresh.some((e) => e.type === 'MOVE' && e.payload.entityId === 'player')
     && !fresh.some((e) => e.type === 'ITEM_TAKEN')) {
     const underfoot = itemAt(nowHere.items, me.pos.x, me.pos.y);
+    // A provision refused is a fact worth a sentence too — the first voiced
+    // run walked over a flare with full hands and heard nothing at all.
+    if (underfoot !== undefined && provisionOf(underfoot.kind) !== undefined) {
+      const held = me.satchel ?? [];
+      if (held.some((c) => provisionOf(c.kind) === undefined)) {
+        told.push(`the ${calledItem(underfoot.id, nowHere)} stays where it lies — your hands are sealed`);
+      } else if (held.length >= 2) {
+        told.push(`the ${calledItem(underfoot.id, nowHere)} stays where it lies — both hands are full; , swaps your first thing out`);
+      }
+    }
     if (underfoot !== undefined
       && provisionOf(underfoot.kind) === undefined && underfoot.kind !== HEART_KIND) {
       const g = underfoot.grants;
