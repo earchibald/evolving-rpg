@@ -34,6 +34,10 @@ export interface Entity {
    *  a step lands on any waypoint (derived, silent, replay-exact — the
    *  venom precedent); decide() only ever reads it. */
   leg?: number;
+  /** The mimic's costume (WORLD_INIT v11): the item kind it wears on the
+   *  map while the `hidden` tag stands. A fact of birth — it stays after
+   *  the unmasking; only the tag decides who is fooled. */
+  guise?: string;
   /**
    * What is worn, by slot. Optional so the many hand-built fixtures that
    * predate equipment stay valid; absent means bare. Replacement arithmetic

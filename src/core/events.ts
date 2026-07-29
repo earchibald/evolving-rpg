@@ -12,7 +12,7 @@ import type { Item } from './item.js';
  *  payload — a special case that could not survive any second consumer of
  *  randomness, and combat is one. */
 export const SCHEMA_VERSIONS = {
-  WORLD_INIT: 10,
+  WORLD_INIT: 11,
   WORLD_BIBLE: 1,
   WORLD_BODIES: 1,
   MOVE: 2,
@@ -31,6 +31,7 @@ export const SCHEMA_VERSIONS = {
   BRACED: 1,
   CALLED: 1,
   WORLD_REMEMBERED: 1,
+  UNMASKED: 1,
 } as const;
 
 export type EventType = keyof typeof SCHEMA_VERSIONS;
@@ -53,6 +54,12 @@ export interface EntitySeed {
    *  Recorded rather than derived because the route is a fact about this
    *  creature's birth, and replay must walk the same round forever. */
   route?: Pos[];
+  /** v11, the mimic: the item kind this creature wears on the map until
+   *  it is unmasked. The lie lives entirely on the render side (the
+   *  sibling engine's lesson) — dispatch, combat and replay all read the
+   *  creature that was always here. Born with the `hidden` tag; the
+   *  UNMASKED event strips it. */
+  guise?: string;
 }
 
 export interface WorldInitPayload {
@@ -305,6 +312,17 @@ export interface WorldRememberedPayload {
   occasion: 'fallen' | 'won';
 }
 
+/** The reach for a prize that was never a prize. Walking onto a hidden
+ *  mimic resolves to this instead of a move or a blow: the guise drops
+ *  (the reducer strips `hidden`) and the spring loads (`ambush` written —
+ *  the stalker's own machinery, so the mimic's first landed blow rolls
+ *  one band harder with no new combat code). The move is spent; you got
+ *  close enough to touch it. Draws nothing — the reveal is a fact, not
+ *  a roll. */
+export interface UnmaskedPayload {
+  mimicId: string;
+}
+
 /** A warden back at its post with the intruder gone, knitting shut. The heal
  *  is an event because hit points may only change on the chain — and it is
  *  its own type rather than a STRIKE special case because "the fight reset"
@@ -358,6 +376,7 @@ export type DraftEvent =
   | { type: 'BRACED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: BracedPayload }
   | { type: 'DRAWN'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: DrawnPayload }
   | { type: 'CALLED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: CalledPayload }
-  | { type: 'WORLD_REMEMBERED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: WorldRememberedPayload };
+  | { type: 'WORLD_REMEMBERED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: WorldRememberedPayload }
+  | { type: 'UNMASKED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: UnmaskedPayload };
 
 export type GameEvent = DraftEvent & { id: string; parent: string | null; seq: number };

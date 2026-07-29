@@ -48,6 +48,8 @@ const CREATURE_BODIES: Readonly<Record<string, readonly string[]>> = Object.free
   caller: Object.freeze(['crier', 'piper', 'herald', 'bell', 'horn']),
   slinger: Object.freeze(['slinger', 'pelter', 'hurler', 'stoner']),
   echo: Object.freeze(['echo', 'shade', 'double']),
+  // The unmasked lie: its silhouette is a container that was never one.
+  mimic: Object.freeze(['maw', 'coffer', 'cask', 'snare', 'grinner']),
 });
 
 /** Head nouns by item kind. Unknown kinds fall back to their own last word,

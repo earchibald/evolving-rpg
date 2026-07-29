@@ -107,6 +107,7 @@ function reduce(state: GameState, event: GameEvent): GameState {
         // Absent fields read the old stillness, exactly as they always did.
         ...(s.disposition === undefined ? {} : { disposition: s.disposition }),
         ...(s.route === undefined ? {} : { route: s.route.map((w) => ({ x: w.x, y: w.y })), leg: 0 }),
+        ...(s.guise === undefined ? {} : { guise: s.guise }),
         // A creature's ceiling is its birth hp; the player's crossed a floor
         // and may arrive wounded, so the ceiling rides in the payload.
         maxHp: s.id === p.player.id ? (p.playerMaxHp ?? s.stats.hp) : s.stats.hp,
@@ -508,6 +509,20 @@ function reduce(state: GameState, event: GameEvent): GameState {
     // after the last turn a run will ever take. State passes through whole.
     case 'WORLD_REMEMBERED':
       return state;
+
+    case 'UNMASKED': {
+      // The guise drops and the spring loads: `hidden` off, `ambush` on —
+      // the stalker's machinery, so the mimic's first landed blow rolls
+      // one band harder and the reducer already knows how to spend it.
+      return {
+        ...state,
+        entities: state.entities.map((e) =>
+          e.id === event.payload.mimicId
+            ? { ...e, tags: [...e.tags.filter((t) => t !== 'hidden'), 'ambush'] }
+            : e,
+        ),
+      };
+    }
 
     case 'TURN_ADVANCED': {
       const advanced = { ...state, turn: event.payload.turn, activeEntityId: event.payload.activeEntityId };

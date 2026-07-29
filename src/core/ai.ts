@@ -137,6 +137,13 @@ export function decide(state: GameState, entityId: string): Action {
   // the tag — one stagger, one lost turn, no bookkeeping anywhere else.
   if (self.tags.includes('staggered')) return { kind: 'wait' };
 
+  // The mimic's whole art is stillness: hidden, it does nothing at all —
+  // no hunt, no drift, no tell — because an item that fidgets is no item.
+  // The lie lives on the render side; this wait is just a thing that does
+  // not move yet. Unmasked, it fights plain (its loaded spring is the
+  // strike's business, not the mind's).
+  if (verbOf(self.kind) === 'feign' && self.tags.includes('hidden')) return { kind: 'wait' };
+
   const quarry = state.entities.find((e) => e.kind === 'you' && isAlive(e));
   if (quarry === undefined) return { kind: 'wait' };
 

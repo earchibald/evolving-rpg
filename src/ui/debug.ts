@@ -9,7 +9,7 @@ import { SCHEMA_VERSIONS } from '../core/events.js';
 import { playerStep, playerWait, playerUse, playerShove, playerBrace, playerTake, playerVolley, runWorldTurns, buryIfDead, beginAgain, descend, isGrave } from '../play/session.js';
 import { isAlive } from '../core/entity.js';
 import { outcome, hitChance, shotTarget } from '../core/commands.js';
-import { damageDice, XP_TO_REACH, slotFor, critFloor, verbOf, provisionOf, HEART_KIND, SLAM_DAMAGE, VENOM_TURNS } from '../core/tables.js';
+import { damageDice, XP_TO_REACH, slotFor, critFloor, verbOf, provisionOf, HEART_KIND, SLAM_DAMAGE, VENOM_TURNS, ARMORY, relicGrant } from '../core/tables.js';
 import { itemAt } from '../core/item.js';
 import { save, load, clear, emptySession } from '../play/store.js';
 import {
@@ -413,6 +413,12 @@ function nameWhatIsHere(state: ReturnType<typeof fold>): void {
   for (const i of state.items) {
     questions.push(describeQuestion('item', i.kind, { grants: i.grants, ...palette }, root));
   }
+  // A guise is an item kind the floor may never actually hold — the batch
+  // asks for it anyway, so the mimic's theater wears the world's own name
+  // for the thing it pretends to be.
+  for (const e of state.entities) {
+    if (e.guise !== undefined) questions.push(describeQuestion('item', e.guise, { ...palette }, root));
+  }
   // The satchel too. A provision carried from birth was never a floor item,
   // so it alone went unnamed: the first voiced run's starting flare wore its
   // bare kind in the panel while its floor twin had a world-name. Nothing is
@@ -434,6 +440,15 @@ function itemFamily(kind: string, grants: Parameters<typeof slotFor>[1]): string
   if (provisionOf(kind) !== undefined) return 'tool';
   const slot = slotFor(kind, grants);
   return slot === 'weapon' ? 'blade' : slot === 'sling' ? 'sling' : 'worn';
+}
+
+/** The stats a guise PRETENDS to grant — exactly what the real relic of
+ *  that kind would grant at this depth, so the mimic's theater matches the
+ *  panel's honest rows to the digit. A provision guise grants nothing,
+ *  like every real provision. The lie is complete or it is nothing. */
+function guiseGrants(guise: string, depth: number): { hp: number; might: number; wits: number; speed: number } {
+  const relic = ARMORY.find((r) => r.kind === guise);
+  return relic === undefined ? { hp: 0, might: 0, wits: 0, speed: 0 } : relicGrant(relic, depth);
 }
 
 /** What the world calls a kind of thing, whether or not it has answered yet. */
@@ -771,7 +786,14 @@ function render(): void {
       // Whoever is standing there wins the square. The item sits on a guard by
       // design, so painting the item over the creature hid the guard every
       // single time — and a risk you cannot see is not a decision you can weigh.
-      if (here !== undefined && inView) {
+      //
+      // Except the hidden mimic, whose whole existence is the exception: it
+      // paints as the item it pretends to be, in that item's family color,
+      // and it is REMEMBERED out of sight the way items are — an "item"
+      // that vanished when you looked away would give the lie away.
+      if (here !== undefined && isAlive(here) && here.tags.includes('hidden')) {
+        cell.classList.add('item', itemFamily(here.guise ?? '', guiseGrants(here.guise ?? '', state.depth)));
+      } else if (here !== undefined && inView) {
         if (!isAlive(here)) cell.classList.add(here.kind === 'you' ? 'you-dead' : 'dead');
         else if (here.kind === 'you') cell.classList.add('player');
         else cell.classList.add('foe');
@@ -1007,8 +1029,39 @@ function render(): void {
     threats.appendChild(li);
   }
 
+  // The hidden mimic keeps an ITEM's row — its guise's name, the distance,
+  // and exactly the grants the real relic of that kind would show, so the
+  // panel's theater matches its honest rows to the digit. Remembered once
+  // seen, like every item. The lie is complete or it is nothing.
+  for (const e of state.entities) {
+    if (!isAlive(e) || !e.tags.includes('hidden') || e.guise === undefined) continue;
+    if (!fog.seen.has(idx(state.grid, e.pos.x, e.pos.y))) continue;
+    const pretend = guiseGrants(e.guise, state.depth);
+    const called = oracle.ask(describeQuestion('item', e.guise, { grants: pretend }, worldRoot())).name;
+    const li = document.createElement('li');
+    li.style.borderLeftColor = 'var(--item)';
+    const who = document.createElement('span');
+    who.className = 'who';
+    who.textContent = called;
+    const odds = document.createElement('span');
+    odds.className = 'odds';
+    const reach = player === undefined ? '?' : Math.abs(e.pos.x - player.pos.x) + Math.abs(e.pos.y - player.pos.y);
+    const gives = [
+      pretend.might === 0 ? '' : `${signed(pretend.might)} might`,
+      pretend.hp === 0 ? '' : `${signed(pretend.hp)} hp`,
+      pretend.speed === 0 ? '' : `${signed(pretend.speed)} speed`,
+      pretend.wits === 0 ? '' : `${signed(pretend.wits)} wits`,
+    ].filter((g) => g !== '').join(' ');
+    odds.textContent = `${reach} away · ${gives}`;
+    li.append(who, odds);
+    threats.appendChild(li);
+  }
+
   for (const e of state.entities) {
     if (e.kind === 'you') continue;
+    // The hidden mimic already stands in the items above — a creature row
+    // for it would be the whole lie told twice, once truthfully.
+    if (isAlive(e) && e.tags.includes('hidden')) continue;
     const standing = idx(state.grid, e.pos.x, e.pos.y);
     // A living creature is knowledge only while watched; a corpse stays
     // where it fell, so a seen tile is enough.
@@ -1360,6 +1413,15 @@ function narrate(fresh: readonly GameEvent[], state: ReturnType<typeof fold>): s
     }
     if (event.type === 'VIGIL_KEPT') {
       lines.push(`${named(state, event.payload.entityId)} resumes its vigil — its wounds knit shut`);
+      continue;
+    }
+    if (event.type === 'UNMASKED') {
+      const m = state.entities.find((x) => x.id === event.payload.mimicId);
+      const worn = m?.guise === undefined
+        ? 'the thing'
+        : oracle.ask(describeQuestion('item', m.guise, {}, worldRoot())).name;
+      const truly = m === undefined ? 'a mimic' : calledCreature(m.kind, m);
+      lines.push(`you reach for ${worn} — it unfolds, teeth first. it was ${truly} all along`);
       continue;
     }
     if (event.type === 'ITEM_USED') {

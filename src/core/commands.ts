@@ -3,7 +3,7 @@ import { inBounds, isPassable } from './grid.js';
 import { findEntity, isAlive } from './entity.js';
 import { intBetween } from './rng.js';
 import { clearShot, withinReach } from './sight.js';
-import { neededToHit, chanceIn20, damageDice, critFloor, WHIFF, BESTIARY, creatureStats, threatOf, spawnBudget, depthBands, wardenAt, ARMORY, relicGrant, slotFor, RELIC_TRAITS, motifAt, verbOf, wardenLevel, AMBUSH_MIGHT_BONUS, AMBUSH_FROM_DEPTH, braceWall, CALL_RISERS, CALL_DISTANCE, dominates, wearsTrait, FLARE_RADIUS, provisionsAt, provisionOf, draughtCeiling, smokeTurns, BOTTOM_DEPTH, HEART_KIND, WAVE_DISTANCE, SHOT_RANGE, sizeStretch, MAX_BOARD_DIM, WANDER_FROM_DEPTH, ROUTE_STOPS } from './tables.js';
+import { neededToHit, chanceIn20, damageDice, critFloor, WHIFF, BESTIARY, creatureStats, threatOf, spawnBudget, depthBands, wardenAt, ARMORY, relicGrant, slotFor, RELIC_TRAITS, motifAt, verbOf, wardenLevel, AMBUSH_MIGHT_BONUS, AMBUSH_FROM_DEPTH, braceWall, CALL_RISERS, CALL_DISTANCE, dominates, wearsTrait, FLARE_RADIUS, provisionsAt, provisionOf, draughtCeiling, smokeTurns, BOTTOM_DEPTH, HEART_KIND, WAVE_DISTANCE, SHOT_RANGE, sizeStretch, MAX_BOARD_DIM, WANDER_FROM_DEPTH, ROUTE_STOPS, MIMIC_IN, MIMIC_FROM_DEPTH, mimicGuises } from './tables.js';
 import type { Relic } from './tables.js';
 import type { Entity, Stats, Pos } from './entity.js';
 import { itemAt } from './item.js';
@@ -68,11 +68,13 @@ export function hitChance(attacker: Entity, target: Entity): number {
 }
 
 /** Whether this attacker is a coiled ambusher whose spring is still loaded.
- *  The tag is written by generation (stalkers born at depth 2+), spent by the
- *  reducer on the first landed blow — so the gate is the tag, one source of
- *  truth, and no strike-time depth check can disagree with the floor. */
+ *  The tag is written by generation (stalkers born at depth 2+) or by the
+ *  unmasking (the mimic's first-strike, v11), spent by the reducer on the
+ *  first landed blow — so the gate is the tag, one source of truth, and no
+ *  strike-time depth check can disagree with the floor. */
 function springLoaded(attacker: Entity): boolean {
-  return verbOf(attacker.kind) === 'ambush' && attacker.tags.includes('ambush');
+  const verb = verbOf(attacker.kind);
+  return (verb === 'ambush' || verb === 'feign') && attacker.tags.includes('ambush');
 }
 
 function resolveStrike(
@@ -431,6 +433,40 @@ export function createWorld(
   });
   const walking = temper.filter((t) => t?.disposition === 'wander').length;
 
+  // The mimic roll (v11): 1 floor in MIMIC_IN, from depth 2 down, holds at
+  // most one — an item that was never an item, wearing a kind the floor's
+  // own tables could honestly have put there. Its tile is drawn from the
+  // same field as every spawn; a few tries skip collisions with real
+  // prizes, posts and the door rather than forcing them, and a floor too
+  // crowded to hide a lie simply goes without.
+  let mimicSeed: { id: string; kind: string; pos: Pos; stats: Stats; tags: string[]; guise: string } | null = null;
+  if (depth >= MIMIC_FROM_DEPTH) {
+    const roll = intBetween(seed, after, 1, MIMIC_IN); after += 1;
+    if (roll === 1) {
+      const guises = mimicGuises(depth);
+      const which = intBetween(seed, after, 0, guises.length - 1); after += 1;
+      const spots = pickSpawnPoints(seed, after, grid, generated.start, 4, OPPONENT_MIN_DISTANCE);
+      after = spots.counterAfter;
+      const taken = (p: { x: number; y: number }): boolean =>
+        spawned.points.some((q) => q.x === p.x && q.y === p.y)
+        || (keeperTile !== undefined && p.x === keeperTile.x && p.y === keeperTile.y)
+        || (p.x === exit.x && p.y === exit.y)
+        || (p.x === far.x && p.y === far.y);
+      const tile = spots.points.find((p) => !taken(p));
+      if (tile !== undefined) {
+        const level = Math.max(1, depth - 1);
+        mimicSeed = {
+          id: 'mimic-1',
+          kind: level === 1 ? 'mimic' : `mimic-${String(level)}`,
+          pos: { x: tile.x, y: tile.y },
+          stats: creatureStats('mimic', level)!,
+          tags: ['hidden'],
+          guise: guises[which]!,
+        };
+      }
+    }
+  }
+
   // The floor's whole account, recorded where facts live — covenant L1: the
   // shape, the journey, the rent and what it bought, who watches the door,
   // what lies guarded. This is the generation reasoning chain, in the event,
@@ -451,6 +487,8 @@ export function createWorld(
     + ` · ${provisions.map((p) => p.kind).join(' and ')} lie${provisions.length === 1 ? 's' : ''} where the path does not go`
     + (coiled > 0 ? ` · ${coiled} of them lie${coiled === 1 ? 's' : ''} coiled, waiting` : '')
     + (walking > 0 ? ` · ${walking} of them walk${walking === 1 ? 's' : ''} rounds of the floor` : '')
+    // Said like the secret room is said: that a lie exists, never where.
+    + (mimicSeed === null ? '' : ' · one thing here is not what it seems')
     + (secret.sealed ? ' · one room keeps itself secret' : '')
     + (repaired.punched > 0 ? ` · ${repaired.punched} hidden way(s) cut where no way was` : '')
     + (depth === 1 ? ` · the world runs ${BOTTOM_DEPTH} floors deep, and something beats at the bottom` : '');
@@ -531,7 +569,7 @@ export function createWorld(
           })(),
           ...(temper[i] === undefined ? {} : temper[i]),
         };
-      }),
+      }).concat(mimicSeed === null ? [] : [mimicSeed]),
     },
   };
 }
@@ -580,6 +618,20 @@ export function attemptMove(state: GameState, entityId: string, dx: number, dy: 
         rngCounter: state.rngCounter,
         rngDraws: 0,
         payload: { entityId, attempted: to, reason: 'occupied' },
+      };
+    }
+
+    // The reach for a prize that was never a prize: a hidden mimic is not
+    // struck, it is UNMASKED — the walk was toward an item, and the intent
+    // to stoop is what springs the lie. The move is spent; the creature
+    // phase that follows is where the first strike lands, one band harder.
+    if (occupant.tags.includes('hidden')) {
+      return {
+        type: 'UNMASKED',
+        schemaVersion: SCHEMA_VERSIONS.UNMASKED,
+        rngCounter: state.rngCounter,
+        rngDraws: 0,
+        payload: { mimicId: occupant.id },
       };
     }
 
@@ -718,6 +770,9 @@ export function shoveAt(
     (e) => e.id !== entityId && isAlive(e) && e.pos.x === at.x && e.pos.y === at.y,
   );
   if (target === undefined || !isHostile(mover, target)) return null;
+  // A hidden mimic reads as furniture to every tool: you cannot shove what
+  // you believe is an item — walking onto it is the only thing that asks.
+  if (target.tags.includes('hidden')) return null;
 
   const behind = { x: target.pos.x + dx, y: target.pos.y + dy };
   const payload = ((): { to: Pos | null; slammed: boolean; struckId: string | null } => {
@@ -770,6 +825,9 @@ function armedForDistance(entity: Entity): boolean {
  *  commands and minds alike. */
 function shotEligible(state: GameState, archer: Entity, target: Entity): boolean {
   if (!isAlive(target) || !isHostile(archer, target)) return false;
+  // A hidden mimic is an item to every eye that aims: the mark must never
+  // volunteer it, or the sling key itself becomes the mimic detector.
+  if (target.tags.includes('hidden')) return false;
   if (Math.abs(target.pos.x - archer.pos.x) + Math.abs(target.pos.y - archer.pos.y) === 1) return false;
   if (!withinReach(archer.pos, target.pos, SHOT_RANGE)) return false;
   return clearShot(state.grid, state.entities, archer.pos, target.pos);
@@ -1193,8 +1251,11 @@ export function useCarried(
   // empty air is allowed and honest (the line says nothing stood beside
   // you): the satchel pays for judgment, not just for luck.
   if (kind === 'iron burr') {
+    // The hidden mimic is furniture to the burr too: staggering "an item"
+    // would name the lie in the journal — the burr is not a mimic detector.
     const beside = state.entities
       .filter((e) => e.id !== entityId && isAlive(e) && isHostile(user, e)
+        && !e.tags.includes('hidden')
         && Math.abs(e.pos.x - user.pos.x) + Math.abs(e.pos.y - user.pos.y) === 1)
       .map((e) => e.id);
     return {

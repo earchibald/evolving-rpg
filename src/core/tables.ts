@@ -214,6 +214,16 @@ export const BESTIARY: readonly Archetype[] = Object.freeze([
     growth: Object.freeze({ hp: 6, might: 1, wits: 1, speed: 0 }),
     weight: 0,
   }),
+  // The mimic: an item that was never an item. Weight 0 like the warden —
+  // it never spawns from the random pool; the mimic roll is its own rare
+  // draw at generation (MIMIC_IN). A surprise brawl at arm's reach: solid
+  // body, real teeth, no legs to speak of — reaching it was the mistake.
+  Object.freeze({
+    kind: 'mimic',
+    base: Object.freeze({ hp: 6, might: 4, wits: 1, speed: 2 }),
+    growth: Object.freeze({ hp: 2, might: 1, wits: 0, speed: 0 }),
+    weight: 0,
+  }),
 ]);
 
 export function archetype(kind: string): Archetype | undefined {
@@ -249,7 +259,7 @@ export function creatureStats(kind: string, level: number): Stats | undefined {
  * tile choices break ties in the fixed neighbour order. Chance stays where
  * it always was — in whether the blow lands.
  */
-export type Verb = 'trample' | 'lunge' | 'ambush' | 'vigil' | 'venom' | 'call' | 'volley';
+export type Verb = 'trample' | 'lunge' | 'ambush' | 'vigil' | 'venom' | 'call' | 'volley' | 'feign';
 
 const VERBS: Readonly<Record<string, Verb>> = Object.freeze({
   bruiser: 'trample',
@@ -259,6 +269,10 @@ const VERBS: Readonly<Record<string, Verb>> = Object.freeze({
   stinger: 'venom',
   caller: 'call',
   slinger: 'volley',
+  // The mimic's art is stillness: hidden it does nothing at all, and its
+  // unmasking loads the stalker's own spring — the first blow one band
+  // harder, through the same recorded machinery.
+  mimic: 'feign',
 });
 
 /** The archetype under a levelled kind: "bruiser-2" is a bruiser. Verbs,
@@ -347,6 +361,20 @@ export const GUARD_LEASH = 4;
  *  the first lesson is the bump, not the patrol crossing your start. */
 export const WANDER_FROM_DEPTH = 2;
 
+/** The mimic's rarity: 1 floor in this many, from MIMIC_FROM_DEPTH down,
+ *  holds at most one. Rare on purpose — met about once or twice per full
+ *  descent, so an item on the floor stays worth trusting and the one that
+ *  is not becomes a story. Never on the teaching floor: the first lesson
+ *  about items must be true. */
+export const MIMIC_IN = 6;
+export const MIMIC_FROM_DEPTH = 2;
+
+/** What a mimic may pretend to be: any kind the floor's own tables could
+ *  honestly have put there — a lie is only good if it is plausible. */
+export function mimicGuises(depth: number): readonly string[] {
+  return [...provisionsAt(depth).map((p) => p.kind), ...ARMORY.map((r) => r.kind)];
+}
+
 /** A wanderer's round: how many waypoints, drawn between these bounds. */
 export const ROUTE_STOPS: readonly [number, number] = [2, 4];
 
@@ -375,6 +403,10 @@ export const VERB_THREAT: Readonly<Record<Verb, number>> = Object.freeze({
   venom: 1.2,
   call: 1.3,
   volley: 1.25,
+  // Ambush-class, plus the disguise: the fight starts on its terms or not
+  // at all. Priced though it never spends floor budget (the mimic roll is
+  // separate) because threat is also the XP a kill pays.
+  feign: 1.3,
 });
 
 /**
