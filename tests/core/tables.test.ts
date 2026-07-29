@@ -5,6 +5,7 @@ import {
   BESTIARY, creatureStats, threatOf, spawnBudget, depthBands, wardenAt,
   NEEDED_FLOOR, NEEDED_CEILING, CRIT, WHIFF,
   ARMORY, relicGrant, critFloor, dominates,
+  verbOf, VERB_THREAT, archetype, RELIC_TRAITS, wearsTrait,
 } from '../../src/core/tables.js';
 
 /**
@@ -92,13 +93,15 @@ describe('experience', () => {
 });
 
 describe('the bestiary', () => {
-  it('holds five spawnable archetypes and one boss that never rolls', () => {
-    expect(BESTIARY.filter((a) => a.weight > 0)).toHaveLength(5);
+  it('holds six spawnable archetypes and one boss that never rolls', () => {
+    expect(BESTIARY.filter((a) => a.weight > 0)).toHaveLength(6);
     expect(BESTIARY.find((a) => a.kind === 'warden')?.weight).toBe(0);
-    // The teaching floor's gate: the two verbs that punish ignorance —
-    // lingering harm and floor-waking — wait past the first lesson.
+    // The teaching floor's gate: the verbs that punish ignorance —
+    // lingering harm, floor-waking, the shot before contact — wait
+    // past the first lesson.
     expect(BESTIARY.find((a) => a.kind === 'stinger')?.fromDepth).toBe(2);
     expect(BESTIARY.find((a) => a.kind === 'caller')?.fromDepth).toBe(3);
+    expect(BESTIARY.find((a) => a.kind === 'slinger')?.fromDepth).toBe(2);
   });
 
   it('scales every archetype upward with its level', () => {
@@ -228,5 +231,35 @@ describe('wits and the crit band', () => {
   it('is total over nonsense', () => {
     expect(critFloor(-3)).toBe(20);
     expect(critFloor(0)).toBe(20);
+  });
+});
+
+describe('the volley enters the tables', () => {
+  it('the slinger volleys, priced and gated below the teaching floor', () => {
+    expect(verbOf('slinger')).toBe('volley');
+    expect(verbOf('slinger-2')).toBe('volley');
+    expect(VERB_THREAT.volley).toBeGreaterThan(1); // unpriced verbs overdraw floors
+    const arch = archetype('slinger');
+    expect(arch).toBeDefined();
+    expect(arch!.fromDepth).toBe(2); // the first lesson stays melee
+    // Mutation proof of the pricing: the kind must cost more than its bare stats.
+    const stats = creatureStats('slinger', 1)!;
+    expect(threatOf(stats, 'slinger')).toBeGreaterThan(threatOf(stats));
+  });
+
+  it('the leaden sling is the ranged trait and never dominates the keen edge', () => {
+    expect(RELIC_TRAITS['leaden sling']).toBe('ranged');
+    const sling = ARMORY.find((r) => r.kind === 'leaden sling');
+    const edge = ARMORY.find((r) => r.kind === 'keen edge');
+    expect(sling).toBeDefined();
+    // Sword-or-sling is chosen with the , key, never walked into.
+    expect(dominates(relicGrant(sling!, 3), relicGrant(edge!, 3))).toBe(false);
+    expect(wearsTrait({ weapon: { kind: 'leaden sling' } }, 'ranged')).toBe(true);
+    expect(wearsTrait({ weapon: { kind: 'keen edge' } }, 'ranged')).toBe(false);
+  });
+
+  it('every kind still answers the register — the new names are names', () => {
+    expect(assayName('slinger', []).sound).toBe(true);
+    expect(assayName('leaden sling', []).sound).toBe(true);
   });
 });

@@ -191,6 +191,16 @@ export const BESTIARY: readonly Archetype[] = Object.freeze([
     weight: 1,
     fromDepth: 3,
   }),
+  // The slinger: the fight starts before you arrive — its verb is the
+  // ground between you. Frail and slow so that reaching it settles it;
+  // never on the teaching floor, where the first lesson is the bump.
+  Object.freeze({
+    kind: 'slinger',
+    base: Object.freeze({ hp: 3, might: 2, wits: 2, speed: 2 }),
+    growth: Object.freeze({ hp: 1, might: 1, wits: 1, speed: 0 }),
+    weight: 2,
+    fromDepth: 2,
+  }),
   Object.freeze({
     kind: 'warden',
     base: Object.freeze({ hp: 16, might: 5, wits: 2, speed: 2 }),
@@ -232,7 +242,7 @@ export function creatureStats(kind: string, level: number): Stats | undefined {
  * tile choices break ties in the fixed neighbour order. Chance stays where
  * it always was — in whether the blow lands.
  */
-export type Verb = 'trample' | 'lunge' | 'ambush' | 'vigil' | 'venom' | 'call';
+export type Verb = 'trample' | 'lunge' | 'ambush' | 'vigil' | 'venom' | 'call' | 'volley';
 
 const VERBS: Readonly<Record<string, Verb>> = Object.freeze({
   bruiser: 'trample',
@@ -241,6 +251,7 @@ const VERBS: Readonly<Record<string, Verb>> = Object.freeze({
   warden: 'vigil',
   stinger: 'venom',
   caller: 'call',
+  slinger: 'volley',
 });
 
 /** The verb a kind acts by. Kinds carry levels ("bruiser-2"); the verb
@@ -330,9 +341,12 @@ export const VERB_THREAT: Readonly<Record<Verb, number>> = Object.freeze({
   vigil: 1.0,
   // The venom's blows keep costing after the fight breaks off; the call is
   // worth more than the caller — it spends the floor's budget on a body
-  // that buys two more.
+  // that buys two more. The volley is lunge-class: it converts approach
+  // rounds into damage rounds, from farther — every step of the walk-in
+  // is a round it may spend on you.
   venom: 1.2,
   call: 1.3,
+  volley: 1.25,
 });
 
 /**
@@ -502,20 +516,26 @@ export const ARMORY: readonly Relic[] = Object.freeze([
   // the fold can honor).
   Object.freeze({ kind: 'sure edge', grants: 'might' as const, base: 2, per: 4, weight: 1 }),
   Object.freeze({ kind: 'steady boots', grants: 'speed' as const, base: 1, per: 4, weight: 1 }),
+  // The distance weapon. Modest might on purpose — it is a weapon, so it
+  // takes the sword's slot, and the keen edge out-grants it: sword-or-sling
+  // is a decision the , key makes, never the walk. Its real grant is the
+  // 'ranged' trait: the draw-and-loose discipline (covenant M8).
+  Object.freeze({ kind: 'leaden sling', grants: 'might' as const, base: 1, per: 3, weight: 2 }),
 ]);
 
 /** The rule a named relic bends, by kind. Read at the moments the rule
  *  matters (a crit landing, a trample shoving) — never stored on the
  *  entity, so replay derives it identically forever. */
-export const RELIC_TRAITS: Readonly<Record<string, 'stagger-crit' | 'hold-ground'>> = Object.freeze({
+export const RELIC_TRAITS: Readonly<Record<string, 'stagger-crit' | 'hold-ground' | 'ranged'>> = Object.freeze({
   'sure edge': 'stagger-crit',
   'steady boots': 'hold-ground',
+  'leaden sling': 'ranged',
 });
 
 /** Whether an entity's worn gear carries a trait. */
 export function wearsTrait(
   gear: Readonly<Partial<Record<string, { kind: string }>>> | undefined,
-  trait: 'stagger-crit' | 'hold-ground',
+  trait: 'stagger-crit' | 'hold-ground' | 'ranged',
 ): boolean {
   if (gear === undefined) return false;
   return Object.values(gear).some((g) => g !== undefined && RELIC_TRAITS[g.kind] === trait);
