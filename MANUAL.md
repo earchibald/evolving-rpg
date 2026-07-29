@@ -66,8 +66,8 @@ That is the whole game. Everything else is reading.
 | **iron burr** | cast it at your feet: everything hostile beside you reels and loses its next action. Worthless at range — they must already be on you |
 | **hollow bell** | ring it: the way out answers from wherever it stands, and every unfound prize on the floor glints onto your map. Knowledge, never power |
 | **scroll** | one page carried at a time, read with `r`, gone when read. Unread it wears a strange mark — "a scroll marked KOR-VETH" — and the first reading teaches this world what that mark means, forever. No scroll deals damage: they buy knowledge, position and time |
-| **the boards** | a new world's ground, chosen at the door: **the vale** (the old 48×32), **the expanse** (four times the ground — the default), **the waste** (eight times). Bigger boards hold more of everything but thinner per step — the journey is the point |
-| **the window** | on big boards the map shows a window that follows you; the small map beside it keeps the whole journey, fog and all, with the window's frame drawn on |
+| **the boards** | a new world's ground, chosen at the door: **the vale** (the old 48×32), **the expanse** (four times the ground — the default), **the waste** (eight times). Bigger boards hold more of everything but thinner per step — the journey is the point. A wipe passes the same door: the one world that remains starts on the ground you pick there |
+| **the window** | on big boards the map shows a window that follows you; the small see-through map floating in the window's corner keeps the whole journey, fog and all, with the window's frame drawn on |
 | **patrol** | some creatures walk rounds of the floor now instead of standing. A corridor that was empty is not empty forever |
 | **a guard's post** | the keeper and every relic guard own their ground: chase or flee, they return to it rather than drifting off across the floor |
 | **mimic** | very rarely, an item on the floor was never an item. The floor's story admits when something here is not what it seems; beasts give it a wide berth; reaching for it is how it is asked. It strikes first, and it always carries something worth the teeth |
@@ -266,7 +266,7 @@ something else, that is a finding worth reporting.
 
 | Do | Expect |
 |---|---|
-| start a fresh world (`n` → wipe) | within a minute: "the world is founded — …" and every name arrives at once, instantly, in the founding's own words |
+| start a fresh world (`n` → wipe → choose a ground) | within a minute: "the world is founded — …" and every name arrives at once, instantly, in the founding's own words. Escape at the door instead: nothing is wiped |
 | read the founding (`m` → this world) | a story, a word-list, a named warden, two or three promises |
 | walk into a wall | "blocked" — and no turn passes |
 | walk into a creature | a to-hit line with real numbers; hover the rail to see the same numbers explained |

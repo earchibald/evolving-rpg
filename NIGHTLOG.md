@@ -1259,3 +1259,42 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > little map grow. Find the item the beasts won't touch. Read the page
 > you cannot name. And when the floor clicks under your boot — believe
 > it.
+
+## 2026-07-29 — 08:48 — the little map climbs above the fold, and the wipe learns to ask
+
+> Dear Designer,
+>
+> Two things you said this morning, both done while you played.
+>
+> **The little map floats now.** You found it parked under the command
+> bar — below the fold on any board big enough to need it, which is
+> exactly the board that needs it. It lives in the top-right corner of
+> the play window instead, see-through, drawn at two pixels a tile so
+> it stays furniture-sized, and it ignores the mouse entirely. The
+> ground beneath it is still the game's; the vale still shows no little
+> map at all, because there the window already is the whole board.
+>
+> **The wipe walks through the door.** "How do we change dungeon
+> sizes?" had a bad answer: only *another world…* passed the door, and
+> a wipe silently handed back the default ground. Now wipe opens the
+> same door — pick the vale, the expanse or the waste, type a seed word
+> or leave it blank — and the one world that remains starts on the
+> ground you chose. A quiet safety fell out of it: nothing is destroyed
+> until you actually choose a board, so Escape at the wipe's door
+> leaves every grave standing. The old wipe was one click from gone;
+> this one asks you to name the world you want instead.
+>
+> 959 tests green, typecheck clean, no chain or schema touched — this
+> was all view and doorway. I restarted your dev server to verify live
+> (you said I could); if your tab looks stale, one refresh brings the
+> new corner map in.
+>
+> On the record, not done tonight: the listener read your two filings
+> from this morning. The "no better than" line that contradicts what
+> `,` actually does — real, and queued. And wiping an unplayed world
+> still files an empty reading (the turn-0 guard never fires because
+> worlds are born at turn 1) — also queued.
+>
+> **Try it:** walk a few rooms and watch the corner — the frame slides
+> with you. Then press n, choose wipe, and press Escape: everything
+> still standing.

@@ -83,11 +83,17 @@ let booted = '';
  * Chosen rather than derived, which is fine: it is an input, like a keypress.
  * It is recorded in WORLD_INIT, so this world stays exactly as reproducible as
  * any other, and it is on screen so you can note one you liked.
+ *
+ * Boot takes the defaults; the wipe's door passes the ground and seed the
+ * player chose there.
  */
-function freshWorld(): void {
-  const seed = randomSeed();
+function freshWorld(
+  width: number = DEFAULT_BOARD.width,
+  height: number = DEFAULT_BOARD.height,
+  seed: number = randomSeed(),
+): void {
   const session = emptySession(MAIN);
-  const first = append(session.log, null, createWorld(seed, DEFAULT_BOARD.width, DEFAULT_BOARD.height));
+  const first = append(session.log, null, createWorld(seed, width, height));
   log = first.log;
   refs = createRef(session.refs, MAIN, first.event.id, 0, `opening run · seed ${seed}`);
   active = MAIN;
@@ -677,7 +683,8 @@ function say(message: string | string[]): void {
  * only what the run has seen, exactly as the big map remembers it. Hidden
  * on the vale, where the window already IS the whole board. A map, not a
  * control: it draws the camera's frame so you know where you are looking,
- * and nothing on it can be clicked.
+ * and nothing on it can be clicked — it floats over the board's corner
+ * (the CSS owns the float), so it must stay small enough to be furniture.
  */
 function paintMinimap(
   state: ReturnType<typeof fold>,
@@ -690,7 +697,9 @@ function paintMinimap(
   map.hidden = whole;
   if (whole) return;
 
-  const scale = state.grid.width > 96 ? 2 : 3;
+  // Two pixels per tile everywhere: at three the expanse's map outgrew the
+  // corner it now lives in, and an overlay earns its keep by being small.
+  const scale = 2;
   map.width = state.grid.width * scale;
   map.height = state.grid.height * scale;
   const pen = map.getContext('2d');
@@ -776,8 +785,8 @@ function render(): void {
   // The camera: a window of at most the vale's frame, centered on the
   // player, clamped to the board — the cell count on screen never grows
   // with the world, and on the vale itself the window IS the board, so
-  // the classic game renders exactly as it always did. The minimap below
-  // carries the rest of the journey.
+  // the classic game renders exactly as it always did. The minimap in the
+  // board's corner carries the rest of the journey.
   const viewW = Math.min(state.grid.width, VIEW_W);
   const viewH = Math.min(state.grid.height, VIEW_H);
   const anchor = you ?? player;
@@ -2622,38 +2631,29 @@ function submitToListener(reason: 'begin-again' | 'another-world' | 'wipe'): voi
 const sheet = el('worlds-dialog') as HTMLDialogElement;
 el('open-worlds').addEventListener('click', () => { sheet.showModal(); });
 
-el('wipe').addEventListener('click', () => {
-  submitToListener('wipe');
-  const worlds = listRefs(refs).length;
-  // The new world FIRST, then the forgetting. unlearn() re-renders through
-  // onChange, and a render while the old refs still stand folds the dying
-  // world one last time — which the namesmith, being instant, would name
-  // into the freshly emptied canon. The model path never showed this hole:
-  // its answers arrived seconds later and the epoch guard dropped them.
-  freshWorld();
-  // In memory before disk. The other order does not work either: the Oracle
-  // keeps its names in memory, so anything that clears only storage gets
-  // them written straight back by the next ask.
-  oracle.unlearn();
-  notes.length = 0;
-  clear(CANON_KEY, NOTES_KEY);
-  lastSaved = '';
-  persist();
-  say(`wiped — ${worlds} world(s) and every name discarded, back to one`);
-  sheet.close();
-  render();
-});
-
-// Another world goes through the door's options first: the ground and the
-// seed are decisions, and the sheet is where decisions live. The listener
-// snapshot is taken when a board is actually chosen — closing the options
-// sheet unchosen costs nothing.
+// Both roads out of the worlds sheet pass the same door: the ground and the
+// seed are decisions, and the sheet is where decisions live. "Another world"
+// births alongside the others; the wipe destroys everything and the chosen
+// board is the one world left behind ("how do I change the size?" had no
+// answer on the wipe road, 2026-07-29). Nothing happens until a board is
+// actually chosen — which quietly makes the door the wipe's confirmation:
+// Escape here leaves every grave standing.
 const optionsSheet = el('world-options') as HTMLDialogElement;
-el('newrun').addEventListener('click', () => {
+let doorMode: 'another' | 'wipe' = 'another';
+
+function openDoor(mode: 'another' | 'wipe'): void {
+  doorMode = mode;
   sheet.close();
   (el('seed-said') as HTMLInputElement).value = '';
+  el('door-title').textContent = mode === 'wipe' ? 'wipe — then one fresh world' : 'a new world';
+  el('door-line').textContent = mode === 'wipe'
+    ? 'choosing a ground below wipes everything; the one world that remains starts there. escape leaves it all standing.'
+    : 'choose the ground. the world stretches to fit it — more creatures in all, fewer per step, and the journey longer.';
   optionsSheet.showModal();
-});
+}
+
+el('newrun').addEventListener('click', () => { openDoor('another'); });
+el('wipe').addEventListener('click', () => { openDoor('wipe'); });
 
 function bornInto(board: (typeof BOARDS)[number]): void {
   submitToListener('another-world');
@@ -2665,8 +2665,36 @@ function bornInto(board: (typeof BOARDS)[number]): void {
   optionsSheet.close();
   render();
 }
+
+function wipeInto(board: (typeof BOARDS)[number]): void {
+  submitToListener('wipe');
+  const worlds = listRefs(refs).length;
+  const said = (el('seed-said') as HTMLInputElement).value.trim();
+  const seed = said === '' ? randomSeed() : parseSeed(said);
+  // The new world FIRST, then the forgetting. unlearn() re-renders through
+  // onChange, and a render while the old refs still stand folds the dying
+  // world one last time — which the namesmith, being instant, would name
+  // into the freshly emptied canon. The model path never showed this hole:
+  // its answers arrived seconds later and the epoch guard dropped them.
+  freshWorld(board.width, board.height, seed);
+  // In memory before disk. The other order does not work either: the Oracle
+  // keeps its names in memory, so anything that clears only storage gets
+  // them written straight back by the next ask.
+  oracle.unlearn();
+  notes.length = 0;
+  clear(CANON_KEY, NOTES_KEY);
+  lastSaved = '';
+  persist();
+  say(`wiped — ${worlds} world(s) and every name discarded · what remains: ${board.name}, ${board.width}×${board.height}, seed ${seed}`);
+  optionsSheet.close();
+  render();
+}
+
 for (const board of BOARDS) {
-  el(`board-${board.key}`).addEventListener('click', () => { bornInto(board); });
+  el(`board-${board.key}`).addEventListener('click', () => {
+    if (doorMode === 'wipe') wipeInto(board);
+    else bornInto(board);
+  });
 }
 
 render();

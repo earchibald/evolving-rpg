@@ -220,7 +220,10 @@ map into yours (knowledge, never stats — BONES.md, decided).
 docs/superpowers/specs/2026-07-29-living-dungeon-design.md, math in
 BALANCE.md "The board breathes"): worlds choose their ground at the door
 — the vale 48x32, the **expanse 96x64 (default)**, the waste 128x96 —
-with a typed seed (words hash via fnv1a). `sizeStretch` (1/2/3) scales
+with a typed seed (words hash via fnv1a); the wipe passes the SAME door
+(the chosen board is the one world left; Escape there wipes nothing),
+and the minimap floats translucent over the board's corner (2px/tile,
+pointer-events off — below the command bar it lived below the fold). `sizeStretch` (1/2/3) scales
 the GROUND economy (rooms cap, provisions, owed relics, traps, the
 camera+minimap exist for it); `bountyStretch` ((S+1)/2) scales the FIGHT
 economy — spawn budget AND XP ladder together, measured in after the

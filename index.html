@@ -19,9 +19,11 @@
 
       <main class="play">
         <div class="board">
-          <div id="grid" class="grid" role="img" aria-label="the world"></div>
+          <div class="view">
+            <div id="grid" class="grid" role="img" aria-label="the world"></div>
+            <canvas id="minimap" class="minimap" role="img" aria-label="the journey so far" hidden></canvas>
+          </div>
           <p id="command-bar" class="command-bar" aria-label="the dungeon's commands"></p>
-          <canvas id="minimap" class="minimap" role="img" aria-label="the journey so far" hidden></canvas>
           <p id="status" class="status" role="status"></p>
         </div>
       </main>
@@ -159,7 +161,8 @@
           <button id="wipe" type="button" class="danger">wipe everything</button>
           <p class="sheet-line danger">
             Every world, every grave, every name the world has given you —
-            gone. There is no undo.
+            gone. The door opens next: you choose the ground the one
+            remaining world starts on. There is no undo.
           </p>
         </div>
 
@@ -171,8 +174,8 @@
 
     <dialog id="world-options" class="sheet">
       <form method="dialog">
-        <h2>a new world</h2>
-        <p class="sheet-line">choose the ground. the world stretches to fit it &mdash; more creatures in all, fewer per step, and the journey longer.</p>
+        <h2 id="door-title">a new world</h2>
+        <p id="door-line" class="sheet-line">choose the ground. the world stretches to fit it &mdash; more creatures in all, fewer per step, and the journey longer.</p>
 
         <label class="seed-row" for="seed-said">
           seed &mdash; leave blank to draw one. words work: &ldquo;ashfall&rdquo; is a seed you can tell a friend.

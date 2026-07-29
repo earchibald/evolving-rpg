@@ -188,15 +188,25 @@ kbd {
 .palette-list li.note { color: var(--soft); }
 .palette-list li.note kbd { opacity: .8; }
 
+/* The window and what floats over it. The wrapper shrink-wraps the grid so
+   the minimap's corner is the GRID's corner, not the column's. */
+.view { position: relative; width: max-content; }
+
 /* The journey so far: a few pixels per tile, fog-respecting, camera frame
-   drawn on. A map, not a control. Hidden on the vale, where the window
-   already shows the whole board. */
+   drawn on. A map, not a control — it floats translucent over the board's
+   far corner, because parked under the command bar it lived below the fold,
+   and a map you must scroll to is no map at all (the designer, 2026-07-29).
+   pointer-events off: the ground beneath stays the game's. Hidden on the
+   vale, where the window already shows the whole board. */
 .minimap {
+  position: absolute; top: 8px; right: 8px;
   image-rendering: pixelated;
   border: 1px solid var(--rule);
   border-radius: 2px;
-  background: #0d0f12;
-  align-self: flex-start;
+  background: rgba(13, 15, 18, .78);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, .55);
+  opacity: .9;
+  pointer-events: none;
 }
 
 /* The seed at the door: same cloth as every other typed word. */
