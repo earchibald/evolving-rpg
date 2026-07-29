@@ -390,20 +390,31 @@ function floodHonest(grid: Grid, start: { x: number; y: number }): Set<number> {
   return seen;
 }
 
-/** The walkable tiles in the one-tile band around a room — its doorways. */
-function doorwaysOf(grid: Grid, room: Room): number[] {
-  const out: number[] = [];
-  for (let x = room.x - 1; x <= room.x + room.w; x += 1) {
-    for (const y of [room.y - 1, room.y + room.h]) {
-      if (tileAt(grid, x, y) === FLOOR) out.push(idx(grid, x, y));
-    }
+/**
+ * The walkable tiles in the one-tile band around a room, told apart: a
+ * `door` is a narrow gap — floor with wall on both shoulders, the shape a
+ * doorway actually has — while `open` counts band floor that is simply more
+ * room, the shared edge of rooms the generator let run together. Only doors
+ * can be sealed; painting SECRET across an open edge turns the neighbor's
+ * own floor into fake wall (found on floor 7 of the first voiced run, where
+ * two entire "walls" of a room were secrets). Corners sit diagonal — no
+ * 4-way step enters through one — so they are neither.
+ */
+function boundaryOf(grid: Grid, room: Room): { doors: number[]; open: number } {
+  const doors: number[] = [];
+  let open = 0;
+  const consider = (x: number, y: number, aX: number, aY: number, bX: number, bY: number): void => {
+    if (tileAt(grid, x, y) !== FLOOR) return;
+    if (tileAt(grid, aX, aY) !== FLOOR && tileAt(grid, bX, bY) !== FLOOR) doors.push(idx(grid, x, y));
+    else open += 1;
+  };
+  for (let x = room.x; x < room.x + room.w; x += 1) {
+    for (const y of [room.y - 1, room.y + room.h]) consider(x, y, x - 1, y, x + 1, y);
   }
   for (let y = room.y; y < room.y + room.h; y += 1) {
-    for (const x of [room.x - 1, room.x + room.w]) {
-      if (tileAt(grid, x, y) === FLOOR) out.push(idx(grid, x, y));
-    }
+    for (const x of [room.x - 1, room.x + room.w]) consider(x, y, x, y - 1, x, y + 1);
   }
-  return out;
+  return { doors, open };
 }
 
 const inRoom = (room: Room, x: number, y: number): boolean =>
@@ -448,8 +459,11 @@ export function sealSecretRoom(
   for (let attempt = 0; attempt < Math.min(4, eligible.length); attempt += 1) {
     const pick = intBetween(seed, c, 0, eligible.length - 1); c += 1;
     const room = eligible[pick]!;
-    const doors = doorwaysOf(grid, room);
-    if (doors.length === 0) continue;
+    const { doors, open } = boundaryOf(grid, room);
+    // No doors is nothing to seal; open boundary is a room merged into its
+    // neighbor — it has no wall to hide behind, and sealing it would eat
+    // the neighbor's floor.
+    if (doors.length === 0 || open > 0) continue;
 
     const tiles = [...grid.tiles];
     for (const d of doors) tiles[d] = SECRET;

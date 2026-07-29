@@ -1,5 +1,5 @@
 import { FLOOR, WALL, EXIT, SECRET, makeGrid, isPassable, idx, tileAt } from '../../src/core/grid.js';
-import { repairWithSecret } from '../../src/core/mapgen.js';
+import { repairWithSecret, sealSecretRoom } from '../../src/core/mapgen.js';
 import { createWorld } from '../../src/core/commands.js';
 import { reachableFrom } from '../../src/core/reachability.js';
 import { visibleFrom, fogAt } from '../../src/ui/fov.js';
@@ -135,6 +135,51 @@ describe('sealed rooms, generated', () => {
     // Roughly one floor in three — the draw is 1-in-3 and some picks abort.
     expect(sealed).toBeGreaterThanOrEqual(4);
     expect(sealed).toBeLessThanOrEqual(20);
+  });
+});
+
+describe('what may keep itself secret', () => {
+  // One floor, three rooms: A and B share an open edge — the generator lets
+  // rooms run together — and C stands apart behind a wall with one door.
+  //   y1  #........#...##
+  //   y3  #............##   ← the lone gap at (9,3) is C's door
+  // The 929-second run found floor 7 sealing a merged room: the whole shared
+  // edge became illusory wall, two "walls" of the neighbor were secrets.
+  const rows = [
+    '###############',
+    '#........#...##',
+    '#........#...##',
+    '#............##',
+    '#........#...##',
+    '#........#...##',
+    '###############',
+  ];
+  const tiles = (): number[] => rows.join('').split('').map((c) => (c === '#' ? WALL : FLOOR));
+  const roomA = { x: 1, y: 1, w: 4, h: 5 };
+  const roomB = { x: 5, y: 1, w: 4, h: 5 };
+  const roomC = { x: 10, y: 1, w: 3, h: 5 };
+  const width = 15;
+
+  it('refuses a room merged into its neighbor — there is no wall to hide behind', () => {
+    const grid = makeGrid(width, 7, tiles());
+    // Start in C, exit in B: only A is eligible, and A's right edge is open
+    // floor shared with B. Sealing it would turn B's own column into fake wall.
+    const { grid: after, sealed } = sealSecretRoom(
+      7, 0, grid, [roomA, roomB, roomC], { x: 11, y: 2 }, { x: 7, y: 4 }, 1);
+    expect(sealed).toBe(false);
+    expect(after.tiles).toEqual(grid.tiles);
+  });
+
+  it('seals a walled room at its narrow door, and nowhere else', () => {
+    const grid = makeGrid(width, 7, tiles());
+    // Start and exit in the merged blob: only C is eligible, and C is honest —
+    // walls all around, one gap. That gap and only that gap becomes secret.
+    const { grid: after, sealed } = sealSecretRoom(
+      7, 0, grid, [roomA, roomB, roomC], { x: 2, y: 2 }, { x: 7, y: 4 }, 1);
+    expect(sealed).toBe(true);
+    expect(tileAt(after, 9, 3)).toBe(SECRET);
+    const changed = after.tiles.filter((t, i) => t !== grid.tiles[i]);
+    expect(changed).toEqual([SECRET]);
   });
 });
 
