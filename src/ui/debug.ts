@@ -6,7 +6,7 @@ import { smithName, DEFAULT_WORDS, fnv1a } from '../canon/namesmith.js';
 import { strikeLine, crossings } from './words.js';
 import { storyOf, remember, rememberedOn, epitaphOf, notable } from '../canon/chronicler.js';
 import { SCHEMA_VERSIONS } from '../core/events.js';
-import { playerStep, playerWait, playerUse, playerShove, playerBrace, playerTake, playerVolley, runWorldTurns, buryIfDead, beginAgain, descend, isGrave } from '../play/session.js';
+import { playerStep, playerWait, playerUse, playerShove, playerBrace, playerTake, playerVolley, runWorldTurns, buryIfDead, beginAgain, descend, descendThrough, isGrave } from '../play/session.js';
 import { isAlive } from '../core/entity.js';
 import { outcome, hitChance, shotTarget } from '../core/commands.js';
 import { damageDice, XP_TO_REACH, slotFor, critFloor, verbOf, provisionOf, HEART_KIND, SLAM_DAMAGE, VENOM_TURNS, ARMORY, relicGrant } from '../core/tables.js';
@@ -748,6 +748,13 @@ function render(): void {
   const mark = you !== undefined && you.tags.includes('drawn') ? shotTarget(state, you.id) : null;
   const markedAt = mark === null ? -1 : idx(state.grid, mark.pos.x, mark.pos.y);
 
+  // Revealed traps mark their squares (the pre-commit courtesy the sibling
+  // engine taught); unrevealed ones are exactly nothing — the floor.
+  const trapAt = new Map<number, { kind: string; sprung: boolean }>();
+  for (const t of state.traps) {
+    if (t.revealed) trapAt.set(idx(state.grid, t.pos.x, t.pos.y), { kind: t.kind, sprung: t.sprung });
+  }
+
   // The camera: a window of at most the vale's frame, centered on the
   // player, clamped to the board — the cell count on screen never grows
   // with the world, and on the vale itself the window IS the board, so
@@ -826,6 +833,10 @@ function render(): void {
       if (inView && here !== undefined && prize !== undefined) {
         cell.classList.add('guarding', itemFamily(prize.kind, prize.grants));
       }
+      // A revealed trap wears its ring under whatever stands there —
+      // marked ground stays marked, dimmed with the rest out of sight.
+      const peril = trapAt.get(at);
+      if (peril !== undefined) cell.classList.add(peril.sprung ? 'trap-spent' : 'trap');
       if (!inView) cell.classList.add('dim');
       grid.appendChild(cell);
     }
@@ -914,6 +925,28 @@ function render(): void {
     ...(player?.tags.includes('warded') === true
       ? [['your ward', 'a warding holds — the next blow to find you is drunk whole', 'good'] as [string, string, string]]
       : []),
+    // The snare on your leg: counted down like the venom, and honest about
+    // what still works.
+    ...((): [string, string, string][] => {
+      const held = player?.tags.find((t) => t.startsWith('snared-'));
+      return held === undefined
+        ? []
+        : [['your legs', `the snare holds — ${held.slice('snared-'.length)} more round(s); blows still swing`, 'bad']];
+    })(),
+    // The alarm ringing: the whole floor's awareness, on a clock.
+    ...(state.alarm !== null && state.turn < state.alarm.until
+      ? [['the floor', `the alarm rings for ${state.alarm.until - state.turn} more round(s) — everything knows where you are`, 'bad'] as [string, string, string]]
+      : []),
+    // The pre-commit courtesy: a known trap one step away says so HERE,
+    // before the step — the sibling engine's warning, worn our way.
+    ...((): [string, string, string][] => {
+      if (player === undefined) return [];
+      const beside = state.traps.find((t) => t.revealed && !t.sprung
+        && Math.abs(t.pos.x - player.pos.x) + Math.abs(t.pos.y - player.pos.y) === 1);
+      return beside === undefined
+        ? []
+        : [['beside you', `a ${beside.kind}, revealed — one step more springs it`, 'bad']];
+    })(),
     ['the way out', toExit, done === 'escaped' ? 'good' : ''],
     ['standing at', player === undefined ? '—' : `${player.pos.x}, ${player.pos.y}`, ''],
     ['turn', String(state.turn), ''],
@@ -1415,6 +1448,42 @@ function narrate(fresh: readonly GameEvent[], state: ReturnType<typeof fold>): s
       lines.push(`${named(state, event.payload.entityId)} resumes its vigil — its wounds knit shut`);
       continue;
     }
+    if (event.type === 'TRAP_SENSED') {
+      // Only the reveals speak. A failed attempt announcing itself would
+      // be the trap detector the roll just refused to be — the misses are
+      // on the chain for the panels, and silent here.
+      const p = event.payload;
+      if (p.revealed) {
+        const t = state.traps.find((x) => x.id === p.trapId);
+        const kind = t?.kind ?? 'a trap';
+        lines.push(p.method === 'sight'
+          ? `your eye catches it — a ${kind}, marked on the map`
+          : `something clicks underfoot — a ${kind}, one pace off, marked`);
+      }
+      continue;
+    }
+    if (event.type === 'TRAP_SPRUNG') {
+      const p = event.payload;
+      const t = state.traps.find((x) => x.id === p.trapId);
+      const kind = t?.kind ?? 'a trap';
+      if (p.dodged) {
+        lines.push(`the ${kind} springs — and you are not where it bites`);
+        continue;
+      }
+      const e = p.effect;
+      if (e.kind === 'spikes') lines.push(`the ${kind} takes you — spikes, ${e.damage} blood`);
+      else if (e.kind === 'venom') lines.push(`the ${kind} takes you — a needle, and venom in the wound`);
+      else if (e.kind === 'snare') lines.push(`the ${kind} closes on your leg — held ${e.turns} rounds; blows still swing`);
+      else if (e.kind === 'alarm') lines.push(`the ${kind} rings out — the whole floor knows where you are`);
+      else if (e.kind === 'maw') lines.push(`the floor opens under you — ${e.damage} in the fall`);
+      else if (e.kind === 'lodestone') lines.push('the world folds — you are somewhere else entirely');
+      else {
+        lines.push(e.opponents.length === 1
+          ? `the ${kind} splits — something climbs out, paces away`
+          : `the ${kind} splits — ${e.opponents.length} things climb out, paces away`);
+      }
+      continue;
+    }
     if (event.type === 'UNMASKED') {
       const m = state.entities.find((x) => x.id === event.payload.mimicId);
       const worn = m?.guise === undefined
@@ -1650,6 +1719,29 @@ function finish(before: number, head: string): void {
         : `down. depth ${down.depth} — it is colder here`);
       // The floor before each warden whispers its promise (2, 5, 8) — the
       // bible keeping its word on the way down.
+      const landed = fold(log, getRef(refs, active).head);
+      const whichPromise = down.depth === 2 ? 0 : down.depth === 5 ? 1 : down.depth === 8 ? 2 : null;
+      if (whichPromise !== null) {
+        const whispered = promiseLine(landed, whichPromise, 'whisper');
+        if (whispered !== null) told.push(whispered);
+      }
+      persist();
+      say(told);
+      render();
+      return;
+    }
+  }
+
+  // The floor gives way: a maw sprung this beat drops you a floor mid-
+  // stride — the stairs' whole ceremony without the rest. The fall's
+  // damage was the TRAP_SPRUNG's business; the crossing is this.
+  const fell = fresh.some((e) => e.type === 'TRAP_SPRUNG' && !e.payload.dodged && e.payload.effect.kind === 'maw');
+  if (fell && outcome(here) === 'playing') {
+    const down = descendThrough(log, refs, active, { width: here.grid.width, height: here.grid.height });
+    if (down !== null) {
+      log = down.log;
+      refs = down.refs;
+      told.push(`the fall ends a floor lower. depth ${down.depth} — you arrive hard, nothing rested`);
       const landed = fold(log, getRef(refs, active).head);
       const whichPromise = down.depth === 2 ? 0 : down.depth === 5 ? 1 : down.depth === 8 ? 2 : null;
       if (whichPromise !== null) {

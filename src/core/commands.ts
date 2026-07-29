@@ -3,17 +3,17 @@ import { inBounds, isPassable } from './grid.js';
 import { findEntity, isAlive } from './entity.js';
 import { intBetween } from './rng.js';
 import { clearShot, withinReach } from './sight.js';
-import { neededToHit, chanceIn20, damageDice, critFloor, WHIFF, BESTIARY, creatureStats, threatOf, spawnBudget, depthBands, wardenAt, ARMORY, relicGrant, slotFor, RELIC_TRAITS, motifAt, verbOf, wardenLevel, AMBUSH_MIGHT_BONUS, AMBUSH_FROM_DEPTH, braceWall, CALL_RISERS, CALL_DISTANCE, dominates, wearsTrait, FLARE_RADIUS, provisionsAt, provisionOf, draughtCeiling, smokeTurns, BOTTOM_DEPTH, HEART_KIND, WAVE_DISTANCE, SHOT_RANGE, sizeStretch, MAX_BOARD_DIM, WANDER_FROM_DEPTH, ROUTE_STOPS, MIMIC_IN, MIMIC_FROM_DEPTH, mimicGuises } from './tables.js';
+import { neededToHit, chanceIn20, damageDice, critFloor, WHIFF, BESTIARY, creatureStats, threatOf, spawnBudget, depthBands, wardenAt, ARMORY, relicGrant, slotFor, RELIC_TRAITS, motifAt, verbOf, wardenLevel, AMBUSH_MIGHT_BONUS, AMBUSH_FROM_DEPTH, braceWall, CALL_RISERS, CALL_DISTANCE, dominates, wearsTrait, FLARE_RADIUS, provisionsAt, provisionOf, draughtCeiling, smokeTurns, BOTTOM_DEPTH, HEART_KIND, WAVE_DISTANCE, SHOT_RANGE, sizeStretch, MAX_BOARD_DIM, WANDER_FROM_DEPTH, ROUTE_STOPS, MIMIC_IN, MIMIC_FROM_DEPTH, mimicGuises, sightAt, trapOf, trapKindsAt, trapCount, trapLevelAt, TRAP_SIGHT_NEED, TRAP_NEAR_NEED, TRAP_DODGE_NEED, TRAP_NEAR_RADIUS, SPIKE_DIE, NEEDLE_VENOM_TURNS, SNARE_TURNS, ALARM_TURNS, MAW_DIE, MAW_FLAT, HATCH_BAND } from './tables.js';
 import type { Relic } from './tables.js';
 import type { Entity, Stats, Pos } from './entity.js';
 import { itemAt } from './item.js';
-import { EXIT, SECRET, tileAt } from './grid.js';
+import { EXIT, SECRET, tileAt, idx } from './grid.js';
 import { nextActive } from './turns.js';
 import { MAX_RULES } from '../canon/rule.js';
 import type { Rule } from '../canon/rule.js';
 import type { Bible } from '../canon/bible.js';
 import { SCHEMA_VERSIONS } from './events.js';
-import type { DraftEvent } from './events.js';
+import type { DraftEvent, EntitySeed } from './events.js';
 import type { GameState } from './state.js';
 
 const STARTING_STATS = { hp: 10, might: 3, wits: 3, speed: 4 } as const;
@@ -467,6 +467,39 @@ export function createWorld(
     }
   }
 
+  // The traps (v12): laid after every inhabitant and prize, so nothing
+  // shares a tile with a lie or a treasure. Count by depth and stretch
+  // (none on the teaching floor); kinds by weighted draw from the depth's
+  // table; tiles from the same drawn field as every spawn — min distance
+  // from the door, collisions skipped. A floor too crowded lays fewer.
+  const trapSeeds: { id: string; kind: string; pos: Pos; level: number }[] = [];
+  const trapsWanted = trapCount(depth, stretch);
+  if (trapsWanted > 0) {
+    const laying = trapKindsAt(depth);
+    const spots = pickSpawnPoints(seed, after, grid, generated.start, trapsWanted + 4, OPPONENT_MIN_DISTANCE);
+    after = spots.counterAfter;
+    const level = trapLevelAt(depth);
+    const claimed = (p: { x: number; y: number }): boolean =>
+      spawned.points.some((q) => q.x === p.x && q.y === p.y)
+      || (keeperTile !== undefined && p.x === keeperTile.x && p.y === keeperTile.y)
+      || (p.x === exit.x && p.y === exit.y)
+      || (p.x === far.x && p.y === far.y)
+      || (mimicSeed !== null && p.x === mimicSeed.pos.x && p.y === mimicSeed.pos.y)
+      || trapSeeds.some((t) => t.pos.x === p.x && t.pos.y === p.y);
+    for (const p of spots.points) {
+      if (trapSeeds.length >= trapsWanted) break;
+      if (claimed(p)) continue;
+      const total = laying.reduce((n, k) => n + k.weight, 0);
+      let roll = intBetween(seed, after, 1, total); after += 1;
+      let chosen = laying[0]!;
+      for (const k of laying) {
+        roll -= k.weight;
+        if (roll <= 0) { chosen = k; break; }
+      }
+      trapSeeds.push({ id: `trap-${String(trapSeeds.length + 1)}`, kind: chosen.kind, pos: { x: p.x, y: p.y }, level });
+    }
+  }
+
   // The floor's whole account, recorded where facts live — covenant L1: the
   // shape, the journey, the rent and what it bought, who watches the door,
   // what lies guarded. This is the generation reasoning chain, in the event,
@@ -544,6 +577,7 @@ export function createWorld(
         stats: carried === undefined ? { ...STARTING_STATS } : { ...carried.stats },
         tags: [],
       },
+      ...(trapSeeds.length === 0 ? {} : { traps: trapSeeds }),
       opponents: population.chosen.map((c, i) => {
         const relicIndex = guardOf.get(i);
         const post = relicIndex !== undefined
@@ -672,6 +706,22 @@ export function attemptMove(state: GameState, entityId: string, dx: number, dy: 
     };
   }
 
+  // The snare holds: a held body's step becomes the strain against it — a
+  // recorded WAIT that spends the action honestly. Refusing for free here
+  // would hand a bot a retry loop that never lets time pass and the snare
+  // never slacken; and a player who knows they are held (the panel says
+  // so) is choosing to strain, which is a turn. Blows, tools and stances
+  // still work: what the snare takes is only the leaving.
+  if (mover.tags.some((t) => t.startsWith('snared-'))) {
+    return {
+      type: 'WAIT',
+      schemaVersion: SCHEMA_VERSIONS.WAIT,
+      rngCounter: state.rngCounter,
+      rngDraws: 0,
+      payload: { entityId },
+    };
+  }
+
   return {
     type: 'MOVE',
     schemaVersion: SCHEMA_VERSIONS.MOVE,
@@ -692,9 +742,183 @@ export function attemptMove(state: GameState, entityId: string, dx: number, dy: 
  * later becomes a declarative rule rather than a function.
  */
 export function endsTurn(draft: DraftEvent): boolean {
-  // ITEM_TAKEN rides along with the move that reached it, so it must not spend
-  // a second turn of its own.
-  return draft.type !== 'MOVE_BLOCKED' && draft.type !== 'ITEM_TAKEN';
+  // ITEM_TAKEN rides along with the move that reached it, so it must not
+  // spend a second turn of its own — and the trap events ride the action
+  // that earned them the same way: the step was the turn, the trap is
+  // what the step cost (or taught).
+  return draft.type !== 'MOVE_BLOCKED' && draft.type !== 'ITEM_TAKEN'
+    && draft.type !== 'TRAP_SENSED' && draft.type !== 'TRAP_SPRUNG';
+}
+
+/**
+ * The next pending chance to know a trap, or null when every chance is
+ * spent. Each trap offers two, each exactly once: `sight` the first time
+ * it stands inside the engine's own sight disc with a clear line (walls
+ * and secrets block; bodies do not — a bruiser is not a curtain), and
+ * `near` the first time you walk within TRAP_NEAR_RADIUS steps of it
+ * still unknowing. One draft per call, drafted against the state the
+ * caller just folded — the session loops until silence, so every roll's
+ * counter is honest.
+ */
+export function senseTrap(state: GameState, playerId = 'player'): Extract<DraftEvent, { type: 'TRAP_SENSED' }> | null {
+  const eye = findEntity(state.entities, playerId);
+  if (eye === undefined || !isAlive(eye)) return null;
+
+  for (const t of state.traps) {
+    if (t.sprung || t.revealed) continue;
+    const sensed = (method: 'sight' | 'near', base: number): Extract<DraftEvent, { type: 'TRAP_SENSED' }> => {
+      const roll = intBetween(state.seed, state.rngCounter, 1, 20);
+      // Recorded the way strikes record: `needed` is what the d20 itself
+      // had to meet, wits already inside it — the event tells the whole
+      // truth of the roll without a reader doing arithmetic.
+      const needed = base + 2 * t.level - eye.stats.wits;
+      return {
+        type: 'TRAP_SENSED',
+        schemaVersion: SCHEMA_VERSIONS.TRAP_SENSED,
+        rngCounter: state.rngCounter,
+        rngDraws: 1,
+        payload: { trapId: t.id, method, roll, needed, revealed: roll >= needed },
+      };
+    };
+    if (!t.sightRolled
+      && withinReach(eye.pos, t.pos, sightAt(state.depth))
+      && clearShot(state.grid, [], eye.pos, t.pos)) {
+      return sensed('sight', TRAP_SIGHT_NEED);
+    }
+    if (!t.nearRolled && walkDistance(state.grid, eye.pos, t.pos) <= TRAP_NEAR_RADIUS) {
+      return sensed('near', TRAP_NEAR_NEED);
+    }
+  }
+  return null;
+}
+
+/** Walkable tiles a band of steps out from a point, in index order —
+ *  where a hatch's risers stand up. One BFS, not one per tile. */
+function ringAround(state: GameState, from: Pos, band: readonly [number, number]): Pos[] {
+  const seen = new Map<number, number>();
+  const queue: Array<{ x: number; y: number; d: number }> = [{ ...from, d: 0 }];
+  seen.set(idx(state.grid, from.x, from.y), 0);
+  while (queue.length > 0) {
+    const here = queue.shift();
+    if (here === undefined) break;
+    if (here.d >= band[1]) continue;
+    for (const [nx, ny] of [[here.x + 1, here.y], [here.x - 1, here.y], [here.x, here.y + 1], [here.x, here.y - 1]] as const) {
+      if (!isPassable(state.grid, nx, ny)) continue;
+      const key = idx(state.grid, nx, ny);
+      if (seen.has(key)) continue;
+      seen.set(key, here.d + 1);
+      queue.push({ x: nx, y: ny, d: here.d + 1 });
+    }
+  }
+  const stood = new Set(state.entities.filter(isAlive).map((e) => idx(state.grid, e.pos.x, e.pos.y)));
+  const out: Pos[] = [];
+  for (const [key, d] of [...seen.entries()].sort((a, b) => a[0] - b[0])) {
+    if (d < band[0] || d > band[1]) continue;
+    if (stood.has(key)) continue;
+    if (state.grid.tiles[key] === EXIT) continue;
+    out.push({ x: key % state.grid.width, y: Math.floor(key / state.grid.width) });
+  }
+  return out;
+}
+
+/**
+ * The trap underfoot paying out, or null when the ground is honest.
+ * Everything resolves HERE — the dodge where the kind's law grants one
+ * (rolled at the victim's level), the die, the risers, the landing — and
+ * the event records it whole. Draws are spent the same whether the dodge
+ * saves you (the STRIKE discipline: the counter's path never depends on
+ * the outcome).
+ */
+export function springTrap(state: GameState, victimId = 'player'): Extract<DraftEvent, { type: 'TRAP_SPRUNG' }> | null {
+  const victim = findEntity(state.entities, victimId);
+  if (victim === undefined || !isAlive(victim)) return null;
+  const trap = state.traps.find((t) => !t.sprung && t.pos.x === victim.pos.x && t.pos.y === victim.pos.y);
+  if (trap === undefined) return null;
+  const law = trapOf(trap.kind)?.dodge ?? 'never';
+
+  let c = state.rngCounter;
+  const mayDodge = law === 'always' || (typeof law === 'number' && state.level >= law);
+  let dodge: { roll: number; needed: number } | null = null;
+  let dodged = false;
+  if (mayDodge) {
+    const roll = intBetween(state.seed, c, 1, 20); c += 1;
+    const needed = TRAP_DODGE_NEED + 2 * trap.level - victim.stats.speed;
+    dodge = { roll, needed };
+    dodged = roll >= needed;
+  }
+
+  const effect = ((): Extract<DraftEvent, { type: 'TRAP_SPRUNG' }>['payload']['effect'] => {
+    if (trap.kind === 'spike pit') {
+      const damage = intBetween(state.seed, c, 1, SPIKE_DIE) + Math.floor(state.depth / 2); c += 1;
+      return { kind: 'spikes', damage };
+    }
+    if (trap.kind === 'venom needle') return { kind: 'venom', turns: NEEDLE_VENOM_TURNS };
+    if (trap.kind === 'strangling snare') return { kind: 'snare', turns: SNARE_TURNS };
+    if (trap.kind === 'alarm bell') return { kind: 'alarm', until: state.turn + ALARM_TURNS };
+    if (trap.kind === 'the maw') {
+      const damage = intBetween(state.seed, c, 1, MAW_DIE) + MAW_FLAT; c += 1;
+      return { kind: 'maw', damage };
+    }
+    if (trap.kind === 'lodestone') {
+      // A drawn far tile: past the wave's own distance, passable, empty,
+      // never the way out. A floor with nowhere far enough leaves you
+      // standing — recorded as a spent stone that moved nothing.
+      const candidates: Pos[] = [];
+      for (let y = 0; y < state.grid.height; y += 1) {
+        for (let x = 0; x < state.grid.width; x += 1) {
+          if (!isPassable(state.grid, x, y)) continue;
+          if (tileAt(state.grid, x, y) === EXIT) continue;
+          if (Math.abs(x - victim.pos.x) + Math.abs(y - victim.pos.y) < WAVE_DISTANCE) continue;
+          if (state.entities.some((e) => isAlive(e) && e.pos.x === x && e.pos.y === y)) continue;
+          candidates.push({ x, y });
+        }
+      }
+      if (candidates.length === 0) return { kind: 'lodestone', to: { x: victim.pos.x, y: victim.pos.y } };
+      const at = intBetween(state.seed, c, 0, candidates.length - 1); c += 1;
+      return { kind: 'lodestone', to: candidates[at]! };
+    }
+    // The hatches: risers at the floor's FIRST band — the call's own law
+    // ("bodies, not elites"), kept on purpose after measurement: risers
+    // drawn from the floor's full band fed the depth-5 brawler to 14/20
+    // survival against a pinned ceiling of 13 — a trap that pays the
+    // fighter more XP than it costs is a vending machine, not a hazard.
+    // The pressure is tempo and position; the XP is pocket change.
+    const count = trap.kind === 'nest hatch' ? ((): number => {
+      const n = intBetween(state.seed, c, 2, 3); c += 1;
+      return n;
+    })() : 1;
+    const rising: EntitySeed[] = [];
+    const spawnable = BESTIARY.filter((a) => a.weight > 0 && state.depth >= (a.fromDepth ?? 1) && verbOf(a.kind) !== 'call');
+    const archTotal = spawnable.reduce((n, a) => n + a.weight, 0);
+    for (let i = 0; i < count; i += 1) {
+      let pick = intBetween(state.seed, c, 1, archTotal); c += 1;
+      let arch = spawnable[0]!;
+      for (const a of spawnable) {
+        pick -= a.weight;
+        if (pick <= 0) { arch = a; break; }
+      }
+      const ring = ringAround(state, trap.pos, HATCH_BAND)
+        .filter((p) => !rising.some((r) => r.pos.x === p.x && r.pos.y === p.y));
+      if (ring.length === 0) break;
+      const at = intBetween(state.seed, c, 0, ring.length - 1); c += 1;
+      rising.push({
+        id: `hatched-${String(state.turn)}-${String(i)}`,
+        kind: arch.kind,
+        pos: { x: ring[at]!.x, y: ring[at]!.y },
+        stats: creatureStats(arch.kind, 1)!,
+        tags: [],
+      });
+    }
+    return { kind: 'hatch', opponents: rising };
+  })();
+
+  return {
+    type: 'TRAP_SPRUNG',
+    schemaVersion: SCHEMA_VERSIONS.TRAP_SPRUNG,
+    rngCounter: state.rngCounter,
+    rngDraws: c - state.rngCounter,
+    payload: { trapId: trap.id, victimId, dodge, dodged, effect },
+  };
 }
 
 /**

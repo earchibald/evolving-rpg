@@ -231,7 +231,14 @@ export function decide(state: GameState, entityId: string): Action {
     }
   }
 
-  const step = firstStep(state, entityId, self.pos, scent);
+  // The alarm ringing: the floor knows you, and the awareness cap — the
+  // wall of eight steps that makes a closed corridor a refuge — is gone
+  // until the ringing stops. Guards stay leashed (they guard) and the
+  // vigil holds its arena; it is the free hunters and the wanderers the
+  // bell belongs to.
+  const alarmed = state.alarm !== null && state.turn < state.alarm.until;
+  const step = firstStep(state, entityId, self.pos, scent,
+    alarmed ? state.grid.width + state.grid.height : AWARENESS);
   if (step !== null) return { kind: 'step', dx: step.dx, dy: step.dy };
 
   // Nothing in reach to hunt: the wanderer walks its round. The reducer

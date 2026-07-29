@@ -49,12 +49,31 @@ export interface GameState {
    *  you in their claws when it rose (adjacent then), recorded so replay and
    *  the brain can never disagree about who was fooled. Null air is clear. */
   readonly smoke: { readonly until: number; readonly at: Pos; readonly unfooled: readonly string[] } | null;
+  /** The floor's traps and what has become of each: the world's truth from
+   *  WORLD_INIT v12, the player's knowledge folded in from TRAP_SENSED and
+   *  TRAP_SPRUNG. One row per trap for the whole floor's life. */
+  readonly traps: readonly {
+    readonly id: string;
+    readonly kind: string;
+    readonly pos: Pos;
+    readonly level: number;
+    /** Each chance offered once, taken or not: has the sight roll
+     *  happened, has the near roll happened, did either reveal it. */
+    readonly sightRolled: boolean;
+    readonly nearRolled: boolean;
+    readonly revealed: boolean;
+    readonly sprung: boolean;
+  }[];
+  /** The alarm ringing: until this turn, every hunt ignores its awareness
+   *  cap — the floor knows where you are. Null is quiet. */
+  readonly alarm: { readonly until: number } | null;
 }
 
 const NO_ENTITIES: readonly Entity[] = Object.freeze([]);
 const NO_ITEMS: readonly Item[] = Object.freeze([]);
 const NO_RULES: readonly Rule[] = Object.freeze([]);
 export const NO_BODIES: readonly Pos[] = Object.freeze([]);
+export const NO_TRAPS: GameState['traps'] = Object.freeze([]);
 
 /** What a fold starts from. A WORLD_INIT event replaces it wholesale.
  *  Frozen as well as typed readonly: every fold in the process shares this one
@@ -77,4 +96,6 @@ export const EMPTY_STATE: GameState = Object.freeze({
   bodies: NO_BODIES,
   bible: null,
   smoke: null,
+  traps: NO_TRAPS,
+  alarm: null,
 });

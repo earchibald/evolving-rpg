@@ -774,6 +774,102 @@ export function smokeTurns(depth: number): number {
 export const BOT_QUAFF_BELOW = 0.35;
 export const BOT_SMOKE_WITHIN = 3;
 
+/* ── traps ───────────────────────────────────────────────────────────────── */
+
+/**
+ * The trap table (the living-dungeon pass). The designer asked for wits-
+ * rolled detection; the sibling engine's doctrine ("hidden = chore,
+ * visible = puzzle") tunes it: the two chances compound high enough that
+ * most traps are FOUND things — a marked square you route around — and
+ * the rare miss is the story. Kinds are the genre's shapes of harm
+ * (blood, venom, tempo, noise, bodies, gravity, distance — the ml-maze
+ * taxonomy widened by the classics), never on the teaching floor, and
+ * none of them on the walked-in first steps.
+ *
+ * `dodge` is the kind's law: 'always' rolls speed, 'never' is by design
+ * (you cannot dodge the floor giving way or a bell you already rang),
+ * and a number is the player level that first earns the roll.
+ */
+export interface TrapKind {
+  readonly kind: string;
+  readonly fromDepth: number;
+  /** Deepest floor this kind may lie on. The maw never on the bottom:
+   *  there is no floor below the bottom to fall to. */
+  readonly maxDepth?: number;
+  readonly weight: number;
+  readonly dodge: 'always' | 'never' | number;
+}
+
+export const TRAP_KINDS: readonly TrapKind[] = Object.freeze([
+  // Blood, plainly: 1d4 + floor(depth/2), dodgeable outright.
+  Object.freeze({ kind: 'spike pit', fromDepth: 2, weight: 3, dodge: 'always' as const }),
+  // The stinger's wound without the stinger — dodgeable once you have
+  // learned to move (player level 3): the needle is FAST.
+  Object.freeze({ kind: 'venom needle', fromDepth: 2, weight: 2, dodge: 3 }),
+  // Tempo: rooted for a few rounds. Blows still swing both ways; what the
+  // snare takes is the choice to leave.
+  Object.freeze({ kind: 'strangling snare', fromDepth: 2, weight: 2, dodge: 'always' as const }),
+  // Noise: the floor knows you. Every hunt ignores its awareness cap while
+  // the ringing holds. Undodgeable by design — it already rang.
+  Object.freeze({ kind: 'alarm bell', fromDepth: 3, weight: 2, dodge: 'never' as const }),
+  // Bodies: one riser, drawn from the floor's own band, standing up a few
+  // paces off — never adjacent, so the spawn's first blow is avoidable by
+  // moving (the designer's word). The trigger itself cannot be dodged.
+  Object.freeze({ kind: 'hatch', fromDepth: 3, weight: 2, dodge: 'never' as const }),
+  Object.freeze({ kind: 'nest hatch', fromDepth: 5, weight: 1, dodge: 'never' as const }),
+  // Gravity: the floor gives way — fall damage and the floor below, no
+  // stair rest, satchel kept. You cannot dodge the floor.
+  Object.freeze({ kind: 'the maw', fromDepth: 4, maxDepth: 8, weight: 1, dodge: 'never' as const }),
+  // Distance: a drawn far tile swallows you. Sometimes an escape, mostly
+  // a stranding — the lodestone does not care which you needed.
+  Object.freeze({ kind: 'lodestone', fromDepth: 4, weight: 1, dodge: 'never' as const }),
+]);
+
+export function trapOf(kind: string): TrapKind | undefined {
+  return TRAP_KINDS.find((t) => t.kind === kind);
+}
+
+/** The kinds a floor of this depth may hold. */
+export function trapKindsAt(depth: number): readonly TrapKind[] {
+  return TRAP_KINDS.filter((t) => t.fromDepth <= depth && depth <= (t.maxDepth ?? Number.POSITIVE_INFINITY));
+}
+
+/** How many traps a floor lays: none on the teaching floor, then a band
+ *  by depth, stretched with the board — about one per thousand tiles at
+ *  the default size, Brogue's order of rarity. */
+export function trapCount(depth: number, stretch = 1): number {
+  const d = Math.max(1, Math.floor(depth));
+  if (d <= 1) return 0;
+  const base = d <= 3 ? 2 : d <= 6 ? 3 : 4;
+  return base * Math.max(1, Math.floor(stretch));
+}
+
+/** A trap's level: what the wits and speed rolls are up against. */
+export function trapLevelAt(depth: number): number {
+  return Math.min(3, Math.ceil(Math.max(1, depth) / 3));
+}
+
+/** The three rolls, one shape: d20 + stat ≥ need + 2·level. Sight is the
+ *  first look, near is the second chance up close (easier — closer is
+ *  louder), dodge is the last instant. At depth 4 (level 2, wits 4-5) the
+ *  two detection chances compound to ≈83%: most traps are found things. */
+export const TRAP_SIGHT_NEED = 10;
+export const TRAP_NEAR_NEED = 8;
+export const TRAP_DODGE_NEED = 12;
+/** How close (steps of walking) "very near" is. */
+export const TRAP_NEAR_RADIUS = 2;
+
+/** What the kinds do, in numbers. */
+export const SPIKE_DIE = 4;
+export const NEEDLE_VENOM_TURNS = 4;
+export const SNARE_TURNS = 3;
+export const ALARM_TURNS = 12;
+export const MAW_DIE = 6;
+export const MAW_FLAT = 2;
+/** Where a hatch's risers stand up: steps of walking from the trap,
+ *  inside this band — never beside you, always a chase. */
+export const HATCH_BAND: readonly [number, number] = [3, 5];
+
 /* ── the bottom ──────────────────────────────────────────────────────────── */
 
 /**

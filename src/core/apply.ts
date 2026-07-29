@@ -148,6 +148,19 @@ function reduce(state: GameState, event: GameEvent): GameState {
         bible: null,
         // New floor, clear air.
         smoke: null,
+        // The traps as generation laid them (v12), nothing yet known about
+        // any of them. Absence reads a trapless floor — every floor before.
+        traps: (p.traps ?? []).map((t) => ({
+          id: t.id,
+          kind: t.kind,
+          pos: { x: t.pos.x, y: t.pos.y },
+          level: t.level,
+          sightRolled: false,
+          nearRolled: false,
+          revealed: false,
+          sprung: false,
+        })),
+        alarm: null,
       };
     }
 
@@ -510,6 +523,90 @@ function reduce(state: GameState, event: GameEvent): GameState {
     case 'WORLD_REMEMBERED':
       return state;
 
+    case 'TRAP_SENSED': {
+      // The chance is spent whether it was taken: the flags are what stop
+      // a second roll forever, and `revealed` only ever turns on.
+      const p = event.payload;
+      return {
+        ...state,
+        traps: state.traps.map((t) => (t.id === p.trapId
+          ? {
+            ...t,
+            sightRolled: t.sightRolled || p.method === 'sight',
+            nearRolled: t.nearRolled || p.method === 'near',
+            revealed: t.revealed || p.revealed,
+          }
+          : t)),
+      };
+    }
+
+    case 'TRAP_SPRUNG': {
+      // Applied verbatim: the dodge, the die, the risers and the landing
+      // were all resolved when the step happened. A sprung trap is spent
+      // and marked — the floor admits it afterwards, whoever missed it.
+      const p = event.payload;
+      const marked = {
+        ...state,
+        traps: state.traps.map((t) => (t.id === p.trapId ? { ...t, revealed: true, sprung: true } : t)),
+      };
+      if (p.dodged) return marked;
+      const effect = p.effect;
+      if (effect.kind === 'spikes' || effect.kind === 'maw') {
+        return {
+          ...marked,
+          entities: marked.entities.map((e) =>
+            e.id === p.victimId
+              ? { ...e, stats: { ...e.stats, hp: Math.max(0, e.stats.hp - effect.damage) } }
+              : e),
+        };
+      }
+      if (effect.kind === 'venom') {
+        // The stinger's wound, re-opened never stacked — the same tag law.
+        return {
+          ...marked,
+          entities: marked.entities.map((e) =>
+            e.id === p.victimId
+              ? { ...e, tags: [...e.tags.filter((t) => !t.startsWith('venom-')), `venom-${String(effect.turns)}`] }
+              : e),
+        };
+      }
+      if (effect.kind === 'snare') {
+        return {
+          ...marked,
+          entities: marked.entities.map((e) =>
+            e.id === p.victimId
+              ? { ...e, tags: [...e.tags.filter((t) => !t.startsWith('snared-')), `snared-${String(effect.turns)}`] }
+              : e),
+        };
+      }
+      if (effect.kind === 'alarm') {
+        return { ...marked, alarm: { until: effect.until } };
+      }
+      if (effect.kind === 'lodestone') {
+        return {
+          ...marked,
+          entities: marked.entities.map((e) =>
+            e.id === p.victimId ? { ...e, pos: { x: effect.to.x, y: effect.to.y } } : e),
+        };
+      }
+      // The hatch: risers join the world exactly as the call's do.
+      return {
+        ...marked,
+        entities: [
+          ...marked.entities,
+          ...effect.opponents.map((o) => ({
+            id: o.id,
+            kind: o.kind,
+            pos: { x: o.pos.x, y: o.pos.y },
+            stats: { ...o.stats },
+            tags: [...o.tags],
+            post: { x: o.pos.x, y: o.pos.y },
+            maxHp: o.stats.hp,
+          })),
+        ],
+      };
+    }
+
     case 'UNMASKED': {
       // The guise drops and the spring loads: `hidden` off, `ambush` on —
       // the stalker's machinery, so the mimic's first landed blow rolls
@@ -526,24 +623,36 @@ function reduce(state: GameState, event: GameEvent): GameState {
 
     case 'TURN_ADVANCED': {
       const advanced = { ...state, turn: event.payload.turn, activeEntityId: event.payload.activeEntityId };
-      // Venom burns on the round, not on the activation — once each time the
-      // turn wraps. Deterministic arithmetic on tags already on the chain
-      // (the creditKills precedent: derived, silent, replay-exact).
+      // Venom burns and snares slacken on the round, not on the activation —
+      // once each time the turn wraps. Deterministic arithmetic on tags
+      // already on the chain (the creditKills precedent).
       if (event.payload.turn === state.turn) return advanced;
-      if (!state.entities.some((e) => e.tags.some((t) => t.startsWith('venom-')))) return advanced;
+      const ticking = state.entities.some((e) =>
+        e.tags.some((t) => t.startsWith('venom-') || t.startsWith('snared-')));
+      if (!ticking) return advanced;
       return {
         ...advanced,
         entities: advanced.entities.map((e) => {
+          if (e.stats.hp <= 0) return e;
           const burning = e.tags.find((t) => t.startsWith('venom-'));
-          if (burning === undefined || e.stats.hp <= 0) return e;
-          const left = Number(burning.slice('venom-'.length)) - 1;
-          return {
-            ...e,
-            stats: { ...e.stats, hp: Math.max(0, e.stats.hp - VENOM_HARM) },
-            tags: left <= 0
-              ? e.tags.filter((t) => !t.startsWith('venom-'))
-              : e.tags.map((t) => (t.startsWith('venom-') ? `venom-${String(left)}` : t)),
-          };
+          const held = e.tags.find((t) => t.startsWith('snared-'));
+          if (burning === undefined && held === undefined) return e;
+          let tags = e.tags;
+          let hp = e.stats.hp;
+          if (burning !== undefined) {
+            const left = Number(burning.slice('venom-'.length)) - 1;
+            hp = Math.max(0, hp - VENOM_HARM);
+            tags = left <= 0
+              ? tags.filter((t) => !t.startsWith('venom-'))
+              : tags.map((t) => (t.startsWith('venom-') ? `venom-${String(left)}` : t));
+          }
+          if (held !== undefined) {
+            const loosens = Number(held.slice('snared-'.length)) - 1;
+            tags = loosens <= 0
+              ? tags.filter((t) => !t.startsWith('snared-'))
+              : tags.map((t) => (t.startsWith('snared-') ? `snared-${String(loosens)}` : t));
+          }
+          return { ...e, stats: { ...e.stats, hp }, tags };
         }),
       };
     }

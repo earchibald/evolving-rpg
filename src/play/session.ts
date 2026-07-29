@@ -1,7 +1,7 @@
 import { append, fold, chain } from '../log/chain.js';
 import { getRef, fork, setHead, listRefs } from '../log/refs.js';
 import type { Refs } from '../log/refs.js';
-import { attemptMove, advanceTurn, endsTurn, wait, takeUnderfoot, outcome, ratifyRule, foundWorld, createWorld, recordBodies, lungeStrike, vigilKept, useCarried, stirWorld, heartHeld, shoveAt, braceSelf, callOut, drawStance, looseShot, shotTarget } from '../core/commands.js';
+import { attemptMove, advanceTurn, endsTurn, wait, takeUnderfoot, outcome, ratifyRule, foundWorld, createWorld, recordBodies, lungeStrike, vigilKept, useCarried, stirWorld, heartHeld, shoveAt, braceSelf, callOut, drawStance, looseShot, shotTarget, senseTrap, springTrap } from '../core/commands.js';
 import { BOTTOM_DEPTH, WAVE_EVERY } from '../core/tables.js';
 import { u32 } from '../core/rng.js';
 import { decide } from '../core/ai.js';
@@ -194,6 +194,34 @@ function collect(position: Position, entityId: string): Position {
   return taken === null ? position : commit(position, taken, entityId, entityId);
 }
 
+/**
+ * The floor settles its account with the player: any trap underfoot pays
+ * out, then every pending chance to know one rolls — after every player
+ * action AND after the world's turns (a trample can shove you into new
+ * sight, or onto worse ground). None of it costs a turn: the action that
+ * got you here already did.
+ *
+ * The spring loops because a lodestone can set you down ON another trap —
+ * a chain the chain records honestly, bounded because each trap springs
+ * at most once ever.
+ */
+function settleTraps(position: Position, playerId: string): Position {
+  let current = position;
+  for (let guard = 0; guard < 8; guard += 1) {
+    const state = fold(current.log, current.head);
+    const sprung = springTrap(state, playerId);
+    if (sprung === null) break;
+    current = commit(current, sprung, playerId, playerId);
+  }
+  for (let guard = 0; guard < 64; guard += 1) {
+    const state = fold(current.log, current.head);
+    const sensed = senseTrap(state, playerId);
+    if (sensed === null) break;
+    current = commit(current, sensed, playerId, playerId);
+  }
+  return current;
+}
+
 export function playerStep(position: Position, playerId: string, dx: number, dy: number): {
   position: Position;
   draft: DraftEvent | null;
@@ -205,7 +233,7 @@ export function playerStep(position: Position, playerId: string, dx: number, dy:
   if (outcome(state, playerId) !== 'playing') return { position, draft: null };
 
   const draft = attemptMove(state, playerId, dx, dy);
-  return { position: collect(commit(position, draft, playerId, playerId), playerId), draft };
+  return { position: settleTraps(collect(commit(position, draft, playerId, playerId), playerId), playerId), draft };
 }
 
 /** Hold position and let the world come to you. */
@@ -217,7 +245,7 @@ export function playerWait(position: Position, playerId: string): {
   if (outcome(state, playerId) !== 'playing') return { position, draft: null };
 
   const draft = wait(state, playerId);
-  return { position: commit(position, draft, playerId, playerId), draft };
+  return { position: settleTraps(commit(position, draft, playerId, playerId), playerId), draft };
 }
 
 /** Spend what the satchel holds. Refusing quietly when it holds nothing —
@@ -231,7 +259,7 @@ export function playerUse(position: Position, playerId: string, slot = 0): {
 
   const draft = useCarried(state, playerId, slot);
   if (draft === null) return { position, draft: null };
-  return { position: commit(position, draft, playerId, playerId), draft };
+  return { position: settleTraps(commit(position, draft, playerId, playerId), playerId), draft };
 }
 
 /** Take what is underfoot, deliberately — tradeoffs and downgrades
@@ -246,7 +274,7 @@ export function playerTake(position: Position, playerId: string): {
 
   const draft = takeUnderfoot(state, playerId, true);
   if (draft === null) return { position, draft: null };
-  return { position: commit(position, draft, playerId, playerId), draft };
+  return { position: settleTraps(commit(position, draft, playerId, playerId), playerId), draft };
 }
 
 /** Drive an adjacent hostile one pace. Refuses quietly (no turn) when
@@ -260,7 +288,7 @@ export function playerShove(position: Position, playerId: string, dx: number, dy
 
   const draft = shoveAt(state, playerId, dx, dy);
   if (draft === null) return { position, draft: null };
-  return { position: commit(position, draft, playerId, playerId), draft };
+  return { position: settleTraps(commit(position, draft, playerId, playerId), playerId), draft };
 }
 
 /** Set against the coming round. Always a turn — a stance is a decision. */
@@ -272,7 +300,7 @@ export function playerBrace(position: Position, playerId: string): {
   if (outcome(state, playerId) !== 'playing') return { position, draft: null };
 
   const draft = braceSelf(state, playerId);
-  return { position: commit(position, draft, playerId, playerId), draft };
+  return { position: settleTraps(commit(position, draft, playerId, playerId), playerId), draft };
 }
 
 /**
@@ -294,14 +322,14 @@ export function playerVolley(position: Position, playerId: string): {
   if (!me.tags.includes('drawn')) {
     const draft = drawStance(state, playerId);
     if (draft === null) return { position, draft: null };
-    return { position: commit(position, draft, playerId, playerId), draft };
+    return { position: settleTraps(commit(position, draft, playerId, playerId), playerId), draft };
   }
 
   const mark = shotTarget(state, playerId);
   if (mark === null) return { position, draft: null };
   const draft = looseShot(state, playerId, mark.id);
   if (draft === null) return { position, draft: null };
-  return { position: commit(position, draft, playerId, playerId), draft };
+  return { position: settleTraps(commit(position, draft, playerId, playerId), playerId), draft };
 }
 
 /**
@@ -324,7 +352,9 @@ export function runWorldTurns(position: Position, playerId: string, maxSteps = 6
     if (outcome(state, playerId) !== 'playing') return current;
 
     const active = state.activeEntityId;
-    if (active === null || active === playerId) return current;
+    // The world's turns can move the player (a trample's shove): the floor
+    // settles before the keyboard comes back.
+    if (active === null || active === playerId) return settleTraps(current, playerId);
 
     const draft = draftFor(state, active, decide(state, active));
     if (draft === null) {
@@ -516,6 +546,58 @@ export function descend(
   }
   // The dead of the floor below: an earlier run that made it this deep and
   // fell leaves a body the descending run can stand on.
+  const lying = fallenBodies(current.log, refs, active, nextDepth);
+  if (lying.length > 0) {
+    const done = append(current.log, current.head, recordBodies(fold(current.log, current.head), lying));
+    current = { log: done.log, head: done.event.id };
+  }
+  for (const rule of state.rules) {
+    const done = append(current.log, current.head, ratifyRule(fold(current.log, current.head), rule));
+    current = { log: done.log, head: done.event.id };
+  }
+
+  return { log: current.log, refs: setHead(refs, active, current.head), depth: nextDepth };
+}
+
+/**
+ * The floor gives way: the maw's descent — the stairs' whole ceremony
+ * (identity, the dead, law, the player crossing whole) without the
+ * stairs' comforts. No cleared-floor rest: you did not clear the floor,
+ * you fell out of it, and you arrive below exactly as wounded as the
+ * fall left you. The next floor's seed derives the same way the stairs
+ * derive it — the world below is the world below, however you arrive.
+ * Null unless the run is still standing.
+ */
+export function descendThrough(
+  log: EventLog,
+  refs: Refs,
+  active: string,
+  dims: { width: number; height: number },
+  playerId = 'player',
+): { log: EventLog; refs: Refs; depth: number } | null {
+  const ref = getRef(refs, active);
+  const state = fold(log, ref.head);
+  if (outcome(state, playerId) !== 'playing') return null;
+
+  const you = findEntity(state.entities, playerId);
+  if (you === undefined || !isAlive(you)) return null;
+
+  const nextDepth = state.depth + 1;
+  const nextSeed = u32(state.seed, 1_000_003 + state.depth);
+  const born = append(log, ref.head, createWorld(
+    nextSeed, dims.width, dims.height, playerId, nextDepth,
+    {
+      stats: { ...you.stats }, maxHp: you.maxHp, xp: state.xp, level: state.level,
+      ...(you.gear === undefined ? {} : { gear: { ...you.gear } as Record<string, { kind: string; grants: typeof you.stats }> }),
+      ...(you.satchel === undefined ? {} : { satchel: { kinds: you.satchel.map((c) => c.kind) } }),
+    },
+  ));
+
+  let current: Position = { log: born.log, head: born.event.id };
+  if (state.bible !== null) {
+    const done = append(current.log, current.head, foundWorld(fold(current.log, current.head), state.bible));
+    current = { log: done.log, head: done.event.id };
+  }
   const lying = fallenBodies(current.log, refs, active, nextDepth);
   if (lying.length > 0) {
     const done = append(current.log, current.head, recordBodies(fold(current.log, current.head), lying));

@@ -12,7 +12,7 @@ import type { Item } from './item.js';
  *  payload — a special case that could not survive any second consumer of
  *  randomness, and combat is one. */
 export const SCHEMA_VERSIONS = {
-  WORLD_INIT: 11,
+  WORLD_INIT: 12,
   WORLD_BIBLE: 1,
   WORLD_BODIES: 1,
   MOVE: 2,
@@ -32,6 +32,8 @@ export const SCHEMA_VERSIONS = {
   CALLED: 1,
   WORLD_REMEMBERED: 1,
   UNMASKED: 1,
+  TRAP_SENSED: 1,
+  TRAP_SPRUNG: 1,
 } as const;
 
 export type EventType = keyof typeof SCHEMA_VERSIONS;
@@ -100,6 +102,13 @@ export interface WorldInitPayload {
    *  through later events — they are part of what generation decided, and
    *  recording them here keeps that decision in one place. */
   opponents: EntitySeed[];
+  /** v12, the traps: where they lie and what they are, decided whole at
+   *  generation like every inhabitant. What the player KNOWS about them
+   *  is separate facts on separate events (TRAP_SENSED) — the two-channel
+   *  split the marinara research named: the world's truth here, the
+   *  player's knowledge on the chain as it is earned. Absent reads a
+   *  floor with no traps, which is every floor before v12. */
+  traps?: { id: string; kind: string; pos: Pos; level: number }[];
 }
 
 export interface MovePayload {
@@ -312,6 +321,49 @@ export interface WorldRememberedPayload {
   occasion: 'fallen' | 'won';
 }
 
+/**
+ * One chance to know, recorded whether it was taken or missed. Each trap
+ * offers two: `sight` the first time it stands in the engine's own sight
+ * disc with a clear line, `near` the first time you walk within two steps
+ * of it unknowing. The roll rides the event (one draw) so replay knows
+ * exactly what was seen and what was walked past — and the journal stays
+ * silent about the misses, because an attempt the player failed must not
+ * itself betray the trap.
+ */
+export interface TrapSensedPayload {
+  trapId: string;
+  method: 'sight' | 'near';
+  roll: number;
+  needed: number;
+  revealed: boolean;
+}
+
+/**
+ * A trap paid. Resolved whole at command time — the dodge (where the
+ * kind's law allows one), the damage die, the risers' kinds and tiles,
+ * the lodestone's landing — and applied verbatim forever (M4). Rides the
+ * move that sprang it: the step was the turn, the trap is what the step
+ * cost. A sprung trap is spent; the floor marks it.
+ */
+export interface TrapSprungPayload {
+  trapId: string;
+  victimId: string;
+  /** The last-instant roll, or null where the kind allows none (or the
+   *  victim has not yet earned one — the level-gated needle). */
+  dodge: { roll: number; needed: number } | null;
+  dodged: boolean;
+  effect:
+    | { kind: 'spikes'; damage: number }
+    | { kind: 'venom'; turns: number }
+    | { kind: 'snare'; turns: number }
+    | { kind: 'alarm'; until: number }
+    | { kind: 'hatch'; opponents: EntitySeed[] }
+    // The fall itself: damage here, the descent a ceremony the session
+    // performs right after (the stairs' own machinery, no rest earned).
+    | { kind: 'maw'; damage: number }
+    | { kind: 'lodestone'; to: Pos };
+}
+
 /** The reach for a prize that was never a prize. Walking onto a hidden
  *  mimic resolves to this instead of a move or a blow: the guise drops
  *  (the reducer strips `hidden`) and the spring loads (`ambush` written —
@@ -377,6 +429,8 @@ export type DraftEvent =
   | { type: 'DRAWN'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: DrawnPayload }
   | { type: 'CALLED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: CalledPayload }
   | { type: 'WORLD_REMEMBERED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: WorldRememberedPayload }
-  | { type: 'UNMASKED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: UnmaskedPayload };
+  | { type: 'UNMASKED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: UnmaskedPayload }
+  | { type: 'TRAP_SENSED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: TrapSensedPayload }
+  | { type: 'TRAP_SPRUNG'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: TrapSprungPayload };
 
 export type GameEvent = DraftEvent & { id: string; parent: string | null; seq: number };
