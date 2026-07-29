@@ -299,6 +299,47 @@ export function farthestFrom(grid: Grid, start: { x: number; y: number }): { x: 
   return best;
 }
 
+/** A shortest walk between two tiles, root-first and inclusive of both ends,
+ *  or [] when no walk exists. Fixed neighbour order (east, west, south,
+ *  north — the hunt's order), so the road a floor is judged by is the same
+ *  road every replay judges. Drawless: a path is derived, never rolled. */
+export function walkPath(
+  grid: Grid,
+  from: { x: number; y: number },
+  to: { x: number; y: number },
+): Array<{ x: number; y: number }> {
+  const parent = new Map<number, number>();
+  const seen = new Set<number>([idx(grid, from.x, from.y)]);
+  const queue: Array<{ x: number; y: number }> = [{ x: from.x, y: from.y }];
+  let found = false;
+  while (queue.length > 0 && !found) {
+    const here = queue.shift();
+    if (here === undefined) break;
+    for (const [nx, ny] of [[here.x + 1, here.y], [here.x - 1, here.y], [here.x, here.y + 1], [here.x, here.y - 1]] as const) {
+      if (!isPassable(grid, nx, ny)) continue;
+      const key = idx(grid, nx, ny);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      parent.set(key, idx(grid, here.x, here.y));
+      if (nx === to.x && ny === to.y) { found = true; break; }
+      queue.push({ x: nx, y: ny });
+    }
+  }
+  if (!found && !(from.x === to.x && from.y === to.y)) return [];
+  const path: Array<{ x: number; y: number }> = [];
+  let at = idx(grid, to.x, to.y);
+  const home = idx(grid, from.x, from.y);
+  while (at !== home) {
+    path.push({ x: at % grid.width, y: Math.floor(at / grid.width) });
+    const back = parent.get(at);
+    if (back === undefined) return [];
+    at = back;
+  }
+  path.push({ x: from.x, y: from.y });
+  path.reverse();
+  return path;
+}
+
 /** How far the walk to a tile is, or Infinity if there is no walk at all. */
 export function walkDistance(grid: Grid, from: { x: number; y: number }, to: { x: number; y: number }): number {
   const seen = new Set<number>([idx(grid, from.x, from.y)]);

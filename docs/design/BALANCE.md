@@ -93,6 +93,34 @@ at ×1.25 (lunge-class: approach rounds become damage rounds); measured on
 the 20-seed sawtooth the bands held unchanged — depth 1 gentle (17/20
 brawler), depth 3 fighter over runner (10 v 4), depth 5 in [1,10].
 
+## The teaching floor reaches the player (2026-07-28)
+
+Depth 1's one relic — always the keen edge, the fighter's whole early
+curve — and its guard stand ON the start→exit walk, eight steps in
+(`walkPath`, chosen drawlessly among placement decisions). Measured need:
+a real player crossed 273 turns of floor 1 with the edge unclaimed on a
+far drawn point and died bare, twice, to the stairs' keeper. Deeper
+floors keep the detour economy; the provision stays off-path everywhere
+(the satchel pays for scouting).
+
+Consequence, measured on the pinned 20 seeds: door 17→18, mid-game
+10→16, deep 9→12 (fresh seeds 21-40: 10). The deep's per-floor bite is
+unchanged — the wider pipeline feeds it — so the d5 band re-pinned to
+[1,13] rather than tuning the deep to suppress the fix. Budget inflation
+was tried and rejected: extra spawns pay the snowballing fighter more XP
+than they cost (coef 4→12, 5→11, 6→13 survivors — non-monotone).
+
+## The Forge's ceiling (M3/M6, amended 2026-07-28)
+
+The designer's ruling: baseline balance is the tables' to set, never the
+Forge's to spend. The assay now refuses outright — never cautions —
+rules that never fire in any trial (M3: the burden of proof sits with
+the rule; a ratified rest rule had spoken zero times in three lives) and
+rules whose measured swing passes the ceiling (M6: `MAX_RULE_SWING = 6`
+mean hit points across the rerolled fights, or `MAX_RULE_FLIPS = 4` of 6
+endings flipped). Inside the band the swing is still said and the
+ratifier still judges.
+
 ## Wits: the crit band
 
 `critFloor(wits) = max(18, 20 − ⌊wits/4⌋)` — a keen mind widens the opening.

@@ -1025,3 +1025,36 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > **Try it:** `npm run dev` — press <kbd>?</kbd> and find <kbd>f</kbd>;
 > a slinger waits on any floor past the first. When it draws, you have
 > one turn: break the line, close, brace, shove — or take the stone.
+
+> [!IMPORTANT]
+> **21:28 — Balanced from the get-go: the door reaches you, the Forge learns no**
+> Your ruling, after the Forge's offers kept souring: baseline balance
+> is the tables' to set, never the Forge's to spend. Two halves, built.
+> **The teaching floor reaches the player.** Reviewing your Chalk
+> Shambles run found the shape of the problem: 273 turns on floor 1,
+> the keen edge — the fighter's whole early curve — lying unclaimed on
+> a far drawn point, two deaths bare-handed to the rust ram. Now depth
+> 1's edge and its guard stand ON the start→exit walk, eight steps in
+> (walkPath, a drawless choice like every placement decision). Verified
+> live on a fresh world: turn 1, and the rail already reads "cleaver of
+> marrow · 8 away" with a tallow whippet standing on it. Deeper floors
+> keep the detour economy; the provision stays off the path everywhere.
+> **The scale learned to say no.** M3 and M6 amended, visibly: a rule
+> that never fires in any trial is REFUSED, not cautioned (your
+> ratified rest rule had spoken exactly zero times in three lives — the
+> new law would have stopped it at the bench), and past MAX_RULE_SWING
+> 6 / MAX_RULE_FLIPS 4 the proportion trial refuses instead of asking.
+> Both standing bench offers re-assayed under the new law: both never
+> fired, both withdrawn. The bench is clear.
+> The honest ledger: the pinned survival curve moved 17/10/9 →
+> 18/16/12 (door/mid/deep). The deep's per-floor bite is unchanged —
+> the wider pipeline feeds it — so the d5 band re-pinned to [1,13]
+> rather than tuning the deep against your own fix; budget inflation
+> was tried and rejected on measurement (extra spawns pay the
+> snowballing fighter more XP than they cost: coef 4→12, 5→11, 6→13).
+> 870/870 green, golden regenerated, chain verified.
+>
+> **Try it:** wipe to a fresh world — the first fight and the first
+> prize are on your road before turn ten. Your dead-letter rest rule
+> still sits in Chalk Shambles' law; a wipe sheds it, or leave it as a
+> monument.

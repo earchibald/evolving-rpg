@@ -1,4 +1,4 @@
-import { generateMap, pickSpawnPoints, farthestFrom, withExit, walkDistance, sealSecretRoom, repairWithSecret } from './mapgen.js';
+import { generateMap, pickSpawnPoints, farthestFrom, withExit, walkDistance, walkPath, sealSecretRoom, repairWithSecret } from './mapgen.js';
 import { inBounds, isPassable } from './grid.js';
 import { findEntity, isAlive } from './entity.js';
 import { intBetween } from './rng.js';
@@ -284,6 +284,21 @@ export function createWorld(
   // Placed on creatures' tiles: a prize is guarded, so taking it means going
   // through something. An item you can pick up for free is not a choice.
   const guardPosts = relics.map((_r, i) => spawned.points[i] ?? exit);
+
+  // The teaching floor reaches the player (the baseline-balance ruling,
+  // 2026-07-28): depth 1's one relic — the fighter's whole early curve —
+  // and its guard stand ON the walked path, eight steps in, so simply
+  // walking the floor meets the fight early and the prize on the way.
+  // Measured need: a real player crossed 273 turns of this floor with the
+  // keen edge lying unclaimed on a far drawn point, and died bare, twice.
+  // Chosen, not drawn (drawless like every placement decision); deeper
+  // floors keep the detour economy untouched.
+  if (depth === 1 && guardPosts.length > 0) {
+    const road = walkPath(grid, generated.start, exit);
+    const at = Math.min(OPPONENT_MIN_DISTANCE, road.length - 2);
+    const post = road[at];
+    if (post !== undefined && at > 0) guardPosts[0] = { x: post.x, y: post.y };
+  }
 
   // The stairs are watched. Rooms and corridors made every fight avoidable —
   // measured: the runner out-survived the fighter 11 to 9 at depth 3, the

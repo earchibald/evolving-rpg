@@ -123,6 +123,17 @@ While adding this, a latent `firstStep` bug fell: OOB neighbours keyed by
 y*width+x before bounds-checking made a quarry at x=0 read reachable one
 step EAST off the map — fixed, the fog's wrap lesson applied to the hunt.
 
+**Balance is baseline-first** (the designer's ruling, 2026-07-28): the
+teaching floor's keen edge + guard stand ON the start→exit walk eight
+steps in (walkPath, drawless choice; deeper floors keep the detour
+economy). The assay hardened: M3 refuses never-fires outright, M6
+refuses past MAX_RULE_SWING 6 / MAX_RULE_FLIPS 4 — the bench's two
+standing offers both re-assayed as dead letters and were withdrawn.
+Pinned curve moved 17/10/9 → 18/16/12 (door/mid/deep); d5 band
+re-pinned [1,13] — the wider pipeline feeds the deep, per-floor bite
+unchanged (budget inflation rejected: it pays the fighter more XP than
+it costs).
+
 **The player has verbs too** (SHOVE v1 / BRACED v1, zero draws): x+dir
 shoves an adjacent hostile one pace — open ground displaces, walls and the
 door frame slam (SLAM_DAMAGE + stagger), a body behind tangles both;
