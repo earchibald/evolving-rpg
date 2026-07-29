@@ -1,6 +1,7 @@
 import { isPassable } from './grid.js';
 import { findEntity, isAlive } from './entity.js';
-import { verbOf, LURK_RANGE, VIGIL_LEASH, CALL_RANGE } from './tables.js';
+import { verbOf, LURK_RANGE, VIGIL_LEASH, CALL_RANGE, SHOT_RANGE } from './tables.js';
+import { clearShot, withinReach } from './sight.js';
 import { walkDistance } from './mapgen.js';
 import type { Entity, Pos } from './entity.js';
 import type { GameState } from './state.js';
@@ -18,6 +19,8 @@ export type Action =
   | { kind: 'step'; dx: number; dy: number }
   | { kind: 'lunge'; targetId: string }
   | { kind: 'mend' }
+  | { kind: 'draw' }
+  | { kind: 'shoot'; targetId: string }
   | { kind: 'wait' };
 
 function manhattan(a: Entity, b: Entity): number {
@@ -34,7 +37,7 @@ function manhattan(a: Entity, b: Entity): number {
  * path is deterministic and a replayed world hunts identically.
  */
 function firstStep(state: GameState, selfId: string, from: Pos, goal: Pos): { dx: number; dy: number } | null {
-  const { width } = state.grid;
+  const { width, height } = state.grid;
   const key = (x: number, y: number): number => y * width + x;
   const occupied = new Set<number>();
   for (const e of state.entities) {
@@ -53,6 +56,14 @@ function firstStep(state: GameState, selfId: string, from: Pos, goal: Pos): { dx
       for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
         const x = at.x + dx;
         const y = at.y + dy;
+        // Bounds before the key: `key` is plain y*width+x, so an off-map
+        // coordinate wraps onto a real tile — one column east of the map IS
+        // the next row's west door by arithmetic, and a hunt whose quarry
+        // stood at x=0 walked EAST off the world toward the collision.
+        // The fog fixed this same wrap first (fov.ts); live floors dodged
+        // it only because their borders are wall. Found by the volley's
+        // borderless test grids.
+        if (x < 0 || y < 0 || x >= width || y >= height) continue;
         const k = key(x, y);
         if (seen.has(k)) continue;
         seen.add(k);
@@ -172,6 +183,19 @@ export function decide(state: GameState, entityId: string): Action {
     // The skirmisher's tooth: close two tiles and strike in the same action.
     if (verb === 'lunge' && canLunge(state, self, quarry)) {
       return { kind: 'lunge', targetId: quarry.id };
+    }
+
+    // The volley: the fight starts before you arrive. Undrawn it draws —
+    // the tell everyone sees, covenant M8 — and drawn it looses. No retreat
+    // ever: the tradition regrets dancing AI, and the slinger's menace is
+    // that it stands there. A broken line falls through to the hunt, whose
+    // first step drops the stance — it re-draws when it re-acquires.
+    if (verb === 'volley'
+      && withinReach(self.pos, quarry.pos, SHOT_RANGE)
+      && clearShot(state.grid, state.entities, self.pos, quarry.pos)) {
+      return self.tags.includes('drawn')
+        ? { kind: 'shoot', targetId: quarry.id }
+        : { kind: 'draw' };
     }
   }
 
