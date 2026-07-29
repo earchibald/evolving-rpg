@@ -1298,3 +1298,35 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > **Try it:** walk a few rooms and watch the corner — the frame slides
 > with you. Then press n, choose wipe, and press Escape: everything
 > still standing.
+
+## 2026-07-29 — 09:02 — the listener stops reading birth certificates
+
+> Dear Designer,
+>
+> The second of your morning filings is closed. Wiping or leaving a
+> world you never touched used to hand the listener an empty reading —
+> the guard meant to stop it compared the turn counter to zero, but
+> worlds are born at turn one, so it never fired once. Your filing said
+> it best: "a dead guard let its birth certificate through as
+> evidence."
+>
+> The gate reads deeds now, not the clock: a consumed turn anywhere on
+> the chain, or the wall bump — the one input that costs no turn. The
+> clock could not carry this anyway; it resets at every stair, and a
+> long run wiped just after a descent must still be read.
+>
+> And words still travel. A run with anything spoken into the witness
+> — or typed to the designer — submits regardless of deeds, because
+> your other filing this morning ("Filed, not played") reached the
+> record over exactly that road, and sealing it would have silenced
+> the bug report it carried.
+>
+> Half the recommendation was already standing: the feedback index has
+> named why each reading was filed (begin-again / another world /
+> wipe) since the factory was built — filterable today.
+>
+> 962 tests — three new on the acted flag — and typecheck clean. I did
+> not burn a world live to watch the skip happen; the flag is
+> unit-tested and the doorway is two lines. The next real wipe of a
+> scratch world is the honest proof: no "the listener takes this run
+> away" line should print.

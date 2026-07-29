@@ -114,6 +114,30 @@ function state(rules: Rule[] = []): GameState {
   };
 }
 
+describe('evidence of play — the acted flag', () => {
+  // WORLD_INIT seeds turn 1, so a turn counter cannot tell an unplayed
+  // world from a fresh one — the listener caught its own null packet
+  // proving it ("Birth mistaken for run", 2026-07-29). The flag reads
+  // deeds instead: a consumed turn anywhere on the chain, or the one
+  // input that consumes none (the wall bump).
+
+  it('no deeds, no acting — an unplayed world reads false', () => {
+    expect(summariseRun([], state(), [], 'main').acted).toBe(false);
+  });
+
+  it('a consumed turn anywhere on the chain is acting', () => {
+    expect(summariseRun(substantialEvents(), state(), [], 'main').acted).toBe(true);
+  });
+
+  it('the wall bump — the one turn-free input — is acting too', () => {
+    const bump = {
+      parent: null, seq: 0, schemaVersion: 1, rngCounter: 0, rngDraws: 0,
+      id: 'b1', type: 'MOVE_BLOCKED', payload: { entityId: 'player', reason: 'wall', attempted: { x: 1, y: 0 } },
+    } as GameEvent;
+    expect(summariseRun([bump], state(), [], 'main').acted).toBe(true);
+  });
+});
+
 describe('what the Rulesmith is shown', () => {
   it('reads the run as sentences rather than a log dump', () => {
     const s = summariseRun(events(), state(), [], 'main');

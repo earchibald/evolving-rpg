@@ -58,6 +58,12 @@ export interface RunSummary {
   measured: string[];
   /** Lens numbers the verdicts covered, so a citation can be checked. */
   citableLenses: number[];
+  /** Whether anyone actually played: a consumed turn anywhere on the chain,
+   *  or the one input that consumes none (the wall bump). The turn counter
+   *  cannot carry this — WORLD_INIT seeds turn 1, and it resets at every
+   *  stair — so a counter-based guard let unplayed wipes file empty
+   *  readings ("Birth mistaken for run", 2026-07-29). */
+  acted: boolean;
 }
 
 function count(events: readonly GameEvent[], type: GameEvent['type']): number {
@@ -101,6 +107,10 @@ export function summariseRun(
   const waits = count(events, 'WAIT');
   const bumps = count(events, 'MOVE_BLOCKED');
   const fired = count(events, 'RULE_FIRED');
+  // Deeds, not the turn counter: every consumed action ticks the clock on
+  // whatever floor it happens, and the bump is the one free input. New verbs
+  // stay covered without being named — they all end in TURN_ADVANCED.
+  const acted = count(events, 'TURN_ADVANCED') + bumps > 0;
   const player = state.entities.find((e) => e.id === playerId);
   const dead = state.entities.filter((e) => e.id !== playerId && !isAlive(e)).length;
   const alive = state.entities.filter((e) => e.id !== playerId && isAlive(e)).length;
@@ -140,6 +150,7 @@ export function summariseRun(
     inForce: state.rules.map(readRule),
     measured,
     citableLenses,
+    acted,
   };
 }
 

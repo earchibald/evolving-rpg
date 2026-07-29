@@ -2599,9 +2599,15 @@ function submitToListener(reason: 'begin-again' | 'another-world' | 'wipe'): voi
   const head = getRef(refs, active).head;
   if (head === null) return;
   const state = fold(log, head);
-  // An unplayed, unspoken run reads as nothing; the listener is not asked.
-  if (state.turn === 0 && !witness.hasVoice()) return;
   const run = summariseRun(chain(log, head), state, notes, active);
+  // An unplayed, unspoken run reads as nothing; the listener is not asked.
+  // Gated on deeds, not the turn counter: WORLD_INIT seeds turn 1, so the
+  // old `turn === 0` guard never fired and every wipe of an untouched world
+  // filed an empty reading — the listener caught its own null packet
+  // ("Birth mistaken for run"). Words still submit, spoken or typed: a
+  // complaint filed over an unplayed world is still a complaint — the
+  // "Filed, not played" packet carried a real bug on exactly this road.
+  if (!run.acted && !witness.hasVoice() && run.said.length === 0) return;
   say('the listener takes this run away to read');
   void witness.submitSnapshot(standing())
     .then(({ takes, marks }) => fetch('/__listener', {
