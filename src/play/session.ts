@@ -1,7 +1,7 @@
 import { append, fold, chain } from '../log/chain.js';
 import { getRef, fork, setHead, listRefs } from '../log/refs.js';
 import type { Refs } from '../log/refs.js';
-import { attemptMove, advanceTurn, endsTurn, wait, takeUnderfoot, outcome, ratifyRule, foundWorld, createWorld, recordBodies, lungeStrike, vigilKept, useCarried, stirWorld, heartHeld, shoveAt, braceSelf, callOut } from '../core/commands.js';
+import { attemptMove, advanceTurn, endsTurn, wait, takeUnderfoot, outcome, ratifyRule, foundWorld, createWorld, recordBodies, lungeStrike, vigilKept, useCarried, stirWorld, heartHeld, shoveAt, braceSelf, callOut, drawStance, looseShot, shotTarget } from '../core/commands.js';
 import { BOTTOM_DEPTH, WAVE_EVERY } from '../core/tables.js';
 import { u32 } from '../core/rng.js';
 import { decide } from '../core/ai.js';
@@ -166,10 +166,12 @@ export function draftFor(state: GameState, entityId: string, action: Action): Dr
 
   // The verbs that are their own commands: the skirmisher's two-tiles-and-
   // the-blow, the warden's knitting-shut at an unwatched post, the caller's
-  // one cry into the dark.
+  // one cry into the dark, the slinger's two-beat volley.
   if (action.kind === 'lunge') return lungeStrike(state, entityId, action.targetId);
   if (action.kind === 'mend') return vigilKept(state, entityId);
   if (action.kind === 'call') return callOut(state, entityId);
+  if (action.kind === 'draw') return drawStance(state, entityId);
+  if (action.kind === 'shoot') return looseShot(state, entityId, action.targetId);
 
   const self = findEntity(state.entities, entityId);
   const target = findEntity(state.entities, action.targetId);
@@ -270,6 +272,35 @@ export function playerBrace(position: Position, playerId: string): {
   if (outcome(state, playerId) !== 'playing') return { position, draft: null };
 
   const draft = braceSelf(state, playerId);
+  return { position: commit(position, draft, playerId, playerId), draft };
+}
+
+/**
+ * One key, two beats: undrawn, the press draws (a turn — the warning
+ * covenant M8 demands); drawn, it looses at the deterministic mark. The
+ * refusals cost nothing: bare hands are a mispress, and a drawn archer
+ * with no line holds the stance rather than wasting the shot.
+ */
+export function playerVolley(position: Position, playerId: string): {
+  position: Position;
+  draft: DraftEvent | null;
+} {
+  const state = fold(position.log, position.head);
+  if (outcome(state, playerId) !== 'playing') return { position, draft: null };
+
+  const me = findEntity(state.entities, playerId);
+  if (me === undefined) return { position, draft: null };
+
+  if (!me.tags.includes('drawn')) {
+    const draft = drawStance(state, playerId);
+    if (draft === null) return { position, draft: null };
+    return { position: commit(position, draft, playerId, playerId), draft };
+  }
+
+  const mark = shotTarget(state, playerId);
+  if (mark === null) return { position, draft: null };
+  const draft = looseShot(state, playerId, mark.id);
+  if (draft === null) return { position, draft: null };
   return { position: commit(position, draft, playerId, playerId), draft };
 }
 
