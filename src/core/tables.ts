@@ -614,16 +614,42 @@ export function relicGrant(relic: Relic, depth: number): Stats {
 export interface Provision {
   readonly kind: string;
   readonly weight: number;
+  /** The first depth this kind may spawn at (absent reads 1). Floor one
+   *  keeps the teaching trio; the wider pantry opens as floors go by. */
+  readonly fromDepth?: number;
 }
 
 export const PROVISIONS: readonly Provision[] = Object.freeze([
   Object.freeze({ kind: 'vital draught', weight: 3 }),
   Object.freeze({ kind: 'still smoke', weight: 2 }),
   // The information tool: break it and light reaches FLARE_RADIUS paces —
-  // layout, never occupants. Third and (per the research's ceiling) close
-  // to last: past four types the satchel is a checklist, not a dilemma.
+  // layout, never occupants.
   Object.freeze({ kind: 'tallow flare', weight: 2 }),
+  // The pantry widened on the designer's word (the 929-second run filled
+  // both hands with phials and asked for more kinds, math run). Three more,
+  // one per niche the trio leaves open, none of them raising player damage:
+  //
+  // The ward: held protection. The NEXT blow that lands on you is drunk
+  // whole — no wound, no venom, no flinch — then it is spent. Worth about
+  // one deep-warden blow (10-12), under half a draught's rescue, but it can
+  // be worn BEFORE the fight and it holds a draw steady through a hit.
+  Object.freeze({ kind: 'ash ward', weight: 2, fromDepth: 2 }),
+  // The burr: cast at your feet, every hostile beside you staggers — each
+  // spends its next action reeling (the recorded WAIT). The melee escape
+  // valve, priced by needing them adjacent first: smoke's cousin that works
+  // AFTER they reach you, on the ones who did.
+  Object.freeze({ kind: 'iron burr', weight: 2, fromDepth: 3 }),
+  // The bell: rings once and the way out answers — the exit and every
+  // unfound prize on the floor join the map. Knowledge, never power; the
+  // flare's far-sighted sibling.
+  Object.freeze({ kind: 'hollow bell', weight: 1, fromDepth: 2 }),
 ]);
+
+/** The kinds a floor of this depth may hold — the pantry gate. One counted
+ *  draw either way, so generation's stream is untouched by the gating. */
+export function provisionsAt(depth: number): readonly Provision[] {
+  return PROVISIONS.filter((p) => (p.fromDepth ?? 1) <= depth);
+}
 
 /** How far the flare's knowledge reaches, in tiles. Wider than sight, less
  *  than a floor: a room and its neighbours, not the map. */

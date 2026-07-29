@@ -64,6 +64,9 @@ const ITEM_BODIES: Readonly<Record<string, readonly string[]>> = Object.freeze({
   'vital draught': Object.freeze(['draught', 'phial', 'flask', 'vial']),
   'still smoke': Object.freeze(['smoke', 'censer', 'pot', 'ember']),
   'tallow flare': Object.freeze(['flare', 'taper', 'wick', 'torch']),
+  'ash ward': Object.freeze(['ward', 'charm', 'knot', 'sigil']),
+  'iron burr': Object.freeze(['burr', 'spur', 'thorn', 'jack']),
+  'hollow bell': Object.freeze(['bell', 'chime', 'knell', 'clapper']),
   heart: Object.freeze(['heart']),
 });
 
@@ -137,6 +140,18 @@ const ITEM_LINES: Readonly<Record<string, readonly string[]>> = Object.freeze({
   'still smoke': Object.freeze([
     'Break it, and the world remembers you standing somewhere else.',
     'The hunt follows the shape you left in the air.',
+  ]),
+  'ash ward': Object.freeze([
+    'Wear it, and one blow belongs to it instead of you.',
+    'It holds exactly once, and once is the whole point.',
+  ]),
+  'iron burr': Object.freeze([
+    'Cast down, it argues with every foot beside yours.',
+    'Small, mean, and entirely on your side.',
+  ]),
+  'hollow bell': Object.freeze([
+    'Rung once, and the way out answers from wherever it stands.',
+    'It knows the floor better than the floor does.',
   ]),
   heart: Object.freeze([
     'It beats. The floor beats with it.',

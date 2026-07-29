@@ -321,6 +321,12 @@ function reduce(state: GameState, event: GameEvent): GameState {
         ...state,
         entities: moved.map((e) => {
           if (e.id === p.targetId) {
+            // The ward drank this blow whole (resolved at command time,
+            // damage recorded 0): no wound, no venom, no reeling, the draw
+            // unbroken — and the warding is spent by exactly this blow.
+            if (p.warded === true) {
+              return { ...e, tags: e.tags.filter((t) => t !== 'warded') };
+            }
             // Clamped at zero: a corpse is dead, not increasingly dead, and
             // letting hp run negative would make "how badly did it lose" a
             // number nothing reads and every display has to special-case.
@@ -424,6 +430,29 @@ function reduce(state: GameState, event: GameEvent): GameState {
           },
         };
       }
+      // The ward is worn: a tag, spent later by the one blow it drinks
+      // (the STRIKE that pays it says so and this reducer strips it there).
+      if (p.effect.kind === 'ward') {
+        return {
+          ...state,
+          entities: emptied.map((e) => (
+            e.id === p.entityId && !e.tags.includes('warded')
+              ? { ...e, tags: [...e.tags, 'warded'] }
+              : e)),
+        };
+      }
+      // The burr: the recorded list reels — same staggered tag the shove
+      // writes, same recorded WAIT spends it. Replay staggers the same
+      // bodies forever; nobody is re-decided here.
+      if (p.effect.kind === 'burr') {
+        const reeling = new Set(p.effect.staggered);
+        return {
+          ...state,
+          entities: emptied.map((e) => (reeling.has(e.id) ? { ...e, tags: staggered(e.tags) } : e)),
+        };
+      }
+      // The bell is knowledge alone — the fog reads it off the chain; the
+      // world's state does not move.
       return { ...state, entities: emptied };
     }
 

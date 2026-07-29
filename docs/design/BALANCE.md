@@ -110,6 +110,38 @@ unchanged — the wider pipeline feeds it — so the d5 band re-pinned to
 was tried and rejected: extra spawns pay the snowballing fighter more XP
 than they cost (coef 4→12, 5→11, 6→13 survivors — non-monotone).
 
+## The pantry widens (2026-07-28, the 929-second run's ask)
+
+The designer, both hands full of phials at depth 7: "think of a handful
+more item types that would be cool and not destroy game balance. Run the
+math on them." Three new kinds, one per niche the trio leaves open, and
+one invariant that protects the ask's second half: **no provision raises
+player damage** — the run that asked also said "I think I'm a little
+overpowered," so the pantry buys survival, position and knowledge, never
+offense.
+
+| kind | niche | effect budget (deep floors) |
+|---|---|---|
+| ash ward | held defense | drinks one landing blow whole (a deep warden's 10–12 ≈ a third of a draught's rescue), wearable in advance, holds a draw through the hit |
+| iron burr | melee escape | every adjacent hostile spends its next action reeling — smoke's cousin that works AFTER they reach you, on the ones who did |
+| hollow bell | knowledge | the exit and every unfound prize join the map — flare-class information, floor-wide, tile-thin |
+
+Spawn math (`provisionsAt`, one counted draw regardless of pool — the
+stream is untouched): floor 1 stays the teaching trio exactly
+(draught 43% / smoke 29% / flare 29%). Depth 2 opens ward and bell
+(draught 30 / smoke 20 / flare 20 / ward 20 / bell 10). Depth 3+ adds
+the burr (draught 25 / smoke·flare·ward·burr 16.7 each / bell 8.3).
+The draught's share thins with depth on purpose — the deep asks for
+judgment, not a deeper flask — and the fromDepth gate is the knob if
+the sawtooth ever objects.
+
+Measured: all five sawtooth pins held unchanged on the pinned seeds
+(bots treat unknown kinds as dead cargo, which is itself a mild deep
+nerf — the d5 band absorbed it without re-pinning). The ward rides
+STRIKE v5 (`warded`, absent reads unwarded — the mode precedent); its
+drink is resolved at command time so the chain records damage 0 and
+replay never re-decides.
+
 ## The Forge's ceiling (M3/M6, amended 2026-07-28)
 
 The designer's ruling: baseline balance is the tables' to set, never the

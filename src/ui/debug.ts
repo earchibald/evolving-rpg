@@ -792,6 +792,10 @@ function render(): void {
         ? []
         : [['your blood', `venom burns for ${burning.slice('venom-'.length)} more round(s) — 1 each`, 'bad']];
     })(),
+    // The warding worn: one row while it holds, gone when a blow spends it.
+    ...(player?.tags.includes('warded') === true
+      ? [['your ward', 'a warding holds — the next blow to find you is drunk whole', 'good'] as [string, string, string]]
+      : []),
     ['the way out', toExit, done === 'escaped' ? 'good' : ''],
     ['standing at', player === undefined ? '—' : `${player.pos.x}, ${player.pos.y}`, ''],
     ['turn', String(state.turn), ''],
@@ -1269,6 +1273,15 @@ function narrate(fresh: readonly GameEvent[], state: ReturnType<typeof fold>): s
         lines.push(`you drink ${drunk} — whole again, and your ceiling rises to ${p.effect.ceilingTo}`);
       } else if (p.effect.kind === 'flare') {
         lines.push(`${drunk} takes — light reaches ${p.effect.radius} paces around`);
+      } else if (p.effect.kind === 'ward') {
+        lines.push(`${drunk} settles over you — the next blow to find you is drunk whole`);
+      } else if (p.effect.kind === 'burr') {
+        lines.push(p.effect.staggered.length === 0
+          ? `${drunk} scatters at your feet — nothing stood beside you to feel it`
+          : `${drunk} scatters at your feet — ${p.effect.staggered.length === 1 ? 'the one beside you reels' : `${p.effect.staggered.length} beside you reel`}`);
+      } else if (p.effect.kind === 'bell') {
+        lines.push(`${drunk} rings once — the way out answers${
+          p.effect.prizes.length > 0 ? `, and ${p.effect.prizes.length} unfound thing(s) glint on the map` : ''}`);
       } else {
         lines.push(`${drunk} swallows the floor — the hunts chase where you were${
           p.effect.unfooled.length > 0 ? ', but what stands beside you is not fooled' : ''}`);
@@ -1347,6 +1360,15 @@ function narrate(fresh: readonly GameEvent[], state: ReturnType<typeof fold>): s
     const them = named(state, mine ? p.targetId : p.attackerId);
     const roll = `(${p.roll} vs ${p.needed})`;
     const target = state.entities.find((x) => x.id === p.targetId);
+    // The ward's one moment: the blow landed and was drunk whole. Its own
+    // line, not a "hit for 0" — the numbers would read as a whiff and the
+    // spent warding would pass unmourned.
+    if (p.warded === true) {
+      lines.push(mine
+        ? `your blow lands and something drinks it whole — a warding, spent ${roll}`
+        : `${them} lands the blow and your ward drinks it whole ${roll} — the warding is spent`);
+      continue;
+    }
     const tier = !p.hit ? 'miss'
       : target !== undefined && target.stats.hp - p.damage <= 0 ? 'kill'
         : p.crit ? 'crit' : 'hit';
@@ -1845,8 +1867,11 @@ function use(slot = 0): void {
   const before = chain(log, head).length;
   const spent = playerUse({ log, head }, 'player', slot);
   if (spent.draft === null) {
-    // Held, but not a tool — the heart, most likely.
-    say(`what you carry is not a thing you use`);
+    // Two quiet refusals share the null: a second ward while one holds,
+    // and holding something that is not a tool (the heart, most likely).
+    say(you.satchel[slot].kind === 'ash ward' && you.tags.includes('warded')
+      ? 'the ward already holds — one warding per body'
+      : `what you carry is not a thing you use`);
     return;
   }
   const after = runWorldTurns(spent.position, 'player');

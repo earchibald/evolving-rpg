@@ -1,7 +1,7 @@
 import { attemptMove, takeUnderfoot, useCarried } from '../../src/core/commands.js';
 import { apply } from '../../src/core/apply.js';
 import { intBetween } from '../../src/core/rng.js';
-import { ARMORY, PROVISIONS, relicGrant, dominates, wearsTrait, critFloor, FLARE_RADIUS } from '../../src/core/tables.js';
+import { ARMORY, PROVISIONS, provisionsAt, relicGrant, dominates, wearsTrait, critFloor, FLARE_RADIUS } from '../../src/core/tables.js';
 import { fogAt } from '../../src/ui/fov.js';
 import { append, emptyLog } from '../../src/log/chain.js';
 import { createWorld } from '../../src/core/commands.js';
@@ -175,7 +175,11 @@ describe('the flare', () => {
     expect(after.visible.size).toBe(before.visible.size);
   });
 
-  it('stands third in a satchel of three', () => {
-    expect(PROVISIONS.map((p) => p.kind)).toEqual(['vital draught', 'still smoke', 'tallow flare']);
+  it('stands third in the teaching trio, which still owns floor one', () => {
+    // Re-pinned 2026-07-28: the designer widened the pantry after the
+    // 929-second run filled both hands with phials. The trio still leads
+    // the table, and the depth gate keeps floor one to exactly them.
+    expect(PROVISIONS.slice(0, 3).map((p) => p.kind)).toEqual(['vital draught', 'still smoke', 'tallow flare']);
+    expect(provisionsAt(1).map((p) => p.kind)).toEqual(['vital draught', 'still smoke', 'tallow flare']);
   });
 });

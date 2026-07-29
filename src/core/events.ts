@@ -18,7 +18,7 @@ export const SCHEMA_VERSIONS = {
   MOVE: 2,
   MOVE_BLOCKED: 2,
   TURN_ADVANCED: 2,
-  STRIKE: 4,
+  STRIKE: 5,
   WAIT: 1,
   DRAWN: 1,
   ITEM_TAKEN: 4,
@@ -145,10 +145,21 @@ export interface ItemUsedPayload {
   effect:
     | { kind: 'draught'; healedTo: number; ceilingTo: number }
     | { kind: 'smoke'; until: number; at: Pos; unfooled: string[] }
-    // The flare: knowledge, not power. Where it burst and how far the floor
-    // admitted its shape — the fog derivation reads this straight off the
-    // chain, so a rewind un-knows it exactly.
-    | { kind: 'flare'; at: Pos; radius: number };
+    // The flare: knowledge, not power. Where it burst and how far light
+    // reached — the fog derivation reads this straight off the chain, so a
+    // rewind un-knows it exactly.
+    | { kind: 'flare'; at: Pos; radius: number }
+    // The wider pantry (designer's word after the 929-second run). New
+    // VALUES in an existing field, never new machinery — the magic-modes
+    // doctrine — so the version holds at 2 and old chains fold unchanged.
+    // The ward is worn until a blow spends it (the tag is the state; the
+    // spending is recorded on the STRIKE that paid it).
+    | { kind: 'ward' }
+    // Who staggered, resolved at command time: replay applies the list.
+    | { kind: 'burr'; staggered: string[] }
+    // Knowledge, never power: where the way out stands and where the
+    // unfound prizes lie. The fog reads it straight off the chain.
+    | { kind: 'bell'; exit: Pos; prizes: Pos[] };
 }
 
 /** A rule entering play. The rule is carried whole rather than by reference,
@@ -215,6 +226,10 @@ export interface StrikePayload {
    *  harder, and the reducer uncoils the attacker (removes the ambush tag).
    *  Recorded so the journal can say so and replay agrees forever. */
   ambush?: boolean;
+  /** v5. The target's ward drank this blow whole: damage recorded 0, no
+   *  venom, no flinch, and the reducer spends the warding (strips the tag).
+   *  Absent reads unwarded — the mode precedent, no upcaster. */
+  warded?: boolean;
 }
 
 /**

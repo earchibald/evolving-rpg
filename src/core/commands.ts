@@ -3,7 +3,7 @@ import { inBounds, isPassable } from './grid.js';
 import { findEntity, isAlive } from './entity.js';
 import { intBetween } from './rng.js';
 import { clearShot, withinReach } from './sight.js';
-import { neededToHit, chanceIn20, damageDice, critFloor, WHIFF, BESTIARY, creatureStats, threatOf, spawnBudget, depthBands, wardenAt, ARMORY, relicGrant, slotFor, RELIC_TRAITS, motifAt, verbOf, wardenLevel, AMBUSH_MIGHT_BONUS, AMBUSH_FROM_DEPTH, braceWall, CALL_RISERS, CALL_DISTANCE, dominates, wearsTrait, FLARE_RADIUS, PROVISIONS, provisionOf, draughtCeiling, smokeTurns, BOTTOM_DEPTH, HEART_KIND, WAVE_DISTANCE, SHOT_RANGE } from './tables.js';
+import { neededToHit, chanceIn20, damageDice, critFloor, WHIFF, BESTIARY, creatureStats, threatOf, spawnBudget, depthBands, wardenAt, ARMORY, relicGrant, slotFor, RELIC_TRAITS, motifAt, verbOf, wardenLevel, AMBUSH_MIGHT_BONUS, AMBUSH_FROM_DEPTH, braceWall, CALL_RISERS, CALL_DISTANCE, dominates, wearsTrait, FLARE_RADIUS, provisionsAt, provisionOf, draughtCeiling, smokeTurns, BOTTOM_DEPTH, HEART_KIND, WAVE_DISTANCE, SHOT_RANGE } from './tables.js';
 import type { Relic } from './tables.js';
 import type { Entity, Stats, Pos } from './entity.js';
 import { itemAt } from './item.js';
@@ -80,7 +80,7 @@ function resolveStrike(
   counter: number,
   attacker: Entity,
   target: Entity,
-): { roll: number; needed: number; hit: boolean; damage: number; crit: boolean } {
+): { roll: number; needed: number; hit: boolean; damage: number; crit: boolean; warded?: true } {
   const roll = intBetween(seed, counter, 1, 20);
   // The set guard raises the bar: harder to hit by 2 + wits/2 — wits is the
   // stat that reads the incoming blow. Baked into `needed` so the recorded
@@ -106,7 +106,15 @@ function resolveStrike(
   const sprung = springLoaded(attacker) && !target.tags.includes('braced');
   const { die, flat } = damageDice(attacker.stats.might + (sprung ? AMBUSH_MIGHT_BONUS : 0));
   const rolledDamage = intBetween(seed, counter + 1, 1, die) + flat;
-  return { roll, needed, hit, crit, damage: hit ? (crit ? rolledDamage * 2 : rolledDamage) : 0 };
+  const landing = hit ? (crit ? rolledDamage * 2 : rolledDamage) : 0;
+  // The worn ward drinks a landing blow whole. Resolved HERE so the chain
+  // records what happened (damage 0, warded said), and the draws are spent
+  // either way — the ward changes the wound, never the stream. Absent when
+  // it did not fire, so every caller's payload spread reads legacy-clean.
+  const warded = landing > 0 && target.tags.includes('warded');
+  return warded
+    ? { roll, needed, hit, crit, damage: 0, warded: true }
+    : { roll, needed, hit, crit, damage: landing };
 }
 
 /** The player as a floor receives them: stats, ceiling and progress carried
@@ -274,10 +282,11 @@ export function createWorld(
   // armory pays for fighting; the satchel pays for scouting: a guarded
   // consumable would just be a fifth relic, and an on-path one is not a
   // detour, it is a toll both already collected.
-  const provTotal = PROVISIONS.reduce((n, p) => n + p.weight, 0);
+  const pantry = provisionsAt(depth);
+  const provTotal = pantry.reduce((n, p) => n + p.weight, 0);
   let provRoll = intBetween(seed, c, 1, provTotal); c += 1;
-  let provision = PROVISIONS[0]!;
-  for (const p of PROVISIONS) {
+  let provision = pantry[0]!;
+  for (const p of pantry) {
     provRoll -= p.weight;
     if (provRoll <= 0) { provision = p; break; }
   }
@@ -1103,6 +1112,60 @@ export function useCarried(
         kind,
         slot,
         effect: { kind: 'flare', at: { x: user.pos.x, y: user.pos.y }, radius: FLARE_RADIUS },
+      },
+    };
+  }
+
+  // The ward: worn until a blow spends it. One warding per body — a second
+  // swallow while the first holds would be a wasted hand, so it refuses
+  // (a mispress, not a turn; the view says why).
+  if (kind === 'ash ward') {
+    if (user.tags.includes('warded')) return null;
+    return {
+      type: 'ITEM_USED',
+      schemaVersion: SCHEMA_VERSIONS.ITEM_USED,
+      rngCounter: state.rngCounter,
+      rngDraws: 0,
+      payload: { entityId, kind, slot, effect: { kind: 'ward' } },
+    };
+  }
+
+  // The burr: everyone hostile standing beside you reels — resolved here,
+  // recorded whole, replay staggers the same bodies forever. Casting it at
+  // empty air is allowed and honest (the line says nothing stood beside
+  // you): the satchel pays for judgment, not just for luck.
+  if (kind === 'iron burr') {
+    const beside = state.entities
+      .filter((e) => e.id !== entityId && isAlive(e) && isHostile(user, e)
+        && Math.abs(e.pos.x - user.pos.x) + Math.abs(e.pos.y - user.pos.y) === 1)
+      .map((e) => e.id);
+    return {
+      type: 'ITEM_USED',
+      schemaVersion: SCHEMA_VERSIONS.ITEM_USED,
+      rngCounter: state.rngCounter,
+      rngDraws: 0,
+      payload: { entityId, kind, slot, effect: { kind: 'burr', staggered: beside } },
+    };
+  }
+
+  // The bell: rings once and the way out answers — the exit and every
+  // unfound prize, resolved here so the fog can read positions off the
+  // chain without re-deriving a dead floor's layout.
+  if (kind === 'hollow bell') {
+    const exitAt = state.grid.tiles.indexOf(EXIT);
+    const exit = exitAt < 0
+      ? { x: user.pos.x, y: user.pos.y }
+      : { x: exitAt % state.grid.width, y: Math.floor(exitAt / state.grid.width) };
+    return {
+      type: 'ITEM_USED',
+      schemaVersion: SCHEMA_VERSIONS.ITEM_USED,
+      rngCounter: state.rngCounter,
+      rngDraws: 0,
+      payload: {
+        entityId,
+        kind,
+        slot,
+        effect: { kind: 'bell', exit, prizes: state.items.map((i) => ({ x: i.pos.x, y: i.pos.y })) },
       },
     };
   }

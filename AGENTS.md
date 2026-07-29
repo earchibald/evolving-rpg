@@ -148,6 +148,24 @@ touches supercover LOS, BFS hunts, Manhattan verb ranges; design whole
 or not at all. Proposals + panel verdict:
 docs/superpowers/specs/2026-07-28-dual-wield-proposals.md.
 
+**The pantry holds six** (the 929-second run's directive, math in
+docs/design/BALANCE.md): beside the teaching trio stand the ash ward
+(drinks ONE landing blow whole — no wound, no venom, no flinch, the
+draw held; STRIKE v5 `warded`, resolved at command time, damage
+recorded 0), the iron burr (every adjacent hostile takes the staggered
+tag — the shove's own machinery — resolved as a recorded id list), and
+the hollow bell (the exit and every unfound prize join the fog's SEEN,
+read off the chain like the flare). `provisionsAt(depth)` gates the
+pantry — floor 1 is the trio exactly, ward/bell from 2, burr from 3 —
+with ONE counted draw regardless of pool, so generation's stream never
+moved. Invariant, kept on purpose: no provision raises player damage.
+Bots treat the new kinds as dead cargo (their wishes name kinds); all
+five sawtooth pins held unchanged. Also this pass: sealSecretRoom
+refuses merged rooms (boundaryOf tells narrow doors from open edges —
+the floor-7 whackadoodle), lenses hold their tongue below their sample
+floors, and the panel is fully static (changes speak in the journal,
+including the new damage-band line).
+
 **The player has verbs too** (SHOVE v1 / BRACED v1, zero draws): x+dir
 shoves an adjacent hostile one pace — open ground displaces, walls and the
 door frame slam (SLAM_DAMAGE + stagger), a body behind tangles both;

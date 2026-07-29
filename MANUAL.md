@@ -56,7 +56,10 @@ That is the whole game. Everything else is reading.
 | **satchel** | two carried things now. Walking fills a free hand; full hands leave the new thing lying (the game says so); `,` swaps your first thing out onto the tile. Two of the same is fine — two flares are two flares |
 | **vital draught** | drink it: healed whole, and your health ceiling rises for good. Early or late, never wasted |
 | **still smoke** | break it: for a few turns every hunt chases where you *were*. Useless against anything already beside you |
-| **tallow flare** | strike it: the floor admits its shape for seven paces around — walls and ways, never what stands in them |
+| **tallow flare** | strike it: light reaches seven paces around — walls and ways, never what stands in them |
+| **ash ward** | wear it: the next blow that lands on you is drunk whole — no wound, no venom, no flinch — then it is spent. One warding at a time; it even holds a drawn shot steady through a hit |
+| **iron burr** | cast it at your feet: everything hostile beside you reels and loses its next action. Worthless at range — they must already be on you |
+| **hollow bell** | ring it: the way out answers from wherever it stands, and every unfound prize on the floor glints onto your map. Knowledge, never power |
 | **shove** | your push. It never misses: open ground moves them, a wall hurts them, another body tangles both. The wall is the argument |
 | **brace** | your guard, for one round: harder to hit, no trample can move you, a coiled spring breaks on it — and whatever misses you reels |
 | **reeling** | what a staggered thing does: it loses its next turn. Shoves into walls, tangles, and blows that break on a set guard all cause it |
@@ -94,9 +97,11 @@ sidegrade, even a downgrade you have reasons for — waits on the floor until
 you take it on purpose with `,`. The journal always says which kind of
 refusal you are looking at.
 
-**Carry one thing.** Every floor also leaves one provision lying somewhere
-off the path, free — the draught, the smoke, or the flare. Which one to
-carry, and when to spend it, is yours to get wrong.
+**Carry two things.** Every floor also leaves one provision lying somewhere
+off the path, free. Floor one keeps to the first three kinds — the draught,
+the smoke, the flare — and deeper floors add the ward, the bell, and the
+burr to what may turn up. Which two to carry, and when to spend them, is
+yours to get wrong.
 
 **Descend** by stepping on the green square. The strongest thing on the
 floor watches it. Clear the whole floor first and you descend healed.
@@ -238,6 +243,9 @@ something else, that is a finding worth reporting.
 | walk toward a *caller* | one cry, and two more things rise far off — kill it first next time |
 | walk over the heavy blade | it stays put and the journal says it asks a trade; `,` takes it, speed and all |
 | strike a flare in a corridor | the map fills in for seven paces around — shape only, nothing that stands in it |
+| wear the ward, then let a warden swing | its blow lands and is drunk whole; the rail's ward row disappears — one blow, exactly |
+| cast the burr in a surround | everything beside you reels; the far ones keep coming |
+| ring the bell on a big floor | the exit square appears on your map, dim, wherever it stands |
 | die | body on the map, a † world in the list, "the stone is cut" with the real floor, turn and killer — and, unasked, a proposed law within a minute |
 | die a death that matters (a first life, a new deepest floor, a warden) | a minute later: "the world has set … down in full" — first words only, the rest withheld |
 | press `r` and walk to where you died | "you stand where you fell" — that life's floor joins your map, and the world recites its full words for that life, right there |

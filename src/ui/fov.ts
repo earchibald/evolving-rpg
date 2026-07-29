@@ -148,6 +148,19 @@ function absorb(
     acc.seen = new Set<number>();
     acc.trod = new Set<number>();
     acc.sight = sightAt(event.payload.depth ?? 1);
+  } else if (event.type === 'ITEM_USED' && event.payload.effect.kind === 'bell'
+    && event.payload.entityId === 'player') {
+    // The bell: the way out and the unfound prizes answer — single tiles
+    // join SEEN, never their surroundings. Positions were resolved on the
+    // event, so a rewind un-knows them exactly, like the flare.
+    if (acc.grid !== null) {
+      const { exit, prizes } = event.payload.effect;
+      if (inBounds(acc.grid, exit.x, exit.y)) acc.seen.add(idx(acc.grid, exit.x, exit.y));
+      for (const p of prizes) {
+        if (inBounds(acc.grid, p.x, p.y)) acc.seen.add(idx(acc.grid, p.x, p.y));
+      }
+    }
+    return;
   } else if (event.type === 'ITEM_USED' && event.payload.effect.kind === 'flare'
     && event.payload.entityId === 'player') {
     // The flare: the floor admits its shape in a burst — SEEN, never

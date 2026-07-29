@@ -1093,3 +1093,54 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > **Try it:** next depth-2 floor owes you a sling; wear it beside the
 > edge and press <kbd>f</kbd>. Your satchel has room for the flare AND
 > the draught now — <kbd>Q</kbd> is the second hand.
+
+---
+
+## 2026-07-28 — 23:43 — the 929-second run answered: two defects dead, the pantry holds six
+
+> Dear Designer,
+>
+> Your fifteen and a half minutes of thinking out loud became tonight's
+> whole worklist. The review found you died on **floor 9 of 9** — the
+> last warden, four blows, 36 to 0 — with two full phials in the
+> satchel. "Two phials of slate, still full," the stone says. You lost
+> by 5 HP, holding 80 HP of unspent rescue. (A draught raises your
+> ceiling even at full health, by the way. The manual says so now.)
+>
+> **The defects, first, as you asked.** The whackadoodle secret room on
+> floor 7 was real and I rendered it from the chain: two entire wall-runs
+> of SECRET. Root cause — one bug wearing two of your complaints:
+> sealSecretRoom treated every floor tile around a room as a "doorway,"
+> which is only true when rooms are wall-separated, and your chunky
+> merged rooms aren't. A door is narrow now (wall on both shoulders);
+> a room merged into its neighbor refuses the seal. And "+-1 speed" is
+> dead at every site — negative grants say their sign.
+>
+> **Your wordings, verbatim.** "Type , to take it." "Your satchel is
+> full" (not hands). The before→after glow is retired whole — the
+> panel only ever says what IS, and the journal now speaks every change
+> it used to carry, including "your blows deal 3–6 now" the moment the
+> band moves. The target ring closes all the way around (inset, like
+> every other ring). Items wear families: violet blade, sky sling,
+> steel worn, rose satchel-goods, bone heart — guard rings match.
+> Remembered walls keep the lit wall's gray. The birth flare rides the
+> naming batch, so the panel and the journal agree on what to call it.
+>
+> **The pantry, with the math run.** Three new kinds, none of them
+> damage (you said you felt overpowered; the pantry buys survival,
+> position and knowledge): the **ash ward** drinks exactly one landing
+> blow whole — worn in advance, it even holds your draw through the
+> hit; the **iron burr** staggers everything adjacent — smoke's cousin
+> for AFTER they reach you; the **hollow bell** rings the exit and
+> every unfound prize onto your map. Floor 1 keeps the teaching trio
+> exactly; ward and bell open at depth 2, the burr at 3; one counted
+> draw either way, so the stream never moved. All five sawtooth pins
+> held without retuning. The ensemble still reads Triangularity 2,
+> Freedom 4–5. Full shares and budgets: docs/design/BALANCE.md.
+>
+> Also: the listener's one good catch shipped — a lens below its sample
+> floor now says "no reading" instead of prose over one turn.
+>
+> **Try it:** next run, go down two floors. Wear the ward BEFORE the
+> warden. Ring the bell on a floor that sprawls. And drink the phial
+> even at full — the ceiling remembers.
