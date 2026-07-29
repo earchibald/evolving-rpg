@@ -1,6 +1,6 @@
 import { isPassable } from './grid.js';
 import { findEntity, isAlive } from './entity.js';
-import { verbOf, LURK_RANGE, VIGIL_LEASH, CALL_RANGE, SHOT_RANGE } from './tables.js';
+import { verbOf, LURK_RANGE, VIGIL_LEASH, GUARD_LEASH, CALL_RANGE, SHOT_RANGE } from './tables.js';
 import { clearShot, withinReach } from './sight.js';
 import { walkDistance } from './mapgen.js';
 import type { Entity, Pos } from './entity.js';
@@ -36,7 +36,16 @@ function manhattan(a: Entity, b: Entity): number {
  * null. Neighbour order is fixed (east, west, south, north), so the chosen
  * path is deterministic and a replayed world hunts identically.
  */
-function firstStep(state: GameState, selfId: string, from: Pos, goal: Pos): { dx: number; dy: number } | null {
+function firstStep(
+  state: GameState,
+  selfId: string,
+  from: Pos,
+  goal: Pos,
+  /** How far the search may walk. The hunt keeps AWARENESS; the guard's
+   *  homeward walk and the wanderer's round pass the whole board, because
+   *  a post or a waypoint is farther away than prey is allowed to be. */
+  reach = AWARENESS,
+): { dx: number; dy: number } | null {
   const { width, height } = state.grid;
   const key = (x: number, y: number): number => y * width + x;
   const occupied = new Set<number>();
@@ -50,7 +59,7 @@ function firstStep(state: GameState, selfId: string, from: Pos, goal: Pos): { dx
     { x: from.x, y: from.y, first: null },
   ];
 
-  for (let depth = 0; depth < AWARENESS; depth += 1) {
+  for (let depth = 0; depth < reach; depth += 1) {
     const next: typeof frontier = [];
     for (const at of frontier) {
       for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
@@ -159,6 +168,22 @@ export function decide(state: GameState, entityId: string): Action {
     // Intruder inside the leash: an ordinary hunt from here down.
   }
 
+  // A posted guard is the vigil's homeward half without the mend (v10):
+  // it hunts only what comes within GUARD_LEASH of its post — the leash
+  // anchored to the POST, not to wherever the chase has dragged it — and
+  // walks home when the leash empties. The keeper and every relic guard
+  // hold their prizes now instead of freezing where a chase went cold.
+  if (self.disposition === 'guard' && verb !== 'vigil') {
+    const post = self.post ?? self.pos;
+    const intruderNear = walkDistance(state.grid, post, scent) <= GUARD_LEASH;
+    if (!intruderNear) {
+      const home = self.pos.x === post.x && self.pos.y === post.y;
+      if (home) return { kind: 'wait' };
+      const back = firstStep(state, entityId, self.pos, post, state.grid.width + state.grid.height);
+      return back === null ? { kind: 'wait' } : { kind: 'step', dx: back.dx, dy: back.dy };
+    }
+  }
+
   // Coiled: perfectly still until the quarry is close enough to commit to.
   // The stillness is in plain sight — that is the tell, and the dread.
   if (verb === 'ambush' && self.tags.includes('ambush')) {
@@ -200,5 +225,22 @@ export function decide(state: GameState, entityId: string): Action {
   }
 
   const step = firstStep(state, entityId, self.pos, scent);
-  return step === null ? { kind: 'wait' } : { kind: 'step', dx: step.dx, dy: step.dy };
+  if (step !== null) return { kind: 'step', dx: step.dx, dy: step.dy };
+
+  // Nothing in reach to hunt: the wanderer walks its round. The reducer
+  // advances the leg as steps land on waypoints; here it is only read —
+  // and a body already standing on its goal heads for the next stop, as
+  // does one whose goal another body is parked on, so a round never
+  // stalls on its own doorstep. Drawless like every decision here.
+  if (self.disposition === 'wander' && self.route !== undefined && self.route.length > 0) {
+    const leg = (self.leg ?? 0) % self.route.length;
+    let goal = self.route[leg]!;
+    const blocked = (w: Pos): boolean =>
+      (w.x === self.pos.x && w.y === self.pos.y)
+      || state.entities.some((e) => e.id !== entityId && isAlive(e) && e.pos.x === w.x && e.pos.y === w.y);
+    if (blocked(goal)) goal = self.route[(leg + 1) % self.route.length]!;
+    const walk = firstStep(state, entityId, self.pos, goal, state.grid.width + state.grid.height);
+    if (walk !== null) return { kind: 'step', dx: walk.dx, dy: walk.dy };
+  }
+  return { kind: 'wait' };
 }

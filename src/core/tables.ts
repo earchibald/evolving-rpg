@@ -336,6 +336,20 @@ export const SLAM_DAMAGE = 1;
  *  what it is for, and a boss kited across the floor is a boss solved. */
 export const VIGIL_LEASH = 5;
 
+/** How far a posted guard will be drawn from its post — the vigil's
+ *  homeward half, generalized (the living-dungeon pass; the sibling
+ *  agent-adventures engine leashes its guardians to the ANCHOR, not to
+ *  wherever the chase has dragged them, and so do we). One shorter than
+ *  the warden's: a guard owns a room, not an arena. */
+export const GUARD_LEASH = 4;
+
+/** The shallowest floor that wanders. The teaching floor stays teachable —
+ *  the first lesson is the bump, not the patrol crossing your start. */
+export const WANDER_FROM_DEPTH = 2;
+
+/** A wanderer's round: how many waypoints, drawn between these bounds. */
+export const ROUTE_STOPS: readonly [number, number] = [2, 4];
+
 /* ── threat and the spawn budget ─────────────────────────────────────────── */
 
 /**

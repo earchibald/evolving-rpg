@@ -8,12 +8,12 @@
   "maxActions": 220,
   "actions": 69,
   "outcome": "escaped",
-  "head": "f5c3f264e0f7a422233bede4f34eb910c82aa55743e24c209dbaaec2278351ca",
-  "finalStateHash": "9e26ec266ac9e3105f7ee239e488b09449ca90f94327a40d91afaec3858d081b",
+  "head": "501fd41872d856f3f42fbf74af4d1d39f9b268dd994e45a5aa0acf1bb1749d47",
+  "finalStateHash": "17374816522c9d1c2f9f50e4fceac2b76499b16c8a0d48ebea59a8f77843703d",
   "events": [
     {
       "type": "WORLD_INIT",
-      "schemaVersion": 9,
+      "schemaVersion": 10,
       "rngCounter": 0,
       "rngDraws": 253,
       "payload": {
@@ -1622,7 +1622,8 @@
               "wits": 2,
               "speed": 4
             },
-            "tags": []
+            "tags": [],
+            "disposition": "guard"
           },
           {
             "id": "foe-2",
@@ -1637,11 +1638,12 @@
               "wits": 1,
               "speed": 3
             },
-            "tags": []
+            "tags": [],
+            "disposition": "guard"
           }
         ]
       },
-      "id": "3a60ef7b4542ddc085fa5c52ecef0bf5c36a32dfdf94ecd676ab337efd17906e",
+      "id": "dabc8b978abedaadf71053db253a12ac9865afdac89dcd72ff612ec4f04e39b7",
       "parent": null,
       "seq": 0
     },
@@ -1661,8 +1663,8 @@
           "y": 27
         }
       },
-      "id": "5962997c6b37eb7307e558e9574d98688706e2b1d5156c161c172b13f6eed8d9",
-      "parent": "3a60ef7b4542ddc085fa5c52ecef0bf5c36a32dfdf94ecd676ab337efd17906e",
+      "id": "6fe4def9920346e9011b945687ee73b60231976e4fccc3a84514db66534ae39c",
+      "parent": "dabc8b978abedaadf71053db253a12ac9865afdac89dcd72ff612ec4f04e39b7",
       "seq": 1
     },
     {
@@ -1674,29 +1676,9 @@
         "activeEntityId": "foe-2",
         "turn": 1
       },
-      "id": "6ceb7f80c15b4ad774604b950a5c2aa009fe87ff98a19e06c54538bc7b631534",
-      "parent": "5962997c6b37eb7307e558e9574d98688706e2b1d5156c161c172b13f6eed8d9",
+      "id": "caee4420deb7d05721d53f33b2b7a5d9ed8e01d56bd06869a5f90dda1b46c07a",
+      "parent": "6fe4def9920346e9011b945687ee73b60231976e4fccc3a84514db66534ae39c",
       "seq": 2
-    },
-    {
-      "type": "MOVE",
-      "schemaVersion": 2,
-      "rngCounter": 253,
-      "rngDraws": 0,
-      "payload": {
-        "entityId": "foe-2",
-        "from": {
-          "x": 10,
-          "y": 23
-        },
-        "to": {
-          "x": 9,
-          "y": 23
-        }
-      },
-      "id": "0776166bcb3e9a91bb44a5f95dbd4fd2bf00190b0c808806af8ba342da80a381",
-      "parent": "6ceb7f80c15b4ad774604b950a5c2aa009fe87ff98a19e06c54538bc7b631534",
-      "seq": 3
     },
     {
       "type": "TURN_ADVANCED",
@@ -1707,9 +1689,9 @@
         "activeEntityId": "foe-1",
         "turn": 2
       },
-      "id": "95fb5a4a24f9aac56f559616aa233a3ae39867ca660a71cb5baa3e4e71e1dae4",
-      "parent": "0776166bcb3e9a91bb44a5f95dbd4fd2bf00190b0c808806af8ba342da80a381",
-      "seq": 4
+      "id": "e4c50917902cb9777e3e00702ccd10a4295c57a6c94af1d20325c8a4ced14c10",
+      "parent": "caee4420deb7d05721d53f33b2b7a5d9ed8e01d56bd06869a5f90dda1b46c07a",
+      "seq": 3
     },
     {
       "type": "TURN_ADVANCED",
@@ -1720,9 +1702,9 @@
         "activeEntityId": "player",
         "turn": 2
       },
-      "id": "8f079ca8f5459952ff9abd789963a0263808aa4ae3bf8c8068771db3ffe79424",
-      "parent": "95fb5a4a24f9aac56f559616aa233a3ae39867ca660a71cb5baa3e4e71e1dae4",
-      "seq": 5
+      "id": "12964c4b531cbfc5e254a85c08e3d615e95c4d9acd9a17d6c0af5095220fae00",
+      "parent": "e4c50917902cb9777e3e00702ccd10a4295c57a6c94af1d20325c8a4ced14c10",
+      "seq": 4
     },
     {
       "type": "MOVE",
@@ -1740,9 +1722,9 @@
           "y": 26
         }
       },
-      "id": "c1b68c19956b047217604ac76963bead18c6741f60e81e39619b5662252781df",
-      "parent": "8f079ca8f5459952ff9abd789963a0263808aa4ae3bf8c8068771db3ffe79424",
-      "seq": 6
+      "id": "10153d340a81564cdca006e8fce614408790731237735d838b26b32037fbc7dd",
+      "parent": "12964c4b531cbfc5e254a85c08e3d615e95c4d9acd9a17d6c0af5095220fae00",
+      "seq": 5
     },
     {
       "type": "TURN_ADVANCED",
@@ -1753,29 +1735,9 @@
         "activeEntityId": "foe-2",
         "turn": 2
       },
-      "id": "688eaf80c74745acd528a5c2909ecf00645915f00778447df22f75a8000edbf2",
-      "parent": "c1b68c19956b047217604ac76963bead18c6741f60e81e39619b5662252781df",
-      "seq": 7
-    },
-    {
-      "type": "MOVE",
-      "schemaVersion": 2,
-      "rngCounter": 253,
-      "rngDraws": 0,
-      "payload": {
-        "entityId": "foe-2",
-        "from": {
-          "x": 9,
-          "y": 23
-        },
-        "to": {
-          "x": 8,
-          "y": 23
-        }
-      },
-      "id": "98a2d1c1f0ce5e95fee41389c3ab7a042cd3c00db9ab611cc8d91cff62cddd46",
-      "parent": "688eaf80c74745acd528a5c2909ecf00645915f00778447df22f75a8000edbf2",
-      "seq": 8
+      "id": "067d5ad4bacca4e1b421e9e811db9ddff6a0aa71de0cc17efec7c87c4c0696ca",
+      "parent": "10153d340a81564cdca006e8fce614408790731237735d838b26b32037fbc7dd",
+      "seq": 6
     },
     {
       "type": "TURN_ADVANCED",
@@ -1786,9 +1748,9 @@
         "activeEntityId": "foe-1",
         "turn": 3
       },
-      "id": "dd819a6144b0aa1e6a2f6effdd12798ff8d5d5b79561f0a849b5975bbfb96d72",
-      "parent": "98a2d1c1f0ce5e95fee41389c3ab7a042cd3c00db9ab611cc8d91cff62cddd46",
-      "seq": 9
+      "id": "ca3cb00bef311a9b1973bb387b384c28512ee5f36c335461a8af5ce8e1aff294",
+      "parent": "067d5ad4bacca4e1b421e9e811db9ddff6a0aa71de0cc17efec7c87c4c0696ca",
+      "seq": 7
     },
     {
       "type": "TURN_ADVANCED",
@@ -1799,9 +1761,9 @@
         "activeEntityId": "player",
         "turn": 3
       },
-      "id": "3c11f965faeb7ffd820e96d0966c0ee734b7709799087d5956cc2efcfc014344",
-      "parent": "dd819a6144b0aa1e6a2f6effdd12798ff8d5d5b79561f0a849b5975bbfb96d72",
-      "seq": 10
+      "id": "9a383dba552a76d3829bf66454c34e7af4a037a260c5351d75c1f312db3c2306",
+      "parent": "ca3cb00bef311a9b1973bb387b384c28512ee5f36c335461a8af5ce8e1aff294",
+      "seq": 8
     },
     {
       "type": "MOVE",
@@ -1819,9 +1781,9 @@
           "y": 25
         }
       },
-      "id": "c35ef10b455d8a0b72a0f48f35aa258a6bf8d035f371dde0619be4f2c607886b",
-      "parent": "3c11f965faeb7ffd820e96d0966c0ee734b7709799087d5956cc2efcfc014344",
-      "seq": 11
+      "id": "6bbe8ccd58422c15b86234e222ba1cf64abfec6e39c193de817e35e27bb39e16",
+      "parent": "9a383dba552a76d3829bf66454c34e7af4a037a260c5351d75c1f312db3c2306",
+      "seq": 9
     },
     {
       "type": "TURN_ADVANCED",
@@ -1832,29 +1794,9 @@
         "activeEntityId": "foe-2",
         "turn": 3
       },
-      "id": "b54a4dca53dd11e1951ba6932a05c96eb2e9edc03a5c1cbf8abbce7e99140dcf",
-      "parent": "c35ef10b455d8a0b72a0f48f35aa258a6bf8d035f371dde0619be4f2c607886b",
-      "seq": 12
-    },
-    {
-      "type": "MOVE",
-      "schemaVersion": 2,
-      "rngCounter": 253,
-      "rngDraws": 0,
-      "payload": {
-        "entityId": "foe-2",
-        "from": {
-          "x": 8,
-          "y": 23
-        },
-        "to": {
-          "x": 7,
-          "y": 23
-        }
-      },
-      "id": "12dd98f1823586462c0b82347b7800cdf64bef7aa958d0c2a4b63ace28337344",
-      "parent": "b54a4dca53dd11e1951ba6932a05c96eb2e9edc03a5c1cbf8abbce7e99140dcf",
-      "seq": 13
+      "id": "53b6159a553ce3ba19de020c48c5432b6d48073097db60e1f353b09f129c7401",
+      "parent": "6bbe8ccd58422c15b86234e222ba1cf64abfec6e39c193de817e35e27bb39e16",
+      "seq": 10
     },
     {
       "type": "TURN_ADVANCED",
@@ -1865,9 +1807,9 @@
         "activeEntityId": "foe-1",
         "turn": 4
       },
-      "id": "83af4cdc7edb9eeed6b7aec350d7ff42cff8edb6385d8953ee7093c012bacaeb",
-      "parent": "12dd98f1823586462c0b82347b7800cdf64bef7aa958d0c2a4b63ace28337344",
-      "seq": 14
+      "id": "ac1ce9ed41935f490dfccf08c61def14e42ef28bf8c857e4284dd19bcda7642f",
+      "parent": "53b6159a553ce3ba19de020c48c5432b6d48073097db60e1f353b09f129c7401",
+      "seq": 11
     },
     {
       "type": "TURN_ADVANCED",
@@ -1878,9 +1820,9 @@
         "activeEntityId": "player",
         "turn": 4
       },
-      "id": "30f0854dd30c9a2f020dcf8eed8e934ce3b83b3efaf2b8ee8194d48386fd8d5a",
-      "parent": "83af4cdc7edb9eeed6b7aec350d7ff42cff8edb6385d8953ee7093c012bacaeb",
-      "seq": 15
+      "id": "3b0971d496b3cfa7200542f97cb51f2a42483d73c7af9f385c04a36e354b597d",
+      "parent": "ac1ce9ed41935f490dfccf08c61def14e42ef28bf8c857e4284dd19bcda7642f",
+      "seq": 12
     },
     {
       "type": "MOVE",
@@ -1898,9 +1840,9 @@
           "y": 24
         }
       },
-      "id": "0f474159eb7c9575bd91141165cee3cfc4aa0c46905ab3e83b4c7af0e65acc98",
-      "parent": "30f0854dd30c9a2f020dcf8eed8e934ce3b83b3efaf2b8ee8194d48386fd8d5a",
-      "seq": 16
+      "id": "ec91a71eebc4f57ef66b2e7c1a24af17656db20c16cc97616776f28c46aa8955",
+      "parent": "3b0971d496b3cfa7200542f97cb51f2a42483d73c7af9f385c04a36e354b597d",
+      "seq": 13
     },
     {
       "type": "TURN_ADVANCED",
@@ -1911,9 +1853,88 @@
         "activeEntityId": "foe-2",
         "turn": 4
       },
-      "id": "1a4c26c3eb96f1f94992eb4b6ce0ec6dcb6c5afff571b3f82e9d45397c8bed4e",
-      "parent": "0f474159eb7c9575bd91141165cee3cfc4aa0c46905ab3e83b4c7af0e65acc98",
+      "id": "36188de06d959217a8a5496058921d5074285a76d95c2bb49e60b092f12fe4ec",
+      "parent": "ec91a71eebc4f57ef66b2e7c1a24af17656db20c16cc97616776f28c46aa8955",
+      "seq": 14
+    },
+    {
+      "type": "MOVE",
+      "schemaVersion": 2,
+      "rngCounter": 253,
+      "rngDraws": 0,
+      "payload": {
+        "entityId": "foe-2",
+        "from": {
+          "x": 10,
+          "y": 23
+        },
+        "to": {
+          "x": 9,
+          "y": 23
+        }
+      },
+      "id": "5911a726613acedb601c501f8917bfa8cda3b4233a2574c9d8cc1a49aa726784",
+      "parent": "36188de06d959217a8a5496058921d5074285a76d95c2bb49e60b092f12fe4ec",
+      "seq": 15
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 253,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "foe-1",
+        "turn": 5
+      },
+      "id": "98f5911559858bb74260412c564daa8e920ca27311a9785effe483b16c97d8ef",
+      "parent": "5911a726613acedb601c501f8917bfa8cda3b4233a2574c9d8cc1a49aa726784",
+      "seq": 16
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 253,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "player",
+        "turn": 5
+      },
+      "id": "74d0549dc3d8c8bfe57a71a2098e4623781c6696c636db69403b23d6f02d9499",
+      "parent": "98f5911559858bb74260412c564daa8e920ca27311a9785effe483b16c97d8ef",
       "seq": 17
+    },
+    {
+      "type": "MOVE",
+      "schemaVersion": 2,
+      "rngCounter": 253,
+      "rngDraws": 0,
+      "payload": {
+        "entityId": "player",
+        "from": {
+          "x": 7,
+          "y": 24
+        },
+        "to": {
+          "x": 7,
+          "y": 23
+        }
+      },
+      "id": "251da52d319d0ad246d3adbf176b0898775fc746b85443ba69dc201859b579cb",
+      "parent": "74d0549dc3d8c8bfe57a71a2098e4623781c6696c636db69403b23d6f02d9499",
+      "seq": 18
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 253,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "foe-2",
+        "turn": 5
+      },
+      "id": "0cd2740242fca0fd69cc71a067ae8ce2e13837f9e4998120f86934efd9544dd8",
+      "parent": "251da52d319d0ad246d3adbf176b0898775fc746b85443ba69dc201859b579cb",
+      "seq": 19
     },
     {
       "type": "STRIKE",
@@ -1928,11 +1949,15 @@
         "needed": 12,
         "hit": false,
         "crit": false,
-        "damage": 0
+        "damage": 0,
+        "attackerTo": {
+          "x": 8,
+          "y": 23
+        }
       },
-      "id": "890bd95bac05f4eece3451c3153af0de486ac56ff77d908cefc7d4b9fe0a35a6",
-      "parent": "1a4c26c3eb96f1f94992eb4b6ce0ec6dcb6c5afff571b3f82e9d45397c8bed4e",
-      "seq": 18
+      "id": "c493ca6576f033ea6e565b272725e58c37c217dc2fcf3f2873ed32d7c4acd005",
+      "parent": "0cd2740242fca0fd69cc71a067ae8ce2e13837f9e4998120f86934efd9544dd8",
+      "seq": 20
     },
     {
       "type": "TURN_ADVANCED",
@@ -1941,11 +1966,11 @@
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-1",
-        "turn": 5
+        "turn": 6
       },
-      "id": "086bcda3ca4b1dc5d6d2e796d690b2fd7b493ae9480396c97dee7946d9d2bc13",
-      "parent": "890bd95bac05f4eece3451c3153af0de486ac56ff77d908cefc7d4b9fe0a35a6",
-      "seq": 19
+      "id": "dedb5e44d7dc40e4005f4ac8b19a2a907560e5b649755b107133a141ed0d5c9a",
+      "parent": "c493ca6576f033ea6e565b272725e58c37c217dc2fcf3f2873ed32d7c4acd005",
+      "seq": 21
     },
     {
       "type": "TURN_ADVANCED",
@@ -1954,11 +1979,11 @@
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "player",
-        "turn": 5
+        "turn": 6
       },
-      "id": "6f50a43f437f0f4004ed62afa8cf946eb75e08e6c05494b5b6ff7feed13bbbd2",
-      "parent": "086bcda3ca4b1dc5d6d2e796d690b2fd7b493ae9480396c97dee7946d9d2bc13",
-      "seq": 20
+      "id": "7d09959ff8c7d6efe71609c7e9461fad8c42a6c5ef5be43506ebce292310d939",
+      "parent": "dedb5e44d7dc40e4005f4ac8b19a2a907560e5b649755b107133a141ed0d5c9a",
+      "seq": 22
     },
     {
       "type": "STRIKE",
@@ -1975,9 +2000,9 @@
         "crit": false,
         "damage": 3
       },
-      "id": "f3117d3716872f261ed474a65bcd44272eaeb5cc76b971878ecf91d5956e6142",
-      "parent": "6f50a43f437f0f4004ed62afa8cf946eb75e08e6c05494b5b6ff7feed13bbbd2",
-      "seq": 21
+      "id": "2f256d274c0e3e513aa2b54f619f6713b9bce5ba20ecc02d73be615ec29a2b61",
+      "parent": "7d09959ff8c7d6efe71609c7e9461fad8c42a6c5ef5be43506ebce292310d939",
+      "seq": 23
     },
     {
       "type": "TURN_ADVANCED",
@@ -1986,11 +2011,11 @@
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-2",
-        "turn": 5
+        "turn": 6
       },
-      "id": "6453dce6cf09f7f7cbf278dfe90f552d9df3681e40bdce0ef841acceeb90648a",
-      "parent": "f3117d3716872f261ed474a65bcd44272eaeb5cc76b971878ecf91d5956e6142",
-      "seq": 22
+      "id": "92d9c4cad9c4050429e65dd667ceee30b639ead55f0f0ee0740eba1a655715e2",
+      "parent": "2f256d274c0e3e513aa2b54f619f6713b9bce5ba20ecc02d73be615ec29a2b61",
+      "seq": 24
     },
     {
       "type": "STRIKE",
@@ -2007,9 +2032,9 @@
         "crit": false,
         "damage": 1
       },
-      "id": "6a1017969835fc621b6fbdbd0b01acfd55de5a9ae0511c25db36f0013a780746",
-      "parent": "6453dce6cf09f7f7cbf278dfe90f552d9df3681e40bdce0ef841acceeb90648a",
-      "seq": 23
+      "id": "f3d8326139fad57f4d824023575e37ece92909d868b404b506a58ccb46ff792f",
+      "parent": "92d9c4cad9c4050429e65dd667ceee30b639ead55f0f0ee0740eba1a655715e2",
+      "seq": 25
     },
     {
       "type": "TURN_ADVANCED",
@@ -2018,11 +2043,11 @@
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-1",
-        "turn": 6
+        "turn": 7
       },
-      "id": "bff9daa57ff9f723a676794114c1174a2c5a4801b332b4db7c5b23f24e9366b5",
-      "parent": "6a1017969835fc621b6fbdbd0b01acfd55de5a9ae0511c25db36f0013a780746",
-      "seq": 24
+      "id": "12a079bcee78b28bf367ad797d5e7ba2af61ab6ca0c383f4a09680587fc3926d",
+      "parent": "f3d8326139fad57f4d824023575e37ece92909d868b404b506a58ccb46ff792f",
+      "seq": 26
     },
     {
       "type": "TURN_ADVANCED",
@@ -2031,11 +2056,11 @@
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "player",
-        "turn": 6
+        "turn": 7
       },
-      "id": "4b318987004e7eae0ee1f0dcb14509f045d690f34a09f94518c8c5cca6038b0b",
-      "parent": "bff9daa57ff9f723a676794114c1174a2c5a4801b332b4db7c5b23f24e9366b5",
-      "seq": 25
+      "id": "6f91b8dbf2c39392c96e6832a39a3cba18724abc40833e8155cf1d471d5ae584",
+      "parent": "12a079bcee78b28bf367ad797d5e7ba2af61ab6ca0c383f4a09680587fc3926d",
+      "seq": 27
     },
     {
       "type": "STRIKE",
@@ -2052,9 +2077,9 @@
         "crit": false,
         "damage": 0
       },
-      "id": "b8b4678d975bb597e1a18cac801489002d6f90f6d70eb01843f0304afa53cb01",
-      "parent": "4b318987004e7eae0ee1f0dcb14509f045d690f34a09f94518c8c5cca6038b0b",
-      "seq": 26
+      "id": "298ffc613db3922623164c52049646778b061e3f48628127255498670b206a9e",
+      "parent": "6f91b8dbf2c39392c96e6832a39a3cba18724abc40833e8155cf1d471d5ae584",
+      "seq": 28
     },
     {
       "type": "TURN_ADVANCED",
@@ -2063,11 +2088,11 @@
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-2",
-        "turn": 6
+        "turn": 7
       },
-      "id": "212314a59d130c8adc679a943a323d59edb3f866f8efc7010849339aac2fe1c3",
-      "parent": "b8b4678d975bb597e1a18cac801489002d6f90f6d70eb01843f0304afa53cb01",
-      "seq": 27
+      "id": "1dc4ea4b95cfc6e6d54b1fa35fd4c0e64c38703ab719814f40284aeaf92e3b14",
+      "parent": "298ffc613db3922623164c52049646778b061e3f48628127255498670b206a9e",
+      "seq": 29
     },
     {
       "type": "STRIKE",
@@ -2084,9 +2109,9 @@
         "crit": false,
         "damage": 0
       },
-      "id": "8874bf20d8b6f81555ae25db5deec0737eb7fe40f4187c2014a8df9ec2b68724",
-      "parent": "212314a59d130c8adc679a943a323d59edb3f866f8efc7010849339aac2fe1c3",
-      "seq": 28
+      "id": "352043944aec2481688143eed35fe0c49885f1421735cc6281c53f5dfd1baaac",
+      "parent": "1dc4ea4b95cfc6e6d54b1fa35fd4c0e64c38703ab719814f40284aeaf92e3b14",
+      "seq": 30
     },
     {
       "type": "TURN_ADVANCED",
@@ -2095,11 +2120,11 @@
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-1",
-        "turn": 7
+        "turn": 8
       },
-      "id": "09b1d5bd5cb36b53fe3264478097c6217fadfe960eb6ee2f640019d57fecfb49",
-      "parent": "8874bf20d8b6f81555ae25db5deec0737eb7fe40f4187c2014a8df9ec2b68724",
-      "seq": 29
+      "id": "ae29cefbf26514d78af284e4059e70136c8bfe598a7d651ffb3137b47eb19853",
+      "parent": "352043944aec2481688143eed35fe0c49885f1421735cc6281c53f5dfd1baaac",
+      "seq": 31
     },
     {
       "type": "TURN_ADVANCED",
@@ -2108,11 +2133,11 @@
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "player",
-        "turn": 7
+        "turn": 8
       },
-      "id": "d34414d3ef827c5e4fe50f53ae4e2b46b9de85d78424f8948ecfbe41b3669939",
-      "parent": "09b1d5bd5cb36b53fe3264478097c6217fadfe960eb6ee2f640019d57fecfb49",
-      "seq": 30
+      "id": "d8c53691f153349cacb9ff50401ae8e363a60fa426f38b199914d376fd982a81",
+      "parent": "ae29cefbf26514d78af284e4059e70136c8bfe598a7d651ffb3137b47eb19853",
+      "seq": 32
     },
     {
       "type": "STRIKE",
@@ -2129,9 +2154,9 @@
         "crit": false,
         "damage": 0
       },
-      "id": "306ec1e8002eec3e5ff7856bc72bf85830b125e7d10b770ce7c7e26eb90a0a0e",
-      "parent": "d34414d3ef827c5e4fe50f53ae4e2b46b9de85d78424f8948ecfbe41b3669939",
-      "seq": 31
+      "id": "2d1f1f63c0c092ccc4f270b155747729947a33d333ff0a2594c0d96acde91d5b",
+      "parent": "d8c53691f153349cacb9ff50401ae8e363a60fa426f38b199914d376fd982a81",
+      "seq": 33
     },
     {
       "type": "TURN_ADVANCED",
@@ -2140,11 +2165,11 @@
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-2",
-        "turn": 7
+        "turn": 8
       },
-      "id": "32ce8fea4882ac4dfa29d3e9875ff1692a1b1501bb6d16c99b5a74f09a443f1e",
-      "parent": "306ec1e8002eec3e5ff7856bc72bf85830b125e7d10b770ce7c7e26eb90a0a0e",
-      "seq": 32
+      "id": "8b001fdb3cdbdca0c80537a4bedaba08b0004678f2f8e9ae89657e7d989e89e3",
+      "parent": "2d1f1f63c0c092ccc4f270b155747729947a33d333ff0a2594c0d96acde91d5b",
+      "seq": 34
     },
     {
       "type": "STRIKE",
@@ -2161,9 +2186,9 @@
         "crit": false,
         "damage": 0
       },
-      "id": "e5d4d25dd6e32ee47a9553acaca0d66fa810800ea2464366cd5114e813f38a02",
-      "parent": "32ce8fea4882ac4dfa29d3e9875ff1692a1b1501bb6d16c99b5a74f09a443f1e",
-      "seq": 33
+      "id": "a786a588cbb5a7e7455da6ad35214a1d273e086b35eab0bfe3a825fec6156926",
+      "parent": "8b001fdb3cdbdca0c80537a4bedaba08b0004678f2f8e9ae89657e7d989e89e3",
+      "seq": 35
     },
     {
       "type": "TURN_ADVANCED",
@@ -2172,11 +2197,11 @@
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-1",
-        "turn": 8
+        "turn": 9
       },
-      "id": "e4ec33cfb271c59b38a145c937d6b53c67d4f548e152e508186fc2cde3a92da6",
-      "parent": "e5d4d25dd6e32ee47a9553acaca0d66fa810800ea2464366cd5114e813f38a02",
-      "seq": 34
+      "id": "a5995c96bad223270ee364071a15d8750058866c0b2afc4f6d55c39862d7a925",
+      "parent": "a786a588cbb5a7e7455da6ad35214a1d273e086b35eab0bfe3a825fec6156926",
+      "seq": 36
     },
     {
       "type": "TURN_ADVANCED",
@@ -2185,11 +2210,11 @@
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "player",
-        "turn": 8
+        "turn": 9
       },
-      "id": "07ae939a0a8a151e3f1f71ba95d0ec14dde3e13d78a1ad5f522bb2d44965ebd2",
-      "parent": "e4ec33cfb271c59b38a145c937d6b53c67d4f548e152e508186fc2cde3a92da6",
-      "seq": 35
+      "id": "85e5881744d3ab7a9e63ee9a67ad68daa94381f5c1af8fd089a1ff05a2fc78b5",
+      "parent": "a5995c96bad223270ee364071a15d8750058866c0b2afc4f6d55c39862d7a925",
+      "seq": 37
     },
     {
       "type": "STRIKE",
@@ -2206,9 +2231,9 @@
         "crit": false,
         "damage": 0
       },
-      "id": "e39708c738788def38daa73ca0941fca9a9570702c064aaa172bd768e44204c9",
-      "parent": "07ae939a0a8a151e3f1f71ba95d0ec14dde3e13d78a1ad5f522bb2d44965ebd2",
-      "seq": 36
+      "id": "2af5bd53a9e89351086ca5a52e605006732d3b26abe82bdedd44a14ecd698a92",
+      "parent": "85e5881744d3ab7a9e63ee9a67ad68daa94381f5c1af8fd089a1ff05a2fc78b5",
+      "seq": 38
     },
     {
       "type": "TURN_ADVANCED",
@@ -2217,11 +2242,11 @@
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-2",
-        "turn": 8
+        "turn": 9
       },
-      "id": "50427066573d869cb19bf5a6032b08d392073b15f4f0132ee38d0701b8f35f26",
-      "parent": "e39708c738788def38daa73ca0941fca9a9570702c064aaa172bd768e44204c9",
-      "seq": 37
+      "id": "55f8cde708422d0dba5adb6c4eb2f5395c67e1c2338dd6eeceb1a4ba3e0dbbb8",
+      "parent": "2af5bd53a9e89351086ca5a52e605006732d3b26abe82bdedd44a14ecd698a92",
+      "seq": 39
     },
     {
       "type": "STRIKE",
@@ -2238,9 +2263,9 @@
         "crit": false,
         "damage": 0
       },
-      "id": "b60f4f8fa238f134dac199854ec6c79beaf70ee8d38794a35664d80b46dc3739",
-      "parent": "50427066573d869cb19bf5a6032b08d392073b15f4f0132ee38d0701b8f35f26",
-      "seq": 38
+      "id": "1de5e28be4ae63e6fe2d4ba0fd263754860bcbbca30b445a074d992d4da1f599",
+      "parent": "55f8cde708422d0dba5adb6c4eb2f5395c67e1c2338dd6eeceb1a4ba3e0dbbb8",
+      "seq": 40
     },
     {
       "type": "TURN_ADVANCED",
@@ -2249,11 +2274,11 @@
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-1",
-        "turn": 9
+        "turn": 10
       },
-      "id": "147b5a9b063c1c90ca3eb7cb6d35a93755be8d75472e9b958d591e4bb8a425c4",
-      "parent": "b60f4f8fa238f134dac199854ec6c79beaf70ee8d38794a35664d80b46dc3739",
-      "seq": 39
+      "id": "5b7a0b94f2585c557d45b129412ae63e0d6a631ceadaed379a8464496cc84c09",
+      "parent": "1de5e28be4ae63e6fe2d4ba0fd263754860bcbbca30b445a074d992d4da1f599",
+      "seq": 41
     },
     {
       "type": "TURN_ADVANCED",
@@ -2262,11 +2287,11 @@
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "player",
-        "turn": 9
+        "turn": 10
       },
-      "id": "00ec3cceb6012347d9783f4e978c4ceb40e713294cdb2d80f60ad1476e8b5e5c",
-      "parent": "147b5a9b063c1c90ca3eb7cb6d35a93755be8d75472e9b958d591e4bb8a425c4",
-      "seq": 40
+      "id": "38326f966db77ae0f6c623e55a2406cdb16cfd54ccbafbcbe9202f2ca5a63119",
+      "parent": "5b7a0b94f2585c557d45b129412ae63e0d6a631ceadaed379a8464496cc84c09",
+      "seq": 42
     },
     {
       "type": "STRIKE",
@@ -2283,9 +2308,9 @@
         "crit": true,
         "damage": 6
       },
-      "id": "13269312017d30558ff15ea07ab07351fdb000576624fdbe765935bfd744fdc6",
-      "parent": "00ec3cceb6012347d9783f4e978c4ceb40e713294cdb2d80f60ad1476e8b5e5c",
-      "seq": 41
+      "id": "9dd562be83abb8f7bc0e8b9d5ad8d84bc41017e624b6f68a3c1fcde5be4a9d2b",
+      "parent": "38326f966db77ae0f6c623e55a2406cdb16cfd54ccbafbcbe9202f2ca5a63119",
+      "seq": 43
     },
     {
       "type": "TURN_ADVANCED",
@@ -2294,43 +2319,10 @@
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-1",
-        "turn": 10
+        "turn": 11
       },
-      "id": "db5336df0f7fa6ddf42189b8c228d50c6f849557d788ad2bf4d0b44b99d7c22d",
-      "parent": "13269312017d30558ff15ea07ab07351fdb000576624fdbe765935bfd744fdc6",
-      "seq": 42
-    },
-    {
-      "type": "TURN_ADVANCED",
-      "schemaVersion": 2,
-      "rngCounter": 273,
-      "rngDraws": 0,
-      "payload": {
-        "activeEntityId": "player",
-        "turn": 10
-      },
-      "id": "b34b3a20bf44eebae3082a0cfd4cd2cadafd51b1cc0281c02c787edd7541d9b1",
-      "parent": "db5336df0f7fa6ddf42189b8c228d50c6f849557d788ad2bf4d0b44b99d7c22d",
-      "seq": 43
-    },
-    {
-      "type": "MOVE",
-      "schemaVersion": 2,
-      "rngCounter": 273,
-      "rngDraws": 0,
-      "payload": {
-        "entityId": "player",
-        "from": {
-          "x": 7,
-          "y": 24
-        },
-        "to": {
-          "x": 7,
-          "y": 23
-        }
-      },
-      "id": "3a61d9961d90c463bf47b8b4963ce2352c980384c5932c1f168da55d80feb72c",
-      "parent": "b34b3a20bf44eebae3082a0cfd4cd2cadafd51b1cc0281c02c787edd7541d9b1",
+      "id": "b8a9c8e1020c32672125dcf98c50ba8ac72198400c0d230a307c2a446ac5a96b",
+      "parent": "9dd562be83abb8f7bc0e8b9d5ad8d84bc41017e624b6f68a3c1fcde5be4a9d2b",
       "seq": 44
     },
     {
@@ -2339,25 +2331,12 @@
       "rngCounter": 273,
       "rngDraws": 0,
       "payload": {
-        "activeEntityId": "foe-1",
-        "turn": 11
-      },
-      "id": "c14557a4d0581db373d4b68318c550135c8dd33dd7b3ac23ab466368f2ad925b",
-      "parent": "3a61d9961d90c463bf47b8b4963ce2352c980384c5932c1f168da55d80feb72c",
-      "seq": 45
-    },
-    {
-      "type": "TURN_ADVANCED",
-      "schemaVersion": 2,
-      "rngCounter": 273,
-      "rngDraws": 0,
-      "payload": {
         "activeEntityId": "player",
         "turn": 11
       },
-      "id": "24cd3e952e4d7d0ed939cd25cdfc0e9a61686e765a1d88c56e33c527c984c926",
-      "parent": "c14557a4d0581db373d4b68318c550135c8dd33dd7b3ac23ab466368f2ad925b",
-      "seq": 46
+      "id": "fefe246453d54688ae0ee95258831b7ff57fe1e492c080484c52783d63feaf1f",
+      "parent": "b8a9c8e1020c32672125dcf98c50ba8ac72198400c0d230a307c2a446ac5a96b",
+      "seq": 45
     },
     {
       "type": "MOVE",
@@ -2375,9 +2354,9 @@
           "y": 23
         }
       },
-      "id": "000af957b469df1f942e83894d347bdd42e39c31660c9c6e2907b15c0e3d592a",
-      "parent": "24cd3e952e4d7d0ed939cd25cdfc0e9a61686e765a1d88c56e33c527c984c926",
-      "seq": 47
+      "id": "18c4d27ccf7615b608421bddced51a4a0b1b10e9613058d44925169a6c6bef70",
+      "parent": "fefe246453d54688ae0ee95258831b7ff57fe1e492c080484c52783d63feaf1f",
+      "seq": 46
     },
     {
       "type": "TURN_ADVANCED",
@@ -2388,9 +2367,9 @@
         "activeEntityId": "foe-1",
         "turn": 12
       },
-      "id": "027da7d74d01662d2fcf7f14f6310111c62920485df2d13f5abbecf87277e22e",
-      "parent": "000af957b469df1f942e83894d347bdd42e39c31660c9c6e2907b15c0e3d592a",
-      "seq": 48
+      "id": "ff4c0fde7bb1e4316ef6b3b92125c4cd8414fb7a3b91f3444fbc5d5394e4f94e",
+      "parent": "18c4d27ccf7615b608421bddced51a4a0b1b10e9613058d44925169a6c6bef70",
+      "seq": 47
     },
     {
       "type": "TURN_ADVANCED",
@@ -2401,9 +2380,9 @@
         "activeEntityId": "player",
         "turn": 12
       },
-      "id": "36a8cbb01074f34e073944769d4a8ef9da85b8e40123aa392273fff248fcfaad",
-      "parent": "027da7d74d01662d2fcf7f14f6310111c62920485df2d13f5abbecf87277e22e",
-      "seq": 49
+      "id": "d99f08a26eb024b3a4491c50b56dd06c5e7d06f01c015b87d783ba62075c8867",
+      "parent": "ff4c0fde7bb1e4316ef6b3b92125c4cd8414fb7a3b91f3444fbc5d5394e4f94e",
+      "seq": 48
     },
     {
       "type": "MOVE",
@@ -2421,9 +2400,9 @@
           "y": 23
         }
       },
-      "id": "65557093d6293ea30ad0b817decea021daeebbbe6029f6f49efe08f56f5d9c04",
-      "parent": "36a8cbb01074f34e073944769d4a8ef9da85b8e40123aa392273fff248fcfaad",
-      "seq": 50
+      "id": "bfeed27f1698e32b3b594c43f1d6d0f0aac0697b59f23bfeeef13ac6fe35ee11",
+      "parent": "d99f08a26eb024b3a4491c50b56dd06c5e7d06f01c015b87d783ba62075c8867",
+      "seq": 49
     },
     {
       "type": "TURN_ADVANCED",
@@ -2434,9 +2413,9 @@
         "activeEntityId": "foe-1",
         "turn": 13
       },
-      "id": "127337f4e2c037acc2bd14bd67eb658145f62da6c92316f19db8778f37f81adf",
-      "parent": "65557093d6293ea30ad0b817decea021daeebbbe6029f6f49efe08f56f5d9c04",
-      "seq": 51
+      "id": "580a0b8b645b91106c13a91d495cc4a4ce08a7033d9b08a697e055699ef721b4",
+      "parent": "bfeed27f1698e32b3b594c43f1d6d0f0aac0697b59f23bfeeef13ac6fe35ee11",
+      "seq": 50
     },
     {
       "type": "TURN_ADVANCED",
@@ -2447,9 +2426,9 @@
         "activeEntityId": "player",
         "turn": 13
       },
-      "id": "8f7cedc20dee7ecb8265f6750d2f9780a72d0a16dc48d0ef47f9c48cfadadcf1",
-      "parent": "127337f4e2c037acc2bd14bd67eb658145f62da6c92316f19db8778f37f81adf",
-      "seq": 52
+      "id": "1410e9251b749541e9766e2ba6bf555cd964a366498985aab500980cf3595f61",
+      "parent": "580a0b8b645b91106c13a91d495cc4a4ce08a7033d9b08a697e055699ef721b4",
+      "seq": 51
     },
     {
       "type": "MOVE",
@@ -2467,9 +2446,9 @@
           "y": 23
         }
       },
-      "id": "d97aa65aa1fd77ab25422603ac42ea7e2bc6bbba08ac89c2c8f4700913c57215",
-      "parent": "8f7cedc20dee7ecb8265f6750d2f9780a72d0a16dc48d0ef47f9c48cfadadcf1",
-      "seq": 53
+      "id": "be9f2e0e3693c17189803a6348c510ad38bdcb75147ab797e1bdd36c7104e756",
+      "parent": "1410e9251b749541e9766e2ba6bf555cd964a366498985aab500980cf3595f61",
+      "seq": 52
     },
     {
       "type": "TURN_ADVANCED",
@@ -2480,9 +2459,9 @@
         "activeEntityId": "foe-1",
         "turn": 14
       },
-      "id": "01576c32ff9ce7d0ee91ebd62a506267cc5ba4c05b4b1b6584f5ab4296cfb9e9",
-      "parent": "d97aa65aa1fd77ab25422603ac42ea7e2bc6bbba08ac89c2c8f4700913c57215",
-      "seq": 54
+      "id": "d1bcaf5c355a6eee685ca03b765297d22bb3ef8fedea7478b1a7f08ac4f2d297",
+      "parent": "be9f2e0e3693c17189803a6348c510ad38bdcb75147ab797e1bdd36c7104e756",
+      "seq": 53
     },
     {
       "type": "ITEM_TAKEN",
@@ -2501,9 +2480,9 @@
         "gearSlot": "weapon",
         "shed": null
       },
-      "id": "96ceebc4b68c558edbc8371e63e2d8351be385b0049f653cee71eb6f4b830b22",
-      "parent": "01576c32ff9ce7d0ee91ebd62a506267cc5ba4c05b4b1b6584f5ab4296cfb9e9",
-      "seq": 55
+      "id": "225be63feeb98ebb83dd655048e7872f9a1025526034c1822a6f80ba656c6c4e",
+      "parent": "d1bcaf5c355a6eee685ca03b765297d22bb3ef8fedea7478b1a7f08ac4f2d297",
+      "seq": 54
     },
     {
       "type": "TURN_ADVANCED",
@@ -2514,9 +2493,9 @@
         "activeEntityId": "player",
         "turn": 14
       },
-      "id": "b09a72a115b39e9261e4523e3c509aa7245b442a6570924d996d95ce55440be0",
-      "parent": "96ceebc4b68c558edbc8371e63e2d8351be385b0049f653cee71eb6f4b830b22",
-      "seq": 56
+      "id": "b46dff711a549657ee802791bd9ca8aaabfac9f9075df1f1b37f6499e2397fe7",
+      "parent": "225be63feeb98ebb83dd655048e7872f9a1025526034c1822a6f80ba656c6c4e",
+      "seq": 55
     },
     {
       "type": "MOVE",
@@ -2534,9 +2513,9 @@
           "y": 23
         }
       },
-      "id": "b98c2e0471eba05cdc020140d391df2c98a92c9e6e3b15d5ce064809e63ee1c5",
-      "parent": "b09a72a115b39e9261e4523e3c509aa7245b442a6570924d996d95ce55440be0",
-      "seq": 57
+      "id": "18abd163c63dec6facecbb583adf26fc87c3312e856343013ac27e100ac6c9f3",
+      "parent": "b46dff711a549657ee802791bd9ca8aaabfac9f9075df1f1b37f6499e2397fe7",
+      "seq": 56
     },
     {
       "type": "TURN_ADVANCED",
@@ -2547,9 +2526,9 @@
         "activeEntityId": "foe-1",
         "turn": 15
       },
-      "id": "18468247196ccf516188c20f48a9bb5e86ba1901c9dd911a90db042c91092c29",
-      "parent": "b98c2e0471eba05cdc020140d391df2c98a92c9e6e3b15d5ce064809e63ee1c5",
-      "seq": 58
+      "id": "225c60991511b93a6ba7600565f74e14fed4ba7153fea876876b8f10e6f2a9cf",
+      "parent": "18abd163c63dec6facecbb583adf26fc87c3312e856343013ac27e100ac6c9f3",
+      "seq": 57
     },
     {
       "type": "TURN_ADVANCED",
@@ -2560,9 +2539,9 @@
         "activeEntityId": "player",
         "turn": 15
       },
-      "id": "2b9a6b74d440fa8e3f3ab52328eefaa3703e0cc61bfae9e42c3830d75fe9486a",
-      "parent": "18468247196ccf516188c20f48a9bb5e86ba1901c9dd911a90db042c91092c29",
-      "seq": 59
+      "id": "f0d01681323b606f3bc0c9017164f32ceaced759200534075b479f13dcf78019",
+      "parent": "225c60991511b93a6ba7600565f74e14fed4ba7153fea876876b8f10e6f2a9cf",
+      "seq": 58
     },
     {
       "type": "MOVE",
@@ -2580,9 +2559,9 @@
           "y": 23
         }
       },
-      "id": "557e96277f4d0f06d0ebbf6e0eacbd7c171dc9349c9a8acfed1fda02c4a254ae",
-      "parent": "2b9a6b74d440fa8e3f3ab52328eefaa3703e0cc61bfae9e42c3830d75fe9486a",
-      "seq": 60
+      "id": "3f8dedfbb5343db891862c14fa4c5cc94491fed0863de1864d2ecbfbf5654117",
+      "parent": "f0d01681323b606f3bc0c9017164f32ceaced759200534075b479f13dcf78019",
+      "seq": 59
     },
     {
       "type": "TURN_ADVANCED",
@@ -2593,9 +2572,9 @@
         "activeEntityId": "foe-1",
         "turn": 16
       },
-      "id": "c9d8d151baab4f4f8624122af83164df03ef195003ebf635a6f73cb12bf59d19",
-      "parent": "557e96277f4d0f06d0ebbf6e0eacbd7c171dc9349c9a8acfed1fda02c4a254ae",
-      "seq": 61
+      "id": "cb3554e68c8c875a2b9b826fb6836a1950e7b472ccb02e38115255d762951764",
+      "parent": "3f8dedfbb5343db891862c14fa4c5cc94491fed0863de1864d2ecbfbf5654117",
+      "seq": 60
     },
     {
       "type": "TURN_ADVANCED",
@@ -2606,9 +2585,9 @@
         "activeEntityId": "player",
         "turn": 16
       },
-      "id": "26ea0aa7d2560ebc2bbc1d5c3db7ffa83f74d731ba242505ff2cf0d7923d3af0",
-      "parent": "c9d8d151baab4f4f8624122af83164df03ef195003ebf635a6f73cb12bf59d19",
-      "seq": 62
+      "id": "3fc985382ec4ae1efe521f28cc457536f61cb20e07315579dd46ddad018a5e89",
+      "parent": "cb3554e68c8c875a2b9b826fb6836a1950e7b472ccb02e38115255d762951764",
+      "seq": 61
     },
     {
       "type": "MOVE",
@@ -2626,9 +2605,9 @@
           "y": 23
         }
       },
-      "id": "92b33c83937cd95e642c767f52ea90d10220fc2f0150fcafaf0d4e1b903eeb3a",
-      "parent": "26ea0aa7d2560ebc2bbc1d5c3db7ffa83f74d731ba242505ff2cf0d7923d3af0",
-      "seq": 63
+      "id": "f65bb738df51a35a79fb8caf27d4b2ab608a67c71382ec9909623d63115e3678",
+      "parent": "3fc985382ec4ae1efe521f28cc457536f61cb20e07315579dd46ddad018a5e89",
+      "seq": 62
     },
     {
       "type": "TURN_ADVANCED",
@@ -2639,9 +2618,9 @@
         "activeEntityId": "foe-1",
         "turn": 17
       },
-      "id": "a66137e9a79c9236957848a6a494d3cdf77e55e5cb07b4be80fc8cde27c6f1ce",
-      "parent": "92b33c83937cd95e642c767f52ea90d10220fc2f0150fcafaf0d4e1b903eeb3a",
-      "seq": 64
+      "id": "40bbd7a5355523f40221c809f1f0577a2e0349749b75187a149574d7d4871ac5",
+      "parent": "f65bb738df51a35a79fb8caf27d4b2ab608a67c71382ec9909623d63115e3678",
+      "seq": 63
     },
     {
       "type": "TURN_ADVANCED",
@@ -2652,9 +2631,9 @@
         "activeEntityId": "player",
         "turn": 17
       },
-      "id": "53b621cde0b1951c571ded059923278cd16dadcdc4e6bc28e81dab5cb659a679",
-      "parent": "a66137e9a79c9236957848a6a494d3cdf77e55e5cb07b4be80fc8cde27c6f1ce",
-      "seq": 65
+      "id": "2cae9c558036d29b83ffa87548591ae51048807ca80888009bd64e95b7dd87c1",
+      "parent": "40bbd7a5355523f40221c809f1f0577a2e0349749b75187a149574d7d4871ac5",
+      "seq": 64
     },
     {
       "type": "MOVE",
@@ -2672,9 +2651,9 @@
           "y": 23
         }
       },
-      "id": "4ba67001aab1e13d75026d81a8796789c0615459fe87e3f194a8ee340460852b",
-      "parent": "53b621cde0b1951c571ded059923278cd16dadcdc4e6bc28e81dab5cb659a679",
-      "seq": 66
+      "id": "094d70006d40c03401617c8efb9f3143fff031720c4a500560e8de954141065b",
+      "parent": "2cae9c558036d29b83ffa87548591ae51048807ca80888009bd64e95b7dd87c1",
+      "seq": 65
     },
     {
       "type": "TURN_ADVANCED",
@@ -2685,9 +2664,9 @@
         "activeEntityId": "foe-1",
         "turn": 18
       },
-      "id": "d0d806eba8bb5949bf3cace77a6a3e3b99dfc255019a21871d443db8a6f7e74a",
-      "parent": "4ba67001aab1e13d75026d81a8796789c0615459fe87e3f194a8ee340460852b",
-      "seq": 67
+      "id": "cd432b7196dc079104ab3dd82cf59c59c8c788c801ff628903cafc601498cf5f",
+      "parent": "094d70006d40c03401617c8efb9f3143fff031720c4a500560e8de954141065b",
+      "seq": 66
     },
     {
       "type": "TURN_ADVANCED",
@@ -2698,9 +2677,9 @@
         "activeEntityId": "player",
         "turn": 18
       },
-      "id": "5b230153d66631a585e9f6c32ac3e13e2fcf7f5e706379cbdf7b4a82c65606b4",
-      "parent": "d0d806eba8bb5949bf3cace77a6a3e3b99dfc255019a21871d443db8a6f7e74a",
-      "seq": 68
+      "id": "99467bf7faaf4ee9beb38c1ecb36105a618f7bf0defc76e5f30ae247b71f2378",
+      "parent": "cd432b7196dc079104ab3dd82cf59c59c8c788c801ff628903cafc601498cf5f",
+      "seq": 67
     },
     {
       "type": "MOVE",
@@ -2718,9 +2697,9 @@
           "y": 22
         }
       },
-      "id": "a4dfc4b11d2ed5e1d226831348cea4a3e8f5878bc582fd949f8cdb729f3c854e",
-      "parent": "5b230153d66631a585e9f6c32ac3e13e2fcf7f5e706379cbdf7b4a82c65606b4",
-      "seq": 69
+      "id": "82fa139681a93167c838750763ba68f27adb883539ac55bb510961677ce4df88",
+      "parent": "99467bf7faaf4ee9beb38c1ecb36105a618f7bf0defc76e5f30ae247b71f2378",
+      "seq": 68
     },
     {
       "type": "TURN_ADVANCED",
@@ -2731,9 +2710,9 @@
         "activeEntityId": "foe-1",
         "turn": 19
       },
-      "id": "9ff5912052f8d541683c30438b42968d70b9dbc480092ef944ba770195cbc3bd",
-      "parent": "a4dfc4b11d2ed5e1d226831348cea4a3e8f5878bc582fd949f8cdb729f3c854e",
-      "seq": 70
+      "id": "5cc0d29bb7c588624f10d3f69c61ec865ed95036b88a54ea81f6d3f1b1634bb2",
+      "parent": "82fa139681a93167c838750763ba68f27adb883539ac55bb510961677ce4df88",
+      "seq": 69
     },
     {
       "type": "TURN_ADVANCED",
@@ -2744,9 +2723,9 @@
         "activeEntityId": "player",
         "turn": 19
       },
-      "id": "6b8e2df25008cb45cb208fd7adf6111fb05fea148c7994cb856a801c24efef34",
-      "parent": "9ff5912052f8d541683c30438b42968d70b9dbc480092ef944ba770195cbc3bd",
-      "seq": 71
+      "id": "a50252359fbd8ce3bdd0565f735dcdf200ca45502bc5144c9915cafc642480a5",
+      "parent": "5cc0d29bb7c588624f10d3f69c61ec865ed95036b88a54ea81f6d3f1b1634bb2",
+      "seq": 70
     },
     {
       "type": "MOVE",
@@ -2764,9 +2743,9 @@
           "y": 21
         }
       },
-      "id": "694c07008caa64d02db5591b21feb99c82e2435635f1928192e455dfc121728b",
-      "parent": "6b8e2df25008cb45cb208fd7adf6111fb05fea148c7994cb856a801c24efef34",
-      "seq": 72
+      "id": "a176ab66db21e2f012a682d4d6eeaebd4b0e6fa8b464ceb1b39de6ab32c6731a",
+      "parent": "a50252359fbd8ce3bdd0565f735dcdf200ca45502bc5144c9915cafc642480a5",
+      "seq": 71
     },
     {
       "type": "TURN_ADVANCED",
@@ -2777,9 +2756,9 @@
         "activeEntityId": "foe-1",
         "turn": 20
       },
-      "id": "390e7ef1530c6d2db9fd355910596215e201ea58132eec8d6c31bfeac4f77ac8",
-      "parent": "694c07008caa64d02db5591b21feb99c82e2435635f1928192e455dfc121728b",
-      "seq": 73
+      "id": "1b60eb6bc287e5e600ebea581265451f07fc69befb85c7c93be4b1c4cd7e52b2",
+      "parent": "a176ab66db21e2f012a682d4d6eeaebd4b0e6fa8b464ceb1b39de6ab32c6731a",
+      "seq": 72
     },
     {
       "type": "TURN_ADVANCED",
@@ -2790,9 +2769,9 @@
         "activeEntityId": "player",
         "turn": 20
       },
-      "id": "9c9be6ac4dd84aa84c0cddcc42e1a5e1494b744360338b1045929b8fb5229345",
-      "parent": "390e7ef1530c6d2db9fd355910596215e201ea58132eec8d6c31bfeac4f77ac8",
-      "seq": 74
+      "id": "793c386491ba7f06ad3d2706cdfd449c811dfa0cd48fb15081a20667222b0463",
+      "parent": "1b60eb6bc287e5e600ebea581265451f07fc69befb85c7c93be4b1c4cd7e52b2",
+      "seq": 73
     },
     {
       "type": "MOVE",
@@ -2810,9 +2789,9 @@
           "y": 20
         }
       },
-      "id": "2ec1219b6c15cdf2cc85617305da252b32c28d2a5b67b65a20c097035b38de64",
-      "parent": "9c9be6ac4dd84aa84c0cddcc42e1a5e1494b744360338b1045929b8fb5229345",
-      "seq": 75
+      "id": "1bfe21df80ae3fed6ad328179f6813324d234feebd45b53aa9605404dee69732",
+      "parent": "793c386491ba7f06ad3d2706cdfd449c811dfa0cd48fb15081a20667222b0463",
+      "seq": 74
     },
     {
       "type": "TURN_ADVANCED",
@@ -2823,9 +2802,9 @@
         "activeEntityId": "foe-1",
         "turn": 21
       },
-      "id": "fc40e2caefbe44dcfc6b83e47a9225394b62c0cfb326f809f8b39d51d78741b6",
-      "parent": "2ec1219b6c15cdf2cc85617305da252b32c28d2a5b67b65a20c097035b38de64",
-      "seq": 76
+      "id": "f97ec9555a066cc14c9fff431723d12b4692a09462c6a275c071091ed52d02a5",
+      "parent": "1bfe21df80ae3fed6ad328179f6813324d234feebd45b53aa9605404dee69732",
+      "seq": 75
     },
     {
       "type": "TURN_ADVANCED",
@@ -2836,9 +2815,9 @@
         "activeEntityId": "player",
         "turn": 21
       },
-      "id": "786dfbbd4c3f8ce4d53aad1daa0e6d20b8afa8359cdaf9e4d448c8383a182d6e",
-      "parent": "fc40e2caefbe44dcfc6b83e47a9225394b62c0cfb326f809f8b39d51d78741b6",
-      "seq": 77
+      "id": "2ea7da64573cf063b3cb591a24a3231297f5ae5547deab6647a3a1791968502c",
+      "parent": "f97ec9555a066cc14c9fff431723d12b4692a09462c6a275c071091ed52d02a5",
+      "seq": 76
     },
     {
       "type": "MOVE",
@@ -2856,9 +2835,9 @@
           "y": 19
         }
       },
-      "id": "625ee15367f5127a36bef955527728f46799a17842a14d3f623fc014cdb235f2",
-      "parent": "786dfbbd4c3f8ce4d53aad1daa0e6d20b8afa8359cdaf9e4d448c8383a182d6e",
-      "seq": 78
+      "id": "535eff6695b2c2a0c43d3d6098a92763b92971a0fdc7dcacff2f27300c2d1170",
+      "parent": "2ea7da64573cf063b3cb591a24a3231297f5ae5547deab6647a3a1791968502c",
+      "seq": 77
     },
     {
       "type": "TURN_ADVANCED",
@@ -2869,9 +2848,9 @@
         "activeEntityId": "foe-1",
         "turn": 22
       },
-      "id": "37092c162cc7bb90a4cf4440a6fa80f913ea5c263714033ec6b741b404b4442a",
-      "parent": "625ee15367f5127a36bef955527728f46799a17842a14d3f623fc014cdb235f2",
-      "seq": 79
+      "id": "4288b901740a6277656c24d3b9b969b54028f6519d6659cdbdfe57706613d439",
+      "parent": "535eff6695b2c2a0c43d3d6098a92763b92971a0fdc7dcacff2f27300c2d1170",
+      "seq": 78
     },
     {
       "type": "TURN_ADVANCED",
@@ -2882,9 +2861,9 @@
         "activeEntityId": "player",
         "turn": 22
       },
-      "id": "7720cfb624786fbc35ad2d409d41da18edce7bd74981c5552f82de1ebaca74c2",
-      "parent": "37092c162cc7bb90a4cf4440a6fa80f913ea5c263714033ec6b741b404b4442a",
-      "seq": 80
+      "id": "8975d508699eb3cc1676eb36dcfd01a95959937b0bc36ade86924ab4b388572c",
+      "parent": "4288b901740a6277656c24d3b9b969b54028f6519d6659cdbdfe57706613d439",
+      "seq": 79
     },
     {
       "type": "MOVE",
@@ -2902,9 +2881,9 @@
           "y": 18
         }
       },
-      "id": "b233fa123799857d68fac83783baa256fd8207fec5fcf37edb964debb9de7cbd",
-      "parent": "7720cfb624786fbc35ad2d409d41da18edce7bd74981c5552f82de1ebaca74c2",
-      "seq": 81
+      "id": "80eb38e98e49aac2f56e51f711c89f2775c27bc25cd1273ee709b1656afc8791",
+      "parent": "8975d508699eb3cc1676eb36dcfd01a95959937b0bc36ade86924ab4b388572c",
+      "seq": 80
     },
     {
       "type": "TURN_ADVANCED",
@@ -2915,9 +2894,9 @@
         "activeEntityId": "foe-1",
         "turn": 23
       },
-      "id": "ea0c2e64b75dd41461529716c7da9c260dd1c54773248606c4b6c1a869929833",
-      "parent": "b233fa123799857d68fac83783baa256fd8207fec5fcf37edb964debb9de7cbd",
-      "seq": 82
+      "id": "f612d652d5980d8f5b6e1e277e7c6bd6c63b2c2ecfba6e6d6e38c8b2efddbda1",
+      "parent": "80eb38e98e49aac2f56e51f711c89f2775c27bc25cd1273ee709b1656afc8791",
+      "seq": 81
     },
     {
       "type": "TURN_ADVANCED",
@@ -2928,9 +2907,9 @@
         "activeEntityId": "player",
         "turn": 23
       },
-      "id": "a57411d64a89658dfabceba3d488a3b8d631f575b026c3f21df54be979f09806",
-      "parent": "ea0c2e64b75dd41461529716c7da9c260dd1c54773248606c4b6c1a869929833",
-      "seq": 83
+      "id": "f0200da0fe117962c7703875d8c696413c9fcd4001502aa8a2f0e23802377ab4",
+      "parent": "f612d652d5980d8f5b6e1e277e7c6bd6c63b2c2ecfba6e6d6e38c8b2efddbda1",
+      "seq": 82
     },
     {
       "type": "MOVE",
@@ -2948,9 +2927,9 @@
           "y": 17
         }
       },
-      "id": "aa8c752889ae7308d990b1b3c0f407b9d7ff6cdfa6812c8775d43ee528081cf8",
-      "parent": "a57411d64a89658dfabceba3d488a3b8d631f575b026c3f21df54be979f09806",
-      "seq": 84
+      "id": "2aedc258818a11b2d58f1c75d0145d18100223b9f39669d08d543233039a5aee",
+      "parent": "f0200da0fe117962c7703875d8c696413c9fcd4001502aa8a2f0e23802377ab4",
+      "seq": 83
     },
     {
       "type": "TURN_ADVANCED",
@@ -2961,9 +2940,9 @@
         "activeEntityId": "foe-1",
         "turn": 24
       },
-      "id": "489dfbe7bd911c7ff752ebd62df283e5fcb5ac375f9d41b70f233a03a701bf03",
-      "parent": "aa8c752889ae7308d990b1b3c0f407b9d7ff6cdfa6812c8775d43ee528081cf8",
-      "seq": 85
+      "id": "daa36eb6a787eb1b7df860aa8cadc8c49914ca910e80b7eb4bbbda7e546017b7",
+      "parent": "2aedc258818a11b2d58f1c75d0145d18100223b9f39669d08d543233039a5aee",
+      "seq": 84
     },
     {
       "type": "TURN_ADVANCED",
@@ -2974,9 +2953,9 @@
         "activeEntityId": "player",
         "turn": 24
       },
-      "id": "366c3b7863a4683dcb9dea1f381ec37cbca9b45ceec107a3679f1ccf5d7a04bf",
-      "parent": "489dfbe7bd911c7ff752ebd62df283e5fcb5ac375f9d41b70f233a03a701bf03",
-      "seq": 86
+      "id": "3c663d8890e3069a97a51754509858bdb42bb1b4203d45d5ea93a1a3de5fb4d7",
+      "parent": "daa36eb6a787eb1b7df860aa8cadc8c49914ca910e80b7eb4bbbda7e546017b7",
+      "seq": 85
     },
     {
       "type": "MOVE",
@@ -2994,9 +2973,9 @@
           "y": 16
         }
       },
-      "id": "28ba0e13cf518a439465b73edfd753e3d552a915c54e28b666e1fc3625ac59e6",
-      "parent": "366c3b7863a4683dcb9dea1f381ec37cbca9b45ceec107a3679f1ccf5d7a04bf",
-      "seq": 87
+      "id": "fe508f3c2b363a2db59fa36cb1bb1e530f7fc39de55b4eb66de39e79baf144e3",
+      "parent": "3c663d8890e3069a97a51754509858bdb42bb1b4203d45d5ea93a1a3de5fb4d7",
+      "seq": 86
     },
     {
       "type": "TURN_ADVANCED",
@@ -3007,9 +2986,9 @@
         "activeEntityId": "foe-1",
         "turn": 25
       },
-      "id": "fb5dd79de923faee55450c3332a83f3c5a2bc784989c6e17a99a1c950619aa99",
-      "parent": "28ba0e13cf518a439465b73edfd753e3d552a915c54e28b666e1fc3625ac59e6",
-      "seq": 88
+      "id": "b57cadcebd44a4aa30ae8ef2c5befa28a6d04ad746ca8ec7a9b9a61ab53ad037",
+      "parent": "fe508f3c2b363a2db59fa36cb1bb1e530f7fc39de55b4eb66de39e79baf144e3",
+      "seq": 87
     },
     {
       "type": "TURN_ADVANCED",
@@ -3020,9 +2999,9 @@
         "activeEntityId": "player",
         "turn": 25
       },
-      "id": "9ef143de5bbadc66e1160b952b82158028e095f68bfbca811ca4637e07e554c4",
-      "parent": "fb5dd79de923faee55450c3332a83f3c5a2bc784989c6e17a99a1c950619aa99",
-      "seq": 89
+      "id": "716b787eec287dffa7b0d085f34e9d4e6ebd83ac22f17dad6a29e56d2765a7bf",
+      "parent": "b57cadcebd44a4aa30ae8ef2c5befa28a6d04ad746ca8ec7a9b9a61ab53ad037",
+      "seq": 88
     },
     {
       "type": "MOVE",
@@ -3040,9 +3019,9 @@
           "y": 15
         }
       },
-      "id": "f1624a899bdf4d99dd4d0db44c6e9df6ef1b482b60be9573a57b842852fe2969",
-      "parent": "9ef143de5bbadc66e1160b952b82158028e095f68bfbca811ca4637e07e554c4",
-      "seq": 90
+      "id": "fe1fb58627792027f9b798e9576a2ab8498d5118a1a6a177d5899bb36424feba",
+      "parent": "716b787eec287dffa7b0d085f34e9d4e6ebd83ac22f17dad6a29e56d2765a7bf",
+      "seq": 89
     },
     {
       "type": "TURN_ADVANCED",
@@ -3053,9 +3032,9 @@
         "activeEntityId": "foe-1",
         "turn": 26
       },
-      "id": "52c837c7d997b60e6ea91d8f44bc555f698408f957e32b4269b6ae3a9631eaeb",
-      "parent": "f1624a899bdf4d99dd4d0db44c6e9df6ef1b482b60be9573a57b842852fe2969",
-      "seq": 91
+      "id": "e2a27bf6c2d312db49c0c9ebd6bb47a41fe9485fc0b2688a8b39bf79142e269b",
+      "parent": "fe1fb58627792027f9b798e9576a2ab8498d5118a1a6a177d5899bb36424feba",
+      "seq": 90
     },
     {
       "type": "TURN_ADVANCED",
@@ -3066,9 +3045,9 @@
         "activeEntityId": "player",
         "turn": 26
       },
-      "id": "002f96a8440c5c688d7b3748a9cb9850cfeae64ea576e5bb3c484831051d04be",
-      "parent": "52c837c7d997b60e6ea91d8f44bc555f698408f957e32b4269b6ae3a9631eaeb",
-      "seq": 92
+      "id": "f58ae0d7a1558469e1fc00fcaddd85f12e17d2a234ef6538474f25dc5148a80a",
+      "parent": "e2a27bf6c2d312db49c0c9ebd6bb47a41fe9485fc0b2688a8b39bf79142e269b",
+      "seq": 91
     },
     {
       "type": "MOVE",
@@ -3086,9 +3065,9 @@
           "y": 14
         }
       },
-      "id": "6a9904251609fe4faeac343ba13591f4533b9233fcd42250a59c25d4669e2c6e",
-      "parent": "002f96a8440c5c688d7b3748a9cb9850cfeae64ea576e5bb3c484831051d04be",
-      "seq": 93
+      "id": "db36eb463a33b80cd4cc3f2813f65a37eebe98bed7a1f303e6bc1359f68bfdf0",
+      "parent": "f58ae0d7a1558469e1fc00fcaddd85f12e17d2a234ef6538474f25dc5148a80a",
+      "seq": 92
     },
     {
       "type": "TURN_ADVANCED",
@@ -3099,9 +3078,9 @@
         "activeEntityId": "foe-1",
         "turn": 27
       },
-      "id": "0ec66090410bc479e13b7a33f1a26feb92886ff51fb9b485d89fea0b0f7b0dee",
-      "parent": "6a9904251609fe4faeac343ba13591f4533b9233fcd42250a59c25d4669e2c6e",
-      "seq": 94
+      "id": "241339ccba7a9843229df3fb5ea6e9c6c075028471b11d353693912a7933c73d",
+      "parent": "db36eb463a33b80cd4cc3f2813f65a37eebe98bed7a1f303e6bc1359f68bfdf0",
+      "seq": 93
     },
     {
       "type": "TURN_ADVANCED",
@@ -3112,9 +3091,9 @@
         "activeEntityId": "player",
         "turn": 27
       },
-      "id": "8a0c61cb6fb4086b507579485dee75ed1c9ded7ff21def465fef97826bbbec44",
-      "parent": "0ec66090410bc479e13b7a33f1a26feb92886ff51fb9b485d89fea0b0f7b0dee",
-      "seq": 95
+      "id": "de909919fb2d932b8a413e452f01a7d510aa884268151d7f51a1cb56502191b6",
+      "parent": "241339ccba7a9843229df3fb5ea6e9c6c075028471b11d353693912a7933c73d",
+      "seq": 94
     },
     {
       "type": "MOVE",
@@ -3132,9 +3111,9 @@
           "y": 14
         }
       },
-      "id": "e0f64ee247548e807eb1a16eb07492079b70a26110b154d7d8f72df2f37bb9bf",
-      "parent": "8a0c61cb6fb4086b507579485dee75ed1c9ded7ff21def465fef97826bbbec44",
-      "seq": 96
+      "id": "24e6ff09789d5f2a78d886acc74b67e76c795dd8b29a21dbb2b35d8dabb6c97e",
+      "parent": "de909919fb2d932b8a413e452f01a7d510aa884268151d7f51a1cb56502191b6",
+      "seq": 95
     },
     {
       "type": "TURN_ADVANCED",
@@ -3145,9 +3124,9 @@
         "activeEntityId": "foe-1",
         "turn": 28
       },
-      "id": "730f3f11eede28478c0c980e381c416948367839db42e34e4d5b982617157fd0",
-      "parent": "e0f64ee247548e807eb1a16eb07492079b70a26110b154d7d8f72df2f37bb9bf",
-      "seq": 97
+      "id": "791435bd2b7b0c24d111d68553bc53ed6add1b6140427e5b2a7aaa974ca681cd",
+      "parent": "24e6ff09789d5f2a78d886acc74b67e76c795dd8b29a21dbb2b35d8dabb6c97e",
+      "seq": 96
     },
     {
       "type": "TURN_ADVANCED",
@@ -3158,9 +3137,9 @@
         "activeEntityId": "player",
         "turn": 28
       },
-      "id": "cd1dc86c24d0343f5f681128441494643a7b0b4cebdcc844fc2616778dd7b147",
-      "parent": "730f3f11eede28478c0c980e381c416948367839db42e34e4d5b982617157fd0",
-      "seq": 98
+      "id": "7ad32e0618807f0d1f1903460c07fa99ed0d06b75aea2c700192ad2091820230",
+      "parent": "791435bd2b7b0c24d111d68553bc53ed6add1b6140427e5b2a7aaa974ca681cd",
+      "seq": 97
     },
     {
       "type": "MOVE",
@@ -3178,9 +3157,9 @@
           "y": 14
         }
       },
-      "id": "6b9a8c9c3a2d4ba15dc4978e7829f1af672bec6720616682943d7b8395e8d0b6",
-      "parent": "cd1dc86c24d0343f5f681128441494643a7b0b4cebdcc844fc2616778dd7b147",
-      "seq": 99
+      "id": "2062ef022c5a1b4fe54c1645c944ff1a0279ed51594ce493b4e64dd38cec5a69",
+      "parent": "7ad32e0618807f0d1f1903460c07fa99ed0d06b75aea2c700192ad2091820230",
+      "seq": 98
     },
     {
       "type": "TURN_ADVANCED",
@@ -3191,9 +3170,9 @@
         "activeEntityId": "foe-1",
         "turn": 29
       },
-      "id": "301d2dfafb3bb3aa78495d4e77eeccdbbb19f2da012ceb7da0aff0901088e825",
-      "parent": "6b9a8c9c3a2d4ba15dc4978e7829f1af672bec6720616682943d7b8395e8d0b6",
-      "seq": 100
+      "id": "9eba15fb02309a15b3e9891841dcedf0df5c90b94923de5afd56e5c675136084",
+      "parent": "2062ef022c5a1b4fe54c1645c944ff1a0279ed51594ce493b4e64dd38cec5a69",
+      "seq": 99
     },
     {
       "type": "TURN_ADVANCED",
@@ -3204,9 +3183,9 @@
         "activeEntityId": "player",
         "turn": 29
       },
-      "id": "7f9641bb36709cdc268220e0fb6973b5391310e02d37eab7f5eb92aec20d0013",
-      "parent": "301d2dfafb3bb3aa78495d4e77eeccdbbb19f2da012ceb7da0aff0901088e825",
-      "seq": 101
+      "id": "8524fb721ab5f76ab68713e6728dd009a7e21aaec7e31a65fe99a9abf5bbb866",
+      "parent": "9eba15fb02309a15b3e9891841dcedf0df5c90b94923de5afd56e5c675136084",
+      "seq": 100
     },
     {
       "type": "MOVE",
@@ -3224,9 +3203,9 @@
           "y": 14
         }
       },
-      "id": "48e9037a0f20bb3788b76fc4d6f8674aa6307c8ab7b68033249a256d2bac2ca2",
-      "parent": "7f9641bb36709cdc268220e0fb6973b5391310e02d37eab7f5eb92aec20d0013",
-      "seq": 102
+      "id": "bc61c1b0b951ee4d1efcbd48455a0f66a43eba4cef41ae48f7cdfa3651c5007a",
+      "parent": "8524fb721ab5f76ab68713e6728dd009a7e21aaec7e31a65fe99a9abf5bbb866",
+      "seq": 101
     },
     {
       "type": "TURN_ADVANCED",
@@ -3237,9 +3216,9 @@
         "activeEntityId": "foe-1",
         "turn": 30
       },
-      "id": "d54045d33434a712ad7cc1fc286f2e4a181e20491862dd059326bd351ac1b971",
-      "parent": "48e9037a0f20bb3788b76fc4d6f8674aa6307c8ab7b68033249a256d2bac2ca2",
-      "seq": 103
+      "id": "0c5cf2746e37cde2321cdae28c42818d0c7a7c4f26591c086d7f1b4be0b82420",
+      "parent": "bc61c1b0b951ee4d1efcbd48455a0f66a43eba4cef41ae48f7cdfa3651c5007a",
+      "seq": 102
     },
     {
       "type": "TURN_ADVANCED",
@@ -3250,9 +3229,9 @@
         "activeEntityId": "player",
         "turn": 30
       },
-      "id": "f2c4aeebb61dd045c4f1f638b2e3dae60a8dfa0dd4f38411dfa69059210315b3",
-      "parent": "d54045d33434a712ad7cc1fc286f2e4a181e20491862dd059326bd351ac1b971",
-      "seq": 104
+      "id": "10d17ea87fbcfa8f8cb9ed5e6e38a80b63e6f8ddfc1b9bbc39e51859ac88dbbd",
+      "parent": "0c5cf2746e37cde2321cdae28c42818d0c7a7c4f26591c086d7f1b4be0b82420",
+      "seq": 103
     },
     {
       "type": "MOVE",
@@ -3270,9 +3249,9 @@
           "y": 13
         }
       },
-      "id": "9fd60510776b8c991848157a05df50f2e75983f4ee9f2cf436d07ec18cdec4f7",
-      "parent": "f2c4aeebb61dd045c4f1f638b2e3dae60a8dfa0dd4f38411dfa69059210315b3",
-      "seq": 105
+      "id": "33db9bd0589a20ed17604eb64ae97f429b2ca0d1054067d121e7aa4df1b610e3",
+      "parent": "10d17ea87fbcfa8f8cb9ed5e6e38a80b63e6f8ddfc1b9bbc39e51859ac88dbbd",
+      "seq": 104
     },
     {
       "type": "TURN_ADVANCED",
@@ -3283,9 +3262,9 @@
         "activeEntityId": "foe-1",
         "turn": 31
       },
-      "id": "5dc66ae626729f4ad0cfe6b6f3bc62f259f40f91ec37df3d3a2b11dad39e622b",
-      "parent": "9fd60510776b8c991848157a05df50f2e75983f4ee9f2cf436d07ec18cdec4f7",
-      "seq": 106
+      "id": "a038337044845246198231319e59d9fc48d41ad1ee96b0b690561c8f0be03624",
+      "parent": "33db9bd0589a20ed17604eb64ae97f429b2ca0d1054067d121e7aa4df1b610e3",
+      "seq": 105
     },
     {
       "type": "TURN_ADVANCED",
@@ -3296,9 +3275,9 @@
         "activeEntityId": "player",
         "turn": 31
       },
-      "id": "39e90fd444734ff3ed4024e1aa9326613f18dbb4de0d6e9125be5efaef693444",
-      "parent": "5dc66ae626729f4ad0cfe6b6f3bc62f259f40f91ec37df3d3a2b11dad39e622b",
-      "seq": 107
+      "id": "3807dbd4b25e030fb53ee032539b0cf3a146bdcd83afae7b66a04a14f1d78f8f",
+      "parent": "a038337044845246198231319e59d9fc48d41ad1ee96b0b690561c8f0be03624",
+      "seq": 106
     },
     {
       "type": "MOVE",
@@ -3316,9 +3295,9 @@
           "y": 12
         }
       },
-      "id": "b347cd07c9c2711778107e98d7b1674f9d37448cb63e0702e67944b979a37479",
-      "parent": "39e90fd444734ff3ed4024e1aa9326613f18dbb4de0d6e9125be5efaef693444",
-      "seq": 108
+      "id": "85dbd15b1b37bdd9d2551e29a9f90ea1d6475669c8d483b278d29945f989032d",
+      "parent": "3807dbd4b25e030fb53ee032539b0cf3a146bdcd83afae7b66a04a14f1d78f8f",
+      "seq": 107
     },
     {
       "type": "TURN_ADVANCED",
@@ -3329,9 +3308,9 @@
         "activeEntityId": "foe-1",
         "turn": 32
       },
-      "id": "b2b437b5bf5881ab3cbaa13944192f9877d516bca37ea7b661e35cc7b7f08641",
-      "parent": "b347cd07c9c2711778107e98d7b1674f9d37448cb63e0702e67944b979a37479",
-      "seq": 109
+      "id": "0f2624259ed6e8b3b2853d6b68de6a7288fb5570f8df0fe217935389e3a033a9",
+      "parent": "85dbd15b1b37bdd9d2551e29a9f90ea1d6475669c8d483b278d29945f989032d",
+      "seq": 108
     },
     {
       "type": "TURN_ADVANCED",
@@ -3342,9 +3321,9 @@
         "activeEntityId": "player",
         "turn": 32
       },
-      "id": "2b042dde4d824e64d58693ffe48e7cc7225daa8fc25451e186d73f02aed5000a",
-      "parent": "b2b437b5bf5881ab3cbaa13944192f9877d516bca37ea7b661e35cc7b7f08641",
-      "seq": 110
+      "id": "01162307f5b7399d917e2d74fddeac48bedade6222bb765ae0a3ac10ccb29e94",
+      "parent": "0f2624259ed6e8b3b2853d6b68de6a7288fb5570f8df0fe217935389e3a033a9",
+      "seq": 109
     },
     {
       "type": "MOVE",
@@ -3362,9 +3341,9 @@
           "y": 12
         }
       },
-      "id": "8921c51009392f17adcaef33c3e509b65101e277bb2fbffcb5c8fd956d0e7a9e",
-      "parent": "2b042dde4d824e64d58693ffe48e7cc7225daa8fc25451e186d73f02aed5000a",
-      "seq": 111
+      "id": "d8baa19ddee065d3c7557fb478810925d125970961a819547b0b1e2d3def3db1",
+      "parent": "01162307f5b7399d917e2d74fddeac48bedade6222bb765ae0a3ac10ccb29e94",
+      "seq": 110
     },
     {
       "type": "TURN_ADVANCED",
@@ -3375,9 +3354,9 @@
         "activeEntityId": "foe-1",
         "turn": 33
       },
-      "id": "c6bcd8f30d393fa68e56363ad82b12a27bc00e5405aff974c2753c7afd942b28",
-      "parent": "8921c51009392f17adcaef33c3e509b65101e277bb2fbffcb5c8fd956d0e7a9e",
-      "seq": 112
+      "id": "050dee386b36539bd5a830f8aab996ad76db36f2e128bb8921e54814ed5dbaee",
+      "parent": "d8baa19ddee065d3c7557fb478810925d125970961a819547b0b1e2d3def3db1",
+      "seq": 111
     },
     {
       "type": "TURN_ADVANCED",
@@ -3388,9 +3367,9 @@
         "activeEntityId": "player",
         "turn": 33
       },
-      "id": "f8c7dba185ab01d9118ffa0876e0ba1e74ce3a79866f6b09e0a46ce67e18412e",
-      "parent": "c6bcd8f30d393fa68e56363ad82b12a27bc00e5405aff974c2753c7afd942b28",
-      "seq": 113
+      "id": "1a2d6422c63755175deeba7bd8931d9112713fa5952127edb1e52a22b4c78892",
+      "parent": "050dee386b36539bd5a830f8aab996ad76db36f2e128bb8921e54814ed5dbaee",
+      "seq": 112
     },
     {
       "type": "MOVE",
@@ -3408,9 +3387,9 @@
           "y": 12
         }
       },
-      "id": "c99a5acb5d78f9e3fad4a8a5b701d8fecd55bb635acaa84c0903a5b86dcc4307",
-      "parent": "f8c7dba185ab01d9118ffa0876e0ba1e74ce3a79866f6b09e0a46ce67e18412e",
-      "seq": 114
+      "id": "eaefdb2635e81f0cbdef82fd135ef2bfaf07cc11e86a30001bde293e56c3c030",
+      "parent": "1a2d6422c63755175deeba7bd8931d9112713fa5952127edb1e52a22b4c78892",
+      "seq": 113
     },
     {
       "type": "TURN_ADVANCED",
@@ -3421,9 +3400,9 @@
         "activeEntityId": "foe-1",
         "turn": 34
       },
-      "id": "5a60d1d4bdbf90938e078371d66e729c32c9100076c66cb5bb60ed892b39eb34",
-      "parent": "c99a5acb5d78f9e3fad4a8a5b701d8fecd55bb635acaa84c0903a5b86dcc4307",
-      "seq": 115
+      "id": "cd28899fad170fa2d9f27ce794525d9ece172c294fd4b5d72ff074f8126061d0",
+      "parent": "eaefdb2635e81f0cbdef82fd135ef2bfaf07cc11e86a30001bde293e56c3c030",
+      "seq": 114
     },
     {
       "type": "TURN_ADVANCED",
@@ -3434,9 +3413,9 @@
         "activeEntityId": "player",
         "turn": 34
       },
-      "id": "9f652146ef5e8d13acf92b033e3dc4a80f3a6e8b6e33bdce3f4801f71f5449b2",
-      "parent": "5a60d1d4bdbf90938e078371d66e729c32c9100076c66cb5bb60ed892b39eb34",
-      "seq": 116
+      "id": "815dd78629669cbd355e289100dea2f54cc98423f3e10ee46ab54d6dbc027009",
+      "parent": "cd28899fad170fa2d9f27ce794525d9ece172c294fd4b5d72ff074f8126061d0",
+      "seq": 115
     },
     {
       "type": "MOVE",
@@ -3454,9 +3433,9 @@
           "y": 12
         }
       },
-      "id": "39b230c974ee46d9bd14ed990b76a641421c74c998d116f91d58491bcbbb3567",
-      "parent": "9f652146ef5e8d13acf92b033e3dc4a80f3a6e8b6e33bdce3f4801f71f5449b2",
-      "seq": 117
+      "id": "2c6245ad816e3639e29976f7d42b3e9042ff8eb79f24d3bf2e379ee38a91008c",
+      "parent": "815dd78629669cbd355e289100dea2f54cc98423f3e10ee46ab54d6dbc027009",
+      "seq": 116
     },
     {
       "type": "TURN_ADVANCED",
@@ -3467,9 +3446,9 @@
         "activeEntityId": "foe-1",
         "turn": 35
       },
-      "id": "4d662a55689dc0e38ecedb31c1463a21914e5ec5b1af10add498ff700966c783",
-      "parent": "39b230c974ee46d9bd14ed990b76a641421c74c998d116f91d58491bcbbb3567",
-      "seq": 118
+      "id": "4c9b4c31ac40d90e0455b38d59d0d65dede6e0bf96f30f442ca30c6edd315aa1",
+      "parent": "2c6245ad816e3639e29976f7d42b3e9042ff8eb79f24d3bf2e379ee38a91008c",
+      "seq": 117
     },
     {
       "type": "TURN_ADVANCED",
@@ -3480,9 +3459,9 @@
         "activeEntityId": "player",
         "turn": 35
       },
-      "id": "7fd0997b9f72b69d476c35f502702a789b4bcf39fe776642377dd9e63e49c4cf",
-      "parent": "4d662a55689dc0e38ecedb31c1463a21914e5ec5b1af10add498ff700966c783",
-      "seq": 119
+      "id": "a13dc554a46b0fd1d62ec549f0bfe25c07181294a522ff9cf51593713a49ebb2",
+      "parent": "4c9b4c31ac40d90e0455b38d59d0d65dede6e0bf96f30f442ca30c6edd315aa1",
+      "seq": 118
     },
     {
       "type": "MOVE",
@@ -3500,9 +3479,9 @@
           "y": 12
         }
       },
-      "id": "0edf22866572c3f5146c34dfa2574366170a02eaeba70d3f1f2fa5e4d5c1e105",
-      "parent": "7fd0997b9f72b69d476c35f502702a789b4bcf39fe776642377dd9e63e49c4cf",
-      "seq": 120
+      "id": "e5f1845185b59da79d697409ce2e63e638c71f1d881af33881c7e55fb9202966",
+      "parent": "a13dc554a46b0fd1d62ec549f0bfe25c07181294a522ff9cf51593713a49ebb2",
+      "seq": 119
     },
     {
       "type": "TURN_ADVANCED",
@@ -3513,9 +3492,9 @@
         "activeEntityId": "foe-1",
         "turn": 36
       },
-      "id": "f90ba2064f8730870fbccd97db6f1d1068baa5e3324b2e2c5a2835e68fa5fb51",
-      "parent": "0edf22866572c3f5146c34dfa2574366170a02eaeba70d3f1f2fa5e4d5c1e105",
-      "seq": 121
+      "id": "ba29983344e7841c4265ab15e174cd9a06908be97756c88b749a8c9bd8a56d7a",
+      "parent": "e5f1845185b59da79d697409ce2e63e638c71f1d881af33881c7e55fb9202966",
+      "seq": 120
     },
     {
       "type": "TURN_ADVANCED",
@@ -3526,9 +3505,9 @@
         "activeEntityId": "player",
         "turn": 36
       },
-      "id": "ec27ec244208c1be9bc6aa6ec14fccb4576f5dfdcbe3cb9272e01e54dfeebe67",
-      "parent": "f90ba2064f8730870fbccd97db6f1d1068baa5e3324b2e2c5a2835e68fa5fb51",
-      "seq": 122
+      "id": "cc807b7fbdef1923544c508b92b7e38f3608a3c98f5430af9c9db253cf687d16",
+      "parent": "ba29983344e7841c4265ab15e174cd9a06908be97756c88b749a8c9bd8a56d7a",
+      "seq": 121
     },
     {
       "type": "MOVE",
@@ -3546,9 +3525,9 @@
           "y": 12
         }
       },
-      "id": "1c407c18f4986268136e4f1837512df736540f8e6b4a7fbba3c8f6f84f62b9c2",
-      "parent": "ec27ec244208c1be9bc6aa6ec14fccb4576f5dfdcbe3cb9272e01e54dfeebe67",
-      "seq": 123
+      "id": "3d90fac3c4f1c5aa92a3154c59cae1e43eac3f08dfe186a73eda622581ea1f46",
+      "parent": "cc807b7fbdef1923544c508b92b7e38f3608a3c98f5430af9c9db253cf687d16",
+      "seq": 122
     },
     {
       "type": "TURN_ADVANCED",
@@ -3559,9 +3538,9 @@
         "activeEntityId": "foe-1",
         "turn": 37
       },
-      "id": "af8bd0c7b3d3c83e41343b7157c83ad3cb3187790cac3a987a007b865cfb7635",
-      "parent": "1c407c18f4986268136e4f1837512df736540f8e6b4a7fbba3c8f6f84f62b9c2",
-      "seq": 124
+      "id": "96ae48bc941ba9ca291213aea5d73fed104b044347814d29565d5fa3ebecc2a7",
+      "parent": "3d90fac3c4f1c5aa92a3154c59cae1e43eac3f08dfe186a73eda622581ea1f46",
+      "seq": 123
     },
     {
       "type": "TURN_ADVANCED",
@@ -3572,9 +3551,9 @@
         "activeEntityId": "player",
         "turn": 37
       },
-      "id": "e03220209502dcf30d768e3e7cd2278c87671d2963532b4b95fc213fb9dc3593",
-      "parent": "af8bd0c7b3d3c83e41343b7157c83ad3cb3187790cac3a987a007b865cfb7635",
-      "seq": 125
+      "id": "a6211ef74c1838b440917ba82791a220eda609a62d47cbc7a35a2f4dba6b014f",
+      "parent": "96ae48bc941ba9ca291213aea5d73fed104b044347814d29565d5fa3ebecc2a7",
+      "seq": 124
     },
     {
       "type": "MOVE",
@@ -3592,9 +3571,9 @@
           "y": 12
         }
       },
-      "id": "5a1fb4408384b0977604f4e0662c239a0a59192ff0bc4a01cb933890115c8170",
-      "parent": "e03220209502dcf30d768e3e7cd2278c87671d2963532b4b95fc213fb9dc3593",
-      "seq": 126
+      "id": "ca64a7a5a39c93a5821ad8aa3d19cc363acad570c21b14eca892489b5bf704dd",
+      "parent": "a6211ef74c1838b440917ba82791a220eda609a62d47cbc7a35a2f4dba6b014f",
+      "seq": 125
     },
     {
       "type": "TURN_ADVANCED",
@@ -3605,9 +3584,9 @@
         "activeEntityId": "foe-1",
         "turn": 38
       },
-      "id": "7899d002239f5895d85dcea2ce5a5be662da435b3ff2d0f88e3bcc881f811389",
-      "parent": "5a1fb4408384b0977604f4e0662c239a0a59192ff0bc4a01cb933890115c8170",
-      "seq": 127
+      "id": "53415044eea0021750fbc9009dd15f00c55ff183a602d7a9ca8d0d31dc3e0965",
+      "parent": "ca64a7a5a39c93a5821ad8aa3d19cc363acad570c21b14eca892489b5bf704dd",
+      "seq": 126
     },
     {
       "type": "TURN_ADVANCED",
@@ -3618,9 +3597,9 @@
         "activeEntityId": "player",
         "turn": 38
       },
-      "id": "4e7603a1633568d2dda73eb38d0edd9151118b1ae90ac072804e7d9ee21f4df0",
-      "parent": "7899d002239f5895d85dcea2ce5a5be662da435b3ff2d0f88e3bcc881f811389",
-      "seq": 128
+      "id": "284cded8c90a08859ad8806fbe8c8984d51e2ac5b9292350866f2f38ae8ba4ed",
+      "parent": "53415044eea0021750fbc9009dd15f00c55ff183a602d7a9ca8d0d31dc3e0965",
+      "seq": 127
     },
     {
       "type": "MOVE",
@@ -3638,9 +3617,9 @@
           "y": 12
         }
       },
-      "id": "e7f1cf70c544186d3a39b186104b0468b899cf69071693d13a859b16c3c3c5ed",
-      "parent": "4e7603a1633568d2dda73eb38d0edd9151118b1ae90ac072804e7d9ee21f4df0",
-      "seq": 129
+      "id": "b3de29f0d9330fb5b29f1baf08fc8f46200888a3fb644385517be4759901ab73",
+      "parent": "284cded8c90a08859ad8806fbe8c8984d51e2ac5b9292350866f2f38ae8ba4ed",
+      "seq": 128
     },
     {
       "type": "TURN_ADVANCED",
@@ -3651,9 +3630,9 @@
         "activeEntityId": "foe-1",
         "turn": 39
       },
-      "id": "035567dd20db8743253609da5683d34c0d3af20511357171bb203f2364f0c94b",
-      "parent": "e7f1cf70c544186d3a39b186104b0468b899cf69071693d13a859b16c3c3c5ed",
-      "seq": 130
+      "id": "16b4b970f8502eaec992ac4b63aec96b114cb0108e1cacfc56aa3f617a258397",
+      "parent": "b3de29f0d9330fb5b29f1baf08fc8f46200888a3fb644385517be4759901ab73",
+      "seq": 129
     },
     {
       "type": "TURN_ADVANCED",
@@ -3664,9 +3643,9 @@
         "activeEntityId": "player",
         "turn": 39
       },
-      "id": "b660e6e977be507108c5bbd611354ce836fef9a5e7961774e6f9a3e68ee85bcf",
-      "parent": "035567dd20db8743253609da5683d34c0d3af20511357171bb203f2364f0c94b",
-      "seq": 131
+      "id": "e39754d3d5dce975dce4c2c3425bad7dbdebe06dc065c6da7674fe3985251da7",
+      "parent": "16b4b970f8502eaec992ac4b63aec96b114cb0108e1cacfc56aa3f617a258397",
+      "seq": 130
     },
     {
       "type": "MOVE",
@@ -3684,9 +3663,9 @@
           "y": 12
         }
       },
-      "id": "d1b69a2d322ea4e2f3f703084d4803a02fcac0c512ff77e0c401f83e879bba20",
-      "parent": "b660e6e977be507108c5bbd611354ce836fef9a5e7961774e6f9a3e68ee85bcf",
-      "seq": 132
+      "id": "f696ad009ce888eeb541f7eedde5edf98721ea810538a7c9436f3cff5129ae9c",
+      "parent": "e39754d3d5dce975dce4c2c3425bad7dbdebe06dc065c6da7674fe3985251da7",
+      "seq": 131
     },
     {
       "type": "TURN_ADVANCED",
@@ -3697,9 +3676,9 @@
         "activeEntityId": "foe-1",
         "turn": 40
       },
-      "id": "2b5074897562e081607c1caae13a7ef942b2f2d547d1c45128979f6b913f03bf",
-      "parent": "d1b69a2d322ea4e2f3f703084d4803a02fcac0c512ff77e0c401f83e879bba20",
-      "seq": 133
+      "id": "bce3a71c994afb52b938d6bb6791235b9128550d84109272d52ef5742ec85ef4",
+      "parent": "f696ad009ce888eeb541f7eedde5edf98721ea810538a7c9436f3cff5129ae9c",
+      "seq": 132
     },
     {
       "type": "TURN_ADVANCED",
@@ -3710,9 +3689,9 @@
         "activeEntityId": "player",
         "turn": 40
       },
-      "id": "18dc17c7cfa8f7f376e03395ba7f69d2d5523503f02d06f9689e29838b21a9cc",
-      "parent": "2b5074897562e081607c1caae13a7ef942b2f2d547d1c45128979f6b913f03bf",
-      "seq": 134
+      "id": "c41fed6e356109765b0f093bd27c9782cd114c46816e951fe25206779caf39c5",
+      "parent": "bce3a71c994afb52b938d6bb6791235b9128550d84109272d52ef5742ec85ef4",
+      "seq": 133
     },
     {
       "type": "MOVE",
@@ -3730,9 +3709,9 @@
           "y": 12
         }
       },
-      "id": "23e342da905db1b0456c5a9e7bafeabfa953f3b7501e4635deb1e3552ce64849",
-      "parent": "18dc17c7cfa8f7f376e03395ba7f69d2d5523503f02d06f9689e29838b21a9cc",
-      "seq": 135
+      "id": "8cab1a6674ddbc80e866b50d0d021a69c5877e19ea4bff3cf877966cc6cb7736",
+      "parent": "c41fed6e356109765b0f093bd27c9782cd114c46816e951fe25206779caf39c5",
+      "seq": 134
     },
     {
       "type": "TURN_ADVANCED",
@@ -3743,9 +3722,9 @@
         "activeEntityId": "foe-1",
         "turn": 41
       },
-      "id": "4eceb272e7e921ba6454aaaddea9a61a42993d74d43170b0e9b082035a256fb2",
-      "parent": "23e342da905db1b0456c5a9e7bafeabfa953f3b7501e4635deb1e3552ce64849",
-      "seq": 136
+      "id": "5e2dba5335e52bd654cf21320616c83d1dccc16505b416d969efac8a681aee86",
+      "parent": "8cab1a6674ddbc80e866b50d0d021a69c5877e19ea4bff3cf877966cc6cb7736",
+      "seq": 135
     },
     {
       "type": "TURN_ADVANCED",
@@ -3756,9 +3735,9 @@
         "activeEntityId": "player",
         "turn": 41
       },
-      "id": "ef6d8e47c4e5144f249b9f78f8a43cd260c0d899f2d82bead07913db06642e50",
-      "parent": "4eceb272e7e921ba6454aaaddea9a61a42993d74d43170b0e9b082035a256fb2",
-      "seq": 137
+      "id": "1cf64ef198115a021192c78c153f0f32b7cad72311ba56f3e40ba54e69d82fe5",
+      "parent": "5e2dba5335e52bd654cf21320616c83d1dccc16505b416d969efac8a681aee86",
+      "seq": 136
     },
     {
       "type": "MOVE",
@@ -3776,9 +3755,9 @@
           "y": 12
         }
       },
-      "id": "1118aed4478ddcd53450069186c3e6da0f2c2749b68db7a310dfb87cb344c5e3",
-      "parent": "ef6d8e47c4e5144f249b9f78f8a43cd260c0d899f2d82bead07913db06642e50",
-      "seq": 138
+      "id": "0a7012f97e6c2cefe2c4994c996ca601a4a5afafef4ab496718aaa3d5559217c",
+      "parent": "1cf64ef198115a021192c78c153f0f32b7cad72311ba56f3e40ba54e69d82fe5",
+      "seq": 137
     },
     {
       "type": "TURN_ADVANCED",
@@ -3789,9 +3768,9 @@
         "activeEntityId": "foe-1",
         "turn": 42
       },
-      "id": "87625f849b6ead39ddb84d517afb1b2831d4fc1d3e3a9e1a67d0d122714eb658",
-      "parent": "1118aed4478ddcd53450069186c3e6da0f2c2749b68db7a310dfb87cb344c5e3",
-      "seq": 139
+      "id": "e16ab98d140ebee8d37122dd60eda25aad3c35a86ed3a936468d782ab267c53e",
+      "parent": "0a7012f97e6c2cefe2c4994c996ca601a4a5afafef4ab496718aaa3d5559217c",
+      "seq": 138
     },
     {
       "type": "TURN_ADVANCED",
@@ -3802,9 +3781,9 @@
         "activeEntityId": "player",
         "turn": 42
       },
-      "id": "aac08474a437524e9d4a4b2aaefcc792ccbca58ba683d722f984b0d147c72c45",
-      "parent": "87625f849b6ead39ddb84d517afb1b2831d4fc1d3e3a9e1a67d0d122714eb658",
-      "seq": 140
+      "id": "f65e80d2318e037cb8e9971703f2fb92129526b9be767600d839e52683c4615e",
+      "parent": "e16ab98d140ebee8d37122dd60eda25aad3c35a86ed3a936468d782ab267c53e",
+      "seq": 139
     },
     {
       "type": "MOVE",
@@ -3822,9 +3801,9 @@
           "y": 12
         }
       },
-      "id": "b42d1b172e31bd6aa804bebe0a7bd3b657f8b093b6eacf2a0e7170945e23f479",
-      "parent": "aac08474a437524e9d4a4b2aaefcc792ccbca58ba683d722f984b0d147c72c45",
-      "seq": 141
+      "id": "f7c53dfdcf107369d0c922281818db7c06cec39f16e4c9ffa0f2049b4c94a66b",
+      "parent": "f65e80d2318e037cb8e9971703f2fb92129526b9be767600d839e52683c4615e",
+      "seq": 140
     },
     {
       "type": "TURN_ADVANCED",
@@ -3835,9 +3814,9 @@
         "activeEntityId": "foe-1",
         "turn": 43
       },
-      "id": "a356388f8882c3dc16ca747d2d4c8de660d43676e9ce8388e18603f217fdb472",
-      "parent": "b42d1b172e31bd6aa804bebe0a7bd3b657f8b093b6eacf2a0e7170945e23f479",
-      "seq": 142
+      "id": "cb76d52d893ac02687b805ed3cebe852bb415e8fa9b199c4494b54b060c91bbe",
+      "parent": "f7c53dfdcf107369d0c922281818db7c06cec39f16e4c9ffa0f2049b4c94a66b",
+      "seq": 141
     },
     {
       "type": "TURN_ADVANCED",
@@ -3848,9 +3827,9 @@
         "activeEntityId": "player",
         "turn": 43
       },
-      "id": "8f5858c04e11dac7d232d3bd546b255e62df6f2e0fabee48c42625a2e6ae0a94",
-      "parent": "a356388f8882c3dc16ca747d2d4c8de660d43676e9ce8388e18603f217fdb472",
-      "seq": 143
+      "id": "9f789efc3e35dd6d0633d5b1d725b10025a230917b2396d2d0e52ad7726f6716",
+      "parent": "cb76d52d893ac02687b805ed3cebe852bb415e8fa9b199c4494b54b060c91bbe",
+      "seq": 142
     },
     {
       "type": "MOVE",
@@ -3868,9 +3847,9 @@
           "y": 12
         }
       },
-      "id": "899e8f024f2da798edfafb04aa79f6b37df7bcfef55e107efc45f5c09eb9bd21",
-      "parent": "8f5858c04e11dac7d232d3bd546b255e62df6f2e0fabee48c42625a2e6ae0a94",
-      "seq": 144
+      "id": "ada1b097d71807990ef2715165595ad3f439905574e9e2707075c69a8283159c",
+      "parent": "9f789efc3e35dd6d0633d5b1d725b10025a230917b2396d2d0e52ad7726f6716",
+      "seq": 143
     },
     {
       "type": "TURN_ADVANCED",
@@ -3881,9 +3860,9 @@
         "activeEntityId": "foe-1",
         "turn": 44
       },
-      "id": "b5c888fbef8e4f067a00934779a589da8901680f6b9cc8731eabdc9824a7a1fe",
-      "parent": "899e8f024f2da798edfafb04aa79f6b37df7bcfef55e107efc45f5c09eb9bd21",
-      "seq": 145
+      "id": "12a488792e473db270c30226b0b8e57ee28cc3115a54eaf79f110cd7991760c9",
+      "parent": "ada1b097d71807990ef2715165595ad3f439905574e9e2707075c69a8283159c",
+      "seq": 144
     },
     {
       "type": "TURN_ADVANCED",
@@ -3894,9 +3873,9 @@
         "activeEntityId": "player",
         "turn": 44
       },
-      "id": "d42eb29c5e7312d0be53621c3cceeefb0a5717fb0dd716266032124268068ac7",
-      "parent": "b5c888fbef8e4f067a00934779a589da8901680f6b9cc8731eabdc9824a7a1fe",
-      "seq": 146
+      "id": "ed897673b4777269bf91bad094654762b6b8d82a6482016bc2b224aee73d1eca",
+      "parent": "12a488792e473db270c30226b0b8e57ee28cc3115a54eaf79f110cd7991760c9",
+      "seq": 145
     },
     {
       "type": "MOVE",
@@ -3914,9 +3893,9 @@
           "y": 12
         }
       },
-      "id": "36cb51e35abd8246c8f862129c2e165ffc79a537f6a6a637603d3f4aa65387af",
-      "parent": "d42eb29c5e7312d0be53621c3cceeefb0a5717fb0dd716266032124268068ac7",
-      "seq": 147
+      "id": "185fc61a1990bc58714cca4f9b9a5fb89122f542a9cafaf1b5a97721af1d5817",
+      "parent": "ed897673b4777269bf91bad094654762b6b8d82a6482016bc2b224aee73d1eca",
+      "seq": 146
     },
     {
       "type": "TURN_ADVANCED",
@@ -3927,9 +3906,9 @@
         "activeEntityId": "foe-1",
         "turn": 45
       },
-      "id": "9819978fcce3f2f867530ed6c0703bcaa573dfb6f6f0e0ccc57f6355d0b3899f",
-      "parent": "36cb51e35abd8246c8f862129c2e165ffc79a537f6a6a637603d3f4aa65387af",
-      "seq": 148
+      "id": "291bf4c410e37ff68102bfd5234daeee99e325d5abe1b1eb1120f903a9c56c98",
+      "parent": "185fc61a1990bc58714cca4f9b9a5fb89122f542a9cafaf1b5a97721af1d5817",
+      "seq": 147
     },
     {
       "type": "TURN_ADVANCED",
@@ -3940,9 +3919,9 @@
         "activeEntityId": "player",
         "turn": 45
       },
-      "id": "fc3b1bbf7499c8527d9e8f78ec562f306c87dcd0697db4609bbfd5e102d6752c",
-      "parent": "9819978fcce3f2f867530ed6c0703bcaa573dfb6f6f0e0ccc57f6355d0b3899f",
-      "seq": 149
+      "id": "b11bd2b7b839ab179d6b2151ebe178350e4f25aaa51fbdb8c5376391f1081c74",
+      "parent": "291bf4c410e37ff68102bfd5234daeee99e325d5abe1b1eb1120f903a9c56c98",
+      "seq": 148
     },
     {
       "type": "MOVE",
@@ -3960,9 +3939,9 @@
           "y": 12
         }
       },
-      "id": "95e1cbf16c8ec4f96862c74d2abffad4254613344a7bef320050a20e2d29921d",
-      "parent": "fc3b1bbf7499c8527d9e8f78ec562f306c87dcd0697db4609bbfd5e102d6752c",
-      "seq": 150
+      "id": "94b48d7050f010ab6ad143478f4c63e74b4e3fb48e1443489f3ea587a5552a89",
+      "parent": "b11bd2b7b839ab179d6b2151ebe178350e4f25aaa51fbdb8c5376391f1081c74",
+      "seq": 149
     },
     {
       "type": "TURN_ADVANCED",
@@ -3973,9 +3952,9 @@
         "activeEntityId": "foe-1",
         "turn": 46
       },
-      "id": "41ea76265356c7f535902697da7e1cbf08d21c07ebf060145d2e19c4789f765b",
-      "parent": "95e1cbf16c8ec4f96862c74d2abffad4254613344a7bef320050a20e2d29921d",
-      "seq": 151
+      "id": "ce35623d51036f48168f6851e2782cf15a2e5374404471839e45bb344cf583ce",
+      "parent": "94b48d7050f010ab6ad143478f4c63e74b4e3fb48e1443489f3ea587a5552a89",
+      "seq": 150
     },
     {
       "type": "TURN_ADVANCED",
@@ -3986,9 +3965,9 @@
         "activeEntityId": "player",
         "turn": 46
       },
-      "id": "727672f60ed7c5ecb84a383b70e178578e7fd0276a409f67cd02d22d9da9939c",
-      "parent": "41ea76265356c7f535902697da7e1cbf08d21c07ebf060145d2e19c4789f765b",
-      "seq": 152
+      "id": "fc40fc0cffb77c66a72b349d5c896147cbfc83d8799e3441a4969dc8d81bbdc5",
+      "parent": "ce35623d51036f48168f6851e2782cf15a2e5374404471839e45bb344cf583ce",
+      "seq": 151
     },
     {
       "type": "MOVE",
@@ -4006,9 +3985,9 @@
           "y": 12
         }
       },
-      "id": "1e57f86406681d35db8443079a808c132bc038993a908ecbb8859c358cefdffa",
-      "parent": "727672f60ed7c5ecb84a383b70e178578e7fd0276a409f67cd02d22d9da9939c",
-      "seq": 153
+      "id": "06404180b4faed19a32195d5259b60bccc3efbe2d28d02e52cf26fd791ab1e88",
+      "parent": "fc40fc0cffb77c66a72b349d5c896147cbfc83d8799e3441a4969dc8d81bbdc5",
+      "seq": 152
     },
     {
       "type": "TURN_ADVANCED",
@@ -4019,9 +3998,9 @@
         "activeEntityId": "foe-1",
         "turn": 47
       },
-      "id": "906a9aca826d4377c6f833d5ede03185c320a17d9719c0370af3e379c40e9355",
-      "parent": "1e57f86406681d35db8443079a808c132bc038993a908ecbb8859c358cefdffa",
-      "seq": 154
+      "id": "b1dfda89f737283f0a2160212a65000b50d88daf3467e5f3ca95582328e69def",
+      "parent": "06404180b4faed19a32195d5259b60bccc3efbe2d28d02e52cf26fd791ab1e88",
+      "seq": 153
     },
     {
       "type": "TURN_ADVANCED",
@@ -4032,9 +4011,9 @@
         "activeEntityId": "player",
         "turn": 47
       },
-      "id": "6609d338bbda04ed5eabe2b4c22538e21cc1db7f4d28a23669b6eac15e4a80be",
-      "parent": "906a9aca826d4377c6f833d5ede03185c320a17d9719c0370af3e379c40e9355",
-      "seq": 155
+      "id": "f1b6b27f02dd67327d39ede617b403f74f23b4776e54ad8be4c02fa70ddd0bbd",
+      "parent": "b1dfda89f737283f0a2160212a65000b50d88daf3467e5f3ca95582328e69def",
+      "seq": 154
     },
     {
       "type": "MOVE",
@@ -4052,9 +4031,9 @@
           "y": 12
         }
       },
-      "id": "bd2b5c473749b33be893f6c13fc8965612b7a490617fc7bc2d892963c59537fc",
-      "parent": "6609d338bbda04ed5eabe2b4c22538e21cc1db7f4d28a23669b6eac15e4a80be",
-      "seq": 156
+      "id": "e320f7b76ba5eab941a8c50c273a3748ef97d9a5bcf8760b35ce01ae3d997090",
+      "parent": "f1b6b27f02dd67327d39ede617b403f74f23b4776e54ad8be4c02fa70ddd0bbd",
+      "seq": 155
     },
     {
       "type": "TURN_ADVANCED",
@@ -4065,9 +4044,9 @@
         "activeEntityId": "foe-1",
         "turn": 48
       },
-      "id": "32e8d6a5accf761c5140a88348324008de68e43f743424dc0527a9c834aa2eea",
-      "parent": "bd2b5c473749b33be893f6c13fc8965612b7a490617fc7bc2d892963c59537fc",
-      "seq": 157
+      "id": "686a5037c6437bba79b8d0b542917a43f9f8f2f6993f1158deb5e963ee285a4b",
+      "parent": "e320f7b76ba5eab941a8c50c273a3748ef97d9a5bcf8760b35ce01ae3d997090",
+      "seq": 156
     },
     {
       "type": "TURN_ADVANCED",
@@ -4078,9 +4057,9 @@
         "activeEntityId": "player",
         "turn": 48
       },
-      "id": "aa98080bf790bf3b3e1611122e5210cda76d09f62907a8bf86b2e307406fa969",
-      "parent": "32e8d6a5accf761c5140a88348324008de68e43f743424dc0527a9c834aa2eea",
-      "seq": 158
+      "id": "317fecc09e018198a906f24b3a13335b91cf02eee4cbcc04f2a4fed9189b3216",
+      "parent": "686a5037c6437bba79b8d0b542917a43f9f8f2f6993f1158deb5e963ee285a4b",
+      "seq": 157
     },
     {
       "type": "MOVE",
@@ -4098,9 +4077,9 @@
           "y": 12
         }
       },
-      "id": "ff5c8be622b48ab2e2d17a484a0576e67baacc52c9d62acb4fb18fe6b4fe52e6",
-      "parent": "aa98080bf790bf3b3e1611122e5210cda76d09f62907a8bf86b2e307406fa969",
-      "seq": 159
+      "id": "3e5c04bbb8a3a23901c9afaa34bcc2b4b1825734e33e38c3e5177b9b74c229b4",
+      "parent": "317fecc09e018198a906f24b3a13335b91cf02eee4cbcc04f2a4fed9189b3216",
+      "seq": 158
     },
     {
       "type": "TURN_ADVANCED",
@@ -4111,9 +4090,9 @@
         "activeEntityId": "foe-1",
         "turn": 49
       },
-      "id": "3d76058eecbeb56ef23d4ffb17f911e1d53e61ff8be4afca39a1060072d7c9b9",
-      "parent": "ff5c8be622b48ab2e2d17a484a0576e67baacc52c9d62acb4fb18fe6b4fe52e6",
-      "seq": 160
+      "id": "6a4fb1ff5836e91cf60005b53babb5698465d9f31a2a5a50a1900136c96cfe42",
+      "parent": "3e5c04bbb8a3a23901c9afaa34bcc2b4b1825734e33e38c3e5177b9b74c229b4",
+      "seq": 159
     },
     {
       "type": "TURN_ADVANCED",
@@ -4124,9 +4103,9 @@
         "activeEntityId": "player",
         "turn": 49
       },
-      "id": "1c83d46d121fe6f28254c24b2627b61511d17266594abd51e82cf9d2287dc2c1",
-      "parent": "3d76058eecbeb56ef23d4ffb17f911e1d53e61ff8be4afca39a1060072d7c9b9",
-      "seq": 161
+      "id": "18bb63777950836948cb2d5695d6e662d0bcfd9688cb2a49d7b412ec1f45f3cc",
+      "parent": "6a4fb1ff5836e91cf60005b53babb5698465d9f31a2a5a50a1900136c96cfe42",
+      "seq": 160
     },
     {
       "type": "MOVE",
@@ -4144,9 +4123,9 @@
           "y": 12
         }
       },
-      "id": "849ef854e2e124c254967b6f5c10bc4d7394829dae3bb7bef34b5ff607210e68",
-      "parent": "1c83d46d121fe6f28254c24b2627b61511d17266594abd51e82cf9d2287dc2c1",
-      "seq": 162
+      "id": "618ec5617d108df02c6175bc47b454bc517b84c47bc47eeb10018e37b2093005",
+      "parent": "18bb63777950836948cb2d5695d6e662d0bcfd9688cb2a49d7b412ec1f45f3cc",
+      "seq": 161
     },
     {
       "type": "TURN_ADVANCED",
@@ -4157,9 +4136,9 @@
         "activeEntityId": "foe-1",
         "turn": 50
       },
-      "id": "447938a688435edddd2593af9a7d32f8332303979c0a0b8ef257b3478b6f1ef8",
-      "parent": "849ef854e2e124c254967b6f5c10bc4d7394829dae3bb7bef34b5ff607210e68",
-      "seq": 163
+      "id": "97386f50aa98295f1d82516e3834e266babd264325b58c447a9ef7c55a39a925",
+      "parent": "618ec5617d108df02c6175bc47b454bc517b84c47bc47eeb10018e37b2093005",
+      "seq": 162
     },
     {
       "type": "TURN_ADVANCED",
@@ -4170,9 +4149,9 @@
         "activeEntityId": "player",
         "turn": 50
       },
-      "id": "15351301b7bd7ea3a509099731c7b4d2d4daf2a71c04051401d49c4ce22b7768",
-      "parent": "447938a688435edddd2593af9a7d32f8332303979c0a0b8ef257b3478b6f1ef8",
-      "seq": 164
+      "id": "5326b6d133c8f49d8ab22d0d0b6b0c1f615007dd559e98b2eecf16fe6cbfeb1d",
+      "parent": "97386f50aa98295f1d82516e3834e266babd264325b58c447a9ef7c55a39a925",
+      "seq": 163
     },
     {
       "type": "MOVE",
@@ -4190,9 +4169,9 @@
           "y": 12
         }
       },
-      "id": "9c9b27e2d96c8f6285647f8fd119ad75b26a5762e815b197110ca695bd53f7ff",
-      "parent": "15351301b7bd7ea3a509099731c7b4d2d4daf2a71c04051401d49c4ce22b7768",
-      "seq": 165
+      "id": "2cd85f293f15d35aa1fef898035daebf1be7c01dc6b21c4e9c53f4d5a453b699",
+      "parent": "5326b6d133c8f49d8ab22d0d0b6b0c1f615007dd559e98b2eecf16fe6cbfeb1d",
+      "seq": 164
     },
     {
       "type": "TURN_ADVANCED",
@@ -4203,9 +4182,9 @@
         "activeEntityId": "foe-1",
         "turn": 51
       },
-      "id": "1aa93c8c2e74aa05349bed8f1d445c3ccd2dba4694195503d90bf5d204b2a755",
-      "parent": "9c9b27e2d96c8f6285647f8fd119ad75b26a5762e815b197110ca695bd53f7ff",
-      "seq": 166
+      "id": "0bb3903469ca17bb140d2f190074a95d3bdc7ab88aad0e77186c218bb532516a",
+      "parent": "2cd85f293f15d35aa1fef898035daebf1be7c01dc6b21c4e9c53f4d5a453b699",
+      "seq": 165
     },
     {
       "type": "TURN_ADVANCED",
@@ -4216,9 +4195,9 @@
         "activeEntityId": "player",
         "turn": 51
       },
-      "id": "d2a7e1d578e0b5175d3e42b2b0df5d927a1de87b42caae0842f2239f05cee34d",
-      "parent": "1aa93c8c2e74aa05349bed8f1d445c3ccd2dba4694195503d90bf5d204b2a755",
-      "seq": 167
+      "id": "aad529016d7f8be0d9a4acfdb6c7d5cc3b9372e025d6c3185444c6a210e91abd",
+      "parent": "0bb3903469ca17bb140d2f190074a95d3bdc7ab88aad0e77186c218bb532516a",
+      "seq": 166
     },
     {
       "type": "MOVE",
@@ -4236,9 +4215,9 @@
           "y": 12
         }
       },
-      "id": "4aa0b4ca534bcc88ac587dfbbd249ce24dc61a28a9916f0f0118201d8678271e",
-      "parent": "d2a7e1d578e0b5175d3e42b2b0df5d927a1de87b42caae0842f2239f05cee34d",
-      "seq": 168
+      "id": "cf38e753ff5d247a6ccef69ebdae3a6c03221f9eceb2174b8e48ede5ddf9aa73",
+      "parent": "aad529016d7f8be0d9a4acfdb6c7d5cc3b9372e025d6c3185444c6a210e91abd",
+      "seq": 167
     },
     {
       "type": "TURN_ADVANCED",
@@ -4249,9 +4228,9 @@
         "activeEntityId": "foe-1",
         "turn": 52
       },
-      "id": "0a2dbaf0fe5dcc77f4437bb5fbf242a5cbf194eacfc9d77acee95ba9237afa41",
-      "parent": "4aa0b4ca534bcc88ac587dfbbd249ce24dc61a28a9916f0f0118201d8678271e",
-      "seq": 169
+      "id": "f281da8ed69d2d57eafc6e6519354d78a474a02efec06be86a8f569f2aac86ca",
+      "parent": "cf38e753ff5d247a6ccef69ebdae3a6c03221f9eceb2174b8e48ede5ddf9aa73",
+      "seq": 168
     },
     {
       "type": "TURN_ADVANCED",
@@ -4262,9 +4241,9 @@
         "activeEntityId": "player",
         "turn": 52
       },
-      "id": "98cfac9c53b7d9d6c3a3284f94f4ca7027910af3f468d130b4a0770d743842df",
-      "parent": "0a2dbaf0fe5dcc77f4437bb5fbf242a5cbf194eacfc9d77acee95ba9237afa41",
-      "seq": 170
+      "id": "010db76a3c7565ae24521138f898bef249262b2a07117c03b2fdf8aa4def8284",
+      "parent": "f281da8ed69d2d57eafc6e6519354d78a474a02efec06be86a8f569f2aac86ca",
+      "seq": 169
     },
     {
       "type": "MOVE",
@@ -4282,9 +4261,9 @@
           "y": 12
         }
       },
-      "id": "5c2b84649ce07d5c20ccc4c8d93f8e58f3afdcb2c5bdd720bb2aee6f79117842",
-      "parent": "98cfac9c53b7d9d6c3a3284f94f4ca7027910af3f468d130b4a0770d743842df",
-      "seq": 171
+      "id": "827ba6d6984ec4e86b69d2f8a8e1fd6bfc3361adf0e13294832626e9af49ff82",
+      "parent": "010db76a3c7565ae24521138f898bef249262b2a07117c03b2fdf8aa4def8284",
+      "seq": 170
     },
     {
       "type": "TURN_ADVANCED",
@@ -4295,9 +4274,9 @@
         "activeEntityId": "foe-1",
         "turn": 53
       },
-      "id": "75df985a9c4adb20f356aeccd03e3e95068ce78a14081e4b83a8600800d644d5",
-      "parent": "5c2b84649ce07d5c20ccc4c8d93f8e58f3afdcb2c5bdd720bb2aee6f79117842",
-      "seq": 172
+      "id": "b85a7b5c20f6a61050cd7427633ee801dd92bf19f0a07eb438fc16dd92bc15fc",
+      "parent": "827ba6d6984ec4e86b69d2f8a8e1fd6bfc3361adf0e13294832626e9af49ff82",
+      "seq": 171
     },
     {
       "type": "TURN_ADVANCED",
@@ -4308,9 +4287,9 @@
         "activeEntityId": "player",
         "turn": 53
       },
-      "id": "c3fb45d4a529c632edc2cec0cb66f2a72e556ac752fea0b6bc04b3f435a79c45",
-      "parent": "75df985a9c4adb20f356aeccd03e3e95068ce78a14081e4b83a8600800d644d5",
-      "seq": 173
+      "id": "accb528ec7b969a86e59d2eece56d611a438ee62b66130bd0d1a76d2643047f9",
+      "parent": "b85a7b5c20f6a61050cd7427633ee801dd92bf19f0a07eb438fc16dd92bc15fc",
+      "seq": 172
     },
     {
       "type": "MOVE",
@@ -4328,9 +4307,9 @@
           "y": 11
         }
       },
-      "id": "aff1994987f54799844b0cc696a279d9a4f5ae6970b513f8c264f676606eca6f",
-      "parent": "c3fb45d4a529c632edc2cec0cb66f2a72e556ac752fea0b6bc04b3f435a79c45",
-      "seq": 174
+      "id": "bd5a124279016cb6de6173bbc5fa8ff9c73aba0c1f97ca750359a978293d4298",
+      "parent": "accb528ec7b969a86e59d2eece56d611a438ee62b66130bd0d1a76d2643047f9",
+      "seq": 173
     },
     {
       "type": "TURN_ADVANCED",
@@ -4341,9 +4320,9 @@
         "activeEntityId": "foe-1",
         "turn": 54
       },
-      "id": "36dcfba16608a5b9cc45c849acacf2434741090349a15bdb8d4edaf8cc44b74b",
-      "parent": "aff1994987f54799844b0cc696a279d9a4f5ae6970b513f8c264f676606eca6f",
-      "seq": 175
+      "id": "1cc84c89e6bd963d7a4e6ebfd3d1fb0429d315eb90a429550aad82eb94f2a41b",
+      "parent": "bd5a124279016cb6de6173bbc5fa8ff9c73aba0c1f97ca750359a978293d4298",
+      "seq": 174
     },
     {
       "type": "TURN_ADVANCED",
@@ -4354,9 +4333,9 @@
         "activeEntityId": "player",
         "turn": 54
       },
-      "id": "8357558bc6d688052d210bf7aad6c97ed2a5ffb7dde13d65b341dac8dc17263b",
-      "parent": "36dcfba16608a5b9cc45c849acacf2434741090349a15bdb8d4edaf8cc44b74b",
-      "seq": 176
+      "id": "106f63764f8088bf6660803f3205869634c3b15f9cd2e5b6c3be476ae8a18df7",
+      "parent": "1cc84c89e6bd963d7a4e6ebfd3d1fb0429d315eb90a429550aad82eb94f2a41b",
+      "seq": 175
     },
     {
       "type": "MOVE",
@@ -4374,9 +4353,9 @@
           "y": 10
         }
       },
-      "id": "ae5c34db92cd752c07be49932e06a2460fb4c04632ca74bc9e96b5cdf0583921",
-      "parent": "8357558bc6d688052d210bf7aad6c97ed2a5ffb7dde13d65b341dac8dc17263b",
-      "seq": 177
+      "id": "5dc9444b0ff6c8db3892dba324f5f3fbcb872cb9c9fcb34d893486cdcad41315",
+      "parent": "106f63764f8088bf6660803f3205869634c3b15f9cd2e5b6c3be476ae8a18df7",
+      "seq": 176
     },
     {
       "type": "TURN_ADVANCED",
@@ -4387,9 +4366,9 @@
         "activeEntityId": "foe-1",
         "turn": 55
       },
-      "id": "b917761d97d304e806daf2de5044b87b92bc5beea00db83ba18a716c556b7523",
-      "parent": "ae5c34db92cd752c07be49932e06a2460fb4c04632ca74bc9e96b5cdf0583921",
-      "seq": 178
+      "id": "50b25a96b15f51d3381794c33efd133df49fb4a2d274661ee53ed254de46cffc",
+      "parent": "5dc9444b0ff6c8db3892dba324f5f3fbcb872cb9c9fcb34d893486cdcad41315",
+      "seq": 177
     },
     {
       "type": "TURN_ADVANCED",
@@ -4400,9 +4379,9 @@
         "activeEntityId": "player",
         "turn": 55
       },
-      "id": "177242e1c84f4a722db7bf170a9edbf29806a8ea782f14f4229834a52dff923c",
-      "parent": "b917761d97d304e806daf2de5044b87b92bc5beea00db83ba18a716c556b7523",
-      "seq": 179
+      "id": "d1512371befa2c16b1314e805a7deb460a36099fe849e00c9cb1b33aacc48c84",
+      "parent": "50b25a96b15f51d3381794c33efd133df49fb4a2d274661ee53ed254de46cffc",
+      "seq": 178
     },
     {
       "type": "MOVE",
@@ -4420,9 +4399,9 @@
           "y": 9
         }
       },
-      "id": "728c6028287722500808cf40025cfb42988f2670942fe6eebd4da2c661c2e0bb",
-      "parent": "177242e1c84f4a722db7bf170a9edbf29806a8ea782f14f4229834a52dff923c",
-      "seq": 180
+      "id": "6f4919555a03ba04caec8432f8bbf1ad5eb9fee0901971391b2dfd55233cc978",
+      "parent": "d1512371befa2c16b1314e805a7deb460a36099fe849e00c9cb1b33aacc48c84",
+      "seq": 179
     },
     {
       "type": "TURN_ADVANCED",
@@ -4433,9 +4412,9 @@
         "activeEntityId": "foe-1",
         "turn": 56
       },
-      "id": "90f9dc8d6f995696f918d803845079c5be2275ded7f3bfc9dbe4e13d41724ad8",
-      "parent": "728c6028287722500808cf40025cfb42988f2670942fe6eebd4da2c661c2e0bb",
-      "seq": 181
+      "id": "fa91791430a795b1006c24cfb94130f98b7013757064fadec53f3c67d54d9134",
+      "parent": "6f4919555a03ba04caec8432f8bbf1ad5eb9fee0901971391b2dfd55233cc978",
+      "seq": 180
     },
     {
       "type": "TURN_ADVANCED",
@@ -4446,9 +4425,9 @@
         "activeEntityId": "player",
         "turn": 56
       },
-      "id": "94032fe4367b6a8955820c3eb318143e0d7457d60297b23e7069e3e1f5366a9c",
-      "parent": "90f9dc8d6f995696f918d803845079c5be2275ded7f3bfc9dbe4e13d41724ad8",
-      "seq": 182
+      "id": "ebf8b611372e621ce7f160d375995482f21bd57abfe20eaff577d07b61b0597c",
+      "parent": "fa91791430a795b1006c24cfb94130f98b7013757064fadec53f3c67d54d9134",
+      "seq": 181
     },
     {
       "type": "MOVE",
@@ -4466,9 +4445,9 @@
           "y": 8
         }
       },
-      "id": "1db97ecbf043ae09314038ae49d619c2eb7d001396272f7bd97e11cf87a33358",
-      "parent": "94032fe4367b6a8955820c3eb318143e0d7457d60297b23e7069e3e1f5366a9c",
-      "seq": 183
+      "id": "63082d70b4d04855f40da3a69d9d9db498e8229ebe8cfed401c8c8dad411ef61",
+      "parent": "ebf8b611372e621ce7f160d375995482f21bd57abfe20eaff577d07b61b0597c",
+      "seq": 182
     },
     {
       "type": "TURN_ADVANCED",
@@ -4479,9 +4458,9 @@
         "activeEntityId": "foe-1",
         "turn": 57
       },
-      "id": "8b1c987f972c816163fdd35693c401fedf79c50ca8bfb85e3a93d4e33101e212",
-      "parent": "1db97ecbf043ae09314038ae49d619c2eb7d001396272f7bd97e11cf87a33358",
-      "seq": 184
+      "id": "52e96b56e1f0b9bba5bb878acb0329d0afd17210acfb731878ea60c0ea408021",
+      "parent": "63082d70b4d04855f40da3a69d9d9db498e8229ebe8cfed401c8c8dad411ef61",
+      "seq": 183
     },
     {
       "type": "TURN_ADVANCED",
@@ -4492,9 +4471,9 @@
         "activeEntityId": "player",
         "turn": 57
       },
-      "id": "d776e6e25328832750cf5b01c10979db85952d080072e378ead18b965a5a5317",
-      "parent": "8b1c987f972c816163fdd35693c401fedf79c50ca8bfb85e3a93d4e33101e212",
-      "seq": 185
+      "id": "6274bd16b7fe69ddbb85e14072800ef9c1f2cc63b9b36476e559f6c2150e8de1",
+      "parent": "52e96b56e1f0b9bba5bb878acb0329d0afd17210acfb731878ea60c0ea408021",
+      "seq": 184
     },
     {
       "type": "MOVE",
@@ -4512,9 +4491,9 @@
           "y": 8
         }
       },
-      "id": "56480e8cc24849d30ef9e17168cb4cd84d23000ef11eae02802a232f0eb3758d",
-      "parent": "d776e6e25328832750cf5b01c10979db85952d080072e378ead18b965a5a5317",
-      "seq": 186
+      "id": "1c4a78c63626c05c68dffb37f6eb2509f4ef0a5c086dc522533985425a113606",
+      "parent": "6274bd16b7fe69ddbb85e14072800ef9c1f2cc63b9b36476e559f6c2150e8de1",
+      "seq": 185
     },
     {
       "type": "TURN_ADVANCED",
@@ -4525,9 +4504,9 @@
         "activeEntityId": "foe-1",
         "turn": 58
       },
-      "id": "60670972ba26eebc26c793b21acdc87a44e2225f8cc61a47b52a321753ca4d83",
-      "parent": "56480e8cc24849d30ef9e17168cb4cd84d23000ef11eae02802a232f0eb3758d",
-      "seq": 187
+      "id": "5937a583de8c34c0630b5aef298a902c1dfb59f1bcbb306b4944ff8736f651f3",
+      "parent": "1c4a78c63626c05c68dffb37f6eb2509f4ef0a5c086dc522533985425a113606",
+      "seq": 186
     },
     {
       "type": "TURN_ADVANCED",
@@ -4538,9 +4517,9 @@
         "activeEntityId": "player",
         "turn": 58
       },
-      "id": "dcd096f8fde43fa17cd526ed7a5b7e5357521b69674fb7abc5038c7772da5119",
-      "parent": "60670972ba26eebc26c793b21acdc87a44e2225f8cc61a47b52a321753ca4d83",
-      "seq": 188
+      "id": "1e71c9eefb91f9e980621145e4802e5cf543efba638e10117f29efaec54c9574",
+      "parent": "5937a583de8c34c0630b5aef298a902c1dfb59f1bcbb306b4944ff8736f651f3",
+      "seq": 187
     },
     {
       "type": "MOVE",
@@ -4558,9 +4537,9 @@
           "y": 8
         }
       },
-      "id": "faf797919cefef8ba5a6ad96a8c6029d4b5bacf5d1b211f96285068874c28ef7",
-      "parent": "dcd096f8fde43fa17cd526ed7a5b7e5357521b69674fb7abc5038c7772da5119",
-      "seq": 189
+      "id": "2789736720204bd47d2b8e6e0195461c32c6ccac70787540f8958ecac49e79bd",
+      "parent": "1e71c9eefb91f9e980621145e4802e5cf543efba638e10117f29efaec54c9574",
+      "seq": 188
     },
     {
       "type": "TURN_ADVANCED",
@@ -4571,29 +4550,9 @@
         "activeEntityId": "foe-1",
         "turn": 59
       },
-      "id": "ff5fe05df569d1bdbf709791550345ea63d6e32a38103555625eca123957d7e5",
-      "parent": "faf797919cefef8ba5a6ad96a8c6029d4b5bacf5d1b211f96285068874c28ef7",
-      "seq": 190
-    },
-    {
-      "type": "MOVE",
-      "schemaVersion": 2,
-      "rngCounter": 273,
-      "rngDraws": 0,
-      "payload": {
-        "entityId": "foe-1",
-        "from": {
-          "x": 44,
-          "y": 4
-        },
-        "to": {
-          "x": 43,
-          "y": 4
-        }
-      },
-      "id": "21afb44384a5b6c9a0aae7fe0a97ada5acf9a6cbceac1ebca760a8a6703cb243",
-      "parent": "ff5fe05df569d1bdbf709791550345ea63d6e32a38103555625eca123957d7e5",
-      "seq": 191
+      "id": "135e3e50c7587ea54554a37457a23a83a2ec71dad1dbd8bc073dc9a4da28368e",
+      "parent": "2789736720204bd47d2b8e6e0195461c32c6ccac70787540f8958ecac49e79bd",
+      "seq": 189
     },
     {
       "type": "TURN_ADVANCED",
@@ -4604,9 +4563,9 @@
         "activeEntityId": "player",
         "turn": 59
       },
-      "id": "44186f52ec0e67429ea9501d5a0a2c4b9e4a4457b099ffe0c13b9670481fdc18",
-      "parent": "21afb44384a5b6c9a0aae7fe0a97ada5acf9a6cbceac1ebca760a8a6703cb243",
-      "seq": 192
+      "id": "42ef57c86ded54eecc15136c68cfcb75a0b5ab28bd8f8823006ecaa6a3e8e0c9",
+      "parent": "135e3e50c7587ea54554a37457a23a83a2ec71dad1dbd8bc073dc9a4da28368e",
+      "seq": 190
     },
     {
       "type": "MOVE",
@@ -4624,9 +4583,9 @@
           "y": 8
         }
       },
-      "id": "02747a868817533c84f79c5f612c74ef88d533dc090ab456efdd2c7b37f0a410",
-      "parent": "44186f52ec0e67429ea9501d5a0a2c4b9e4a4457b099ffe0c13b9670481fdc18",
-      "seq": 193
+      "id": "4999378f3f46c48c5de85aab91dda08e1a72e0d48d167c0969e78828beb77d71",
+      "parent": "42ef57c86ded54eecc15136c68cfcb75a0b5ab28bd8f8823006ecaa6a3e8e0c9",
+      "seq": 191
     },
     {
       "type": "TURN_ADVANCED",
@@ -4637,29 +4596,9 @@
         "activeEntityId": "foe-1",
         "turn": 60
       },
-      "id": "b8498e0165c93d11a5a1f58d835193a4cf2345253665077a0f4765386d9ec659",
-      "parent": "02747a868817533c84f79c5f612c74ef88d533dc090ab456efdd2c7b37f0a410",
-      "seq": 194
-    },
-    {
-      "type": "MOVE",
-      "schemaVersion": 2,
-      "rngCounter": 273,
-      "rngDraws": 0,
-      "payload": {
-        "entityId": "foe-1",
-        "from": {
-          "x": 43,
-          "y": 4
-        },
-        "to": {
-          "x": 42,
-          "y": 4
-        }
-      },
-      "id": "4e10787e30331226c742912f22c21ae7d8ac58a62d9df2ea908db24a2894ec0e",
-      "parent": "b8498e0165c93d11a5a1f58d835193a4cf2345253665077a0f4765386d9ec659",
-      "seq": 195
+      "id": "feba8ebaa49c072cff799fcc19bf3f0a755b608782e152014559f2330467d222",
+      "parent": "4999378f3f46c48c5de85aab91dda08e1a72e0d48d167c0969e78828beb77d71",
+      "seq": 192
     },
     {
       "type": "TURN_ADVANCED",
@@ -4670,9 +4609,9 @@
         "activeEntityId": "player",
         "turn": 60
       },
-      "id": "f92253f07ca7d35911c6b32fd6de20919867ed1631a379cc53109ef21e572aa1",
-      "parent": "4e10787e30331226c742912f22c21ae7d8ac58a62d9df2ea908db24a2894ec0e",
-      "seq": 196
+      "id": "ff7023fd77109f1ce5ecbc533b297860a5595a42a2ebb8d77d82bec4a7b6f1d2",
+      "parent": "feba8ebaa49c072cff799fcc19bf3f0a755b608782e152014559f2330467d222",
+      "seq": 193
     },
     {
       "type": "MOVE",
@@ -4690,9 +4629,9 @@
           "y": 8
         }
       },
-      "id": "efd143295db94467ced197d63a4119b143acc0b61f33d8b9ad565a4b6d132828",
-      "parent": "f92253f07ca7d35911c6b32fd6de20919867ed1631a379cc53109ef21e572aa1",
-      "seq": 197
+      "id": "35e412bc2a6cb25c90fe0ae0aa1f975b6507b069ff3786f6267825450d63cc2e",
+      "parent": "ff7023fd77109f1ce5ecbc533b297860a5595a42a2ebb8d77d82bec4a7b6f1d2",
+      "seq": 194
     },
     {
       "type": "TURN_ADVANCED",
@@ -4703,29 +4642,9 @@
         "activeEntityId": "foe-1",
         "turn": 61
       },
-      "id": "19bd3d8aedcf5aaed4ea626608ddec1ceb6c514b3949e9a3f3fc60f6555b733f",
-      "parent": "efd143295db94467ced197d63a4119b143acc0b61f33d8b9ad565a4b6d132828",
-      "seq": 198
-    },
-    {
-      "type": "MOVE",
-      "schemaVersion": 2,
-      "rngCounter": 273,
-      "rngDraws": 0,
-      "payload": {
-        "entityId": "foe-1",
-        "from": {
-          "x": 42,
-          "y": 4
-        },
-        "to": {
-          "x": 42,
-          "y": 5
-        }
-      },
-      "id": "97e08935b7abaf040b65e9f8edfda3d83af08c9aad8a4df0d47b4cb7a19e80b1",
-      "parent": "19bd3d8aedcf5aaed4ea626608ddec1ceb6c514b3949e9a3f3fc60f6555b733f",
-      "seq": 199
+      "id": "bb09f422646d963274829d9578743a5ec0abee3fd0157771023029f2d2d8ab13",
+      "parent": "35e412bc2a6cb25c90fe0ae0aa1f975b6507b069ff3786f6267825450d63cc2e",
+      "seq": 195
     },
     {
       "type": "TURN_ADVANCED",
@@ -4736,9 +4655,9 @@
         "activeEntityId": "player",
         "turn": 61
       },
-      "id": "4b1da1be6e3222a9d4a374504fef5f3d5ca862b469946c74a54ddc2bf4fafff3",
-      "parent": "97e08935b7abaf040b65e9f8edfda3d83af08c9aad8a4df0d47b4cb7a19e80b1",
-      "seq": 200
+      "id": "eba175a2f65eab537a83c88a5bc43abd7b904b027228c96c0c5168b13c959ea7",
+      "parent": "bb09f422646d963274829d9578743a5ec0abee3fd0157771023029f2d2d8ab13",
+      "seq": 196
     },
     {
       "type": "MOVE",
@@ -4752,13 +4671,13 @@
           "y": 8
         },
         "to": {
-          "x": 42,
-          "y": 7
+          "x": 43,
+          "y": 8
         }
       },
-      "id": "2ee1f8dcaa0cd6e2dffccad0181f75a30b1e6464b461dc0b34fe1cf013dc7494",
-      "parent": "4b1da1be6e3222a9d4a374504fef5f3d5ca862b469946c74a54ddc2bf4fafff3",
-      "seq": 201
+      "id": "ddc44a5224326a6dbf10d336ff2a682b24cce5b55e93cf55feb28ad8de884557",
+      "parent": "eba175a2f65eab537a83c88a5bc43abd7b904b027228c96c0c5168b13c959ea7",
+      "seq": 197
     },
     {
       "type": "TURN_ADVANCED",
@@ -4769,29 +4688,9 @@
         "activeEntityId": "foe-1",
         "turn": 62
       },
-      "id": "21328fcfa557bcb3f39bdaf51a9217896ac58c42a7bcd4822e85accc9041744c",
-      "parent": "2ee1f8dcaa0cd6e2dffccad0181f75a30b1e6464b461dc0b34fe1cf013dc7494",
-      "seq": 202
-    },
-    {
-      "type": "MOVE",
-      "schemaVersion": 2,
-      "rngCounter": 273,
-      "rngDraws": 0,
-      "payload": {
-        "entityId": "foe-1",
-        "from": {
-          "x": 42,
-          "y": 5
-        },
-        "to": {
-          "x": 42,
-          "y": 6
-        }
-      },
-      "id": "044cf68baaad386feb4bb9578cfd29c56fd047b5085dc9d0485a98d3ac875f3e",
-      "parent": "21328fcfa557bcb3f39bdaf51a9217896ac58c42a7bcd4822e85accc9041744c",
-      "seq": 203
+      "id": "9d47a471d88d534597e9f3ddcce271536ad0ededd7714426d2a1208c0ea499aa",
+      "parent": "ddc44a5224326a6dbf10d336ff2a682b24cce5b55e93cf55feb28ad8de884557",
+      "seq": 198
     },
     {
       "type": "TURN_ADVANCED",
@@ -4802,9 +4701,141 @@
         "activeEntityId": "player",
         "turn": 62
       },
-      "id": "0087cf235c36045e878a938b087e3c71f73f0037bc8ed748af3de3116ec7badc",
-      "parent": "044cf68baaad386feb4bb9578cfd29c56fd047b5085dc9d0485a98d3ac875f3e",
+      "id": "7c24484c7f3100c781ba7da03cc8aac43aabd419bdac6c17edd25a88ef30744a",
+      "parent": "9d47a471d88d534597e9f3ddcce271536ad0ededd7714426d2a1208c0ea499aa",
+      "seq": 199
+    },
+    {
+      "type": "MOVE",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "entityId": "player",
+        "from": {
+          "x": 43,
+          "y": 8
+        },
+        "to": {
+          "x": 44,
+          "y": 8
+        }
+      },
+      "id": "09548f2f15be64ae7836a7077dad805bd550a6d80e69dee20267781a0c578153",
+      "parent": "7c24484c7f3100c781ba7da03cc8aac43aabd419bdac6c17edd25a88ef30744a",
+      "seq": 200
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "foe-1",
+        "turn": 63
+      },
+      "id": "93264c7a4315df7e0ec975d6755f0515cb98192c3c7499906737da7c6074c622",
+      "parent": "09548f2f15be64ae7836a7077dad805bd550a6d80e69dee20267781a0c578153",
+      "seq": 201
+    },
+    {
+      "type": "MOVE",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "entityId": "foe-1",
+        "from": {
+          "x": 44,
+          "y": 4
+        },
+        "to": {
+          "x": 44,
+          "y": 5
+        }
+      },
+      "id": "664d532f43bfbfd956fbe4b986b043c2da135e137fb258fdfd30d067c331f1df",
+      "parent": "93264c7a4315df7e0ec975d6755f0515cb98192c3c7499906737da7c6074c622",
+      "seq": 202
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "player",
+        "turn": 63
+      },
+      "id": "83e7fadb4ae6ddb14048b07fae6f18937ea41beb33804125efebe39514e56ec6",
+      "parent": "664d532f43bfbfd956fbe4b986b043c2da135e137fb258fdfd30d067c331f1df",
+      "seq": 203
+    },
+    {
+      "type": "MOVE",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "entityId": "player",
+        "from": {
+          "x": 44,
+          "y": 8
+        },
+        "to": {
+          "x": 44,
+          "y": 7
+        }
+      },
+      "id": "85affc38d4b489ea14e596b364b03bcf9a603d30d9f2108c57837bfe3a498ab8",
+      "parent": "83e7fadb4ae6ddb14048b07fae6f18937ea41beb33804125efebe39514e56ec6",
       "seq": 204
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "foe-1",
+        "turn": 64
+      },
+      "id": "f0191c2ffbb35d34a42de2ba03e017310d31477a8406e3afd3cfffe8da284e10",
+      "parent": "85affc38d4b489ea14e596b364b03bcf9a603d30d9f2108c57837bfe3a498ab8",
+      "seq": 205
+    },
+    {
+      "type": "MOVE",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "entityId": "foe-1",
+        "from": {
+          "x": 44,
+          "y": 5
+        },
+        "to": {
+          "x": 44,
+          "y": 6
+        }
+      },
+      "id": "21e1b06d0eb137b57c223cb5f349011ba78f875d430e183be6fbde0cf5cf5eab",
+      "parent": "f0191c2ffbb35d34a42de2ba03e017310d31477a8406e3afd3cfffe8da284e10",
+      "seq": 206
+    },
+    {
+      "type": "TURN_ADVANCED",
+      "schemaVersion": 2,
+      "rngCounter": 273,
+      "rngDraws": 0,
+      "payload": {
+        "activeEntityId": "player",
+        "turn": 64
+      },
+      "id": "2450120141533ae9495ad9fcf2cc17214260ee41b670ad0ea505312ab7a5f857",
+      "parent": "21e1b06d0eb137b57c223cb5f349011ba78f875d430e183be6fbde0cf5cf5eab",
+      "seq": 207
     },
     {
       "type": "STRIKE",
@@ -4821,9 +4852,9 @@
         "crit": false,
         "damage": 0
       },
-      "id": "30b5c171f244ae3314cb12e66167b5dd1ea23f1064ce4a9f3133f28f8808e2d1",
-      "parent": "0087cf235c36045e878a938b087e3c71f73f0037bc8ed748af3de3116ec7badc",
-      "seq": 205
+      "id": "41a168e5f126c52f8fed4793acb430f58be507a6d51aabe27f6a1f77fce522e5",
+      "parent": "2450120141533ae9495ad9fcf2cc17214260ee41b670ad0ea505312ab7a5f857",
+      "seq": 208
     },
     {
       "type": "TURN_ADVANCED",
@@ -4832,11 +4863,11 @@
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "foe-1",
-        "turn": 63
+        "turn": 65
       },
-      "id": "f8ed4d8d0e7dceff5eb60d6e72a357424ad937b7db38a2562cf7981ab218ef03",
-      "parent": "30b5c171f244ae3314cb12e66167b5dd1ea23f1064ce4a9f3133f28f8808e2d1",
-      "seq": 206
+      "id": "b40f97944f4820723fa467cf00bcfdc709ca4619b416a9c90c8da4500c215b37",
+      "parent": "41a168e5f126c52f8fed4793acb430f58be507a6d51aabe27f6a1f77fce522e5",
+      "seq": 209
     },
     {
       "type": "STRIKE",
@@ -4853,9 +4884,9 @@
         "crit": false,
         "damage": 4
       },
-      "id": "8bb1ad9c0719386f7bfd27ecf24027399bc1ec3e9e69a981cb08292f0cf32878",
-      "parent": "f8ed4d8d0e7dceff5eb60d6e72a357424ad937b7db38a2562cf7981ab218ef03",
-      "seq": 207
+      "id": "b33cfe14ba6106934a0bd4694ef67a9a4ac9f72d3ba6299e2a5a2cbe86fde6f2",
+      "parent": "b40f97944f4820723fa467cf00bcfdc709ca4619b416a9c90c8da4500c215b37",
+      "seq": 210
     },
     {
       "type": "TURN_ADVANCED",
@@ -4864,11 +4895,11 @@
       "rngDraws": 0,
       "payload": {
         "activeEntityId": "player",
-        "turn": 63
+        "turn": 65
       },
-      "id": "d6e5e0da2f642d50408875e57bca7ba67a277c5d7ad661798e40ab9ee49755e7",
-      "parent": "8bb1ad9c0719386f7bfd27ecf24027399bc1ec3e9e69a981cb08292f0cf32878",
-      "seq": 208
+      "id": "593619820a682f76e631c8951c3ad9ca786b3cb5e0917edc3ba071586e1f496a",
+      "parent": "b33cfe14ba6106934a0bd4694ef67a9a4ac9f72d3ba6299e2a5a2cbe86fde6f2",
+      "seq": 211
     },
     {
       "type": "STRIKE",
@@ -4885,75 +4916,9 @@
         "crit": false,
         "damage": 6
       },
-      "id": "7c5586639231109bd51324d73f5c4c1810a1cf3a501403338004c70eec0ae9c0",
-      "parent": "d6e5e0da2f642d50408875e57bca7ba67a277c5d7ad661798e40ab9ee49755e7",
-      "seq": 209
-    },
-    {
-      "type": "TURN_ADVANCED",
-      "schemaVersion": 2,
-      "rngCounter": 279,
-      "rngDraws": 0,
-      "payload": {
-        "activeEntityId": "player",
-        "turn": 64
-      },
-      "id": "be5e6d1090225f873173daa4008cc63fed4cbc25d9f66eec0f8cad9a38e4cd81",
-      "parent": "7c5586639231109bd51324d73f5c4c1810a1cf3a501403338004c70eec0ae9c0",
-      "seq": 210
-    },
-    {
-      "type": "MOVE",
-      "schemaVersion": 2,
-      "rngCounter": 279,
-      "rngDraws": 0,
-      "payload": {
-        "entityId": "player",
-        "from": {
-          "x": 42,
-          "y": 7
-        },
-        "to": {
-          "x": 43,
-          "y": 7
-        }
-      },
-      "id": "9b7d5594099a95c601cdb4201209fbd5ac338e08054192bee0ce8eee5b55210d",
-      "parent": "be5e6d1090225f873173daa4008cc63fed4cbc25d9f66eec0f8cad9a38e4cd81",
-      "seq": 211
-    },
-    {
-      "type": "TURN_ADVANCED",
-      "schemaVersion": 2,
-      "rngCounter": 279,
-      "rngDraws": 0,
-      "payload": {
-        "activeEntityId": "player",
-        "turn": 65
-      },
-      "id": "4fd9c6294ce58fc9c2b7311a63469a2ab0278683dcda982003dafb6dee3f1c7d",
-      "parent": "9b7d5594099a95c601cdb4201209fbd5ac338e08054192bee0ce8eee5b55210d",
+      "id": "eef6d31b418dfba63aba9cf0424454e72b30fd76fe3601bb6c9c93c5f9150b7b",
+      "parent": "593619820a682f76e631c8951c3ad9ca786b3cb5e0917edc3ba071586e1f496a",
       "seq": 212
-    },
-    {
-      "type": "MOVE",
-      "schemaVersion": 2,
-      "rngCounter": 279,
-      "rngDraws": 0,
-      "payload": {
-        "entityId": "player",
-        "from": {
-          "x": 43,
-          "y": 7
-        },
-        "to": {
-          "x": 44,
-          "y": 7
-        }
-      },
-      "id": "6102e4f7d1aa219b89f5b3cf86eacb111cead4e36acca8681733193d0d5e7e69",
-      "parent": "4fd9c6294ce58fc9c2b7311a63469a2ab0278683dcda982003dafb6dee3f1c7d",
-      "seq": 213
     },
     {
       "type": "TURN_ADVANCED",
@@ -4964,9 +4929,9 @@
         "activeEntityId": "player",
         "turn": 66
       },
-      "id": "ca455b518968d58b421c88779ad5fc5c3189fecddad748abd0f99d5a9b35b077",
-      "parent": "6102e4f7d1aa219b89f5b3cf86eacb111cead4e36acca8681733193d0d5e7e69",
-      "seq": 214
+      "id": "319da40001c13a9b7b99acbcffee2685be25a2520c7052491fdc155c1304e834",
+      "parent": "eef6d31b418dfba63aba9cf0424454e72b30fd76fe3601bb6c9c93c5f9150b7b",
+      "seq": 213
     },
     {
       "type": "MOVE",
@@ -4984,9 +4949,9 @@
           "y": 7
         }
       },
-      "id": "f885eac3d27ff57f8ba473a082fa04c75370d72ddca5c66794b09263bb5146c1",
-      "parent": "ca455b518968d58b421c88779ad5fc5c3189fecddad748abd0f99d5a9b35b077",
-      "seq": 215
+      "id": "36f0a32b4f01b0b2b9df07cd6a4ed53abbe257fa7921196d781920d2b6bda50f",
+      "parent": "319da40001c13a9b7b99acbcffee2685be25a2520c7052491fdc155c1304e834",
+      "seq": 214
     },
     {
       "type": "TURN_ADVANCED",
@@ -4997,9 +4962,9 @@
         "activeEntityId": "player",
         "turn": 67
       },
-      "id": "80e67bc2d4a701893f98a599c0e0c1d8a362ac3af1266c969888480cddd19f51",
-      "parent": "f885eac3d27ff57f8ba473a082fa04c75370d72ddca5c66794b09263bb5146c1",
-      "seq": 216
+      "id": "5b941c46ca058802ffd748583069c8583e8b7ca77ca468760d2e9dd94792b15b",
+      "parent": "36f0a32b4f01b0b2b9df07cd6a4ed53abbe257fa7921196d781920d2b6bda50f",
+      "seq": 215
     },
     {
       "type": "MOVE",
@@ -5017,9 +4982,9 @@
           "y": 6
         }
       },
-      "id": "bf07ddbf99fd22596b389aa367c90eacfe9f7a01d3cd13ed50733f0e250b8b27",
-      "parent": "80e67bc2d4a701893f98a599c0e0c1d8a362ac3af1266c969888480cddd19f51",
-      "seq": 217
+      "id": "5e88584e45ee7553eb04c8645f65ab392eb4c531cee12f1826e3664517010da9",
+      "parent": "5b941c46ca058802ffd748583069c8583e8b7ca77ca468760d2e9dd94792b15b",
+      "seq": 216
     },
     {
       "type": "TURN_ADVANCED",
@@ -5030,9 +4995,9 @@
         "activeEntityId": "player",
         "turn": 68
       },
-      "id": "238940fae63a8f002bf017b9350d1b798fd6855cfb5ab90c45b2256eb7e9f604",
-      "parent": "bf07ddbf99fd22596b389aa367c90eacfe9f7a01d3cd13ed50733f0e250b8b27",
-      "seq": 218
+      "id": "0c582cb9ef1f630bca83f782ec6bb704b10688f4b3e581b08e2adc040cc00b37",
+      "parent": "5e88584e45ee7553eb04c8645f65ab392eb4c531cee12f1826e3664517010da9",
+      "seq": 217
     },
     {
       "type": "MOVE",
@@ -5050,9 +5015,9 @@
           "y": 5
         }
       },
-      "id": "c096cffb8b4ba101df54cab084f6497b7d567c5b5a71b2bd5240617e9cd71782",
-      "parent": "238940fae63a8f002bf017b9350d1b798fd6855cfb5ab90c45b2256eb7e9f604",
-      "seq": 219
+      "id": "f36cc881094e296d53a5fb9b14a01916b7854ef5fcff55fc731f773ab5629f6f",
+      "parent": "0c582cb9ef1f630bca83f782ec6bb704b10688f4b3e581b08e2adc040cc00b37",
+      "seq": 218
     },
     {
       "type": "TURN_ADVANCED",
@@ -5063,9 +5028,9 @@
         "activeEntityId": "player",
         "turn": 69
       },
-      "id": "7d131c3cb88c5532b06bfeb751f5bab41bd3d2e69699a5d56bbe458fc4b50e1d",
-      "parent": "c096cffb8b4ba101df54cab084f6497b7d567c5b5a71b2bd5240617e9cd71782",
-      "seq": 220
+      "id": "cbb0b97a6a07ff4aff572e9ec1f53c3e542227aa0cc0a3dab89d330916d7df01",
+      "parent": "f36cc881094e296d53a5fb9b14a01916b7854ef5fcff55fc731f773ab5629f6f",
+      "seq": 219
     },
     {
       "type": "MOVE",
@@ -5083,9 +5048,9 @@
           "y": 4
         }
       },
-      "id": "4811415aadff79a3ee8c957d6aacd039cf77f4892f230df0b3fb0e02a6c4c1f8",
-      "parent": "7d131c3cb88c5532b06bfeb751f5bab41bd3d2e69699a5d56bbe458fc4b50e1d",
-      "seq": 221
+      "id": "78479b44a7dad8ad3c94118414f00188bd5199a35ec9d0118e725a530ac6882d",
+      "parent": "cbb0b97a6a07ff4aff572e9ec1f53c3e542227aa0cc0a3dab89d330916d7df01",
+      "seq": 220
     },
     {
       "type": "TURN_ADVANCED",
@@ -5096,9 +5061,9 @@
         "activeEntityId": "player",
         "turn": 70
       },
-      "id": "f5c3f264e0f7a422233bede4f34eb910c82aa55743e24c209dbaaec2278351ca",
-      "parent": "4811415aadff79a3ee8c957d6aacd039cf77f4892f230df0b3fb0e02a6c4c1f8",
-      "seq": 222
+      "id": "501fd41872d856f3f42fbf74af4d1d39f9b268dd994e45a5aa0acf1bb1749d47",
+      "parent": "78479b44a7dad8ad3c94118414f00188bd5199a35ec9d0118e725a530ac6882d",
+      "seq": 221
     }
   ]
 }

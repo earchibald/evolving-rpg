@@ -102,6 +102,11 @@ function reduce(state: GameState, event: GameEvent): GameState {
         // universal fact, not a warden field: every creature has a post,
         // and only the vigil happens to read it.
         post: { x: s.pos.x, y: s.pos.y },
+        // The temper (v10): guards own their posts, wanderers carry their
+        // recorded round, leg 0 — the reducer advances it as steps land.
+        // Absent fields read the old stillness, exactly as they always did.
+        ...(s.disposition === undefined ? {} : { disposition: s.disposition }),
+        ...(s.route === undefined ? {} : { route: s.route.map((w) => ({ x: w.x, y: w.y })), leg: 0 }),
         // A creature's ceiling is its birth hp; the player's crossed a floor
         // and may arrive wounded, so the ceiling rides in the payload.
         maxHp: s.id === p.player.id ? (p.playerMaxHp ?? s.stats.hp) : s.stats.hp,
@@ -177,9 +182,19 @@ function reduce(state: GameState, event: GameEvent): GameState {
       const p = event.payload;
       return {
         ...state,
-        entities: unstanced(state.entities, p.entityId).map((e) =>
-          e.id === p.entityId ? { ...e, pos: { x: p.to.x, y: p.to.y } } : e,
-        ),
+        entities: unstanced(state.entities, p.entityId).map((e) => {
+          if (e.id !== p.entityId) return e;
+          const landed = { ...e, pos: { x: p.to.x, y: p.to.y } };
+          // The wanderer's round advances when a step lands on ANY of its
+          // waypoints — the next leg is the one after the waypoint struck,
+          // so a skipped or coincidental stop can never turn the round
+          // backwards. Derived, silent, replay-exact (the venom precedent).
+          if (e.route !== undefined && e.route.length > 0) {
+            const struck = e.route.findIndex((w) => w.x === p.to.x && w.y === p.to.y);
+            if (struck >= 0) return { ...landed, leg: (struck + 1) % e.route.length };
+          }
+          return landed;
+        }),
       };
     }
 

@@ -24,6 +24,16 @@ export interface Entity {
    *  it later would mean folding from the root to answer a question the
    *  state can simply carry. */
   post?: Pos;
+  /** How this creature holds its ground when nothing is hunted (WORLD_INIT
+   *  v10). Guards own a place — the vigil's homeward half, generalized;
+   *  wanderers walk their recorded route. Absent means the old stillness. */
+  disposition?: 'guard' | 'wander';
+  /** The wanderer's round, recorded at birth. */
+  route?: readonly Pos[];
+  /** Which waypoint the round heads for next. Advanced by the reducer when
+   *  a step lands on any waypoint (derived, silent, replay-exact — the
+   *  venom precedent); decide() only ever reads it. */
+  leg?: number;
   /**
    * What is worn, by slot. Optional so the many hand-built fixtures that
    * predate equipment stay valid; absent means bare. Replacement arithmetic

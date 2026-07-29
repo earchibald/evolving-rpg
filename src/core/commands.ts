@@ -3,7 +3,7 @@ import { inBounds, isPassable } from './grid.js';
 import { findEntity, isAlive } from './entity.js';
 import { intBetween } from './rng.js';
 import { clearShot, withinReach } from './sight.js';
-import { neededToHit, chanceIn20, damageDice, critFloor, WHIFF, BESTIARY, creatureStats, threatOf, spawnBudget, depthBands, wardenAt, ARMORY, relicGrant, slotFor, RELIC_TRAITS, motifAt, verbOf, wardenLevel, AMBUSH_MIGHT_BONUS, AMBUSH_FROM_DEPTH, braceWall, CALL_RISERS, CALL_DISTANCE, dominates, wearsTrait, FLARE_RADIUS, provisionsAt, provisionOf, draughtCeiling, smokeTurns, BOTTOM_DEPTH, HEART_KIND, WAVE_DISTANCE, SHOT_RANGE, sizeStretch, MAX_BOARD_DIM } from './tables.js';
+import { neededToHit, chanceIn20, damageDice, critFloor, WHIFF, BESTIARY, creatureStats, threatOf, spawnBudget, depthBands, wardenAt, ARMORY, relicGrant, slotFor, RELIC_TRAITS, motifAt, verbOf, wardenLevel, AMBUSH_MIGHT_BONUS, AMBUSH_FROM_DEPTH, braceWall, CALL_RISERS, CALL_DISTANCE, dominates, wearsTrait, FLARE_RADIUS, provisionsAt, provisionOf, draughtCeiling, smokeTurns, BOTTOM_DEPTH, HEART_KIND, WAVE_DISTANCE, SHOT_RANGE, sizeStretch, MAX_BOARD_DIM, WANDER_FROM_DEPTH, ROUTE_STOPS } from './tables.js';
 import type { Relic } from './tables.js';
 import type { Entity, Stats, Pos } from './entity.js';
 import { itemAt } from './item.js';
@@ -402,6 +402,35 @@ export function createWorld(
     && !(keeperTile !== undefined && p.x === keeperTile.x && p.y === keeperTile.y));
   let nextFree = 0;
 
+  // The dispositions (v10, the living-dungeon pass). By role, drawless:
+  // the keeper and every relic guard OWN their posts now — they hunt only
+  // inside the leash and walk home when it empties, instead of freezing
+  // wherever a chase went cold. Free spawns past the teaching floor draw
+  // their temper: a third walk rounds of the floor (routes of drawn room
+  // centers — the patrol that makes a big board feel inhabited), a sixth
+  // post themselves where they stand, the rest keep the old stillness.
+  const centers = generated.rooms.map((r) => ({ x: r.x + Math.floor(r.w / 2), y: r.y + Math.floor(r.h / 2) }));
+  const temper: (undefined | { disposition: 'guard' } | { disposition: 'wander'; route: Pos[] })[] =
+    population.chosen.map(() => undefined);
+  let after = spawned.counterAfter;
+  population.chosen.forEach((_ch, i) => {
+    if (guardOf.has(i) || i === keeper) { temper[i] = { disposition: 'guard' }; return; }
+    if (depth < WANDER_FROM_DEPTH || centers.length < 2) return;
+    const drawn = intBetween(seed, after, 1, 6); after += 1;
+    if (drawn <= 2) {
+      const stops = intBetween(seed, after, ROUTE_STOPS[0], ROUTE_STOPS[1]); after += 1;
+      const route: Pos[] = [];
+      for (let s = 0; s < stops; s += 1) {
+        const at = intBetween(seed, after, 0, centers.length - 1); after += 1;
+        route.push({ x: centers[at]!.x, y: centers[at]!.y });
+      }
+      temper[i] = { disposition: 'wander', route };
+    } else if (drawn === 3) {
+      temper[i] = { disposition: 'guard' };
+    }
+  });
+  const walking = temper.filter((t) => t?.disposition === 'wander').length;
+
   // The floor's whole account, recorded where facts live — covenant L1: the
   // shape, the journey, the rent and what it bought, who watches the door,
   // what lies guarded. This is the generation reasoning chain, in the event,
@@ -421,6 +450,7 @@ export function createWorld(
     + ` · ${relics.map((r) => r.kind).join(' and ') || 'nothing'} lies guarded`
     + ` · ${provisions.map((p) => p.kind).join(' and ')} lie${provisions.length === 1 ? 's' : ''} where the path does not go`
     + (coiled > 0 ? ` · ${coiled} of them lie${coiled === 1 ? 's' : ''} coiled, waiting` : '')
+    + (walking > 0 ? ` · ${walking} of them walk${walking === 1 ? 's' : ''} rounds of the floor` : '')
     + (secret.sealed ? ' · one room keeps itself secret' : '')
     + (repaired.punched > 0 ? ` · ${repaired.punched} hidden way(s) cut where no way was` : '')
     + (depth === 1 ? ` · the world runs ${BOTTOM_DEPTH} floors deep, and something beats at the bottom` : '');
@@ -430,8 +460,8 @@ export function createWorld(
     schemaVersion: SCHEMA_VERSIONS.WORLD_INIT,
     rngCounter: 0,
     // Generation started from counter 0, so the counter it finished on after
-    // placing inhabitants is exactly the number of draws it consumed.
-    rngDraws: spawned.counterAfter,
+    // placing inhabitants and drawing tempers is exactly what it consumed.
+    rngDraws: after,
     payload: {
       width,
       height,
@@ -499,6 +529,7 @@ export function createWorld(
             if (verbOf(c.kind) === 'call') return ['call'];
             return [];
           })(),
+          ...(temper[i] === undefined ? {} : temper[i]),
         };
       }),
     },

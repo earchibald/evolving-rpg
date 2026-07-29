@@ -12,7 +12,7 @@ import type { Item } from './item.js';
  *  payload — a special case that could not survive any second consumer of
  *  randomness, and combat is one. */
 export const SCHEMA_VERSIONS = {
-  WORLD_INIT: 9,
+  WORLD_INIT: 10,
   WORLD_BIBLE: 1,
   WORLD_BODIES: 1,
   MOVE: 2,
@@ -41,6 +41,18 @@ export interface EntitySeed {
   pos: Pos;
   stats: Stats;
   tags: string[];
+  /** v10, the dispositions (the living-dungeon pass): how this creature
+   *  holds its ground when nothing is hunted. A `guard` owns a place — it
+   *  hunts only within GUARD_LEASH of its post and walks home when the
+   *  leash empties; a `wander` walks its recorded route. Absence reads
+   *  exactly the old way: stand, hunt within awareness, freeze where the
+   *  scent went cold. */
+  disposition?: 'guard' | 'wander';
+  /** v10. The wanderer's round: waypoints drawn at generation (room
+   *  centers — counted draws like every birth choice), walked in a cycle.
+   *  Recorded rather than derived because the route is a fact about this
+   *  creature's birth, and replay must walk the same round forever. */
+  route?: Pos[];
 }
 
 export interface WorldInitPayload {
