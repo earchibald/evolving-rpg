@@ -18,8 +18,9 @@ export const SCHEMA_VERSIONS = {
   MOVE: 2,
   MOVE_BLOCKED: 2,
   TURN_ADVANCED: 2,
-  STRIKE: 3,
+  STRIKE: 4,
   WAIT: 1,
+  DRAWN: 1,
   ITEM_TAKEN: 3,
   ITEM_USED: 1,
   RULE_RATIFIED: 1,
@@ -176,6 +177,12 @@ export interface RuleFiredPayload {
 export interface StrikePayload {
   attackerId: string;
   targetId: string;
+  /** v4, the modes: how far the blow flew. Absent reads melee (the motif
+   *  precedent — old chains fold unchanged, no upcaster). An open door on
+   *  purpose: later modes (a bolt, a blast) are new values here plus their
+   *  own eligibility gates at command time, never new machinery — the
+   *  reducer applies recorded outcomes whatever the mode says. */
+  mode?: 'melee' | 'ranged';
   roll: number;
   needed: number;
   hit: boolean;
@@ -223,6 +230,15 @@ export interface ShovePayload {
  *  event because standing guard is a decision that spends the turn, and the
  *  chronicle should tell it apart from simply standing. */
 export interface BracedPayload {
+  entityId: string;
+}
+
+/** The drawn stance — covenant M8's warning, on the chain. Anyone's: the
+ *  slinger's and the player's draws are one event, because the discipline
+ *  is one discipline. The reducer writes the tag; waiting alone preserves
+ *  it; every other act by the holder — and any blow or reel that finds
+ *  them — shakes the shot loose unfired. */
+export interface DrawnPayload {
   entityId: string;
 }
 
@@ -300,6 +316,7 @@ export type DraftEvent =
   | { type: 'WORLD_STIRRED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: WorldStirredPayload }
   | { type: 'SHOVE'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: ShovePayload }
   | { type: 'BRACED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: BracedPayload }
+  | { type: 'DRAWN'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: DrawnPayload }
   | { type: 'CALLED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: CalledPayload }
   | { type: 'WORLD_REMEMBERED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: WorldRememberedPayload };
 

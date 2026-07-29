@@ -56,19 +56,24 @@ function creditKills(before: GameState, after: GameState, killerId: string, play
   return { ...after, xp, level, entities };
 }
 
-/** A stance ends the moment its holder acts. Every event with an actor runs
- *  its actor through here; BRACED itself is the only writer of the tag. */
-function unbraced(entities: readonly Entity[], actorId: string): readonly Entity[] {
+/** A stance ends the moment its holder acts — both stances, one law. Every
+ *  event with an actor runs its actor through here; BRACED and DRAWN are the
+ *  tags' only writers. WAIT is the draw's deliberate exception (its own arm
+ *  below): an archer may stand at full draw as long as they dare stand
+ *  still, while a brace is strictly one round. */
+function unstanced(entities: readonly Entity[], actorId: string): readonly Entity[] {
   const held = entities.find((e) => e.id === actorId);
-  if (held === undefined || !held.tags.includes('braced')) return entities;
+  if (held === undefined || (!held.tags.includes('braced') && !held.tags.includes('drawn'))) return entities;
   return entities.map((e) =>
-    e.id === actorId ? { ...e, tags: e.tags.filter((t) => t !== 'braced') } : e,
+    e.id === actorId ? { ...e, tags: e.tags.filter((t) => t !== 'braced' && t !== 'drawn') } : e,
   );
 }
 
-/** Reeling, at most once — a second stagger on a staggered thing is spent. */
+/** Reeling, at most once — a second stagger on a staggered thing is spent.
+ *  The reel shakes any drawn shot loose (covenant M8's flinch). */
 function staggered(tags: string[]): string[] {
-  return tags.includes('staggered') ? tags : [...tags, 'staggered'];
+  const shaken = tags.filter((t) => t !== 'drawn');
+  return shaken.includes('staggered') ? shaken : [...shaken, 'staggered'];
 }
 
 /**
@@ -168,7 +173,7 @@ function reduce(state: GameState, event: GameEvent): GameState {
       const p = event.payload;
       return {
         ...state,
-        entities: unbraced(state.entities, p.entityId).map((e) =>
+        entities: unstanced(state.entities, p.entityId).map((e) =>
           e.id === p.entityId ? { ...e, pos: { x: p.to.x, y: p.to.y } } : e,
         ),
       };
@@ -261,7 +266,7 @@ function reduce(state: GameState, event: GameEvent): GameState {
       const guarded = state.entities.find((e) => e.id === p.targetId)?.tags.includes('braced') === true;
       // The attacker's own stance (a player striking out of a brace) ends
       // with the action.
-      const acted = unbraced(state.entities, p.attackerId);
+      const acted = unstanced(state.entities, p.attackerId);
       // The verbs' movement applies whether or not the blow landed: a lunge
       // that whiffs still crossed the ground (attackerTo rides on misses for
       // lunges; trample fields are only ever written on landed, surviving
@@ -280,8 +285,10 @@ function reduce(state: GameState, event: GameEvent): GameState {
       if (!p.hit) {
         // Missing a set guard is overcommitment: the attacker reels. This is
         // the brace's tooth — derived from the tag the blow was thrown at,
-        // so replay reads it the same forever.
-        const after = guarded
+        // so replay reads it the same forever. Melee only: overcommitment
+        // is a fact about bodies, and the far shooter never lent theirs
+        // (absent mode reads melee — v3 chains fold unchanged).
+        const after = guarded && (p.mode ?? 'melee') === 'melee'
           ? moved.map((e) => (e.id === p.attackerId ? { ...e, tags: staggered(e.tags) } : e))
           : moved;
         return after === state.entities ? state : { ...state, entities: after };
@@ -301,11 +308,14 @@ function reduce(state: GameState, event: GameEvent): GameState {
             // letting hp run negative would make "how badly did it lose" a
             // number nothing reads and every display has to special-case.
             const hp = Math.max(0, e.stats.hp - p.damage);
+            // A landed, hurting blow shakes any drawn shot loose — the
+            // flinch, covenant M8's half that melee enforces on archers.
+            const flinched = p.damage > 0 ? e.tags.filter((t) => t !== 'drawn') : e.tags;
             // A surviving, bitten body burns: fresh venom replaces stale —
             // the wound re-opened, never stacked.
             let tags = venomous && hp > 0
-              ? [...e.tags.filter((t) => !t.startsWith('venom-')), `venom-${String(VENOM_TURNS)}`]
-              : e.tags;
+              ? [...flinched.filter((t) => !t.startsWith('venom-')), `venom-${String(VENOM_TURNS)}`]
+              : flinched;
             if (surely && hp > 0) tags = staggered(tags);
             return { ...e, stats: { ...e.stats, hp }, tags };
           }
@@ -321,7 +331,7 @@ function reduce(state: GameState, event: GameEvent): GameState {
 
     case 'SHOVE': {
       const p = event.payload;
-      const after = unbraced(state.entities, p.shoverId).map((e) => {
+      const after = unstanced(state.entities, p.shoverId).map((e) => {
         if (e.id === p.targetId) {
           const reels = p.slammed || p.struckId !== null;
           return {
@@ -339,12 +349,27 @@ function reduce(state: GameState, event: GameEvent): GameState {
     }
 
     case 'BRACED': {
+      // One stance per body: setting the guard lowers any drawn shot.
       const p = event.payload;
       return {
         ...state,
         entities: state.entities.map((e) =>
-          e.id === p.entityId && !e.tags.includes('braced')
-            ? { ...e, tags: [...e.tags, 'braced'] }
+          e.id === p.entityId
+            ? { ...e, tags: [...e.tags.filter((t) => t !== 'braced' && t !== 'drawn'), 'braced'] }
+            : e,
+        ),
+      };
+    }
+
+    case 'DRAWN': {
+      // The warning covenant M8 requires, written where replay reads it.
+      // One stance per body: drawing drops any set guard.
+      const p = event.payload;
+      return {
+        ...state,
+        entities: state.entities.map((e) =>
+          e.id === p.entityId
+            ? { ...e, tags: [...e.tags.filter((t) => t !== 'braced' && t !== 'drawn'), 'drawn'] }
             : e,
         ),
       };
@@ -355,7 +380,7 @@ function reduce(state: GameState, event: GameEvent): GameState {
       // are applied verbatim — replay never re-decides how much a draught
       // mended or who the smoke fooled.
       const p = event.payload;
-      const emptied = unbraced(state.entities, p.entityId).map((e) => {
+      const emptied = unstanced(state.entities, p.entityId).map((e) => {
         if (e.id !== p.entityId) return e;
         const { satchel: _spent, ...rest } = e;
         if (p.effect.kind === 'draught') {
