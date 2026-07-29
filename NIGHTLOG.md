@@ -1369,3 +1369,69 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 >
 > 966 tests — four new on the answered take — typecheck clean, no
 > draws touched, no schema bumped past the new event's own v1.
+
+## 2026-07-29 — 11:33 — your boring floor, read back and measured: the stretch never reached the spawns
+
+> Dear Designer,
+>
+> First, a confession with a timeline. The dev server I restarted this
+> morning died somewhere between 10:04 and 11:15 while you played. That
+> is your "TypeError: Failed to fetch" at t194 — you died, the world
+> reached for a death-proposal, and there was nothing on the other end.
+> The proposal that death would have offered is gone (it fires once);
+> the forge's ask button still works any time. The server is back and
+> I am watching it. Your two notes from that window ("only two
+> monsters…", "okay, three monsters.") never reached the repo's mirror
+> for the same reason — they lived in your browser only, and are now
+> written down here.
+>
+> **The session, read back off your own chain** (runs/latest.json,
+> 4,272 events): one world, the expanse, seed 366264905, the door cut —
+> 56 rooms, the way out 113 steps. Four lives, three graves, every
+> grave remembered. Floor one, in the world's own words: "a budget of
+> 59 paid 49 for 3: skirmisher, skirmisher, stalker." You walked 1,174
+> steps, bumped 60 walls, and swung or were swung at NINETEEN times in
+> three thousand turns. You spent 976 turns on floor one and typed the
+> verdict at turn 679, level 2, unhurt, flare in hand: quite boring.
+> Your last life ended on floor two's door-watcher: it hit for 5, you
+> whiffed, it hit for 6, you answered for 4, it hit for 3. Dead at
+> t194, and then the fetch error where the proposal should have been.
+>
+> **The diagnosis — your count was exact, and it is the design's gap,
+> not the dice's.** The census across ten seeds: the expanse births
+> 3 creatures on floor one (the vale: 2–3; even the waste: 3–5). Two
+> causes, both on the record:
+>
+> The bounty factor B=(S+1)/2 was chosen after the measured wrong turn
+> (budget×S bled the depth-3 fighter — fights-per-heal), so the
+> expanse's floor-one budget is 59 against level-1 prices of 13–23:
+> that buys three bodies and strands a remainder too small to spend.
+> Meanwhile the board stretched ×4 in ground and ×2 in journey. And
+> every element meant to FILL the stretched quiet — patrols, traps,
+> the mimic, scrolls — starts at depth 2. The teaching floor got all
+> of the stretch and none of the filling: 113 steps, three meetings.
+>
+> **The rebalance I propose** (measured, not yet landed — the watch
+> list says no retune without your word, and this entry is me asking):
+>
+> 1. The teaching floor takes the FULL stretch: d1 spawn budget ×S
+>    instead of ×B. The fights-per-heal autopsy was a depth-3 wound;
+>    the door pin (10/10 gentle) has margin to spend, and floor-one
+>    XP is small enough that the stretched ladder absorbs it.
+> 2. Wanderers walk from depth 1 on stretched boards (S≥2). Same
+>    creatures, moved — meetings, not power. The empty corridor
+>    problem is exactly what patrols were built for; floor one is
+>    where they are currently forbidden.
+> 3. Held in reserve: level-1 prices themselves (a 3-hp stalker
+>    priced 23 is the offence formula talking, not the corpse) — a
+>    bigger swing touching every pin; only if 1+2 measure short.
+>
+> Cost of landing: tables change, the door pins re-measured and
+> re-pinned, golden probe + regen (generation draws move). Say the
+> word and it is an afternoon's increment.
+>
+> One old note answered while I was reading them back: you once asked
+> what trap I would build first — "a trap door, dropping to the next
+> depth." It shipped last night as the maw: it drops you a floor,
+> 1d6+2, and you arrive with no stair-rest. Your instinct was already
+> in the game before the question surfaced in the mirror.
