@@ -117,7 +117,7 @@ export interface CarriedPlayer {
   xp: number;
   level: number;
   gear?: Record<string, { kind: string; grants: Stats }>;
-  satchel?: { kind: string };
+  satchel?: { kinds: readonly string[] };
 }
 
 /**
@@ -399,7 +399,7 @@ export function createWorld(
       level: carried?.level ?? 1,
       ...(carried === undefined ? {} : { playerMaxHp: carried.maxHp }),
       ...(carried?.gear === undefined ? {} : { playerGear: carried.gear }),
-      ...(carried?.satchel === undefined ? {} : { playerSatchel: { kind: carried.satchel.kind } }),
+      ...(carried?.satchel === undefined ? {} : { playerSatchel: { kinds: [...carried.satchel.kinds] } }),
       items: [
         ...relics.map((r, i) => ({
           id: `relic-${String(i + 1)}`,
@@ -971,36 +971,46 @@ export function takeUnderfoot(
   const item = itemAt(state.items, taker.pos.x, taker.pos.y);
   if (item === undefined) return null;
 
-  // The heart fills your hands. It goes into the satchel — shoving out
-  // whatever was carried (left on the tile, like any swap) — and SEALS it:
-  // nothing else can be taken up or used while you carry the world's ending.
-  // Recorded like any satchel take; the weight is in what it refuses after.
+  // The heart fills your hands. It takes the first slot — shoving out
+  // whatever rode there (left on the tile, like any swap) — and SEALS the
+  // whole satchel: nothing can be taken up or used, either hand, while you
+  // carry the world's ending. Recorded like any satchel take; the weight
+  // is in what it refuses after.
   if (item.kind === HEART_KIND) {
     return {
       type: 'ITEM_TAKEN',
       schemaVersion: SCHEMA_VERSIONS.ITEM_TAKEN,
       rngCounter: state.rngCounter,
       rngDraws: 0,
-      payload: { entityId, itemId: item.id, grants: { ...item.grants }, satchel: { swappedOut: taker.satchel?.kind ?? null } },
+      payload: { entityId, itemId: item.id, grants: { ...item.grants }, satchel: { swappedOut: taker.satchel?.[0]?.kind ?? null, slot: 0 } },
     };
   }
 
-  // A provision rides in the satchel, not on the body. Walking over one with
-  // full hands swaps — the old one stays on this tile, permanently, so the
-  // choice is reversible by one step back. No "better one" exists to prefer:
-  // that is the point, and why this must not reuse the relics' upgrade rule.
+  // A provision rides in the satchel, not on the body — two slots now (the
+  // designer's ruling, 2026-07-28), filled in order, duplicates welcome:
+  // two flares are two flares. Full hands refuse the walk-over (the caller
+  // says so out loud); the , key swaps the FIRST slot out onto this tile,
+  // reversible by one step back. Hands sealed by something that is not a
+  // provision (the heart) do not open at all.
   if (provisionOf(item.kind) !== undefined) {
-    const carried = taker.satchel?.kind ?? null;
-    // Same for same is nothing at all; and hands sealed by something that is
-    // not a provision (the heart) do not open for one.
-    if (carried === item.kind) return null;
-    if (carried !== null && provisionOf(carried) === undefined) return null;
+    const carried = taker.satchel ?? [];
+    if (carried.some((c) => provisionOf(c.kind) === undefined)) return null;
+    if (carried.length < 2) {
+      return {
+        type: 'ITEM_TAKEN',
+        schemaVersion: SCHEMA_VERSIONS.ITEM_TAKEN,
+        rngCounter: state.rngCounter,
+        rngDraws: 0,
+        payload: { entityId, itemId: item.id, grants: { ...item.grants }, satchel: { swappedOut: null, slot: carried.length } },
+      };
+    }
+    if (!deliberate) return null;
     return {
       type: 'ITEM_TAKEN',
       schemaVersion: SCHEMA_VERSIONS.ITEM_TAKEN,
       rngCounter: state.rngCounter,
       rngDraws: 0,
-      payload: { entityId, itemId: item.id, grants: { ...item.grants }, satchel: { swappedOut: carried } },
+      payload: { entityId, itemId: item.id, grants: { ...item.grants }, satchel: { swappedOut: carried[0]!.kind, slot: 0 } },
     };
   }
 
@@ -1033,10 +1043,14 @@ export function takeUnderfoot(
 export function useCarried(
   state: GameState,
   entityId: string,
+  /** Which hand: 0 is q's, 1 is Q's. What remains compacts forward. */
+  slot = 0,
 ): Extract<DraftEvent, { type: 'ITEM_USED' }> | null {
   const user = findEntity(state.entities, entityId);
   if (user === undefined) return null;
-  const kind = user.satchel?.kind;
+  // The heart seals both hands — a flare beside the world's ending stays lit.
+  if (user.satchel?.some((c) => provisionOf(c.kind) === undefined) === true) return null;
+  const kind = user.satchel?.[slot]?.kind;
   if (kind === undefined || provisionOf(kind) === undefined) return null;
 
   if (kind === 'vital draught') {
@@ -1049,7 +1063,7 @@ export function useCarried(
       schemaVersion: SCHEMA_VERSIONS.ITEM_USED,
       rngCounter: state.rngCounter,
       rngDraws: 0,
-      payload: { entityId, kind, effect: { kind: 'draught', healedTo: ceilingTo, ceilingTo } },
+      payload: { entityId, kind, slot, effect: { kind: 'draught', healedTo: ceilingTo, ceilingTo } },
     };
   }
 
@@ -1064,6 +1078,7 @@ export function useCarried(
       payload: {
         entityId,
         kind,
+        slot,
         effect: { kind: 'flare', at: { x: user.pos.x, y: user.pos.y }, radius: FLARE_RADIUS },
       },
     };
@@ -1085,6 +1100,7 @@ export function useCarried(
     payload: {
       entityId,
       kind,
+      slot,
       effect: { kind: 'smoke', until: state.turn + smokeTurns(state.depth), at: { x: user.pos.x, y: user.pos.y }, unfooled },
     },
   };
@@ -1092,9 +1108,9 @@ export function useCarried(
 
 export type Outcome = 'playing' | 'escaped' | 'dead' | 'won';
 
-/** Whether the world's ending rides in this player's hands. */
+/** Whether the world's ending rides in this player's hands — either of them. */
 export function heartHeld(state: GameState, playerId = 'player'): boolean {
-  return findEntity(state.entities, playerId)?.satchel?.kind === HEART_KIND;
+  return findEntity(state.entities, playerId)?.satchel?.some((c) => c.kind === HEART_KIND) === true;
 }
 
 /**

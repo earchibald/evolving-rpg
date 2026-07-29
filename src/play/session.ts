@@ -222,14 +222,14 @@ export function playerWait(position: Position, playerId: string): {
 
 /** Spend what the satchel holds. Refusing quietly when it holds nothing —
  *  the keypress simply does not become a turn. */
-export function playerUse(position: Position, playerId: string): {
+export function playerUse(position: Position, playerId: string, slot = 0): {
   position: Position;
   draft: DraftEvent | null;
 } {
   const state = fold(position.log, position.head);
   if (outcome(state, playerId) !== 'playing') return { position, draft: null };
 
-  const draft = useCarried(state, playerId);
+  const draft = useCarried(state, playerId, slot);
   if (draft === null) return { position, draft: null };
   return { position: commit(position, draft, playerId, playerId), draft };
 }
@@ -503,7 +503,7 @@ export function descend(
     {
       stats: { ...you.stats, hp }, maxHp: you.maxHp, xp: state.xp, level: state.level,
       ...(you.gear === undefined ? {} : { gear: { ...you.gear } as Record<string, { kind: string; grants: typeof you.stats }> }),
-      ...(you.satchel === undefined ? {} : { satchel: { kind: you.satchel.kind } }),
+      ...(you.satchel === undefined ? {} : { satchel: { kinds: you.satchel.map((c) => c.kind) } }),
     },
   ));
 

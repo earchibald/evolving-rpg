@@ -97,7 +97,7 @@ export function storyOf(
     .filter((g): g is { kind: string; grants: { hp: number; might: number; wits: number; speed: number } } => g !== undefined)
     .map((g) => called.item(g.kind));
   if (worn.length > 0) facts.push(`worn at the end: ${worn.join(', ')}`);
-  if (you?.satchel !== undefined) facts.push(`carried at the end: ${called.item(you.satchel.kind)}`);
+  if (you?.satchel !== undefined && you.satchel.length > 0) facts.push(`carried at the end: ${you.satchel.map((c) => called.item(c.kind)).join(', ')}`);
 
   for (const e of events) {
     if (e.type === 'ITEM_USED') facts.push(`${called.item(e.payload.kind)} was spent`);

@@ -102,7 +102,7 @@ function reduce(state: GameState, event: GameEvent): GameState {
         // and may arrive wounded, so the ceiling rides in the payload.
         maxHp: s.id === p.player.id ? (p.playerMaxHp ?? s.stats.hp) : s.stats.hp,
         ...(s.id === p.player.id && p.playerGear !== undefined ? { gear: p.playerGear } : {}),
-        ...(s.id === p.player.id && p.playerSatchel !== undefined ? { satchel: { kind: p.playerSatchel.kind } } : {}),
+        ...(s.id === p.player.id && p.playerSatchel !== undefined ? { satchel: p.playerSatchel.kinds.map((k) => ({ kind: k })) } : {}),
       }));
       return {
         grid: makeGrid(p.width, p.height, p.tiles),
@@ -210,13 +210,19 @@ function reduce(state: GameState, event: GameEvent): GameState {
       // The satchel's take: carried, not worn. The swap is recorded in the
       // payload (v3) because it MINTS a floor item — what was carried lies
       // where the new thing lay — and replay must mint the same one forever.
+      // v4 records WHICH slot the take filled; absence reads the first (an
+      // old chain carried one thing, and it lived there).
       if (p.satchel !== undefined) {
+        const slot = p.satchel.slot ?? 0;
         const droppedKind = p.satchel.swappedOut;
         return {
           ...state,
-          entities: state.entities.map((e) =>
-            e.id === p.entityId ? { ...e, satchel: { kind: item?.kind ?? 'carried' } } : e,
-          ),
+          entities: state.entities.map((e) => {
+            if (e.id !== p.entityId) return e;
+            const held = [...(e.satchel ?? [])];
+            held[slot] = { kind: item?.kind ?? 'carried' };
+            return { ...e, satchel: held };
+          }),
           items: [
             ...state.items.filter((i) => i.id !== p.itemId),
             ...(droppedKind === null || item === undefined ? [] : [{
@@ -382,15 +388,19 @@ function reduce(state: GameState, event: GameEvent): GameState {
       const p = event.payload;
       const emptied = unstanced(state.entities, p.entityId).map((e) => {
         if (e.id !== p.entityId) return e;
+        // The recorded slot empties; what remains compacts forward (the
+        // second thing becomes the first — q always spends the first).
+        const left = (e.satchel ?? []).filter((_c, i) => i !== (p.slot ?? 0));
         const { satchel: _spent, ...rest } = e;
+        const carried = left.length === 0 ? rest : { ...rest, satchel: left };
         if (p.effect.kind === 'draught') {
           return {
-            ...rest,
+            ...carried,
             maxHp: p.effect.ceilingTo,
             stats: { ...e.stats, hp: p.effect.healedTo },
           };
         }
-        return rest;
+        return carried;
       });
       if (p.effect.kind === 'smoke') {
         return {

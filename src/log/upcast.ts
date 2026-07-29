@@ -103,6 +103,16 @@ export function upcastEvent(raw: unknown): DraftEvent {
     // hands and a bare floor are what absence already says. Nothing to
     // rewrite.
 
+    if (version <= 8) {
+      // v8 → v9: the satchel grew a second slot, so the carry became an
+      // ordered list. A v8 world carried at most one kind; the list of one
+      // says exactly that.
+      const carried = payload.playerSatchel as { kind?: unknown; kinds?: unknown } | undefined;
+      if (carried !== undefined && typeof carried.kind === 'string') {
+        payload.playerSatchel = { kinds: [carried.kind] };
+      }
+    }
+
     return {
       type: 'WORLD_INIT',
       schemaVersion: current,

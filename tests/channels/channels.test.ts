@@ -134,7 +134,7 @@ describe('the stamp — how you stood when you said it', () => {
   it('reads the player out of the state', () => {
     const state = {
       ...EMPTY_STATE, depth: 3, turn: 41, level: 2,
-      entities: [{ ...you, satchel: { kind: 'still smoke' } }],
+      entities: [{ ...you, satchel: [{ kind: 'still smoke' }] }],
     };
     expect(statusOf(state)).toEqual({
       floor: 3, turn: 41, level: 2, hitPoints: 5, fullHealth: 12, carrying: 'still smoke',

@@ -12,7 +12,7 @@ import type { Item } from './item.js';
  *  payload — a special case that could not survive any second consumer of
  *  randomness, and combat is one. */
 export const SCHEMA_VERSIONS = {
-  WORLD_INIT: 8,
+  WORLD_INIT: 9,
   WORLD_BIBLE: 1,
   WORLD_BODIES: 1,
   MOVE: 2,
@@ -21,8 +21,8 @@ export const SCHEMA_VERSIONS = {
   STRIKE: 4,
   WAIT: 1,
   DRAWN: 1,
-  ITEM_TAKEN: 3,
-  ITEM_USED: 1,
+  ITEM_TAKEN: 4,
+  ITEM_USED: 2,
   RULE_RATIFIED: 1,
   RULE_FIRED: 1,
   VIGIL_KEPT: 1,
@@ -58,9 +58,9 @@ export interface WorldInitPayload {
    *  map resets each floor and the next identical relic stacks — the exact
    *  bug slots exist to prevent, reborn on every descent. */
   playerGear?: Record<string, { kind: string; grants: { hp: number; might: number; wits: number; speed: number } }>;
-  /** v8. What rides in the satchel across the stairs — same reason as gear:
-   *  a floor is new, what you carry is not. */
-  playerSatchel?: { kind: string };
+  /** v8 carried one kind; v9 carries the ordered list (the second slot) —
+   *  same reason as gear: a floor is new, what you carry is not. */
+  playerSatchel?: { kinds: readonly string[] };
   width: number;
   height: number;
   tiles: number[];
@@ -115,8 +115,10 @@ export interface ItemTakenPayload {
    *  kind is named here, that is what was carried BEFORE, now set down on
    *  the tile the new thing was lifted from (the walk-over swap). Recorded
    *  rather than derived because the swap invents a floor item, and replay
-   *  must mint the same one forever. */
-  satchel?: { swappedOut: string | null };
+   *  must mint the same one forever. v4 adds `slot`: which of the two
+   *  slots the take filled (absence reads the first — old chains carried
+   *  one thing and it lived there). */
+  satchel?: { swappedOut: string | null; slot?: number };
 }
 
 /**
@@ -129,6 +131,9 @@ export interface ItemTakenPayload {
 export interface ItemUsedPayload {
   entityId: string;
   kind: string;
+  /** v2. Which slot was spent (absence reads the first). Recorded so replay
+   *  empties the same hand forever; what remains compacts forward. */
+  slot?: number;
   effect:
     | { kind: 'draught'; healedTo: number; ceilingTo: number }
     | { kind: 'smoke'; until: number; at: Pos; unfooled: string[] }

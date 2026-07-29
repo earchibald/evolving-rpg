@@ -24,7 +24,7 @@ function bottomCorridor(opts: { bodies?: Pos[]; satchel?: { kind: string }; hear
     type: 'WORLD_INIT', schemaVersion: SCHEMA_VERSIONS.WORLD_INIT, rngCounter: 0, rngDraws: 0,
     payload: {
       width, height: 1, tiles, seed: 4, depth: BOTTOM_DEPTH,
-      ...(opts.satchel === undefined ? {} : { playerSatchel: opts.satchel }),
+      ...(opts.satchel === undefined ? {} : { playerSatchel: { kinds: [opts.satchel.kind] } }),
       items: [{
         id: 'heart-1', kind: HEART_KIND,
         pos: { x: opts.heartAt ?? width - 1, y: 0 },
@@ -95,10 +95,10 @@ describe('the heart in hand', () => {
     // Standing on the heart (heartAt 0 = under the player), take it.
     const took = takeUnderfoot(state, 'player');
     expect(took).not.toBeNull();
-    expect(took!.payload.satchel).toEqual({ swappedOut: 'still smoke' });
+    expect(took!.payload.satchel).toEqual({ swappedOut: 'still smoke', slot: 0 });
 
     const after = apply(state, asEvent(took!));
-    expect(after.entities[0]?.satchel).toEqual({ kind: HEART_KIND });
+    expect(after.entities[0]?.satchel).toEqual([{ kind: HEART_KIND }]);
     // The shoved-out smoke lies where the heart lay.
     expect(after.items.some((i) => i.kind === 'still smoke')).toBe(true);
     // Sealed: not a tool, and no provision may displace it.

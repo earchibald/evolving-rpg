@@ -41,7 +41,7 @@ function room(entities: Entity[], items: GameState['items'], opts: { walls?: Arr
 
 const GRANTLESS: Stats = { hp: 0, might: 0, wits: 0, speed: 0 };
 
-function you(x: number, y: number, o: { gear?: Entity['gear']; satchel?: { kind: string } } = {}): Entity {
+function you(x: number, y: number, o: { gear?: Entity['gear']; satchel?: { kind: string }[] } = {}): Entity {
   return {
     id: 'player', kind: 'you', pos: { x, y },
     stats: { hp: 10, might: 3, wits: 3, speed: 4 }, tags: [], maxHp: 10,
@@ -144,7 +144,7 @@ describe('the named properties', () => {
 
 describe('the flare', () => {
   it('records where it burst and how far', () => {
-    const state = room([you(5, 5, { satchel: { kind: 'tallow flare' } })], []);
+    const state = room([you(5, 5, { satchel: [{ kind: 'tallow flare' }] })], []);
     const used = useCarried(state, 'player');
     expect(used).not.toBeNull();
     expect(used!.rngDraws).toBe(0);

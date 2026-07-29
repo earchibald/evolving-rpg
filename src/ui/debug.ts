@@ -756,11 +756,11 @@ function render(): void {
       { key: 'boots', text: wornIn('boots') },
       { key: 'trinket', text: wornIn('trinket') },
     ], ''],
-    // The satchel: carried, not worn — under the world's name for it, with
-    // the one thing to know (q spends it) said right there.
-    ['satchel', player?.satchel === undefined ? 'empty' : `${
-      oracle.ask(describeQuestion('item', player.satchel.kind, {}, worldRoot())).name
-    } — q to use`, ''],
+    // The satchel: carried, not worn — both hands under the world's names,
+    // each with its key (q the first, Q the second) said right there.
+    ['satchel', player?.satchel === undefined || player.satchel.length === 0 ? 'empty' : player.satchel.map((c, i) => `${
+      oracle.ask(describeQuestion('item', c.kind, {}, worldRoot())).name
+    } — ${i === 0 ? 'q' : 'Q'}`).join(' · '), ''],
     ...(state.smoke !== null && state.turn < state.smoke.until
       ? [['the air', `smoke holds for ${state.smoke.until - state.turn} more turn(s) — hunts chase where you were`, 'good'] as [string, string, string]]
       : []),
@@ -1817,19 +1817,23 @@ function hold(): void {
   finish(before, after.head);
 }
 
-function use(): void {
+function use(slot = 0): void {
   const head = getRef(refs, active).head;
   if (head === null) return;
 
   const state = fold(log, head);
   const you = state.entities.find((e) => e.kind === 'you');
-  if (you?.satchel === undefined) {
+  if (you?.satchel === undefined || you.satchel.length === 0) {
     say('your satchel is empty');
+    return;
+  }
+  if (you.satchel[slot] === undefined) {
+    say('that hand is empty — q spends the first thing, Q the second');
     return;
   }
 
   const before = chain(log, head).length;
-  const spent = playerUse({ log, head }, 'player');
+  const spent = playerUse({ log, head }, 'player', slot);
   if (spent.draft === null) {
     // Held, but not a tool — the heart, most likely.
     say(`what you carry is not a thing you use`);
@@ -1944,7 +1948,7 @@ wire('gm-form', 'gm-said', 'gamemaster');
 const KEYMAP: ReadonlyArray<{ shown: string; what: string; button?: string }> = [
   { shown: '← ↑ → ↓ · wasd', what: 'move — into a creature is a strike, into a wall is free' },
   { shown: '. · space', what: 'hold still (this is a turn)' },
-  { shown: 'q', what: 'use what the satchel holds (this is a turn too)' },
+  { shown: 'q · Q', what: 'use what the satchel holds — q the first thing, Q the second (a turn either way)' },
   { shown: 'x, then a direction', what: 'shove — drive what stands beside you one pace; walls hurt, bodies tangle' },
   { shown: 'z', what: 'brace — set against the coming round; a blow that misses you staggers' },
   { shown: 'f', what: 'the sling — draw first (a turn, seen by all), loose second; waiting holds the draw' },
@@ -2015,7 +2019,13 @@ window.addEventListener('keydown', (event) => {
   if (event.key === 'q') {
     event.preventDefault();
     shoveArmed = false;
-    use();
+    use(0);
+    return;
+  }
+  if (event.key === 'Q') {
+    event.preventDefault();
+    shoveArmed = false;
+    use(1);
     return;
   }
   if (event.key === 'x') {

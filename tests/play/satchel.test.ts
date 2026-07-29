@@ -9,11 +9,12 @@ import type { DraftEvent } from '../../src/core/events.js';
 import type { Position } from '../../src/play/session.js';
 
 /**
- * The satchel: one carried thing, spent on purpose.
+ * The satchel: two carried things now (the designer's second slot,
+ * 2026-07-28), spent on purpose — q the first hand, Q the second.
  *
  * Everything here drives the session layer — the same playerStep and
- * playerUse a keyboard reaches — because "walking over swaps" and "using
- * costs the turn" are session truths, not reducer truths.
+ * playerUse a keyboard reaches — because "walking fills a free hand" and
+ * "using costs the turn" are session truths, not reducer truths.
  */
 
 interface Placed {
@@ -23,13 +24,13 @@ interface Placed {
   grants?: { hp: number; might: number; wits: number; speed: number };
 }
 
-function corridor(items: Placed[], foes: Array<{ id: string; kind: string; x: number; hp?: number }> = [], playerSatchel?: { kind: string }, height = 1): Position {
+function corridor(items: Placed[], foes: Array<{ id: string; kind: string; x: number; hp?: number }> = [], carrying?: string[], height = 1): Position {
   const width = 14;
   const draft: DraftEvent = {
     type: 'WORLD_INIT', schemaVersion: SCHEMA_VERSIONS.WORLD_INIT, rngCounter: 0, rngDraws: 0,
     payload: {
       width, height, tiles: new Array<number>(width * height).fill(FLOOR), seed: 9, depth: 1,
-      ...(playerSatchel === undefined ? {} : { playerSatchel }),
+      ...(carrying === undefined ? {} : { playerSatchel: { kinds: carrying } }),
       items: items.map((i) => ({
         id: i.id, kind: i.kind, pos: { x: i.x, y: 0 },
         grants: i.grants ?? { hp: 0, might: 0, wits: 0, speed: 0 },
@@ -52,40 +53,43 @@ describe('carrying', () => {
     let p = corridor([{ id: 'provision-1', kind: 'still smoke', x: 1 }]);
     p = playerStep(p, 'player', 1, 0).position;
     const s = at(p);
-    expect(s.entities[0]?.satchel).toEqual({ kind: 'still smoke' });
+    expect(s.entities[0]?.satchel).toEqual([{ kind: 'still smoke' }]);
     expect(s.items).toHaveLength(0);
   });
 
-  it('swaps on walk-over, leaving what was carried on the tile', () => {
-    let p = corridor([{ id: 'provision-1', kind: 'vital draught', x: 1 }], [], { kind: 'still smoke' });
+  it('fills the second hand on walk-over, and full hands refuse the third', () => {
+    let p = corridor([{ id: 'provision-1', kind: 'vital draught', x: 1 }], [], ['still smoke']);
     p = playerStep(p, 'player', 1, 0).position;
     const s = at(p);
-    expect(s.entities[0]?.satchel).toEqual({ kind: 'vital draught' });
-    // The smoke lies exactly where the draught lay — one step back re-swaps.
-    expect(s.items).toHaveLength(1);
-    expect(s.items[0]?.kind).toBe('still smoke');
-    expect(s.items[0]?.pos).toEqual({ x: 1, y: 0 });
+    expect(s.entities[0]?.satchel).toEqual([{ kind: 'still smoke' }, { kind: 'vital draught' }]);
+    expect(s.items).toHaveLength(0);
+
+    const full = corridor([{ id: 'provision-1', kind: 'tallow flare', x: 1 }], [], ['still smoke', 'vital draught']);
+    const walked = playerStep(full, 'player', 1, 0).position;
+    const fs = at(walked);
+    expect(fs.entities[0]?.satchel).toEqual([{ kind: 'still smoke' }, { kind: 'vital draught' }]);
+    expect(fs.items).toHaveLength(1); // the flare stays where it lies
   });
 
-  it('does not churn events swapping same for same', () => {
-    let p = corridor([{ id: 'provision-1', kind: 'still smoke', x: 1 }], [], { kind: 'still smoke' });
+  it('welcomes a twin — two smokes are two smokes', () => {
+    let p = corridor([{ id: 'provision-1', kind: 'still smoke', x: 1 }], [], ['still smoke']);
     p = playerStep(p, 'player', 1, 0).position;
     const s = at(p);
-    expect(s.items).toHaveLength(1);
-    expect(s.entities[0]?.satchel).toEqual({ kind: 'still smoke' });
+    expect(s.items).toHaveLength(0);
+    expect(s.entities[0]?.satchel).toEqual([{ kind: 'still smoke' }, { kind: 'still smoke' }]);
   });
 
   it('rides the stairs in the player payload', () => {
     // descend() is exercised end to end elsewhere; here, the payload field
     // folds into the satchel on arrival — the carry mechanism itself.
-    const p = corridor([], [], { kind: 'vital draught' });
-    expect(at(p).entities[0]?.satchel).toEqual({ kind: 'vital draught' });
+    const p = corridor([], [], ['vital draught']);
+    expect(at(p).entities[0]?.satchel).toEqual([{ kind: 'vital draught' }]);
   });
 });
 
 describe('the vital draught', () => {
   it('mends whole and raises the ceiling, in one swallow, for one turn', () => {
-    let p = corridor([], [{ id: 'foe-1', kind: 'bruiser', x: 12 }], { kind: 'vital draught' });
+    let p = corridor([], [{ id: 'foe-1', kind: 'bruiser', x: 12 }], ['vital draught']);
     // Bleed first, so the mend is visible: give the world a few turns.
     p = playerWait(p, 'player').position;
     const wounded = {
@@ -117,7 +121,7 @@ describe('the still smoke', () => {
     let p = corridor([], [
       { id: 'near', kind: 'bruiser', x: 1 },
       { id: 'far', kind: 'bruiser', x: 9 },
-    ], { kind: 'still smoke' });
+    ], ['still smoke']);
 
     const used = playerUse(p, 'player');
     expect(used.draft?.type).toBe('ITEM_USED');
@@ -137,7 +141,7 @@ describe('the still smoke', () => {
     const world = corridor([], [
       { id: 'near', kind: 'bruiser', x: 1 },
       { id: 'far', kind: 'bruiser', x: 5 },
-    ], { kind: 'still smoke' }, 2);
+    ], ['still smoke'], 2);
     const smoked = at(playerUse(world, 'player').position);
 
     // The player slips past and east; the fooled hunter still walks WEST,
@@ -159,7 +163,7 @@ describe('the still smoke', () => {
   });
 
   it('clears when its turns run out', () => {
-    const world = corridor([], [{ id: 'far', kind: 'bruiser', x: 9 }], { kind: 'still smoke' });
+    const world = corridor([], [{ id: 'far', kind: 'bruiser', x: 9 }], ['still smoke']);
     const smoked = at(playerUse(world, 'player').position);
     const stale = { ...smoked, turn: smoked.smoke!.until };
     // Past the smoke, the hunt reads the truth again.
@@ -173,7 +177,7 @@ describe('the still smoke', () => {
 
 describe('the archetypal players and the satchel', () => {
   it('the brawler drinks when bleeding past the table\'s line', () => {
-    const world = corridor([], [{ id: 'foe-1', kind: 'bruiser', x: 12 }], { kind: 'vital draught' });
+    const world = corridor([], [{ id: 'foe-1', kind: 'bruiser', x: 12 }], ['vital draught']);
     const s = at(world);
     const bloodied = {
       ...s,
@@ -187,7 +191,7 @@ describe('the archetypal players and the satchel', () => {
   });
 
   it('the coward smokes when the chase closes, never once touched', () => {
-    const world = corridor([], [{ id: 'foe-1', kind: 'bruiser', x: 3 }], { kind: 'still smoke' });
+    const world = corridor([], [{ id: 'foe-1', kind: 'bruiser', x: 3 }], ['still smoke']);
     const s = at(world);
     expect(coward(s, 'player').kind).toBe('use');
 
@@ -202,7 +206,7 @@ describe('the archetypal players and the satchel', () => {
 
 describe('using spends the turn', () => {
   it('hands the world its turn after a use', () => {
-    let p = corridor([], [{ id: 'foe-1', kind: 'bruiser', x: 3 }], { kind: 'vital draught' });
+    let p = corridor([], [{ id: 'foe-1', kind: 'bruiser', x: 3 }], ['vital draught']);
     p = playerUse(p, 'player').position;
     p = runWorldTurns(p, 'player');
     const s = at(p);

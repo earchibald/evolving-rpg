@@ -31,10 +31,14 @@ export interface Entity {
    */
   gear?: Readonly<Partial<Record<string, { kind: string; grants: Stats }>>>;
   /**
-   * The one thing carried to use rather than wear. Absent means empty hands.
-   * Walk-over swaps (the old one stays on the tile); one key spends it.
+   * What is carried to use rather than wear — up to two things, in order
+   * (the designer's second slot, 2026-07-28). Absent means empty hands.
+   * Walking fills the first empty slot; full hands refuse the walk-over
+   * and the , key swaps the first out onto the tile. q spends the first,
+   * Q the second; spending the first moves the second up. Duplicates are
+   * welcome: two flares are two flares.
    */
-  satchel?: { readonly kind: string };
+  satchel?: readonly { readonly kind: string }[];
   /**
    * The most hit points this entity can hold.
    *

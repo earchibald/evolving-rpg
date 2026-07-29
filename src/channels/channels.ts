@@ -68,7 +68,7 @@ export function statusOf(state: GameState): Status | null {
     level: state.level,
     hitPoints: you.stats.hp,
     fullHealth: you.maxHp,
-    carrying: you.satchel?.kind ?? null,
+    carrying: you.satchel === undefined || you.satchel.length === 0 ? null : you.satchel.map((c) => c.kind).join(', '),
   };
 }
 

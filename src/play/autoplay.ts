@@ -40,7 +40,7 @@ export function autoplay(start: Position, policy: Policy, maxActions = 200, play
       : wish.kind === 'use'
         // An empty satchel makes 'use' a no-op that never passes the turn —
         // acceptable only because no policy wishes it with empty hands.
-        ? playerUse(position, playerId).position
+        ? playerUse(position, playerId, wish.slot ?? 0).position
         : playerStep(position, playerId, wish.dx, wish.dy).position;
 
     position = runWorldTurns(position, playerId);

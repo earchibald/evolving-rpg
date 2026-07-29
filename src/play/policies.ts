@@ -24,12 +24,14 @@ export interface Wish {
   readonly kind: 'step' | 'wait' | 'use';
   readonly dx: number;
   readonly dy: number;
+  /** For 'use': which hand (0 or 1). Absent reads the first. */
+  readonly slot?: number;
 }
 
 export type Policy = (state: GameState, playerId: string) => Wish;
 
 const WAIT: Wish = { kind: 'wait', dx: 0, dy: 0 };
-const USE: Wish = { kind: 'use', dx: 0, dy: 0 };
+const use = (slot: number): Wish => ({ kind: 'use', dx: 0, dy: 0, slot });
 const step = (dx: number, dy: number): Wish => ({ kind: 'step', dx, dy });
 
 function you(state: GameState, playerId: string): Entity | undefined {
@@ -87,15 +89,16 @@ export function firstStepToward(state: GameState, from: Pos, goal: (p: Pos) => b
  *  are the collapse canary (tables.ts): a bot that plays the satchel as well
  *  as a person means the satchel stopped being a decision. */
 function quaffWish(me: Entity): Wish | null {
-  if (me.satchel?.kind !== 'vital draught') return null;
-  return me.stats.hp < me.maxHp * BOT_QUAFF_BELOW ? USE : null;
+  const at = (me.satchel ?? []).findIndex((c) => c.kind === 'vital draught');
+  if (at < 0) return null;
+  return me.stats.hp < me.maxHp * BOT_QUAFF_BELOW ? use(at) : null;
 }
 
 /** The bottom floor's errand, shared by the goal-seeking policies: the heart
  *  first, then the stair you came down by. Null anywhere else. */
 function bottomWish(state: GameState, me: Entity): Wish | null {
   if (state.depth < BOTTOM_DEPTH) return null;
-  if (me.satchel?.kind === HEART_KIND) {
+  if ((me.satchel ?? []).some((c) => c.kind === HEART_KIND)) {
     return firstStepToward(state, me.pos, (p) => tileAt(state.grid, p.x, p.y) === EXIT) ?? WAIT;
   }
   const heart = state.items.find((i) => i.kind === HEART_KIND);
@@ -137,9 +140,10 @@ export const coward: Policy = (state, playerId) => {
 
   // The coward's one trick: smoke when the chase closes but before it
   // touches — adjacent smoke fools nobody (they have you by touch).
-  if (me.satchel?.kind === 'still smoke' && near > 1 && near <= BOT_SMOKE_WITHIN
+  const smokeAt = (me.satchel ?? []).findIndex((c) => c.kind === 'still smoke');
+  if (smokeAt >= 0 && near > 1 && near <= BOT_SMOKE_WITHIN
       && (state.smoke === null || state.turn >= state.smoke.until)) {
-    return USE;
+    return use(smokeAt);
   }
 
   if (near > 6) return WAIT;
