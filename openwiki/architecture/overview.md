@@ -19,10 +19,13 @@ The codebase is organized into distinct, unidirectional module layers. Higher-le
 flowchart TD
     UI[ui/ Debug UI & Panels] --> Play[play/ Session Driver & Store]
     UI --> Channels[channels/ Designer & GM Notes]
-    Play --> Canon[canon/ Rule Engine & Interpreter]
+    Play --> Canon[canon/ Rules, Bible, Namesmith]
+    Play --> Assay[assay/ Rule Assay & Covenant]
     Play --> Log[log/ Event Chain & Refs]
+    Critic[critic/ Ensemble Lenses] --> Log
+    Assay --> Play
     Channels --> Oracle[oracle/ Async Model Client]
-    Canon --> Core[core/ Entities, Grid & State]
+    Canon --> Core[core/ Tables, Entities, Grid & State]
     Oracle --> Canon
     Log --> Core
 ```
@@ -32,7 +35,8 @@ flowchart TD
 ### Layer Responsibilities
 
 1. **`core/` (Pure Engine)**
-   - Defines the core data structures: `GameState`, `Entity`, `Stats` (HP, Might, Wits, Speed), `Item`, and `Grid`.
+   - Defines core data structures: `GameState`, `Entity`, `Stats` (HP, Might, Wits, Speed), `Item`, and `Grid`.
+   - Centralizes tuning numbers, combat tables, bounded accuracy, dice bands, crits, XP/levels, depth motifs, and verb pools in `src/core/tables.ts`.
    - Houses the deterministic event reducer `apply(state, event)` in `src/core/apply.ts`.
    - Manages seeded random number generation via `src/core/rng.ts`.
    - Has **zero dependencies** on external modules, DOM, or network.
@@ -44,27 +48,36 @@ flowchart TD
    - Handles schema versioning and upcasting in `src/log/upcast.ts`.
    - Derives canon state by folding event chains: `fold(log, head)`. Depends solely on `core/`.
 
-3. **`canon/` (Rules & Provenance)**
+3. **`canon/` (Rules, Worldsmith & Fiction)**
    - Defines the R2 declarative rule schema (`Trigger`, `Condition`, `Effect`, `Rule`) and safety bounds in `src/canon/rule.ts`.
    - Evaluates rule triggers against game state during action resolution via `fireRules` in `src/canon/interpret.ts`.
+   - Generates whole-world identities in `src/canon/bible.ts` (`WORLD_BIBLE`), composes names in code via `src/canon/namesmith.ts`, and writes ended run stories via `src/canon/chronicler.ts`.
    - Depends on `core/` and `log/`.
 
-4. **`oracle/` (Asynchronous Model Bridge)**
+4. **`assay/` (Rule Assay & Covenant Invariants)**
+   - Defines mechanical (M1–M5), thematic (T1–T3), and legible (L1–L3) game invariants in `src/assay/covenant.ts`.
+   - Executes adversarial simulation trials (`trial of greed`, `trial of coward`, `trial of function`) on proposed rules in `src/assay/ruleAssay.ts` before player ratification in the Forge.
+
+5. **`critic/` (Game Design Lenses & Scorecard)**
+   - Evaluates run history logs in `src/critic/critic.ts` across Schell game design lenses: Lens #2 Surprise (`src/critic/surprise.ts`) and Lens #61 Interest Curve (`src/critic/interest.ts`).
+   - Produces deterministic, memoized scorecard readings and ensemble metrics (`src/critic/ensemble.ts`) without language model calls.
+
+6. **`oracle/` (Asynchronous Model Bridge)**
    - Manages asynchronous queries to language models via `ask()` and `consult()` in `src/oracle/oracle.ts`.
    - Enforces the non-blocking invariant: game turns never wait for model completions.
    - Provides transport abstractions (`stub`, `cli`, `sdk`, `artifact`) in `src/oracle/transports.ts`.
-   - Implements content-keyed caching where cached responses form the permanent canon. Depends on `canon/`.
+   - Implements content-keyed caching where cached responses form permanent world canon. Depends on `canon/`.
 
-5. **`play/` (Session Driver & Orchestration)**
-   - Coordinates player input, AI creature turns (`decide`), rule evaluations, turn advancements, and death rewinds in `src/play/session.ts`.
+7. **`play/` (Session Driver & Orchestration)**
+   - Coordinates player input, AI creature turns (`decide`), autoplay policies (`src/play/policies.ts`), rule evaluations, turn advancements, and death rewinds in `src/play/session.ts`.
    - Manages LocalStorage serialization and session verification in `src/play/store.ts`.
-   - Depends on `core/`, `log/`, `canon/`, and `oracle/`.
+   - Depends on `core/`, `log/`, `canon/`, `assay/`, and `oracle/`.
 
-6. **`channels/` (Designer & Gamemaster Feedback)**
+8. **`channels/` (Designer & Gamemaster Feedback)**
    - Provides out-of-world (`designer`) and in-world (`gamemaster`) note channels in `src/channels/channels.ts`.
-   - Captures contextual state (`where`, `turn`, `head`) alongside user feedback.
+   - Captures contextual state (`where`, `turn`, `head`, player position) alongside user feedback.
 
-7. **`server/` (Development Server Plugins)**
+9. **`server/` (Development Server Plugins)**
    - Vite dev-server plugins in `server/oracle-plugin.ts` (proxies Oracle queries to `claude` CLI) and `server/chronicle-plugin.ts` (persists chronicle logs).
 
 ---

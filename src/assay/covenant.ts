@@ -93,6 +93,18 @@ export const COVENANT: readonly Invariant[] = Object.freeze([
     enforcedBy: 'assayRule: trial of proportion; the Forge\'s assay line',
   }),
   Object.freeze({
+    id: 'M7',
+    register: 'mechanical' as const,
+    statement: 'Distance is honest. A blow from afar flies only along a recorded straight line that walls, secrets and living bodies do not cross, within a stated reach, on the same bounded dice as every blow — and reach is priced into threat.',
+    enforcedBy: 'clearShot/withinReach gates in looseShot; STRIKE v4 mode; VERB_THREAT.volley; sawtooth pins',
+  }),
+  Object.freeze({
+    id: 'M8',
+    register: 'mechanical' as const,
+    statement: 'No shot without a warning. Every ranged blow, anyone\'s, is preceded by a visibly drawn stance at least one full action earlier; moving, striking, flinching or reeling spends the shot unfired.',
+    enforcedBy: 'the drawn-tag gate in looseShot; the reducer\'s stance clearing; the stance tests',
+  }),
+  Object.freeze({
     id: 'L1',
     register: 'legible' as const,
     statement: 'Every system exposes its mechanics human-readably: what it decided, with the real numbers, where a player will read it. A facility whose reasoning cannot be read cannot be checked, and ships unfinished.',

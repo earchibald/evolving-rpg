@@ -195,6 +195,15 @@ describe('the covenant is enforced, not aspirational', () => {
       }
     }
   });
+
+  it('binds distance: M7 and M8 are stated with named enforcers', () => {
+    for (const id of ['M7', 'M8']) {
+      const inv = COVENANT.find((i) => i.id === id);
+      expect(inv).toBeDefined();
+      expect(inv!.register).toBe('mechanical');
+      expect(inv!.enforcedBy.length).toBeGreaterThan(0);
+    }
+  });
 });
 
 describe('the function trial plays well before it cautions (M3)', () => {

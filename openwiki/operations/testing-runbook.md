@@ -23,6 +23,10 @@ All development tasks are defined in `/package.json`:
 | `npm run test:watch` | `vitest` | Runs test runner in interactive watch mode |
 | `npm run typecheck` | `tsc --noEmit` | Runs TypeScript typechecker across all project source and test files |
 | `npm run golden` | `tsx scripts/generate-golden.ts` | Re-generates the golden replay fixture (`tests/fixtures/golden-run.json`) |
+| `npm run play` | `tsx scripts/play.ts` | Runs automated gameplay sessions using policy archetypes |
+| `npm run trial` | `tsx scripts/trial.ts` | Executes standalone Rule Assay trials against candidate rules |
+| `npm run loop` | `tsx scripts/loop.ts` | Runs complete agentic playtest, assay, and rule-proposal loop |
+| `npm run balance` | `tsx scripts/balance.ts` | Runs combat and balance simulation passes across depth levels |
 
 ---
 
@@ -57,6 +61,15 @@ npm run test tests/log/golden-replay.test.ts
 # Re-generate golden run fixture when schema versions intentionally bump
 npm run golden
 ```
+
+---
+
+## Agentic Playtesting & Critic Evaluation (`scripts/`)
+
+1. **Automated Playtesting (`scripts/play.ts`)**: Runs policy archetypes (`greedy`, `cautious`, `explorer`, `sitter`) through `src/play/session.ts` to stress-test turn loops and state transitions without UI interaction.
+2. **Rule Assay Verification (`scripts/trial.ts`)**: Simulates adversarial exploit scenarios (`trial of greed`, `trial of coward`) against candidate R2 rules to verify Covenant compliance before offer generation.
+3. **Agentic Closed Loop (`scripts/loop.ts`)**: Integrates playtesting, Critic scorecard generation (`src/critic/critic.ts`), Rulesmith proposal drafting, and Covenant assaying into a single CLI execution loop.
+4. **Balance Analysis (`scripts/balance.ts`)**: Simulates combat encounters across depths 1–9 to verify bounded accuracy, HP sawtooth, and leveling curves against `docs/design/BALANCE.md`.
 
 ---
 

@@ -16,23 +16,23 @@ This source map provides a complete directory inventory and file index for the `
 ```
 /
 ├── index.html                  # Main DOM entrypoint mounting UI panels
+├── MANUAL.md                   # Player manual and test guide
 ├── package.json                # Dependencies and npm scripts
 ├── tsconfig.json               # TypeScript compiler configuration
 ├── vite.config.ts              # Vite bundle and dev server plugin configuration
-├── scripts/                    # CLI scripts
-│   └── generate-golden.ts      # Golden replay fixture generator
-├── server/                     # Vite dev server plugins
-│   ├── chronicle-plugin.ts     # Local chronicle persistence plugin
-│   └── oracle-plugin.ts        # CLI proxy middleware endpoint (/__oracle)
+├── scripts/                    # CLI scripts (play, trial, loop, balance, generate-golden)
+├── server/                     # Vite dev server plugins (oracle, chronicle)
 ├── src/                        # Core TypeScript application logic
 │   ├── version.ts              # Engine version constant (0.3.0)
-│   ├── canon/                  # R1 records, R2 rule schema & interpreter
+│   ├── assay/                  # Covenant invariants & Rule Assay simulation trials
+│   ├── canon/                  # R1 records, R2 rules, Worldsmith, Namesmith, Chronicler
 │   ├── channels/               # Designer & Gamemaster note channels
-│   ├── core/                   # Pure game engine: grid, entities, commands, reducers
+│   ├── core/                   # Pure game engine: grid, entities, combat tables, reducers
+│   ├── critic/                 # Game design lenses (Surprise, Interest), Ensemble scorecard
 │   ├── log/                    # Event log, SHA-256 hashing, refs, upcasters
 │   ├── oracle/                 # Asynchronous LLM client, transports & fallbacks
-│   ├── play/                   # Session turn driver & LocalStorage store
-│   └── ui/                     # Debug UI panel rendering & styles
+│   ├── play/                   # Session driver, autoplay policies & store
+│   └── ui/                     # Debug UI, words pools, FOV, and CSS styles
 └── tests/                      # Vitest test suites and golden fixtures
 ```
 
@@ -55,6 +55,7 @@ This source map provides a complete directory inventory and file index for the `
 | `reachability.ts` | BFS grid pathfinding & connectivity | `isReachable`, `shortestPath` |
 | `rng.ts` | Seeded pseudo-random number generator | `RNG`, `createRNG` |
 | `state.ts` | Game state schema definition | `GameState`, `EMPTY_STATE` |
+| `tables.ts` | Centralized combat tables & tuning numbers | `neededToHit`, `critFloor`, `levelForXp`, `creatureStats` |
 | `turns.ts` | Entity initiative & turn ordering | `nextActiveEntity` |
 
 ### 2. `src/log/` — Event Log & History
@@ -67,14 +68,37 @@ This source map provides a complete directory inventory and file index for the `
 | `refs.ts` | Named world pointers, fork and reset | `fork`, `reset`, `getRef`, `listRefs` |
 | `upcast.ts` | Schema migrations across event versions | `upcastEvent(event)` |
 
-### 3. `src/canon/` — Rungs & Rule Engine
+### 3. `src/canon/` — Rungs, Worldsmith & Fiction
 
 | File | Primary Responsibility | Key Exports |
 |---|---|---|
 | `rule.ts` | R2 closed rule schema, bounds & validation | `Rule`, `Trigger`, `Condition`, `Effect`, `validateRule` |
 | `interpret.ts` | Rule condition checking & firing engine | `holds`, `fireRules` |
+| `bible.ts` | Worldsmith whole-world bible generation | `createBible`, `Bible`, `validateBible` |
+| `namesmith.ts` | Programmatic name composition in code | `composeRelicName`, `composeCreatureName` |
+| `chronicler.ts` | Ended run story generator on event chain | `storyOf`, `writeChronicle` |
+| `rulesmith.ts` | Rule proposal drafting from Critic scorecard | `draftRuleProposal` |
 
-### 4. `src/oracle/` — Async Model Bridge
+### 4. `src/assay/` — Rule Assay & Covenant Invariants
+
+| File | Primary Responsibility | Key Exports |
+|---|---|---|
+| `covenant.ts` | Stated mechanical, thematic, legible invariants | `COVENANT`, `Invariant` |
+| `ruleAssay.ts` | Adversarial simulation trials (Greed, Coward) | `assayRule`, `RuleAssay` |
+| `register.ts` | Structural name and line register guards | `assayName`, `assayLine` |
+
+### 5. `src/critic/` — Game Design Lenses & Scorecard
+
+| File | Primary Responsibility | Key Exports |
+|---|---|---|
+| `critic.ts` | External run log evaluation report | `evaluateLog`, `Report`, `Reading` |
+| `lenses.ts` | Schell game design lens registry | `LENSES` |
+| `surprise.ts` | Lens #2 Surprise metric (d20 outcomes) | `surpriseOf` |
+| `interest.ts` | Lens #61 Interest curve metric | `interestOf` |
+| `memo.ts` | Scorecard memoization by head hash | `memoizedScorecard` |
+| `ensemble.ts` | Composite evaluation scorecard pointer | `ensemblePointer` |
+
+### 6. `src/oracle/` — Async Model Bridge
 
 | File | Primary Responsibility | Key Exports |
 |---|---|---|
@@ -82,28 +106,36 @@ This source map provides a complete directory inventory and file index for the `
 | `transports.ts` | Transport implementations | `stubTransport`, `brokenTransport`, `cliTransport` |
 | `types.ts` | Oracle query, answer, and call types | `Question`, `Answer`, `Call`, `Transport` |
 
-### 5. `src/play/` — Session Driver & Persistence
+### 7. `src/play/` — Session Driver & Persistence
 
 | File | Primary Responsibility | Key Exports |
 |---|---|---|
 | `session.ts` | Session turn driver, commit pipeline, mortality | `commit`, `step`, `autoTurn`, `rewindOnDeath` |
+| `autoplay.ts` | Automated playtesting driver | `autoplay` |
+| `policies.ts` | Policy archetypes (`greedy`, `cautious`, `explorer`) | `greedy`, `cautious`, `explorer` |
 | `store.ts` | LocalStorage session save/restore | `serialise`, `deserialise`, `save`, `load` |
 
-### 6. `src/channels/` & `src/ui/` — Channels & Debug Interface
+### 8. `src/channels/` & `src/ui/` — Channels & Debug Interface
 
 | File | Primary Responsibility | Key Exports |
 |---|---|---|
 | `channels.ts` | Designer & Gamemaster notes | `send(oracle, channel, said, where, at, post)` |
 | `debug.ts` | Debug UI rendering and interaction loop | `mountDebugUI(container)` |
+| `words.ts` | Combat voice line pools by verb and tier | `wordsFor` |
+| `fov.ts` | Chain-derived field of view computation | `computeFOV` |
 | `debug.css` | Fixed-panel layout CSS styles | Grid and panel layout rules |
 
-### 7. `server/` & `scripts/` — Development Support
+### 9. `server/` & `scripts/` — Development & Agentic Scripts
 
 | File | Primary Responsibility |
 |---|---|
 | `server/oracle-plugin.ts` | Vite middleware endpoint (`POST /__oracle`) executing `claude` CLI |
 | `server/chronicle-plugin.ts` | Local chronicle log persistence middleware |
 | `scripts/generate-golden.ts` | Script to generate `tests/fixtures/golden-run.json` |
+| `scripts/play.ts` | Automated gameplay sessions using policy archetypes |
+| `scripts/trial.ts` | Standalone Rule Assay trial driver for candidate rules |
+| `scripts/loop.ts` | Complete agentic playtest, assay, and proposal loop |
+| `scripts/balance.ts` | Combat and balance simulation across depth levels |
 
 ---
 

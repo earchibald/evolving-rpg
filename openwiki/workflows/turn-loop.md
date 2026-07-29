@@ -71,13 +71,19 @@ Actions are turned into draft events via `draftFor`:
 
 ## Combat Mechanics & AI Decision Engine
 
-### Melee Combat Resolution (`src/core/commands.ts`)
+### Melee Combat Resolution (`src/core/commands.ts` & `src/core/tables.ts`)
 
-When an entity steps into an enemy cell, combat resolves deterministically:
+When an entity steps into an enemy cell, combat resolves deterministically using bounded accuracy dice tables (`src/core/tables.ts`):
 
-$$\text{Damage} = \max\left(1, \text{Attacker.Might} - \lfloor \text{Defender.Wits} / 2 \rfloor\right)$$
+1. **Target Roll (`neededToHit`)**:
+   $$\text{Needed} = \text{clamp}(10 + \text{Defender.Speed} - \text{Attacker.Might},\, 4,\, 17)$$
+2. **d20 Check**:
+   - **Crit (`CRIT`)**: Natural 20 (or $\ge$ `critFloor(wits)` down to 18) always hits and doubles damage.
+   - **Whiff (`WHIFF`)**: Natural 1 always misses regardless of stat advantage.
+   - **Hit**: Roll $\ge \text{Needed}$ lands a blow; damage is drawn from `DamageDice` based on attacker Might band.
+3. **Tactical Verbs**: Players can perform non-dice positional stance actions including `shove` (pushes target back 1 tile) and `brace` (defensive stance). Creatures feature specialized verbs (`trample`, `lunge`, `ambush`, `vigil`, `stinger`, `caller`).
 
-HP reduction is applied via `modifyHp` in `src/core/entity.ts`. If defender HP drops to 0 or below, the entity's status transitions to dead (`isAlive = false`).
+HP reduction is applied via `modifyHp` in `src/core/entity.ts`. Defeating enemies grants XP; filling the XP bar triggers a level-up restoring HP. If defender HP drops to 0 or below, the entity transitions to dead (`isAlive = false`). When a run ends (victory or death), the Chronicler (`src/canon/chronicler.ts`) generates a validated story payload recorded into the chain as a `CHRONICLE_WRITTEN` event.
 
 ### AI Creature Behaviour (`src/core/ai.ts`)
 

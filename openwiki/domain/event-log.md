@@ -111,15 +111,24 @@ As game engine mechanics evolve across software updates, event schema versions b
 
 ```typescript
 export const SCHEMA_VERSIONS = {
-  WORLD_INIT: 4,
+  WORLD_INIT: 8,
+  WORLD_BIBLE: 1,
+  WORLD_BODIES: 1,
   MOVE: 2,
   MOVE_BLOCKED: 2,
   TURN_ADVANCED: 2,
-  STRIKE: 1,
+  STRIKE: 3,
   WAIT: 1,
-  ITEM_TAKEN: 1,
+  ITEM_TAKEN: 3,
+  ITEM_USED: 1,
   RULE_RATIFIED: 1,
   RULE_FIRED: 1,
+  VIGIL_KEPT: 1,
+  WORLD_STIRRED: 1,
+  SHOVE: 1,
+  BRACED: 1,
+  CALLED: 1,
+  WORLD_REMEMBERED: 1,
 } as const;
 ```
 

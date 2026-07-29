@@ -10,8 +10,9 @@ tags: [integration, oracle, llm, transports, channels, feedback]
 The **Oracle** (`src/oracle/oracle.ts`) is the single boundary through which language models touch `evolving-rpg`. It is designed around three strict invariants that prevent model latency or availability issues from degrading gameplay:
 
 1. **Never Block a Turn**: Mechanics resolve instantly; narrative prose arrives asynchronously.
-2. **The Cache is the Canon**: Questions are keyed by `{ intent, subject }`. Cached model responses form the permanent world canon.
-3. **Deterministic Fallbacks**: Every query has an instant, offline fallback generator (`fallbackFor`).
+2. **The Cache is the Canon**: Questions are keyed by `{ intent, subject }` and scoped per world (`world` identifier), ensuring cached responses form permanent world canon without cross-world leak.
+3. **Model Division of Labor**: Individual creature and item names are composed deterministically in code (`src/canon/namesmith.ts`) using the world's lexicon. Model calls are reserved for high-leverage moments off the turn path: World Founding (`src/canon/bible.ts`) and Ended Run Storytelling (`src/canon/chronicler.ts`).
+4. **Deterministic Fallbacks**: Every query has an instant, offline fallback generator (`fallbackFor`).
 
 ---
 

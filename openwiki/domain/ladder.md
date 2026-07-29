@@ -80,7 +80,10 @@ export type Condition =
   | { readonly kind: 'exitWithin'; readonly n: number }
   | { readonly kind: 'exitBeyond'; readonly n: number }
   | { readonly kind: 'turnAtLeast'; readonly n: number }
+  | { readonly kind: 'depthAtLeast'; readonly n: number }
   | { readonly kind: 'statAtLeast'; readonly stat: StatName; readonly n: number }
+  | { readonly kind: 'motifIs'; readonly motif: MotifName }
+  | { readonly kind: 'bodyHere' }
   | { readonly kind: 'blowLanded' }
   | { readonly kind: 'blowMissed' };
 
@@ -133,6 +136,18 @@ In addition to range checks, `validateRule(input)` rejects incoherent rule shape
 - **Target effects without an target**: `harmOther` and `push` require a trigger that has another party (e.g., `STRIKE` or `STRUCK`).
 
 Any invalid rule proposal is converted to a `Rejected` payload (`{ rejected: string }`) without entering game state.
+
+---
+
+## Rule Assay & Covenant Invariants (`src/assay/`)
+
+While structural validation (`validateRule`) checks if a rule is *well-formed*, it cannot prove that a rule is *sound* during play. To protect game balance and maintain the Covenant model (`src/assay/covenant.ts`), proposed rules undergo adversarial simulation via `assayRule` (`src/assay/ruleAssay.ts`) before being offered for player ratification:
+
+1. **Trial of Greed (M2 Invariant)**: Drives an exploit policy (`brawler`/`bumper`) hammering the rule's trigger in a friendly world for 120 turns. Refuses any rule where stat gain exceeds `MAX_RULE_GAIN` (+6).
+2. **Trial of the Coward (M1 Invariant)**: Drives a degenerate defense policy (`sitter`) where the player stands still while an attacker strikes. Refuses any rule that makes the player invincible while doing nothing.
+3. **Trial of Function (M3 Invariant)**: Evaluates whether the rule fires during trials. If a rule never fires, it yields a *caution* (finding attached to verdict) rather than a hard refusal, allowing legitimate niche rules (e.g. `turnAtLeast 500`) to be over-ruled by the player.
+
+Rules that pass the assay arrive as endorsed offers on the Wardens' bench (`runs/endorsed/`).
 
 ---
 

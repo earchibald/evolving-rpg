@@ -36,13 +36,15 @@ The codebase strictly separates engine logic, state persistence, rules interpret
 
 ```
 src/
-├── core/       # Pure engine: grid, entities, stats, seeded RNG, event reducers
+├── core/       # Pure engine: grid, entities, stats, combat tables, seeded RNG, reducers
 ├── log/        # Content-addressed append-only event log, SHA-256 hashing, refs
-├── canon/      # R1 records, R2 rules vocabulary, and the rule interpreter
+├── canon/      # R1 records, R2 rules vocabulary, Worldsmith, Namesmith, Chronicler
+├── assay/      # Covenant invariants, Rule Assay trials (Greed, Coward, Function)
+├── critic/     # Game design lenses (Surprise, Interest), Ensemble scorecard
 ├── oracle/     # Async LLM ask() interface, transports, and fallback system
-├── play/       # Session driver, turn loop, mortality rewinds, LocalStorage store
+├── play/       # Session driver, turn loop, autoplay policies, mortality rewinds
 ├── channels/   # Designer & Gamemaster feedback channels
-├── ui/         # Debug UI, grid renderer, chronicle view, and control panels
+├── ui/         # Debug UI, grid renderer, words pools, FOV, and control panels
 └── version.ts  # Current engine version (0.3.0)
 ```
 
@@ -55,10 +57,10 @@ The system architecture relies on a pure functional reducer flow detailed in [Ar
 Explore the domain documentation for specific subsystem guidance:
 
 - **State & History**: Read [Content-Addressed Event Log](/openwiki/domain/event-log.md) to learn how history is structured as a SHA-256 parent-hashed event chain supporting instant world forking, resets, state folding (`fold = reduce(apply, EMPTY_STATE)`), and schema upcasting.
-- **Rule Engine**: Read [The Ladder & Rule Vocabulary](/openwiki/domain/ladder.md) to understand R2 rule types (`Trigger`, `Condition`, `Effect`), safety bounds, and the `fireRules` interpreter.
-- **Turn Loop & Gameplay**: Read [Turn Execution Loop & Session Driver](/openwiki/workflows/turn-loop.md) for details on `commit`, `step`, entity movement, combat mechanics, AI decision-making (`decide`), mortality rewinds, and session persistence.
-- **AI & Integrations**: Read [Oracle & Feedback Channels](/openwiki/integrations/oracle-channels.md) to inspect the asynchronous `ask` / `consult` model bridge, schema enforcement, transports (`stub`, `cli`, `sdk`, `artifact`), and dev-server CLI proxy (`server/oracle-plugin.ts`).
-- **Development & Verification**: Read [Operations & Testing Runbook](/openwiki/operations/testing-runbook.md) for dev server commands, mutation proof testing requirements, and golden replay verification (`scripts/generate-golden.ts`).
+- **Rule Engine & Validation**: Read [The Ladder & Rule Vocabulary](/openwiki/domain/ladder.md) to understand R2 rule types (`Trigger`, `Condition`, `Effect`), safety bounds, the `fireRules` interpreter, and the **Rule Assay & Covenant** validation system (`src/assay/`).
+- **Turn Loop & Gameplay**: Read [Turn Execution Loop & Session Driver](/openwiki/workflows/turn-loop.md) for details on `commit`, `step`, entity movement, combat tables (`src/core/tables.ts`), AI decision-making (`decide`), autoplay policies, mortality rewinds, and Chronicler stories.
+- **AI & Integrations**: Read [Oracle & Feedback Channels](/openwiki/integrations/oracle-channels.md) to inspect the asynchronous `ask` / `consult` model bridge, Worldsmith/Namesmith composition, transports (`stub`, `cli`, `sdk`, `artifact`), and dev-server CLI proxy (`server/oracle-plugin.ts`).
+- **Development & Operations**: Read [Operations & Testing Runbook](/openwiki/operations/testing-runbook.md) for dev server commands, mutation proof testing requirements, golden replay verification (`scripts/generate-golden.ts`), agentic playtesting (`scripts/loop.ts`), and game design Critic lenses (`src/critic/`).
 - **Codebase Index**: Read [Source Map](/openwiki/source-map.md) for a comprehensive inventory of source files, server plugins, and test suites.
 
 ---
@@ -84,6 +86,12 @@ npm run typecheck
 
 # Re-generate golden replay test fixture
 npm run golden
+
+# Run CLI playtester / trial / loop / balance scripts
+npm run play
+npm run trial
+npm run loop
+npm run balance
 ```
 
 ---
@@ -99,8 +107,7 @@ npm run golden
 
 ## Backlog
 
-The following technical and product areas are deferred to future increments:
+The following technical and product areas remain deferred:
 
-- **Forge UI Panel (Increment 4)**: Interface for reviewing R1->R2 rule proposals, ratifying rules, and managing active rungs. Deferred until Increment 3 play feedback is analyzed (Source: `docs/superpowers/specs/2026-07-24-self-evolving-rpg-design.md#forge`).
-- **Judged Critic Passes (Increment 5)**: Periodic LLM evaluation passes using Schell's game design lenses (#63 Beauty, #65 Story Machine). Deferred pending artifact publication (Source: `docs/superpowers/specs/2026-07-24-self-evolving-rpg-design.md#critic`).
-- **Artifact Publishing Target (Increment 5)**: Inlining assets into a single single-file HTML bundle exposing `window.claude.complete` (Source: `docs/superpowers/specs/2026-07-24-self-evolving-rpg-design.md#modules`).
+- **Artifact Publishing Target**: Inlining assets into a single single-file HTML bundle exposing `window.claude.complete` (Source: `docs/superpowers/specs/2026-07-24-self-evolving-rpg-design.md#modules`).
+- **Judged Register LLM Passes**: Qualitative LLM passes for evaluating voice register and thematic alignment beyond deterministic structural checks (Source: `src/assay/covenant.ts`).

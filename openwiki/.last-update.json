@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-07-26T00:54:42.212Z",
+  "updatedAt": "2026-07-28T17:38:29.434Z",
   "command": "update",
-  "gitHead": "a126bd34217f864c8e12787559a6da77debd532f",
+  "gitHead": "a955931e0ad83492e378fa62a0334bf9aa1e8c61",
   "model": "gemini-3.6-flash"
 }
