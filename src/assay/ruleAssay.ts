@@ -36,20 +36,31 @@ import type { GameState } from '../core/state.js';
  * possible while holding still, and a game you cannot lose by doing nothing
  * has lost its stakes.
  *
- * **Function (M3, the honest half).** If a rule never fired in any trial, that
- * is said as a *caution*, not a refusal: a simulation can demonstrate breakage
- * but cannot prove a universal negative — `turnAtLeast 500` is a legitimate
- * rule these trials will simply never reach.
+ * **Function (M3, amended).** A rule must demonstrate life. The trials meet
+ * it where it lives first — its depth, its cut, a body underfoot, an honest
+ * fighter's double-length pass for rules gated on playing well — and what
+ * still never fires is REFUSED, not cautioned. This was a caution once ("a
+ * simulation cannot prove a universal negative"); the allowance let dead
+ * letters reach the bench and get ratified, and the designer ruled that the
+ * burden of proof sits with the rule.
  *
- * Refusals are reserved for what a trial demonstrated. Everything else is a
- * finding attached to the verdict, so the Forge can show it and the player can
- * overrule it.
+ * **Proportion (M6, amended).** The swing is measured and said, and past the
+ * stated ceiling the scale itself refuses. Inside the band the ratifier
+ * judges — blind is the only wrong way to weigh — but baseline balance is
+ * the tables' to set, never the Forge's to spend.
  */
 
 /** The most any single stat may provably gain in one exploited run. Their
  *  ratified rules earn +1s and +2s; a run that can mint +6 of anything has
  *  stopped being about the map. A judgment, exported, arguable. */
 export const MAX_RULE_GAIN = 6;
+
+/** Where the proportion trial stops asking and starts refusing: a mean hit-
+ *  point swing of two relics' worth, or the fight's ending flipped in most
+ *  rerolls. Below this the swing is said and the ratifier weighs it; at or
+ *  past it the rule is not offered at all. Judgments, exported, arguable. */
+export const MAX_RULE_SWING = 6;
+export const MAX_RULE_FLIPS = 4;
 
 /** Actions per trial. Long enough to demonstrate divergence and to let the
  *  brute finish the job; short enough to run inside a keypress budget. */
@@ -316,18 +327,25 @@ export function assayRule(rule: Rule): RuleAssay {
     const strewn = env.body === true
       ? ' (weighed on a floor strewn with bodies — the heaviest case, not the typical one)'
       : '';
+    // Past the ceiling the scale refuses outright (M6, amended): baseline
+    // balance is the tables' to set, never the Forge's to spend. Inside the
+    // band, the swing is said and the ratifier weighs it.
+    const past = Math.abs(meanSwing) >= MAX_RULE_SWING || flips >= MAX_RULE_FLIPS;
     findings.push(
-      `caution (M6): across ${String(PROPORTION_SEEDS.length)} rerolled fights this rule swings hit points left by ${meanSwing.toFixed(1)} and flips ${String(flips)} outcome(s) ${direction} — heavier than a relic; weigh it before ratifying${strewn}`,
+      `${past ? 'refused' : 'caution'} (M6): across ${String(PROPORTION_SEEDS.length)} rerolled fights this rule swings hit points left by ${meanSwing.toFixed(1)} and flips ${String(flips)} outcome(s) ${direction} — ${past ? 'past the ceiling the scale refuses; balance belongs to the tables' : 'heavier than a relic; weigh it before ratifying'}${strewn}`,
     );
   }
 
-  // ── trial of function (M3) — a caution, never a refusal ───────────────
+  // ── trial of function (M3, amended) — the hard gate ──────────────────
   //
   // The exploiters above play badly on purpose, so rules gated on playing
   // *well* — a cleared floor, a long walk, a late turn — never fire for them
-  // and drew a false caution. (The founding case: a dead-air rule that fired
-  // four times in real sweeps while the assay called it dead weight.) A
-  // fighter's honest pass through the same world covers that class.
+  // and once drew a false caution. (The founding case: a dead-air rule that
+  // fired four times in real sweeps while the assay called it dead weight.)
+  // A fighter's honest pass through the same world covers that class. What
+  // never fires even then is refused: the caution allowance let dead letters
+  // reach the bench and get ratified — a rest rule whose quiet radius sat
+  // inside the pursuit radius spoke exactly zero times in three lives.
   if (fired === 0) {
     const honest = autoplay(withRule(greedWorld(7, env), rule), brawler, TRIAL_ACTIONS * 2);
     fired += firings(honest.position, rule.id);
@@ -335,7 +353,7 @@ export function assayRule(rule: Rule): RuleAssay {
   const neverFired = fired === 0;
   if (neverFired) {
     findings.push(
-      'caution (M3): no trial ever saw this rule fire; it may be waiting on conditions the trials cannot reach, or it may be dead weight',
+      'refused (M3): no trial — exploiter or an honest fighter\'s double-length pass — ever saw this rule fire; a rule must demonstrate life before it enters play',
     );
   }
 

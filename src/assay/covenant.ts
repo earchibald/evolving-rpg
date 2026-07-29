@@ -53,8 +53,12 @@ export const COVENANT: readonly Invariant[] = Object.freeze([
   Object.freeze({
     id: 'M3',
     register: 'mechanical' as const,
-    statement: 'A rule that can never fire is refused before ratification when demonstrable, and cautioned when not.',
-    enforcedBy: 'validateRule coherence checks; assayRule: trial of function',
+    // Amended 2026-07-28: the caution allowance let dead letters reach the
+    // bench and get ratified (a rest rule whose quiet radius sat inside the
+    // pursuit radius never fired once in three lives). The designer ruled:
+    // the burden of proof sits with the rule.
+    statement: 'A rule must demonstrate life before it enters play: if no trial — exploiter or honest — ever sees it fire, it is refused, not cautioned. The trials meet the rule where it lives first; what still never fires does not ship.',
+    enforcedBy: 'validateRule coherence checks; assayRule: trial of function (hard gate)',
   }),
   Object.freeze({
     id: 'M4',
@@ -89,8 +93,12 @@ export const COVENANT: readonly Invariant[] = Object.freeze([
   Object.freeze({
     id: 'M6',
     register: 'mechanical' as const,
-    statement: 'A rule\'s weight is measured and said. Every proposal carries the outcome swing its trials measured, so a ratifier never weighs a rule blind — a bounded rule can still be far too strong.',
-    enforcedBy: 'assayRule: trial of proportion; the Forge\'s assay line',
+    // Amended 2026-07-28: measuring and saying was not enough — over-heavy
+    // rules kept arriving for ratification. Past the stated ceiling the
+    // scale now refuses outright: baseline balance is the tables' to set,
+    // never the Forge's to spend.
+    statement: 'A rule\'s weight is measured and said, and past a stated ceiling it is refused. Every proposal carries the outcome swing its trials measured; inside the band the ratifier judges, beyond it (mean swing at or past MAX_RULE_SWING, or outcomes flipping in most rerolls) the trial itself says no.',
+    enforcedBy: 'assayRule: trial of proportion; MAX_RULE_SWING / MAX_RULE_FLIPS; the Forge\'s assay line',
   }),
   Object.freeze({
     id: 'M7',

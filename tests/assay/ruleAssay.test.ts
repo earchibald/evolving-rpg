@@ -90,15 +90,20 @@ describe('trial of the coward — death must remain possible (M1)', () => {
     expect(got.findings.join(' ')).not.toMatch(/M1/);
   });
 
-  it('allows the rule the player actually ratified', () => {
-    // heal 1 on wait, nothing within 4, under 99% health — the conditions keep
-    // it from firing in melee at all. This one earned its place; the assay
-    // must not take it back.
+  it('refuses the dead-letter rest the player once ratified — M1 holds, M3 takes it', () => {
+    // heal 1 on wait, nothing within 4, under 99% health. The conditions keep
+    // it from firing in melee — and, measured live, from firing at all: the
+    // ratified radius-6 twin spoke exactly zero times across three lives.
+    // Under the amended M3 the burden of proof sits with the rule, and this
+    // one cannot carry it. M1 stays silent: it never made death impossible,
+    // it never made anything at all.
     const got = assayRule(rule({
       require: [{ kind: 'noCreatureWithin', n: 4 }, { kind: 'hpBelowPercent', n: 99 }],
       then: [{ kind: 'heal', n: 1 }],
     }));
-    expect(got.verdict).toBe('sound');
+    expect(got.verdict).toBe('refused');
+    expect(got.findings.join(' ')).toMatch(/M3/);
+    expect(got.findings.join(' ')).not.toMatch(/M1/);
   });
 
   it('does not blame a rule for a world where nobody dies anyway', () => {
@@ -128,18 +133,20 @@ describe('trial of proportion — the swing, measured and said (M6)', () => {
   });
 });
 
-describe('trial of function — cautions, not refusals (M3)', () => {
-  it('cautions on a rule no trial can reach, and still calls it sound', () => {
-    // turnAtLeast 900: legitimate late-game design the 120-action trials will
-    // never see. A simulation cannot prove a universal negative, so this is a
-    // caution for the Forge to show, not a verdict.
+describe('trial of function — the hard gate (M3, amended)', () => {
+  it('refuses a rule no trial can reach — life must be demonstrated', () => {
+    // turnAtLeast 900: the 120-action trials will never see it. This was a
+    // caution once ("a simulation cannot prove a universal negative"); the
+    // allowance let dead letters reach the bench and get ratified, and the
+    // designer ruled the burden of proof sits with the rule. Late-game
+    // design must now name conditions the trials can reach, or wait.
     const got = assayRule(rule({
       require: [{ kind: 'turnAtLeast', n: 900 }],
       then: [{ kind: 'heal', n: 1 }],
     }));
-    expect(got.verdict).toBe('sound');
+    expect(got.verdict).toBe('refused');
     expect(got.neverFired).toBe(true);
-    expect(got.findings.join(' ')).toMatch(/M3|caution/);
+    expect(got.findings.join(' ')).toMatch(/M3/);
   });
 
   it('does not caution a rule the trials saw fire', () => {
@@ -224,12 +231,13 @@ describe('the function trial plays well before it cautions (M3)', () => {
     expect(got.findings.join(' ')).not.toMatch(/caution/);
   });
 
-  it('still cautions on what genuinely cannot be reached', () => {
+  it('still refuses what genuinely cannot be reached', () => {
     const got = assayRule(rule({
       require: [{ kind: 'turnAtLeast', n: 900 }],
       then: [{ kind: 'heal', n: 1 }],
     }));
     expect(got.neverFired).toBe(true);
+    expect(got.verdict).toBe('refused');
   });
 });
 
@@ -261,20 +269,23 @@ describe('the trials meet the rule where it lives (VOCABULARY.md §2)', () => {
     expect(got.findings.join(' ')).toMatch(/M2/);
   });
 
-  it('allows a modest body-gated heal, the BONES option F shape', () => {
-    // "When you stand where you fell, recover" — the kind of rule a death
-    // proposal can now offer. Bounded by the health ceiling like any heal.
+  it('refuses the heavy body-gated heal past the ceiling — and says the floor was strewn', () => {
+    // "When you stand where you fell, recover 2 per step" measured 7.0 mean
+    // swing on the strewn trial floor — past MAX_RULE_SWING, so the amended
+    // M6 refuses rather than asking the ratifier to. This agrees with the
+    // BONES verdict too: bodies confer knowledge and words, never stats.
+    // The gate still opened and the rule still fired — the refusal is
+    // proportion's, not function's.
     const got = assayRule(rule({
       when: 'MOVE',
       require: [{ kind: 'bodyHere' }],
       then: [{ kind: 'heal', n: 2 }],
     }));
-    expect(got.verdict).toBe('sound');
+    expect(got.verdict).toBe('refused');
     expect(got.neverFired).toBe(false);
-    // If proportion weighs it, the caution says the floor was strewn — the
-    // ratifier must know the swing is the heaviest case, not the typical one.
     const m6 = got.findings.find((f) => f.includes('M6'));
-    if (m6 !== undefined) expect(m6).toMatch(/strewn with bodies/);
+    expect(m6).toBeDefined();
+    expect(m6).toMatch(/strewn with bodies/);
   });
 
   it('still cautions honestly when the gate is one no trial can open', () => {
