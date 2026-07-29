@@ -2,7 +2,7 @@ import { emptyLog, append, chain, fold, verifyChain } from '../log/chain.js';
 import { emptyRefs, createRef, getRef, setHead, fork, reset, listRefs } from '../log/refs.js';
 import { createWorld, ratifyRule, foundWorld } from '../core/commands.js';
 import { validateBible, isRefusedBible } from '../canon/bible.js';
-import { smithName, DEFAULT_WORDS } from '../canon/namesmith.js';
+import { smithName, DEFAULT_WORDS, fnv1a } from '../canon/namesmith.js';
 import { strikeLine, crossings } from './words.js';
 import { storyOf, remember, rememberedOn, epitaphOf, notable } from '../canon/chronicler.js';
 import { SCHEMA_VERSIONS } from '../core/events.js';
@@ -35,9 +35,33 @@ import type { Refs } from '../log/refs.js';
 import type { Entity } from '../core/entity.js';
 import type { GameEvent } from '../core/events.js';
 
-const WIDTH = 48;
-const HEIGHT = 32;
+/** The boards the door offers (the living-dungeon spec, 2026-07-29). The
+ *  expanse is the new default: four times the vale's ground, so the new
+ *  elements — patrols, traps, the rare mimic — are met one at a time.
+ *  Engine numbers stretch with the board (tables.ts sizeStretch); the
+ *  vale plays exactly the game that was always here. */
+const BOARDS = [
+  { key: 'vale', name: 'the vale', width: 48, height: 32, line: 'the old board — tight ground, every step contested. the game as it first stood.' },
+  { key: 'expanse', name: 'the expanse', width: 96, height: 64, line: 'four times the ground. floors breathe; patrols cross distant halls; the journey is the point. the default.' },
+  { key: 'waste', name: 'the waste', width: 128, height: 96, line: 'eight times the ground. long silences between fights, and everything found is farther from home.' },
+] as const;
+const DEFAULT_BOARD = BOARDS[1];
+
+/** The camera's window: the vale's own frame. Bigger boards scroll under
+ *  it; the vale fills it exactly, so the classic game renders unchanged. */
+const VIEW_W = 48;
+const VIEW_H = 32;
+
 const MAIN = 'main';
+
+const randomSeed = (): number => Math.floor(Math.random() * 2 ** 31);
+
+/** A seed the player typed: digits mean themselves; words hash (the
+ *  namesmith's own fnv1a), so "ashfall" is a seed you can tell a friend. */
+function parseSeed(said: string): number {
+  if (/^\d{1,10}$/.test(said)) return Number(said) % 2 ** 31;
+  return fnv1a(said) % 2 ** 31;
+}
 
 /** A grant with its sign said right — +2, or -1, never "+-1" (read aloud,
  *  bemused, in the 929-second run). Callers filter zeroes before this. */
@@ -61,9 +85,9 @@ let booted = '';
  * any other, and it is on screen so you can note one you liked.
  */
 function freshWorld(): void {
-  const seed = Math.floor(Math.random() * 2 ** 31);
+  const seed = randomSeed();
   const session = emptySession(MAIN);
-  const first = append(session.log, null, createWorld(seed, WIDTH, HEIGHT));
+  const first = append(session.log, null, createWorld(seed, DEFAULT_BOARD.width, DEFAULT_BOARD.height));
   log = first.log;
   refs = createRef(session.refs, MAIN, first.event.id, 0, `opening run · seed ${seed}`);
   active = MAIN;
@@ -84,14 +108,17 @@ function freshWorld(): void {
  * reproducible as every other — and it is on screen, so you can note one you
  * liked.
  */
-function anotherWorld(): string {
-  const seed = Math.floor(Math.random() * 2 ** 31);
+function anotherWorld(
+  width: number = DEFAULT_BOARD.width,
+  height: number = DEFAULT_BOARD.height,
+  seed: number = randomSeed(),
+): string {
   const taken = new Set(listRefs(refs).map((r) => r.name));
   let n = 2;
   while (taken.has(`world-${n}`)) n += 1;
   const name = `world-${n}`;
 
-  const born = append(log, null, createWorld(seed, WIDTH, HEIGHT));
+  const born = append(log, null, createWorld(seed, width, height));
   log = born.log;
   refs = createRef(refs, name, born.event.id, 0, `seed ${seed}`);
   active = name;
@@ -612,6 +639,62 @@ function say(message: string | string[]): void {
   witness.heard(lines, standing());
 }
 
+/**
+ * The minimap: the journey so far, a few pixels per tile, fog-respecting —
+ * only what the run has seen, exactly as the big map remembers it. Hidden
+ * on the vale, where the window already IS the whole board. A map, not a
+ * control: it draws the camera's frame so you know where you are looking,
+ * and nothing on it can be clicked.
+ */
+function paintMinimap(
+  state: ReturnType<typeof fold>,
+  fog: { seen: ReadonlySet<number>; visible: ReadonlySet<number> },
+  anchor: Entity | undefined,
+  cam: { x: number; y: number; w: number; h: number },
+): void {
+  const map = el('minimap') as HTMLCanvasElement;
+  const whole = cam.w >= state.grid.width && cam.h >= state.grid.height;
+  map.hidden = whole;
+  if (whole) return;
+
+  const scale = state.grid.width > 96 ? 2 : 3;
+  map.width = state.grid.width * scale;
+  map.height = state.grid.height * scale;
+  const pen = map.getContext('2d');
+  if (pen === null) return;
+
+  const vars = getComputedStyle(document.documentElement);
+  const ink = (name: string, fallback: string): string => vars.getPropertyValue(name).trim() || fallback;
+  pen.clearRect(0, 0, map.width, map.height);
+
+  for (let y = 0; y < state.grid.height; y += 1) {
+    for (let x = 0; x < state.grid.width; x += 1) {
+      const at = idx(state.grid, x, y);
+      if (!fog.seen.has(at)) continue;
+      const tile = state.grid.tiles[at];
+      if (tile === EXIT) pen.fillStyle = ink('--exit', '#7fbf7f');
+      else if (tile === WALL || tile === SECRET) pen.fillStyle = ink('--rule', '#2a2f38');
+      else pen.fillStyle = ink('--faint', '#5b6472');
+      pen.fillRect(x * scale, y * scale, scale, scale);
+    }
+  }
+  // Prizes the run knows about (the bell's gift carries here too).
+  for (const prize of state.items) {
+    const at = idx(state.grid, prize.pos.x, prize.pos.y);
+    if (!fog.seen.has(at)) continue;
+    pen.fillStyle = ink('--item', '#c9a227');
+    pen.fillRect(prize.pos.x * scale, prize.pos.y * scale, scale, scale);
+  }
+  // You, and the frame the big map is looking through.
+  if (anchor !== undefined) {
+    pen.fillStyle = ink('--player', '#e8e9ec');
+    pen.fillRect(anchor.pos.x * scale - 1, anchor.pos.y * scale - 1, scale + 2, scale + 2);
+  }
+  pen.strokeStyle = ink('--soft', '#99a1b0');
+  pen.lineWidth = 1;
+  pen.strokeRect(cam.x * scale + 0.5, cam.y * scale + 0.5, cam.w * scale - 1, cam.h * scale - 1);
+}
+
 function render(): void {
   const head = getRef(refs, active).head;
   const state = fold(log, head);
@@ -650,11 +733,22 @@ function render(): void {
   const mark = you !== undefined && you.tags.includes('drawn') ? shotTarget(state, you.id) : null;
   const markedAt = mark === null ? -1 : idx(state.grid, mark.pos.x, mark.pos.y);
 
+  // The camera: a window of at most the vale's frame, centered on the
+  // player, clamped to the board — the cell count on screen never grows
+  // with the world, and on the vale itself the window IS the board, so
+  // the classic game renders exactly as it always did. The minimap below
+  // carries the rest of the journey.
+  const viewW = Math.min(state.grid.width, VIEW_W);
+  const viewH = Math.min(state.grid.height, VIEW_H);
+  const anchor = you ?? player;
+  const camX = Math.max(0, Math.min(state.grid.width - viewW, (anchor?.pos.x ?? 0) - Math.floor(viewW / 2)));
+  const camY = Math.max(0, Math.min(state.grid.height - viewH, (anchor?.pos.y ?? 0) - Math.floor(viewH / 2)));
+
   const grid = el('grid');
-  grid.style.gridTemplateColumns = `repeat(${state.grid.width}, 15px)`;
+  grid.style.gridTemplateColumns = `repeat(${viewW}, 15px)`;
   grid.textContent = '';
-  for (let y = 0; y < state.grid.height; y += 1) {
-    for (let x = 0; x < state.grid.width; x += 1) {
+  for (let y = camY; y < camY + viewH; y += 1) {
+    for (let x = camX; x < camX + viewW; x += 1) {
       const cell = document.createElement('div');
       cell.className = 'cell';
       const at = idx(state.grid, x, y);
@@ -714,6 +808,8 @@ function render(): void {
       grid.appendChild(cell);
     }
   }
+
+  paintMinimap(state, fog, anchor, { x: camX, y: camY, w: viewW, h: viewH });
 
   if (head !== null) foundThisWorld(state, head);
   nameWhatIsHere(state);
@@ -1480,7 +1576,9 @@ function finish(before: number, head: string): void {
   // pause. The rules re-ratify and the player crosses whole inside descend().
   const here = fold(log, head);
   if (outcome(here) === 'escaped') {
-    const down = descend(log, refs, active, { width: WIDTH, height: HEIGHT });
+    // A world keeps its size all the way down: the floor below is cut to
+    // the same cloth as the floor you chose at the door.
+    const down = descend(log, refs, active, { width: here.grid.width, height: here.grid.height });
     if (down !== null) {
       log = down.log;
       refs = down.refs;
@@ -2219,14 +2317,30 @@ el('wipe').addEventListener('click', () => {
   render();
 });
 
+// Another world goes through the door's options first: the ground and the
+// seed are decisions, and the sheet is where decisions live. The listener
+// snapshot is taken when a board is actually chosen — closing the options
+// sheet unchosen costs nothing.
+const optionsSheet = el('world-options') as HTMLDialogElement;
 el('newrun').addEventListener('click', () => {
-  submitToListener('another-world');
-  const name = anotherWorld();
-  persist();
-  say(`${name} — a different map, alongside the others, nothing discarded`);
   sheet.close();
-  render();
+  (el('seed-said') as HTMLInputElement).value = '';
+  optionsSheet.showModal();
 });
+
+function bornInto(board: (typeof BOARDS)[number]): void {
+  submitToListener('another-world');
+  const said = (el('seed-said') as HTMLInputElement).value.trim();
+  const seed = said === '' ? randomSeed() : parseSeed(said);
+  const name = anotherWorld(board.width, board.height, seed);
+  persist();
+  say(`${name} — ${board.name}, ${board.width}×${board.height}, seed ${seed} — alongside the others, nothing discarded`);
+  optionsSheet.close();
+  render();
+}
+for (const board of BOARDS) {
+  el(`board-${board.key}`).addEventListener('click', () => { bornInto(board); });
+}
 
 render();
 persist();

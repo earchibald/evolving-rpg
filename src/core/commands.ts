@@ -416,7 +416,7 @@ export function createWorld(
     + (bottom
       ? ` · the bottom — the heart lies ${Number.isFinite(walk) ? walk : '?'} steps of walking away, and the way out is the stair you came down by`
       : ` · the way out is ${Number.isFinite(walk) ? walk : '?'} steps of walking`)
-    + ` · a budget of ${spawnBudget(depth)} paid ${spent} for ${population.chosen.length}: ${kinds}`
+    + ` · a budget of ${spawnBudget(depth, stretch)} paid ${spent} for ${population.chosen.length}: ${kinds}`
     + ` · ${watcher} watches ${bottom ? 'the heart' : 'the stairs'}`
     + ` · ${relics.map((r) => r.kind).join(' and ') || 'nothing'} lies guarded`
     + ` · ${provisions.map((p) => p.kind).join(' and ')} lie${provisions.length === 1 ? 's' : ''} where the path does not go`

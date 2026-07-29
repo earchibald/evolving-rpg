@@ -20,6 +20,7 @@
       <main class="play">
         <div class="board">
           <div id="grid" class="grid" role="img" aria-label="the world"></div>
+          <canvas id="minimap" class="minimap" role="img" aria-label="the journey so far" hidden></canvas>
           <p id="status" class="status" role="status"></p>
         </div>
       </main>
@@ -138,11 +139,12 @@
         </div>
 
         <div class="world-option">
-          <button id="newrun" type="button">another world</button>
+          <button id="newrun" type="button">another world&hellip;</button>
           <p class="sheet-line">
-            A fresh map with a fresh seed, alongside the ones you already
-            have. Rules do not follow — a new world is born lawless. Switch
-            between worlds in the <em>worlds</em> list below the map.
+            A fresh world, alongside the ones you already have — you choose
+            its ground and its seed at the door. Rules do not follow; a new
+            world is born lawless. Switch between worlds in the
+            <em>worlds</em> list on the screen.
           </p>
         </div>
 
@@ -152,6 +154,37 @@
             Every world, every grave, every name the world has given you —
             gone. There is no undo.
           </p>
+        </div>
+
+        <menu>
+          <button value="cancel" class="ghost">close <kbd>esc</kbd></button>
+        </menu>
+      </form>
+    </dialog>
+
+    <dialog id="world-options" class="sheet">
+      <form method="dialog">
+        <h2>a new world</h2>
+        <p class="sheet-line">choose the ground. the world stretches to fit it &mdash; more creatures in all, fewer per step, and the journey longer.</p>
+
+        <label class="seed-row" for="seed-said">
+          seed &mdash; leave blank to draw one. words work: &ldquo;ashfall&rdquo; is a seed you can tell a friend.
+          <input id="seed-said" type="text" autocomplete="off" placeholder="drawn fresh" />
+        </label>
+
+        <div class="world-option">
+          <button id="board-expanse" type="button" autofocus>the expanse &mdash; 96&times;64</button>
+          <p class="sheet-line">four times the vale&rsquo;s ground. floors breathe; the journey is the point. <strong>the default.</strong></p>
+        </div>
+
+        <div class="world-option">
+          <button id="board-vale" type="button">the vale &mdash; 48&times;32</button>
+          <p class="sheet-line">the old board &mdash; tight ground, every step contested. the game as it first stood.</p>
+        </div>
+
+        <div class="world-option">
+          <button id="board-waste" type="button">the waste &mdash; 128&times;96</button>
+          <p class="sheet-line">eight times the ground. long silences between fights, and everything found is farther from home.</p>
         </div>
 
         <menu>

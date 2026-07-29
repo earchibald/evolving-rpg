@@ -153,6 +153,25 @@ kbd {
 .board { display: flex; flex-direction: column; gap: .6rem; }
 
 .grid { display: grid; gap: 1px; width: max-content; }
+
+/* The journey so far: a few pixels per tile, fog-respecting, camera frame
+   drawn on. A map, not a control. Hidden on the vale, where the window
+   already shows the whole board. */
+.minimap {
+  image-rendering: pixelated;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  background: #0d0f12;
+  align-self: flex-start;
+}
+
+/* The seed at the door: same cloth as every other typed word. */
+.seed-row { display: flex; flex-direction: column; gap: .25rem; font-size: .78rem; color: var(--soft); }
+.seed-row input {
+  font: inherit; background: var(--raised); color: var(--ink);
+  border: 1px solid var(--rule); border-radius: 3px; padding: .4rem .6rem;
+}
+.seed-row input::placeholder { color: #4a515d; }
 .cell { width: 15px; height: 15px; background: var(--floor); }
 .cell.wall { background: var(--wall); }
 .cell.player { background: var(--player); }
