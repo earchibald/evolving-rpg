@@ -110,10 +110,17 @@ export function meanDamage(might: number): number {
  */
 export const XP_TO_REACH: readonly number[] = Object.freeze([0, 0, 16, 40, 72, 112, 160, 224, 304, 400]);
 
-export function levelForXp(xp: number): number {
+export function levelForXp(xp: number, stretch = 1): number {
+  // The stretch scales the thresholds, not the kills: a bigger board pays
+  // roughly stretch× the XP per cleared floor (spawnBudget carries the same
+  // factor), so stretching the ladder by the same integer keeps levels-per-
+  // floor on the tuned curve at every size. Derived from the grid's own
+  // dims at apply time — never evented, so the log and the level still
+  // cannot disagree.
+  const s = Math.max(1, Math.floor(stretch));
   let level = 1;
   for (let l = XP_TO_REACH.length - 1; l >= 1; l -= 1) {
-    if (xp >= XP_TO_REACH[l]!) { level = l; break; }
+    if (xp >= XP_TO_REACH[l]! * s) { level = l; break; }
   }
   return level;
 }
@@ -373,6 +380,31 @@ export function threatOf(stats: Stats, kind?: string): number {
   return Math.round((offence + defence) * (verb === undefined ? 1 : VERB_THREAT[verb]));
 }
 
+/* ── board size ──────────────────────────────────────────────────────────── */
+
+/**
+ * The one integer the board's size turns: max(1, round(sqrt(area / 1536))).
+ *
+ * 1536 is the vale (48x32, the board the whole game was tuned on); the
+ * expanse (96x64) reads 2, the waste (128x96) reads 3, and every tiny test
+ * board reads 1 — which is what keeps stretch-1 worlds bit-identical to the
+ * game as it stood before boards could breathe.
+ *
+ * Why sqrt and not area: meetings along a journey ≈ density × path length,
+ * and the path grows with the *dimension*. Scaling creature count with the
+ * dimension (not the area) holds encounters-per-journey roughly flat, so a
+ * bigger board is locally SPARSER — the breathing room the designer asked
+ * for, with the new elements (patrols, traps, the rare mimic) filling it.
+ * Derived from dims already recorded in WORLD_INIT: size needs no schema.
+ */
+export function sizeStretch(width: number, height: number): number {
+  return Math.max(1, Math.round(Math.sqrt((width * height) / 1536)));
+}
+
+/** The board chokepoint (the maze-solver discipline: clamp once, loudly).
+ *  Above this an accidental dimension allocates a country, not a floor. */
+export const MAX_BOARD_DIM = 256;
+
 /** The spawn budget a floor may spend on creatures. The linear part is steep
  *  enough that depth 2 visibly bites; first cut (14+12d) let one unlucky
  *  bruiser roll eat floor 1 whole — a single-creature floor teaches nothing —
@@ -385,10 +417,13 @@ export function threatOf(stats: Stats, kind?: string): number {
  *  anchoring it one floor earlier crushed the depth-3 runner to 2-in-20 and
  *  lens #33 read the mid-game as a corridor: one viable approach is not a
  *  choice. The teaching floor never feels it at all. */
-export function spawnBudget(depth: number): number {
+export function spawnBudget(depth: number, stretch = 1): number {
   const d = Math.max(1, Math.floor(depth));
   const deep = Math.max(0, d - 2);
-  return 24 + 15 * d + 4 * deep * deep;
+  // The stretch multiplies the whole rent (sizeStretch): a bigger board
+  // fields more creatures in absolute count and fewer per tile — meetings
+  // per journey hold roughly flat, and the ground breathes between them.
+  return (24 + 15 * d + 4 * deep * deep) * Math.max(1, Math.floor(stretch));
 }
 
 /** Out-of-depth overlap: which creature-levels a floor may draw, with weights.

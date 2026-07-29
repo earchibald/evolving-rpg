@@ -1,6 +1,6 @@
 import { makeGrid } from './grid.js';
 import { applyResolved } from '../canon/interpret.js';
-import { threatOf, levelForXp, growthAt, slotOf, SLAM_DAMAGE, verbOf, VENOM_TURNS, VENOM_HARM, wearsTrait } from './tables.js';
+import { threatOf, levelForXp, growthAt, slotOf, SLAM_DAMAGE, verbOf, VENOM_TURNS, VENOM_HARM, wearsTrait, sizeStretch } from './tables.js';
 import { NO_BODIES } from './state.js';
 import type { GameEvent } from './events.js';
 import type { GameState } from './state.js';
@@ -31,7 +31,11 @@ function creditKills(before: GameState, after: GameState, killerId: string, play
   const xp = after.xp + gained;
   let level = after.level;
   let entities = after.entities;
-  const target = levelForXp(xp);
+  // The ladder stretches with the board it stands on (sizeStretch): a
+  // stretched floor pays stretched XP, and reading the factor off the
+  // grid's own dims keeps the level derived — never evented, never able
+  // to disagree with the log.
+  const target = levelForXp(xp, sizeStretch(after.grid.width, after.grid.height));
 
   while (level < target) {
     level += 1;

@@ -180,8 +180,13 @@ export function generateMap(
   const tiles = new Array<number>(width * height).fill(WALL);
 
   // Rogue put ~9 rooms on 80x24 (one per ~210 tiles); Brogue runs denser.
-  // The divisor is the motif's: the warren crowds, the halls breathe.
-  const target = Math.max(3, Math.min(16, Math.round((width * height) / motif.tilesPerRoom)));
+  // The divisor is the motif's: the warren crowds, the halls breathe. The
+  // cap scales with area (16 was tuned on 48x32; a fixed cap on a 4x board
+  // would starve the motif and hand back a prairie with sixteen sheds) —
+  // floored at 16 so every board the game launched with means what it
+  // meant, ceilinged at 64 as the runaway guard.
+  const cap = Math.min(64, Math.max(16, Math.round((16 * width * height) / 1536)));
+  const target = Math.max(3, Math.min(cap, Math.round((width * height) / motif.tilesPerRoom)));
   const rooms: Room[] = [];
 
   for (let attempt = 0; attempt < target * 10 && rooms.length < target; attempt += 1) {

@@ -3,7 +3,7 @@ import { inBounds, isPassable } from './grid.js';
 import { findEntity, isAlive } from './entity.js';
 import { intBetween } from './rng.js';
 import { clearShot, withinReach } from './sight.js';
-import { neededToHit, chanceIn20, damageDice, critFloor, WHIFF, BESTIARY, creatureStats, threatOf, spawnBudget, depthBands, wardenAt, ARMORY, relicGrant, slotFor, RELIC_TRAITS, motifAt, verbOf, wardenLevel, AMBUSH_MIGHT_BONUS, AMBUSH_FROM_DEPTH, braceWall, CALL_RISERS, CALL_DISTANCE, dominates, wearsTrait, FLARE_RADIUS, provisionsAt, provisionOf, draughtCeiling, smokeTurns, BOTTOM_DEPTH, HEART_KIND, WAVE_DISTANCE, SHOT_RANGE } from './tables.js';
+import { neededToHit, chanceIn20, damageDice, critFloor, WHIFF, BESTIARY, creatureStats, threatOf, spawnBudget, depthBands, wardenAt, ARMORY, relicGrant, slotFor, RELIC_TRAITS, motifAt, verbOf, wardenLevel, AMBUSH_MIGHT_BONUS, AMBUSH_FROM_DEPTH, braceWall, CALL_RISERS, CALL_DISTANCE, dominates, wearsTrait, FLARE_RADIUS, provisionsAt, provisionOf, draughtCeiling, smokeTurns, BOTTOM_DEPTH, HEART_KIND, WAVE_DISTANCE, SHOT_RANGE, sizeStretch, MAX_BOARD_DIM } from './tables.js';
 import type { Relic } from './tables.js';
 import type { Entity, Stats, Pos } from './entity.js';
 import { itemAt } from './item.js';
@@ -139,13 +139,13 @@ export interface CarriedPlayer {
  * always as full as its budget allows. The warden joins on its floors without
  * consuming budget: a boss is the floor's *feature*, not part of its rent.
  */
-function chooseSpawns(seed: number, counter: number, depth: number): {
+function chooseSpawns(seed: number, counter: number, depth: number, stretch = 1): {
   chosen: { kind: string; level: number; stats: Stats }[];
   counterAfter: number;
 } {
   const chosen: { kind: string; level: number; stats: Stats }[] = [];
   const spawnable = BESTIARY.filter((a) => a.weight > 0 && depth >= (a.fromDepth ?? 1));
-  let budget = spawnBudget(depth);
+  let budget = spawnBudget(depth, stretch);
   let c = counter;
 
   // A boss floor is a peak, not a double peak: the warden pays half its own
@@ -160,7 +160,10 @@ function chooseSpawns(seed: number, counter: number, depth: number): {
     ...spawnable.map((a) => threatOf(creatureStats(a.kind, Math.max(1, depth - 1))!, a.kind)),
   );
 
-  for (let guard = 0; guard < 32 && budget >= cheapest(); guard += 1) {
+  // The guard scales with the stretch: a triple budget needs triple the
+  // spending rounds or the loop caps the floor at the vale's population
+  // and quietly refunds the rent.
+  for (let guard = 0; guard < 32 * Math.max(1, stretch) && budget >= cheapest(); guard += 1) {
     const bands = depthBands(depth);
     const bandTotal = bands.reduce((n, b) => n + b.weight, 0);
     let roll = intBetween(seed, c, 1, bandTotal); c += 1;
@@ -201,6 +204,17 @@ export function createWorld(
   depth = 1,
   carried?: CarriedPlayer,
 ): Extract<DraftEvent, { type: 'WORLD_INIT' }> {
+  // The board chokepoint: one loud gate, here, where every world is born
+  // (the maze-solver discipline). Above the cap a mistyped dimension
+  // allocates a country; better to refuse than to try to render one.
+  if (width > MAX_BOARD_DIM || height > MAX_BOARD_DIM) {
+    throw new Error(`createWorld: ${width}x${height} exceeds the ${MAX_BOARD_DIM} board cap`);
+  }
+  // How far this board stretches past the vale (48x32): 1 there and on
+  // every test board, 2 on the expanse, 3 on the waste. Scales the rent,
+  // the pantry and the armory below — and nothing else, so a stretch-1
+  // world is bit-identical to the game before boards could breathe.
+  const stretch = sizeStretch(width, height);
   // The depth cuts the floor to a motif — the door, the warren, the halls,
   // or the deep's per-floor draw (tables.ts, BALANCE.md pass 10). Drawn
   // first, so the whole floor is shaped by it.
@@ -234,7 +248,7 @@ export function createWorld(
 
   const walk = walkDistance(grid, generated.start, bottom ? far : exit);
 
-  const population = chooseSpawns(seed, secret.counterAfter, depth);
+  const population = chooseSpawns(seed, secret.counterAfter, depth, stretch);
 
   // The floor's prizes, drawn from the armory by weight — counted draws like
   // every other choice generation makes. One relic on the first floor; two
@@ -250,7 +264,12 @@ export function createWorld(
   // the might band-jump the edge buys, and when the armory made that a
   // weighted maybe, floor-one deaths quadrupled and the depth-3 inversion
   // collapsed. Variety starts at depth 2, where the floors owe two relics.
-  const relicCount = depth >= 2 ? 2 : 1;
+  // The stretch owes more prizes: a longer journey earns another guarded
+  // detour per size step (2 on the vale, 3 on the expanse, 4 on the waste —
+  // never stacking, slots replace). The teaching floor holds ONE whatever
+  // the acreage: the lesson is the keen edge on the walked path, not a
+  // scavenger hunt.
+  const relicCount = depth >= 2 ? 2 + (stretch - 1) : 1;
   // Depth 1 guarantees the keen edge BY NAME — the fighter's curve keys on
   // it, and finding it by granted stat was one armory reorder away from
   // handing the teaching floor a sling instead (the panel's fragility note).
@@ -283,12 +302,19 @@ export function createWorld(
   // consumable would just be a fifth relic, and an on-path one is not a
   // detour, it is a toll both already collected.
   const pantry = provisionsAt(depth);
-  const provTotal = pantry.reduce((n, p) => n + p.weight, 0);
-  let provRoll = intBetween(seed, c, 1, provTotal); c += 1;
-  let provision = pantry[0]!;
-  for (const p of pantry) {
-    provRoll -= p.weight;
-    if (provRoll <= 0) { provision = p; break; }
+  // One provision per size step (the vale's one, the expanse's two, the
+  // waste's three) — each its own counted draw from the depth's pantry,
+  // duplicates welcome, all off-path and unguarded as ever.
+  const provisions: { kind: string }[] = [];
+  for (let i = 0; i < stretch; i += 1) {
+    const provTotal = pantry.reduce((n, p) => n + p.weight, 0);
+    let provRoll = intBetween(seed, c, 1, provTotal); c += 1;
+    let provision = pantry[0]!;
+    for (const p of pantry) {
+      provRoll -= p.weight;
+      if (provRoll <= 0) { provision = p; break; }
+    }
+    provisions.push({ kind: provision.kind });
   }
 
   const spawned = pickSpawnPoints(
@@ -296,10 +322,11 @@ export function createWorld(
     c,
     grid,
     generated.start,
-    population.chosen.length + 1,
+    population.chosen.length + provisions.length,
     OPPONENT_MIN_DISTANCE,
   );
-  const provisionTile = spawned.points[spawned.points.length - 1] ?? exit;
+  const provisionTileAt = (i: number): { x: number; y: number } =>
+    spawned.points[spawned.points.length - provisions.length + i] ?? exit;
 
   // Placed on creatures' tiles: a prize is guarded, so taking it means going
   // through something. An item you can pick up for free is not a choice.
@@ -371,7 +398,7 @@ export function createWorld(
       && !(p.x === generated.start.x && p.y === generated.start.y)
       && !isGuardPost(p));
   const freePoints = spawned.points.filter((p, i) =>
-    i >= relics.length && i < spawned.points.length - 1
+    i >= relics.length && i < spawned.points.length - provisions.length
     && !(keeperTile !== undefined && p.x === keeperTile.x && p.y === keeperTile.y));
   let nextFree = 0;
 
@@ -392,7 +419,7 @@ export function createWorld(
     + ` · a budget of ${spawnBudget(depth)} paid ${spent} for ${population.chosen.length}: ${kinds}`
     + ` · ${watcher} watches ${bottom ? 'the heart' : 'the stairs'}`
     + ` · ${relics.map((r) => r.kind).join(' and ') || 'nothing'} lies guarded`
-    + ` · ${provision.kind} lies where the path does not go`
+    + ` · ${provisions.map((p) => p.kind).join(' and ')} lie${provisions.length === 1 ? 's' : ''} where the path does not go`
     + (coiled > 0 ? ` · ${coiled} of them lie${coiled === 1 ? 's' : ''} coiled, waiting` : '')
     + (secret.sealed ? ' · one room keeps itself secret' : '')
     + (repaired.punched > 0 ? ` · ${repaired.punched} hidden way(s) cut where no way was` : '')
@@ -427,12 +454,12 @@ export function createWorld(
           pos: { x: guardPosts[i]!.x, y: guardPosts[i]!.y },
           grants: relicGrant(r, depth),
         })),
-        {
-          id: 'provision-1',
-          kind: provision.kind,
-          pos: { x: provisionTile.x, y: provisionTile.y },
+        ...provisions.map((p, i) => ({
+          id: `provision-${String(i + 1)}`,
+          kind: p.kind,
+          pos: { x: provisionTileAt(i).x, y: provisionTileAt(i).y },
           grants: { hp: 0, might: 0, wits: 0, speed: 0 },
-        },
+        })),
         // The bottom keeps its heart at the far end, watched by the last
         // warden. Grants nothing worn — what it grants is the ending.
         ...(bottom ? [{
