@@ -1,4 +1,5 @@
 import { assayName } from '../assay/register.js';
+import { archetypeOf } from '../core/tables.js';
 import type { Question } from '../oracle/types.js';
 
 /**
@@ -186,10 +187,10 @@ export function fnv1a(text: string): number {
   return hash >>> 0;
 }
 
-/** The archetype under a levelled kind: "bruiser-2" is a bruiser. */
-function baseOf(kind: string): string {
-  return kind.includes('-') ? kind.slice(0, kind.indexOf('-')) : kind;
-}
+/** The archetype under a levelled kind — tables' archetypeOf, aliased.
+ *  describeQuestion normalizes creature subjects before they arrive, so
+ *  this is defense in depth for any subject built by hand. */
+const baseOf = archetypeOf;
 
 function bodiesFor(family: string, what: string): readonly string[] {
   if (family === 'creature') {
@@ -214,8 +215,10 @@ const TRIES = 24;
  * Composes a name and line for a describe question, or null when every
  * composition collides with what is already taken.
  *
- * `subject` arrives as "creature:bruiser-2" or "item:keen edge" (the
- * describeQuestion shape). Anything else is not the namesmith's to answer.
+ * `subject` arrives as "creature:bruiser" or "item:keen edge" (the
+ * describeQuestion shape — creature subjects are archetype-normalized at
+ * that gate; a hand-built levelled subject is normalized again here).
+ * Anything else is not the namesmith's to answer.
  */
 export function smithName(
   question: Question,
@@ -233,7 +236,11 @@ export function smithName(
   const bodies = bodiesFor(family, what);
   const lines = linesFor(family, what);
   const spent = new Set(taken.filter((n) => n !== '').map((n) => n.toLowerCase()));
-  const seed = `${question.scope ?? ''}|${question.subject}`;
+  // The seed hashes the ARCHETYPE for creatures, matching the normalized
+  // subject describeQuestion builds — so a hand-built levelled subject
+  // still composes the species' own first-choice name.
+  const seeded = family === 'creature' ? `creature:${baseOf(what)}` : question.subject;
+  const seed = `${question.scope ?? ''}|${seeded}`;
 
   for (let salt = 0; salt < TRIES; salt += 1) {
     const h = fnv1a(`${seed}|${String(salt)}`);

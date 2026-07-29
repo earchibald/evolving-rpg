@@ -198,6 +198,13 @@ register guard, veto-aware (Oracle.refusals persists so determinism cannot
 un-reject). With a namer installed, describe intents NEVER reach the
 transport; the founding gate holds the smith too, so floor one waits for
 its own words. The founding is the only naming-adjacent model call left.
+Creature names key the ARCHETYPE (the designer's ruling 2026-07-28:
+warden-4 and warden-7 once wore different names, and the 929s epitaph's
+"soot herald" taught nothing) — describeQuestion normalizes creature
+subjects through tables' archetypeOf, the smith's seed matches, and the
+one cache entry per species is what makes the duplicate guard safe.
+Standing worlds re-mint their bestiary once under the new keys; relics
+and provisions are untouched.
 
 **The world has a bottom** (GESTALT L4): depth 9, said out loud on floor 1.
 The heart lies at the far end of the ninth floor behind the last warden;

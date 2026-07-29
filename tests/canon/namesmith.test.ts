@@ -36,16 +36,20 @@ describe('the namesmith', () => {
     }
   });
 
-  it('keeps levelled kinds apart — a bruiser-2 is not wearing the bruiser\'s name', () => {
-    const taken: string[] = [];
-    const seen = new Set<string>();
-    for (const kind of ['bruiser', 'bruiser-2', 'bruiser-3', 'bruiser-4']) {
-      const made = smithName(describeQuestion('creature', kind, {}, 'root-a'), taken, DEFAULT_WORDS);
-      expect(made).not.toBeNull();
-      expect(seen.has(made!.name)).toBe(false);
-      seen.add(made!.name);
-      taken.push(made!.name);
+  it('keys the archetype — every levelled bruiser asks one question, wears one name', () => {
+    // Re-pinned 2026-07-28, the designer's ruling after the 929-second run:
+    // the depth-9 keeper (warden-7) wore a stranger's name from the depth-6
+    // warden (warden-4), and "a soot herald killed me" taught nothing. A
+    // name is a fact about the SPECIES; the level is a number, not a face.
+    for (const kind of ['bruiser', 'bruiser-2', 'bruiser-3', 'warden-7']) {
+      const q = describeQuestion('creature', kind, {}, 'root-a');
+      expect(q.subject).toBe(`creature:${kind.split('-')[0]!}`);
     }
+    const one = smithName(describeQuestion('creature', 'bruiser-2', {}, 'root-a'), [], DEFAULT_WORDS)!;
+    const two = smithName(describeQuestion('creature', 'bruiser-4', {}, 'root-a'), [], DEFAULT_WORDS)!;
+    const plain = smithName(describeQuestion('creature', 'bruiser', {}, 'root-a'), [], DEFAULT_WORDS)!;
+    expect(two.name).toBe(one.name);
+    expect(plain.name).toBe(one.name);
   });
 
   it('steers around a veto — rejecting a name composes a different one', () => {

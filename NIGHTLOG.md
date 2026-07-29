@@ -1144,3 +1144,26 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > **Try it:** next run, go down two floors. Wear the ward BEFORE the
 > warden. Ring the bell on a floor that sprawls. And drink the phial
 > even at full — the ceiling remembers.
+
+---
+
+## 2026-07-29 — 00:43 — a name is a species, not a level
+
+> Dear Designer,
+>
+> Your ruling, kept: creature names key the archetype now. One gate does
+> it — describeQuestion normalizes "warden-7" to the warden before the
+> question exists, the smith's seed matches, and the cache holds one
+> entry per species, which is exactly what keeps the no-duplicates guard
+> from ever salting a second name for the same face. Proven live: a
+> slinger-3 and a slinger-7 stood in one corridor and both read "moth
+> stoner" — hp 5 dealing 2–4 beside hp 9 dealing 3–6. The name teaches
+> the species; the numbers carry the level. The next epitaph that says
+> what killed you will mean something you've met.
+>
+> One honest consequence: worlds already standing re-mint their bestiary
+> once under the new keys (old levelled entries orphan in the canon;
+> same world root still means same names forever after). Relics and
+> provisions never keyed levels and are untouched. 898/898, the
+> overturned "levelled kinds apart" pin re-pinned to the new law with
+> your reasoning in the comment.

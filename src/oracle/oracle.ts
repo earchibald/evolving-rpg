@@ -1,5 +1,6 @@
 import { canonicalJson } from '../log/canonical.js';
 import { assayName } from '../assay/register.js';
+import { archetypeOf } from '../core/tables.js';
 import type { Answer, Call, Intent, Namer, Question, Transport } from './types.js';
 
 /**
@@ -572,9 +573,15 @@ export class Oracle {
 }
 
 export function describeQuestion(kind: string, what: string, context: Record<string, unknown>, scope?: string): Question {
+  // Creatures are named by ARCHETYPE: "warden-7" asks about the warden.
+  // Normalized here — the one gate every asker passes — so the cache key,
+  // the smith's seed and the register's duplicate guard all agree, and a
+  // levelled kind can never mint a second name for the same species (the
+  // designer's ruling 2026-07-28: the 929-second run's keeper wore a
+  // stranger's name, and the epitaph taught nothing).
   return {
     intent: 'describe' as Intent,
-    subject: `${kind}:${what}`,
+    subject: `${kind}:${kind === 'creature' ? archetypeOf(what) : what}`,
     context,
     ...(scope === undefined ? {} : { scope }),
   };

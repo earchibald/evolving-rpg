@@ -254,11 +254,18 @@ const VERBS: Readonly<Record<string, Verb>> = Object.freeze({
   slinger: 'volley',
 });
 
-/** The verb a kind acts by. Kinds carry levels ("bruiser-2"); the verb
- *  belongs to the archetype under the suffix. */
+/** The archetype under a levelled kind: "bruiser-2" is a bruiser. Verbs,
+ *  names and every other fact about a KIND belong to this, never to the
+ *  level suffix — the designer's ruling 2026-07-28, after the 929-second
+ *  run's keeper (warden-7) wore a stranger's name from the depth-6 warden
+ *  (warden-4) and "a soot herald killed me" taught nothing. */
+export function archetypeOf(kind: string): string {
+  return kind.includes('-') ? kind.slice(0, kind.indexOf('-')) : kind;
+}
+
+/** The verb a kind acts by. */
 export function verbOf(kind: string): Verb | undefined {
-  const base = kind.includes('-') ? kind.slice(0, kind.indexOf('-')) : kind;
-  return VERBS[base];
+  return VERBS[archetypeOf(kind)];
 }
 
 /** How close (steps of walking) something must come before a coiled stalker
