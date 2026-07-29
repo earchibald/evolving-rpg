@@ -2,7 +2,8 @@ import { generateMap, pickSpawnPoints, farthestFrom, withExit, walkDistance, sea
 import { inBounds, isPassable } from './grid.js';
 import { findEntity, isAlive } from './entity.js';
 import { intBetween } from './rng.js';
-import { neededToHit, chanceIn20, damageDice, critFloor, WHIFF, BESTIARY, creatureStats, threatOf, spawnBudget, depthBands, wardenAt, ARMORY, relicGrant, slotOf, motifAt, verbOf, wardenLevel, AMBUSH_MIGHT_BONUS, AMBUSH_FROM_DEPTH, braceWall, CALL_RISERS, CALL_DISTANCE, dominates, wearsTrait, FLARE_RADIUS, PROVISIONS, provisionOf, draughtCeiling, smokeTurns, BOTTOM_DEPTH, HEART_KIND, WAVE_DISTANCE } from './tables.js';
+import { clearShot, withinReach } from './sight.js';
+import { neededToHit, chanceIn20, damageDice, critFloor, WHIFF, BESTIARY, creatureStats, threatOf, spawnBudget, depthBands, wardenAt, ARMORY, relicGrant, slotOf, motifAt, verbOf, wardenLevel, AMBUSH_MIGHT_BONUS, AMBUSH_FROM_DEPTH, braceWall, CALL_RISERS, CALL_DISTANCE, dominates, wearsTrait, FLARE_RADIUS, PROVISIONS, provisionOf, draughtCeiling, smokeTurns, BOTTOM_DEPTH, HEART_KIND, WAVE_DISTANCE, SHOT_RANGE } from './tables.js';
 import type { Relic } from './tables.js';
 import type { Entity, Stats, Pos } from './entity.js';
 import { itemAt } from './item.js';
@@ -522,7 +523,7 @@ export function attemptMove(state: GameState, entityId: string, dx: number, dy: 
       schemaVersion: SCHEMA_VERSIONS.STRIKE,
       rngCounter: state.rngCounter,
       rngDraws: STRIKE_DRAWS,
-      payload: { attackerId: entityId, targetId: occupant.id, ...outcome, ...verbExtras },
+      payload: { attackerId: entityId, targetId: occupant.id, mode: 'melee', ...outcome, ...verbExtras },
     };
   }
 
@@ -597,7 +598,7 @@ export function lungeStrike(
     schemaVersion: SCHEMA_VERSIONS.STRIKE,
     rngCounter: state.rngCounter,
     rngDraws: STRIKE_DRAWS,
-    payload: { attackerId: entityId, targetId, ...outcome, attackerTo: via },
+    payload: { attackerId: entityId, targetId, mode: 'melee', ...outcome, attackerTo: via },
   };
 }
 
@@ -658,6 +659,97 @@ export function braceSelf(state: GameState, entityId: string): Extract<DraftEven
     rngCounter: state.rngCounter,
     rngDraws: 0,
     payload: { entityId },
+  };
+}
+
+/** Whether this entity can fight at distance at all: a creature by its verb,
+ *  the player by what they wear. One question, both answers — the volley is
+ *  one discipline whoever holds it. */
+function armedForDistance(entity: Entity): boolean {
+  return entity.kind === 'you'
+    ? wearsTrait(entity.gear, 'ranged')
+    : verbOf(entity.kind) === 'volley';
+}
+
+/** Whether a shot from `archer` could fly at `target` right now: hostile,
+ *  alive, past arm's reach (the bump owns range 1), inside the reach disc,
+ *  and the honest line clear — covenant M7, asked once, answered for
+ *  commands and minds alike. */
+function shotEligible(state: GameState, archer: Entity, target: Entity): boolean {
+  if (!isAlive(target) || !isHostile(archer, target)) return false;
+  if (Math.abs(target.pos.x - archer.pos.x) + Math.abs(target.pos.y - archer.pos.y) === 1) return false;
+  if (!withinReach(archer.pos, target.pos, SHOT_RANGE)) return false;
+  return clearShot(state.grid, state.entities, archer.pos, target.pos);
+}
+
+/**
+ * The draw: half of every shot, and all of its warning — covenant M8.
+ * Costs the turn, like the brace it displaces; the shot it promises flies
+ * only if the stance survives to the next action. Null for hands that
+ * cannot throw and for a stance already held: mispresses, not turns.
+ */
+export function drawStance(state: GameState, entityId: string): Extract<DraftEvent, { type: 'DRAWN' }> | null {
+  const archer = findEntity(state.entities, entityId);
+  if (archer === undefined || !isAlive(archer)) return null;
+  if (!armedForDistance(archer)) return null;
+  if (archer.tags.includes('drawn')) return null;
+  return {
+    type: 'DRAWN',
+    schemaVersion: SCHEMA_VERSIONS.DRAWN,
+    rngCounter: state.rngCounter,
+    rngDraws: 0,
+    payload: { entityId },
+  };
+}
+
+/**
+ * The mark: nearest hostile the shot could reach, nearest by the disc's own
+ * squared distance, ties to birth order — deterministic, so the UI can say
+ * which and replay can never disagree. Null when nothing in the world can
+ * be shot from here.
+ */
+export function shotTarget(state: GameState, entityId: string): Entity | null {
+  const archer = findEntity(state.entities, entityId);
+  if (archer === undefined) return null;
+  let best: Entity | null = null;
+  let bestAway = Number.POSITIVE_INFINITY;
+  for (const e of state.entities) {
+    if (e.id === entityId || !shotEligible(state, archer, e)) continue;
+    const dx = e.pos.x - archer.pos.x;
+    const dy = e.pos.y - archer.pos.y;
+    const away = dx * dx + dy * dy;
+    if (away < bestAway) { bestAway = away; best = e; }
+  }
+  return best;
+}
+
+/**
+ * The loose: the drawn stance spent as a blow at distance. The same dice as
+ * every strike — the guard's raised bar included — at the same two draws,
+ * with no movement ever riding along: a stone moves nothing but blood.
+ * Null when the stance is not held or the line refuses; the caller decides
+ * whether that refusal costs a turn (it does not — a shot that cannot fly
+ * was never loosed).
+ */
+export function looseShot(
+  state: GameState,
+  entityId: string,
+  targetId: string,
+): Extract<DraftEvent, { type: 'STRIKE' }> | null {
+  const archer = findEntity(state.entities, entityId);
+  const target = findEntity(state.entities, targetId);
+  if (archer === undefined || target === undefined) return null;
+  if (!archer.tags.includes('drawn')) return null;
+  if (!armedForDistance(archer)) return null;
+  if (!shotEligible(state, archer, target)) return null;
+
+  const outcome = resolveStrike(state.seed, state.rngCounter, archer, target);
+  return {
+    type: 'STRIKE',
+    schemaVersion: SCHEMA_VERSIONS.STRIKE,
+    rngCounter: state.rngCounter,
+    rngDraws: STRIKE_DRAWS,
+    payload: { attackerId: entityId, targetId, mode: 'ranged', ...outcome },
   };
 }
 
