@@ -68,6 +68,41 @@ function events(): GameEvent[] {
   ] as GameEvent[];
 }
 
+/**
+ * The same run with a real history in front of it: twenty linked blows and
+ * turns BEFORE ev-1, so the lenses stand above their sample floors (a lens
+ * below its floor holds its tongue now — the 929-second run's listener) and
+ * ev-1..ev-5 stay inside the last-40 citable window. Parent-linked because
+ * summariseRun walks the chain from the newest event.
+ */
+function substantialEvents(): GameEvent[] {
+  const base = { seq: 0, schemaVersion: 1, rngCounter: 0, rngDraws: 0 };
+  const padding: GameEvent[] = [];
+  let parent: string | null = null;
+  for (let i = 0; i < 20; i += 1) {
+    const blow = `blow-${i}`;
+    const tick = `tick-${i}`;
+    const mine = i % 2 === 0;
+    padding.push({
+      ...base, parent, id: blow, type: 'STRIKE',
+      payload: {
+        attackerId: mine ? 'player' : 'thing-1', targetId: mine ? 'thing-1' : 'player',
+        hit: i % 3 !== 0, damage: i % 3 === 0 ? 0 : 2, roll: 11, needed: 10,
+      },
+    } as GameEvent);
+    padding.push({
+      ...base, parent: blow, id: tick, type: 'TURN_ADVANCED',
+      payload: { activeEntityId: 'player', turn: i + 1 },
+    } as GameEvent);
+    parent = tick;
+  }
+  const tail = events().map((e, i) => ({
+    ...e,
+    parent: i === 0 ? parent : `ev-${i}`,
+  }));
+  return [...padding, ...tail];
+}
+
 function state(rules: Rule[] = []): GameState {
   return {
     grid: makeGrid(4, 1, new Array<number>(4).fill(FLOOR)),
@@ -309,7 +344,8 @@ describe('never blocking, never canon', () => {
 });
 
 describe('reading the Critic', () => {
-  const run = () => summariseRun(events(), state(), [note()], 'main');
+  // A substantial history: the lenses only read above their sample floors.
+  const run = () => summariseRun(substantialEvents(), state(), [note()], 'main');
 
   it('carries the lens verdicts into the summary', () => {
     const s = run();

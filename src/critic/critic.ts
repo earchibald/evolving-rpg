@@ -62,20 +62,32 @@ function surpriseReading(log: EventLog, head: string | null, title: string): Omi
   const s = surpriseOf(log, head);
   const thin = s.modelled < ENOUGH_OUTCOMES;
 
-  const verdict = s.modelled === 0
-    ? 'Nothing with a knowable probability has happened yet — no blows have been struck.'
-    : s.rate === 0
-      ? 'Nothing that happened was unlikely. The dice never surprise you: every to-hit '
-        + 'target the game produces sits near even money, so no roll can land outside expectation.'
-      : `${s.surprising} of ${s.modelled} outcomes were long shots — the dice do occasionally overturn a fight.`;
+  // Below the floor the lens does not read at all. The 929-second run's
+  // listener caught a shaped verdict standing on a one-turn sample, hedged
+  // only in the fine print — and a hedge appended to a claim is still a
+  // claim. Under the floor the claim itself is withheld.
+  if (thin) {
+    return {
+      title,
+      figure: '—',
+      verdict: s.modelled === 0
+        ? 'Nothing with a knowable probability has happened yet — no blows have been struck. No reading.'
+        : `Only ${s.modelled} modelled outcome(s) — no reading below ${ENOUGH_OUTCOMES}.`,
+      confidence: `across ${s.modelled} modelled outcome(s) — too little to conclude anything`,
+      measured: false,
+    };
+  }
+
+  const verdict = s.rate === 0
+    ? 'Nothing that happened was unlikely. The dice never surprise you: every to-hit '
+      + 'target the game produces sits near even money, so no roll can land outside expectation.'
+    : `${s.surprising} of ${s.modelled} outcomes were long shots — the dice do occasionally overturn a fight.`;
 
   return {
     title,
     figure: s.rate.toFixed(2),
     verdict,
-    confidence: thin
-      ? `across ${s.modelled} modelled outcome(s) — too little to conclude anything`
-      : `across ${s.modelled} modelled outcomes`,
+    confidence: `across ${s.modelled} modelled outcomes`,
     measured: true,
   };
 }
@@ -83,6 +95,19 @@ function surpriseReading(log: EventLog, head: string | null, title: string): Omi
 function interestReading(log: EventLog, head: string | null, title: string): Omit<Reading, 'lens'> {
   const i = interestOf(log, head);
   const thin = i.turns < ENOUGH_TURNS;
+
+  // Same floor as the surprise lens: "the curve rises and falls" was once
+  // said of a single turn. There is no curve in one turn — below the floor
+  // there is no reading, not a reading with a disclaimer.
+  if (thin) {
+    return {
+      title,
+      figure: '—',
+      verdict: `Only ${i.turns} turn(s) — no curve to read below ${ENOUGH_TURNS}.`,
+      confidence: `across ${i.turns} turn(s) — too little to conclude anything`,
+      measured: false,
+    };
+  }
 
   const notes: string[] = [];
   if (i.turns > 1) {
@@ -102,9 +127,7 @@ function interestReading(log: EventLog, head: string | null, title: string): Omi
     title,
     figure: i.mean.toFixed(2),
     verdict: notes.join(' '),
-    confidence: thin
-      ? `across ${i.turns} turn(s) — too little to conclude anything`
-      : `across ${i.turns} turns, peak at ${Math.round(i.peakAt * 100)}%, flattest run ${i.flattest}`,
+    confidence: `across ${i.turns} turns, peak at ${Math.round(i.peakAt * 100)}%, flattest run ${i.flattest}`,
     measured: true,
   };
 }
