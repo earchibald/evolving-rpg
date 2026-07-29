@@ -106,6 +106,23 @@ Verbs are PRICED into threat (×1.1–1.3) — unpriced they collapsed depth-5
 survival to 0/20 — and the M6 proportion trial weighs rules against
 verbless stand-ins so the scale cannot move with the bestiary.
 
+**Combat reaches — the volley discipline** (increment 8, covenant M7/M8):
+every blow, melee or ranged, resolves through the one `resolveStrike` path;
+STRIKE v4 carries `mode` ('melee'|'ranged', absent reads melee — the open
+door magic modes will walk through). A shot needs the honest line
+(`src/core/sight.ts`: integer supercover, walls/secrets/living bodies
+block, two-walls-kissing corners block, reach disc dx²+dy² ≤ 30) and the
+drawn stance: DRAWN v1 is an event and a visible tag, one stance per body,
+held through WAITs, lost to any other act, any damage, any stagger — so
+every ranged blow anyone throws is telegraphed one full action ahead. The
+**slinger** (verb volley, threat ×1.25, fromDepth 2) draws and looses and
+never retreats; the player does the same with the **leaden sling** relic
+(trait 'ranged', weapon slot — sword-or-sling is a `,` decision) on the
+f key. Adjacency refuses shots: the bump owns range 1. Fork moved to k.
+While adding this, a latent `firstStep` bug fell: OOB neighbours keyed by
+y*width+x before bounds-checking made a quarry at x=0 read reachable one
+step EAST off the map — fixed, the fog's wrap lesson applied to the hunt.
+
 **The player has verbs too** (SHOVE v1 / BRACED v1, zero draws): x+dir
 shoves an adjacent hostile one pace — open ground displaces, walls and the
 door frame slam (SLAM_DAMAGE + stagger), a body behind tangles both;

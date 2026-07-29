@@ -59,6 +59,7 @@ choices are a thing the Forge may propose later.
 | skirmisher | 4/2/1/3 | +2/+1/0/+1 | fast chaff, teaches spacing |
 | bruiser | 7/4/1/1 | +3/+1/0/0 | slow wall, teaches when not to trade |
 | stalker | 3/3/2/4 | +1/+1/+1/+1 | fragile hunter, teaches priority |
+| slinger | 3/2/2/2 | +1/+1/+1/0 | fights from the ground between you (depth 2+), teaches approach |
 | warden | 16/5/2/2 | +6/+1/+1/0 | the stairs' guard, every 3rd floor |
 
 Kinds are mechanical bones; the Oracle names each kind as it is touched
@@ -75,6 +76,22 @@ Kinds are article-free — the Covenant's name rules bind the world's own data.
 | iron charm | max hp | +3 | +1 per depth |
 | fleet boots | speed | +1 | +1 per 3 depths |
 | grey lens | wits | +1 | +1 per 2 depths |
+| leaden sling | might | +1 | +1 per 3 depths — and the 'ranged' trait: the volley discipline. Weapon slot, so sword-or-sling is a `,` decision (the keen edge out-grants it; walking never swaps them) |
+
+## The volley (covenant M7/M8)
+
+Shots resolve on the same bounded dice as blows — `10 + speed − might`,
+same bands, same two draws — so no second accuracy table exists to drift.
+What prices distance is **tempo and geometry**, not arithmetic: a shot
+costs two beats (draw, then loose; the draw visible to everyone, lost to
+movement, damage or a stagger), flies only along a clear straight line
+(walls, secrets and living bodies block; two walls kissing at a corner
+block), reaches `SHOT_RANGE = 5` on the fog's own disc (dx²+dy² ≤ 30),
+and refuses adjacency — the bump owns range 1. Kiting is dead by
+construction: you cannot move and stay drawn. The slinger's verb prices
+at ×1.25 (lunge-class: approach rounds become damage rounds); measured on
+the 20-seed sawtooth the bands held unchanged — depth 1 gentle (17/20
+brawler), depth 3 fighter over runner (10 v 4), depth 5 in [1,10].
 
 ## Wits: the crit band
 

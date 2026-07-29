@@ -30,6 +30,7 @@ doubt, read the last three lines — they always say what just happened.
 | `.` or space | stand still for a turn |
 | `x`, then a direction | shove — drive whatever stands beside you one pace |
 | `z` | brace — set yourself against the coming round |
+| `f` | the sling — press once to draw (everyone sees it), again to let fly |
 | `q` | use what your satchel holds |
 | `,` | take what is underfoot on purpose — trades and downgrades included |
 | `c` | the witness — the microphone listens while you play; again to stop |
@@ -60,6 +61,10 @@ That is the whole game. Everything else is reading.
 | **brace** | your guard, for one round: harder to hit, no trample can move you, a coiled spring breaks on it — and whatever misses you reels |
 | **reeling** | what a staggered thing does: it loses its next turn. Shoves into walls, tangles, and blows that break on a set guard all cause it |
 | **venom** | some bites keep costing: one point a round for three rounds after. Breaking off a fight no longer ends it |
+| **leaden sling** | a weapon that reaches. It takes the blade's place in your hand — sword or sling, you choose with `,` — and fights in two beats: draw, then let fly |
+| **drawing** | half of every shot, and all of its warning. Drawing costs a turn and everyone can see it. Standing still keeps it; moving, swinging, or being hurt loses it, shot unfired |
+| **what stops a stone** | walls. Hidden doors, until found. Any living body in the way — theirs or yours. Distance past five rings. And anything standing right beside the thrower: up close, the fight belongs to fists and blades |
+| **slinger** | the creature that fights the same way. When it draws back its arm you have one turn: step behind something, close in, brace, or shove it — or take the stone |
 | **warden** | the boss. Stands at the stairs every third floor and will not be drawn far from them. Run away and its wounds close — a boss poked is a boss unpoked |
 | **the heart** | what beats at the bottom of the ninth floor. Taking it is not the end — carrying it out is |
 | **echo** | one of your past selves, risen. Only at the bottom, only where your bodies lie |

@@ -987,3 +987,41 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 >
 > **Try it:** `npm run dev`, press <kbd>c</kbd>, complain out loud, die
 > or don't, press <kbd>r</kbd> — then read what lands in `runs/feedback/`.
+
+> [!IMPORTANT]
+> **17:34 — Combat at every distance: the volley discipline**
+> Your goal — a combat system both sides use, melee and ranged, magic
+> not locked out — built end to end. One resolution still rules every
+> blow (the same d20, the same bands, the same two draws); what a MODE
+> decides is who can be hit from where, and STRIKE v4's `mode` field is
+> an open string so a bolt or a blast later is a new value, not new
+> machinery. Distance is priced in tempo and geometry, never a second
+> table: a shot takes two beats — **draw** (a turn, visible to every
+> eye, the Into-the-Breach warning made law as covenant M8), then
+> **loose** — and the stance breaks on movement, damage or a reel, so
+> kiting died in the design instead of the tuning. The line is law too
+> (M7, `src/core/sight.ts`): integer supercover, symmetric both ways;
+> walls, secrets and living bodies stop a stone, two walls kissing at
+> a corner stop it, the reach disc is the fog's own circle at 5. The
+> **slinger** (seventh archetype, volley ×1.25, depth 2+) stands and
+> draws and never dances; the player answers with the **leaden sling**
+> — weapon slot, so sword-or-sling is a `,` decision — on f (fork
+> moved to k; fire owns the genre's key). The rail warns in words, the
+> map rings the drawn in amber, the drawn player sees their mark.
+> Two finds along the way: the old localStorage save was refused with
+> the exact reason (STRIKE v3 in a v4 engine — pre-RC breakage said
+> honestly), and a LATENT HUNT BUG fell — `firstStep` keyed neighbours
+> y·width+x before bounds-checking, so a quarry at x=0 read reachable
+> one step EAST off the world (the fog's wrap lesson, alive in the
+> hunt; walled borders had been hiding it — borderless volley test
+> grids exposed it).
+> Proved live on a hand-cut proving floor: you draw, the felt slinger
+> draws back its arm — a shot is coming, your stone finishes it where
+> it stands (14 vs 8), the kill pays 12 xp, chain verified to the
+> hash. Sawtooth re-pinned without touching a number: depth-1 gentle
+> 17/20, depth-3 fighter 10 v runner 4, depth-5 in band. Golden
+> regenerated (229 events, still escapes). 865/865 green.
+>
+> **Try it:** `npm run dev` — press <kbd>?</kbd> and find <kbd>f</kbd>;
+> a slinger waits on any floor past the first. When it draws, you have
+> one turn: break the line, close, brace, shove — or take the stone.
