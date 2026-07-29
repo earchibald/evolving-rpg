@@ -111,16 +111,16 @@ export function meanDamage(might: number): number {
 export const XP_TO_REACH: readonly number[] = Object.freeze([0, 0, 16, 40, 72, 112, 160, 224, 304, 400]);
 
 export function levelForXp(xp: number, stretch = 1): number {
-  // The stretch scales the thresholds, not the kills: a bigger board pays
-  // roughly stretch× the XP per cleared floor (spawnBudget carries the same
-  // factor), so stretching the ladder by the same integer keeps levels-per-
-  // floor on the tuned curve at every size. Derived from the grid's own
-  // dims at apply time — never evented, so the log and the level still
-  // cannot disagree.
-  const s = Math.max(1, Math.floor(stretch));
+  // The BOUNTY scales the thresholds — the same factor the spawn budget
+  // carries (threat in, XP out: one number or the symmetry breaks), so
+  // levels-per-floor stays the tuned curve at every size. Every vale
+  // threshold is even, so the 1.5× expanse ladder stays integer-exact.
+  // Derived from the grid's own dims at apply time — never evented, so
+  // the log and the level still cannot disagree.
+  const b = bountyStretch(stretch);
   let level = 1;
   for (let l = XP_TO_REACH.length - 1; l >= 1; l -= 1) {
-    if (xp >= XP_TO_REACH[l]! * s) { level = l; break; }
+    if (xp >= Math.round(XP_TO_REACH[l]! * b)) { level = l; break; }
   }
   return level;
 }
@@ -451,6 +451,24 @@ export function sizeStretch(width: number, height: number): number {
  *  Above this an accidental dimension allocates a country, not a floor. */
 export const MAX_BOARD_DIM = 256;
 
+/**
+ * The combat economy's gentler knob: (stretch + 1) / 2 — 1 on the vale,
+ * 1.5 on the expanse, 2 on the waste. Applied to the spawn budget AND
+ * the XP ladder together (threat in, XP out — one factor, exact parity).
+ *
+ * Why not the full stretch: measured. Budget ×2 on the expanse meant ~2×
+ * fights per floor while the stretched ladder kept full-heal level-ups
+ * at the vale's cadence — the depth-3 brawler died 9 in 10 and the
+ * RUNNER out-survived the FIGHTER, the exact domination the covenant
+ * forbids. Fights-per-heal is the real currency; the bounty holds it
+ * near the vale's while the GROUND still stretches full — the pantry,
+ * the armory and the traps keep the whole sizeStretch, so a bigger
+ * board is journey-rich and fight-fair rather than fight-doubled.
+ */
+export function bountyStretch(stretch: number): number {
+  return (Math.max(1, Math.floor(stretch)) + 1) / 2;
+}
+
 /** The spawn budget a floor may spend on creatures. The linear part is steep
  *  enough that depth 2 visibly bites; first cut (14+12d) let one unlucky
  *  bruiser roll eat floor 1 whole — a single-creature floor teaches nothing —
@@ -466,10 +484,13 @@ export const MAX_BOARD_DIM = 256;
 export function spawnBudget(depth: number, stretch = 1): number {
   const d = Math.max(1, Math.floor(depth));
   const deep = Math.max(0, d - 2);
-  // The stretch multiplies the whole rent (sizeStretch): a bigger board
-  // fields more creatures in absolute count and fewer per tile — meetings
-  // per journey hold roughly flat, and the ground breathes between them.
-  return (24 + 15 * d + 4 * deep * deep) * Math.max(1, Math.floor(stretch));
+  // The BOUNTY multiplies the rent, not the raw stretch (bountyStretch:
+  // budget at the full stretch doubled fights-per-heal, and the runner
+  // out-survived the fighter at depth 3 — the covenant's one forbidden
+  // domination, measured 2/10 v 1/10 before this held it). A bigger
+  // board fields more creatures in absolute count and far fewer per
+  // tile — the breathing room, with the patrols keeping it alive.
+  return Math.round((24 + 15 * d + 4 * deep * deep) * bountyStretch(stretch));
 }
 
 /** Out-of-depth overlap: which creature-levels a floor may draw, with weights.

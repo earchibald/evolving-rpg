@@ -24,21 +24,26 @@ describe('the board stretches', () => {
     expect(sizeStretch(15, 7)).toBe(1);
   });
 
-  it('multiplies the rent by the stretch and nothing else', () => {
+  it('multiplies the rent by the BOUNTY — gentler than the ground', () => {
+    // Measured (2026-07-29): the full stretch doubled fights-per-heal and
+    // the depth-3 runner out-survived the fighter 2/10 v 1/10 — the one
+    // domination the covenant forbids. The bounty (1 / 1.5 / 2) holds
+    // fights-per-heal near the vale's while the ground stretches whole.
     for (const depth of [1, 3, 5, 9]) {
       expect(spawnBudget(depth, 1)).toBe(spawnBudget(depth));
-      expect(spawnBudget(depth, 2)).toBe(spawnBudget(depth) * 2);
-      expect(spawnBudget(depth, 3)).toBe(spawnBudget(depth) * 3);
+      expect(spawnBudget(depth, 2)).toBe(Math.round(spawnBudget(depth) * 1.5));
+      expect(spawnBudget(depth, 3)).toBe(spawnBudget(depth) * 2);
     }
   });
 
-  it('stretches the XP ladder by the same integer', () => {
-    // 16 XP reaches level 2 on the vale; the expanse asks 32 for the same
-    // step — levels-per-floor stays the tuned curve when kills double.
+  it('stretches the XP ladder by the same bounty — threat in, XP out, one factor', () => {
+    // 16 XP reaches level 2 on the vale; the expanse asks 24 (×1.5, exact
+    // — every vale threshold is even), the waste 32.
     expect(levelForXp(16)).toBe(2);
     expect(levelForXp(16, 2)).toBe(1);
-    expect(levelForXp(32, 2)).toBe(2);
-    expect(levelForXp(31, 2)).toBe(1);
+    expect(levelForXp(24, 2)).toBe(2);
+    expect(levelForXp(23, 2)).toBe(1);
+    expect(levelForXp(32, 3)).toBe(2);
   });
 
   it('a stretch-1 world is bit-identical to the world before boards could breathe', () => {

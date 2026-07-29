@@ -92,3 +92,54 @@ describe('the rising sawtooth, measured on fixed seeds', () => {
     expect(d5).toBeLessThanOrEqual(13);
   });
 });
+
+/**
+ * The expanse, pinned (2026-07-29, the living-dungeon pass). The default
+ * board is 96x64 now: if the vale holds its law and the default does not,
+ * the default is out of law. Ten seeds, not twenty — the ground is 4x and
+ * the suite pays wall-clock for every tile — with bands wide the way every
+ * pin's bands are wide: a broken table, not a tuning tremor, is what trips
+ * them. Pinned AFTER the bounty correction: at the full stretch the
+ * depth-3 runner out-survived the fighter 2/10 v 1/10 (the covenant's one
+ * forbidden domination); under the bounty these read 7 v 4, the door reads
+ * 10/10, and the deep reads 4/10 — the same sawtooth, wider halls.
+ */
+const EXPANSE = { width: 96, height: 64 };
+const EXPANSE_SEEDS = [3, 7, 11, 15, 21, 29, 33, 44, 51, 60];
+
+function expanseFloors(seed: number, policy: Policy, count: number): 'escaped' | 'dead' | 'playing' | 'won' {
+  const born = append(emptyLog(), null, createWorld(seed, EXPANSE.width, EXPANSE.height));
+  let done = autoplay({ log: born.log, head: born.event.id }, policy, 4000);
+  for (let floor = 2; floor <= count && done.ended === 'escaped'; floor += 1) {
+    const refs = createRef(emptyRefs(), 'run', done.position.head, 0, 'balance');
+    const down = descend(done.position.log, refs, 'run', EXPANSE);
+    if (down === null) break;
+    const head = getRef(down.refs, 'run').head;
+    if (head === null) break;
+    done = autoplay({ log: down.log, head }, policy, 4000);
+  }
+  return done.ended;
+}
+
+const expanseSurvived = (policy: Policy, depth: number): number =>
+  EXPANSE_SEEDS.filter((s) => expanseFloors(s, policy, depth) === 'escaped').length;
+
+describe('the sawtooth on the expanse — the default board keeps the law', () => {
+  it('the door stays gentle at four times the ground', () => {
+    expect(expanseSurvived(brawler, 1)).toBeGreaterThanOrEqual(7);
+  });
+
+  it('fighting still pays at depth 3 — running never dominates, whatever the acreage', () => {
+    const fighter = expanseSurvived(brawler, 3);
+    const runner = expanseSurvived(rusher, 3);
+    expect(fighter).toBeGreaterThanOrEqual(runner);
+    expect(fighter).toBeGreaterThanOrEqual(3);
+    expect(fighter).toBeLessThanOrEqual(9);
+  });
+
+  it('the deep stays earned, never given', () => {
+    const d5 = expanseSurvived(brawler, 5);
+    expect(d5).toBeGreaterThanOrEqual(1);
+    expect(d5).toBeLessThanOrEqual(7);
+  });
+});

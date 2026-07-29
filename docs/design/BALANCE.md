@@ -296,3 +296,82 @@ fog is already the tax. Motif is named in the floor's story (covenant L1).
 Bands to re-measure after landing: d1 unchanged by construction; d3 (warren
 density may bite the runner harder — watch the non-domination pin's spread);
 d5 (halls' sparseness vs the quadratic budget — watch [1,10]).
+
+## The board breathes (2026-07-29 — the living-dungeon pass, math run)
+
+The designer's frame, verbatim intent: the vale was the right size for the
+old mechanics; the new elements need to be **rare enough to be
+differentiated and have room to happen**. So the board grew — and the math
+below is about keeping the fight economy lawful while the ground stretches.
+
+### Sizes and the two factors
+
+| board | size | area | sizeStretch S | bountyStretch B |
+|---|---|---|---|---|
+| the vale | 48×32 | 1,536 | 1 | 1 |
+| the expanse (default) | 96×64 | 6,144 | 2 | 1.5 |
+| the waste | 128×96 | 12,288 | 3 | 2 |
+
+`S = max(1, round(sqrt(area/1536)))` scales the **ground economy**: rooms
+(cap 16·area-ratio, motif density preserved), provisions per floor (=S),
+relics owed past the teaching floor (2+S−1), traps (base×S), the minimap's
+reason to exist. `B = (S+1)/2` scales the **fight economy**: the spawn
+budget and the XP ladder together — one factor on both sides, because
+threat-in/XP-out is one symmetry and two factors would be two chances to
+break it.
+
+### Why B, not S — the measured wrong turn
+
+First cut scaled the budget by S. Measured on the expanse (10 fixed seeds):
+depth-1 brawler 6/10, and at depth 3 the brawler survived **1/10 against
+the rusher's 2/10** — running dominating fighting, the covenant's one
+forbidden inequality. Diagnosis (per-floor autopsy, traps innocent at 0
+harm in every death): budget ×2 means ~2× fights per floor, while the
+stretched ladder holds level-ups — and their full heals — at the vale's
+per-floor cadence. **Fights-per-heal is the real currency**; doubling it
+bled the fighter white. Under B: door 10/10, depth-3 fighter 7/10 over
+runner 4/10, depth-5 4/10. The expanse is pinned at those bands in
+tests/balance/sawtooth.test.ts — the default board keeps the law or the
+suite says so.
+
+### The new elements' budgets
+
+| element | rate | effect budget |
+|---|---|---|
+| wanderers | ~1/3 of free spawns, d2+, routes of 2–4 room centers | no threat re-price: same creature, moved — the patrol raises MEETINGS, not power; hunt interrupts the round |
+| guards (by role + 1/6 draw) | keeper + relic guards always | pure behavior refinement — return-to-post closes the drifted-guard hole; leash 4 anchored to the POST |
+| mimic | 1 floor in 6, d2+, at most one | feign priced ×1.3 (ambush-class + the disguise); never spends floor budget (its roll is separate) but pays its threat as XP; always carries a pocket — beating the lie pays like a small vault |
+| traps | 2/3/4 by depth band ×S, d2+, ≈1 per 1,000 tiles at default | harm shapes, not budget: spikes ≈ one bruiser blow; needle = stinger's wound +1 round; snare = 3 rounds of ground; alarm = 12 rounds of the floor's full attention; hatch = level-1 bodies (below); maw ≈ 1d6+2 and a floor, no rest; lodestone = position, gambled |
+| pockets | ~1/3 of creatures (mimic always) | provision 70 / scroll 25 / relic 5; drawn at birth, zero draws at death — replay-exact for any death cause |
+| scrolls | 1 floor in 3 lays one, d2+; pockets carry more | knowledge/position/time only — no damage kind exists, by the felt-overpowered guard |
+
+### The hatch ruling — bodies, not elites (measured)
+
+First cut drew hatch risers from the floor's full band. Depth-5 brawler
+went to **14/20 against a pinned ceiling of 13** — the trap fed the
+fighter more XP than it cost, a vending machine wearing a trap's face.
+Re-cut to the call's own law (risers at the first band): all five vale
+pins returned to their standing values. A hazard must never be the
+efficient farm.
+
+### Ensemble after the pass
+
+Triangularity holds at **2** (rusher, brawler — risk and safety both keep
+a case) on both measured depths. Freedom reads **2 (d1) / 3 (d3)**, down
+from the pre-pass 4–5: the do-nothing family (coward/shuffler/bumper/
+sitter) converged into one outcome-place, because **patrols find the idle
+now** — a sitter is no longer perfectly safe, so the passive profiles
+collapsed together. That is the wanderers doing exactly their job; the
+lens reads the sameness honestly. Player-facing freedom (the approaches
+worth taking) is unchanged.
+
+### Watch list
+
+- Rusher survival at expanse depth 3 runs higher than the vale's (4/10 v
+  ~2/20): bigger boards let runners slip wider around the watched stairs.
+  The inequality holds with margin; if human runs read the same, consider
+  keeper leash or a second watcher on stretched floors. No retune without
+  the designer's word.
+- Bots leave scrolls as dead cargo and blunder revealed traps — the
+  collapse-canary policy, unchanged on purpose. Human-vs-bot divergence on
+  trap floors is expected and worth listening for in voiced runs.
