@@ -3,7 +3,7 @@ import { inBounds, isPassable } from './grid.js';
 import { findEntity, isAlive } from './entity.js';
 import { intBetween } from './rng.js';
 import { clearShot, withinReach } from './sight.js';
-import { neededToHit, chanceIn20, damageDice, critFloor, WHIFF, BESTIARY, creatureStats, threatOf, spawnBudget, depthBands, wardenAt, ARMORY, relicGrant, slotFor, RELIC_TRAITS, motifAt, verbOf, wardenLevel, AMBUSH_MIGHT_BONUS, AMBUSH_FROM_DEPTH, braceWall, CALL_RISERS, CALL_DISTANCE, dominates, wearsTrait, FLARE_RADIUS, provisionsAt, provisionOf, draughtCeiling, smokeTurns, BOTTOM_DEPTH, HEART_KIND, WAVE_DISTANCE, SHOT_RANGE, sizeStretch, MAX_BOARD_DIM, WANDER_FROM_DEPTH, ROUTE_STOPS, MIMIC_IN, MIMIC_FROM_DEPTH, mimicGuises, sightAt, trapOf, trapKindsAt, trapCount, trapLevelAt, TRAP_SIGHT_NEED, TRAP_NEAR_NEED, TRAP_DODGE_NEED, TRAP_NEAR_RADIUS, SPIKE_DIE, NEEDLE_VENOM_TURNS, SNARE_TURNS, ALARM_TURNS, MAW_DIE, MAW_FLAT, HATCH_BAND, scrollOf, scrollsAt, SCROLL_IN, BLINK_CLEAR, SUNDER_RADIUS, TRAP_EATER_REACH } from './tables.js';
+import { neededToHit, chanceIn20, damageDice, critFloor, WHIFF, BESTIARY, creatureStats, threatOf, spawnBudget, depthBands, wardenAt, ARMORY, relicGrant, slotFor, RELIC_TRAITS, motifAt, verbOf, wardenLevel, AMBUSH_MIGHT_BONUS, AMBUSH_FROM_DEPTH, braceWall, CALL_RISERS, CALL_DISTANCE, dominates, wearsTrait, FLARE_RADIUS, provisionsAt, provisionOf, draughtCeiling, smokeTurns, BOTTOM_DEPTH, HEART_KIND, WAVE_DISTANCE, SHOT_RANGE, sizeStretch, MAX_BOARD_DIM, WANDER_FROM_DEPTH, ROUTE_STOPS, MIMIC_IN, MIMIC_FROM_DEPTH, mimicGuises, sightAt, trapOf, trapKindsAt, trapCount, trapLevelAt, TRAP_SIGHT_NEED, TRAP_NEAR_NEED, TRAP_DODGE_NEED, TRAP_NEAR_RADIUS, SPIKE_DIE, NEEDLE_VENOM_TURNS, SNARE_TURNS, ALARM_TURNS, MAW_DIE, MAW_FLAT, HATCH_BAND, scrollOf, scrollsAt, SCROLL_IN, BLINK_CLEAR, SUNDER_RADIUS, TRAP_EATER_REACH, POCKET_IN, POCKET_SHARES } from './tables.js';
 import type { Relic } from './tables.js';
 import type { Entity, Stats, Pos } from './entity.js';
 import { itemAt } from './item.js';
@@ -434,13 +434,55 @@ export function createWorld(
   });
   const walking = temper.filter((t) => t?.disposition === 'wander').length;
 
+  // The pockets (v14): roughly one creature in POCKET_IN is born carrying,
+  // drawn NOW so the death drop is derived arithmetic — zero draws at kill
+  // time, any death. Mostly a provision, sometimes a scroll (where the
+  // shelf has opened), rarely a relic at the depth's own grant.
+  const drawPocket = (): { kind: string; grants: Stats } => {
+    const shelf = scrollsAt(depth);
+    const shares: { what: 'provision' | 'scroll' | 'relic'; weight: number }[] = [
+      { what: 'provision', weight: POCKET_SHARES.provision + (shelf.length === 0 ? POCKET_SHARES.scroll : 0) },
+      ...(shelf.length === 0 ? [] : [{ what: 'scroll' as const, weight: POCKET_SHARES.scroll }]),
+      { what: 'relic', weight: POCKET_SHARES.relic },
+    ];
+    const total = shares.reduce((n, s) => n + s.weight, 0);
+    let roll = intBetween(seed, after, 1, total); after += 1;
+    let what: 'provision' | 'scroll' | 'relic' = 'provision';
+    for (const s of shares) {
+      roll -= s.weight;
+      if (roll <= 0) { what = s.what; break; }
+    }
+    const weighted = <T extends { weight: number }>(pool: readonly T[]): T => {
+      const sum = pool.reduce((n, p) => n + p.weight, 0);
+      let r = intBetween(seed, after, 1, sum); after += 1;
+      let chosen = pool[0]!;
+      for (const p of pool) {
+        r -= p.weight;
+        if (r <= 0) { chosen = p; break; }
+      }
+      return chosen;
+    };
+    if (what === 'provision') {
+      return { kind: weighted(provisionsAt(depth)).kind, grants: { hp: 0, might: 0, wits: 0, speed: 0 } };
+    }
+    if (what === 'scroll') {
+      return { kind: weighted(shelf).kind, grants: { hp: 0, might: 0, wits: 0, speed: 0 } };
+    }
+    const relic = weighted(ARMORY);
+    return { kind: relic.kind, grants: relicGrant(relic, depth) };
+  };
+  const pockets: (undefined | { kind: string; grants: Stats })[] = population.chosen.map(() => {
+    const carrying = intBetween(seed, after, 1, POCKET_IN); after += 1;
+    return carrying === 1 ? drawPocket() : undefined;
+  });
+
   // The mimic roll (v11): 1 floor in MIMIC_IN, from depth 2 down, holds at
   // most one — an item that was never an item, wearing a kind the floor's
   // own tables could honestly have put there. Its tile is drawn from the
   // same field as every spawn; a few tries skip collisions with real
   // prizes, posts and the door rather than forcing them, and a floor too
   // crowded to hide a lie simply goes without.
-  let mimicSeed: { id: string; kind: string; pos: Pos; stats: Stats; tags: string[]; guise: string } | null = null;
+  let mimicSeed: { id: string; kind: string; pos: Pos; stats: Stats; tags: string[]; guise: string; pocket?: { kind: string; grants: Stats } } | null = null;
   if (depth >= MIMIC_FROM_DEPTH) {
     const roll = intBetween(seed, after, 1, MIMIC_IN); after += 1;
     if (roll === 1) {
@@ -463,6 +505,9 @@ export function createWorld(
           stats: creatureStats('mimic', level)!,
           tags: ['hidden'],
           guise: guises[which]!,
+          // A lie always hoards: the mimic carries something worth the
+          // teeth, every time — beating the trick pays like a small vault.
+          pocket: drawPocket(),
         };
       }
     }
@@ -641,6 +686,7 @@ export function createWorld(
             return [];
           })(),
           ...(temper[i] === undefined ? {} : temper[i]),
+          ...(pockets[i] === undefined ? {} : { pocket: pockets[i] }),
         };
       }).concat(mimicSeed === null ? [] : [mimicSeed]),
     },

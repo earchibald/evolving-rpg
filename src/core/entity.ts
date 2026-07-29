@@ -41,6 +41,9 @@ export interface Entity {
   /** The one scroll carried (v13): read with r, spent by the reading,
    *  swapped with , like everything the hands hold. Absent is empty. */
   scroll?: { readonly kind: string };
+  /** What this creature carries to its grave (v14): set at birth, spilled
+   *  by the reducer where the body falls — derived, silent, any death. */
+  pocket?: { readonly kind: string; readonly grants: Stats };
   /**
    * What is worn, by slot. Optional so the many hand-built fixtures that
    * predate equipment stay valid; absent means bare. Replacement arithmetic

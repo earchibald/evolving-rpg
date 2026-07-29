@@ -12,7 +12,7 @@ import type { Item } from './item.js';
  *  payload — a special case that could not survive any second consumer of
  *  randomness, and combat is one. */
 export const SCHEMA_VERSIONS = {
-  WORLD_INIT: 13,
+  WORLD_INIT: 14,
   WORLD_BIBLE: 1,
   WORLD_BODIES: 1,
   MOVE: 2,
@@ -63,6 +63,11 @@ export interface EntitySeed {
    *  creature that was always here. Born with the `hidden` tag; the
    *  UNMASKED event strips it. */
   guise?: string;
+  /** v14, the pocket: what this creature carries, drawn at birth so the
+   *  death drop is derived arithmetic — any death, zero draws at kill
+   *  time. Invisible until dropped (the reconsidered visibility policy:
+   *  what the floor owns is visible; what a body carries is not). */
+  pocket?: { kind: string; grants: Stats };
 }
 
 export interface WorldInitPayload {

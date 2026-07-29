@@ -818,6 +818,11 @@ function render(): void {
       // that vanished when you looked away would give the lie away.
       if (here !== undefined && isAlive(here) && here.tags.includes('hidden')) {
         cell.classList.add('item', itemFamily(here.guise ?? '', guiseGrants(here.guise ?? '', state.depth)));
+      } else if (here !== undefined && !isAlive(here) && here.kind !== 'you' && prize !== undefined) {
+        // Loot outranks the corpse it spilled from: a prize you cannot
+        // see is a prize you walk past. Your own body keeps its square —
+        // finding it is a moment the map owes you whole.
+        cell.classList.add('item', itemFamily(prize.kind, prize.grants));
       } else if (here !== undefined && inView) {
         if (!isAlive(here)) cell.classList.add(here.kind === 'you' ? 'you-dead' : 'dead');
         else if (here.kind === 'you') cell.classList.add('player');
@@ -1678,6 +1683,17 @@ function narrate(fresh: readonly GameEvent[], state: ReturnType<typeof fold>): s
       them, damage: p.damage, roll, tier, seq: event.seq,
     });
     lines.push(mine ? told : `${sprung}${lunged}${told}${shoved}${countered}${bit}`);
+
+    // The pocket spilled: a kill that sets something down says so — the
+    // drop itself is derived (no event), so the journal is where it
+    // becomes a fact a player hears. Scrolls keep their mark until read.
+    if (mine && p.hit && target !== undefined && target.stats.hp - p.damage <= 0 && target.pocket !== undefined) {
+      const spilledKind = target.pocket.kind;
+      const calledSpill = scrollOf(spilledKind) !== undefined
+        ? scrollShown(spilledKind, getRef(refs, active).head)
+        : oracle.ask(describeQuestion('item', spilledKind, {}, worldRoot())).name;
+      lines.push(`something spills from it as it falls — ${calledSpill}`);
+    }
 
     // The thresholds, said the moment they are crossed — first blood, below
     // half, nearly spent. Events of their own, not a dimension of every

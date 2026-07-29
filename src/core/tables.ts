@@ -774,6 +774,29 @@ export function smokeTurns(depth: number): number {
 export const BOT_QUAFF_BELOW = 0.35;
 export const BOT_SMOKE_WITHIN = 3;
 
+/* ── pockets ─────────────────────────────────────────────────────────────── */
+
+/**
+ * Monster loot, resolved at BIRTH: roughly one creature in POCKET_IN is
+ * born carrying, and what it carries is drawn then and recorded in its
+ * seed — so the death drop is derived arithmetic (any death: blow, slam,
+ * rule), zero draws at kill time, replay-exact by construction. The
+ * sibling engine draws its loot at death from a dedicated stream; ours
+ * resolves earlier, which is the stronger replay shape — their per-
+ * species rates (0.10–0.40) bracket this table's one-in-three.
+ *
+ * The visibility policy, reconsidered (the designer's ask): what the
+ * floor owns is visible; what a body carries is not. Pocket loot is the
+ * item layer's first hidden information, and the reason fighting a
+ * wanderer that found you in a corridor can pay.
+ */
+export const POCKET_IN = 3;
+
+/** What a pocket holds, by weight: mostly a provision, sometimes a
+ *  scroll, rarely a relic (≈70/25/5). The scroll share folds into the
+ *  provision share on floors whose shelf is empty. */
+export const POCKET_SHARES = Object.freeze({ provision: 14, scroll: 5, relic: 1 });
+
 /* ── scrolls ─────────────────────────────────────────────────────────────── */
 
 /**

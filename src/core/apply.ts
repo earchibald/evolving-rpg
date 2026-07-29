@@ -1,4 +1,4 @@
-import { makeGrid, FLOOR } from './grid.js';
+import { makeGrid, FLOOR, isPassable } from './grid.js';
 import { applyResolved } from '../canon/interpret.js';
 import { threatOf, levelForXp, growthAt, slotOf, SLAM_DAMAGE, verbOf, VENOM_TURNS, VENOM_HARM, wearsTrait, sizeStretch } from './tables.js';
 import { NO_BODIES } from './state.js';
@@ -60,6 +60,39 @@ function creditKills(before: GameState, after: GameState, killerId: string, play
   return { ...after, xp, level, entities };
 }
 
+/**
+ * The pockets spilled: every creature that crossed from alive to dead in
+ * this event sets down what it carried, on its death tile — nudged one
+ * pace by fixed order if an item already lies there, swallowed by the
+ * floor only when every neighbouring tile is taken too (poverty is
+ * honest; a stack of invisible items is not). Derived, silent, any
+ * death — blow, slam, rule — the creditKills precedent exactly, which
+ * is why the two walk together at every site.
+ */
+function dropPockets(before: GameState, after: GameState): GameState {
+  let items = after.items;
+  let spilled = false;
+  for (const was of before.entities) {
+    if (was.pocket === undefined || was.stats.hp <= 0) continue;
+    const now = after.entities.find((e) => e.id === was.id);
+    if (now === undefined || now.stats.hp > 0) continue;
+    const at = now.pos;
+    const open = (x: number, y: number): boolean =>
+      isPassable(after.grid, x, y) && !items.some((i) => i.pos.x === x && i.pos.y === y);
+    const tile = [[at.x, at.y], [at.x + 1, at.y], [at.x - 1, at.y], [at.x, at.y + 1], [at.x, at.y - 1]]
+      .find(([x, y]) => open(x!, y!));
+    if (tile === undefined) continue;
+    items = [...items, {
+      id: `pocket-${was.id}`,
+      kind: was.pocket.kind,
+      pos: { x: tile[0]!, y: tile[1]! },
+      grants: { ...was.pocket.grants },
+    }];
+    spilled = true;
+  }
+  return spilled ? { ...after, items } : after;
+}
+
 /** A stance ends the moment its holder acts — both stances, one law. Every
  *  event with an actor runs its actor through here; BRACED and DRAWN are the
  *  tags' only writers. WAIT is the draw's deliberate exception (its own arm
@@ -108,6 +141,7 @@ function reduce(state: GameState, event: GameEvent): GameState {
         ...(s.disposition === undefined ? {} : { disposition: s.disposition }),
         ...(s.route === undefined ? {} : { route: s.route.map((w) => ({ x: w.x, y: w.y })), leg: 0 }),
         ...(s.guise === undefined ? {} : { guise: s.guise }),
+        ...(s.pocket === undefined ? {} : { pocket: { kind: s.pocket.kind, grants: { ...s.pocket.grants } } }),
         // A creature's ceiling is its birth hp; the player's crossed a floor
         // and may arrive wounded, so the ceiling rides in the payload.
         maxHp: s.id === p.player.id ? (p.playerMaxHp ?? s.stats.hp) : s.stats.hp,
@@ -171,7 +205,7 @@ function reduce(state: GameState, event: GameEvent): GameState {
       // not re-read the rule, and does not re-evaluate a single condition —
       // that is what keeps folded history stable as rules accumulate. A kill
       // the rule made belongs to whoever the rule fired for.
-      return creditKills(state, applyResolved(state, event.payload.outcomes), event.payload.actorId);
+      return creditKills(state, dropPockets(state, applyResolved(state, event.payload.outcomes)), event.payload.actorId);
     }
 
     case 'RULE_RATIFIED': {
@@ -372,7 +406,7 @@ function reduce(state: GameState, event: GameEvent): GameState {
       const attacker = state.entities.find((e) => e.id === p.attackerId);
       const venomous = attacker !== undefined && verbOf(attacker.kind) === 'venom';
       const surely = p.crit && attacker !== undefined && wearsTrait(attacker.gear, 'stagger-crit');
-      return creditKills(state, {
+      return creditKills(state, dropPockets(state, {
         ...state,
         entities: moved.map((e) => {
           if (e.id === p.targetId) {
@@ -404,7 +438,7 @@ function reduce(state: GameState, event: GameEvent): GameState {
           }
           return e;
         }),
-      }, p.attackerId);
+      }), p.attackerId);
     }
 
     case 'SHOVE': {
@@ -422,8 +456,8 @@ function reduce(state: GameState, event: GameEvent): GameState {
         if (p.struckId !== null && e.id === p.struckId) return { ...e, tags: staggered(e.tags) };
         return e;
       });
-      // A slam can finish a wounded thing; the kill pays like any other.
-      return creditKills(state, { ...state, entities: after }, p.shoverId);
+      // A slam can finish a wounded thing; the kill pays — and spills.
+      return creditKills(state, dropPockets(state, { ...state, entities: after }), p.shoverId);
     }
 
     case 'BRACED': {
