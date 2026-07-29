@@ -9,7 +9,7 @@ import { SCHEMA_VERSIONS } from '../core/events.js';
 import { playerStep, playerWait, playerUse, playerShove, playerBrace, playerTake, playerVolley, runWorldTurns, buryIfDead, beginAgain, descend, isGrave } from '../play/session.js';
 import { isAlive } from '../core/entity.js';
 import { outcome, hitChance, shotTarget } from '../core/commands.js';
-import { damageDice, XP_TO_REACH, slotOf, critFloor, verbOf, provisionOf, HEART_KIND, SLAM_DAMAGE, VENOM_TURNS } from '../core/tables.js';
+import { damageDice, XP_TO_REACH, slotFor, critFloor, verbOf, provisionOf, HEART_KIND, SLAM_DAMAGE, VENOM_TURNS } from '../core/tables.js';
 import { itemAt } from '../core/item.js';
 import { save, load, clear, emptySession } from '../play/store.js';
 import {
@@ -751,6 +751,9 @@ function render(): void {
       { key: 'wits', text: String(player.stats.wits) },
     ], ''],
     ['wielding', wornIn('weapon'), ''],
+    // The other hand: the distance weapon, worn beside the blade (dual
+    // wield, the panel's verdict 2026-07-28).
+    ['sling hand', wornIn('sling'), ''],
     ['wearing', player === undefined ? '—' : [
       { key: 'armor', text: wornIn('armor') },
       { key: 'boots', text: wornIn('boots') },
@@ -782,7 +785,7 @@ function render(): void {
   // then what it is (green) — "1–4 → 3–6" — so a pickup or a level explains
   // itself in place. Only rows that change rarely; position and the turn
   // counter change every step, and a glow that is always on means nothing.
-  const NOTABLE = ['hit points', 'level', 'you deal', 'might · speed · wits', 'wielding', 'wearing', 'satchel', 'depth'];
+  const NOTABLE = ['hit points', 'level', 'you deal', 'might · speed · wits', 'wielding', 'sling hand', 'wearing', 'satchel', 'depth'];
   const remember = (key: string, value: string): { lit: boolean; was: string } => {
     const prior = lastVitals.get(key);
     if (prior === undefined) {
@@ -1329,12 +1332,14 @@ function narrate(fresh: readonly GameEvent[], state: ReturnType<typeof fold>): s
       ].filter((d) => d !== '');
       // Say the swap when there is one: what came off matters as much as what
       // went on — under the world's name for it, same as the rail.
-      const takerBefore = state.entities.find((x) => x.id === event.payload.entityId);
-      const slotName = slotOf(event.payload.grants);
-      const shed = takerBefore?.gear?.[slotName];
-      const swap = shed === undefined ? '' : ` · your ${
+      // What came off is read from the RECORDED shed (ITEM_TAKEN v4), never
+      // re-derived from state — the old derivation read the post-swap gear
+      // and named the new item as the one set down (found by the first
+      // voiced run). It lands on the floor now, too; the line says so.
+      const shed = event.payload.shed ?? undefined;
+      const swap = shed === undefined || shed === null ? '' : ` · your ${
         oracle.ask(describeQuestion('item', shed.kind, { grants: shed.grants }, worldRoot())).name
-      } is set down`;
+      } lies where this one lay`;
       lines.push(`you take up ${calledItem(event.payload.itemId, state)} — ${deltas.join(', ')}${swap}`);
       continue;
     }
@@ -1447,7 +1452,7 @@ function finish(before: number, head: string): void {
     if (underfoot !== undefined
       && provisionOf(underfoot.kind) === undefined && underfoot.kind !== HEART_KIND) {
       const g = underfoot.grants;
-      const worn = me.gear?.[slotOf(g)];
+      const worn = me.gear?.[slotFor(underfoot.kind, g)];
       const allGeq = (a: typeof g, b: typeof g): boolean =>
         a.hp >= b.hp && a.might >= b.might && a.wits >= b.wits && a.speed >= b.speed;
       // Two refusals, two truths: strictly-no-better stays a shrug; a

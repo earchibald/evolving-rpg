@@ -31,7 +31,7 @@ doubt, read the last three lines — they always say what just happened.
 | `x`, then a direction | shove — drive whatever stands beside you one pace |
 | `z` | brace — set yourself against the coming round |
 | `f` | the sling — press once to draw (everyone sees it), again to let fly |
-| `q` | use what your satchel holds |
+| `q` / `Q` | use what your satchel holds — `q` the first thing, `Q` the second |
 | `,` | take what is underfoot on purpose — trades and downgrades included |
 | `c` | the witness — the microphone listens while you play; again to stop |
 | `t` | talk to the gamemaster — your character speaking, in there |
@@ -53,7 +53,7 @@ That is the whole game. Everything else is reading.
 | **floor** | one level of a world. Nine of them. The first is gentle |
 | **the cut** | a floor's shape: *the door* (roomy, kind), *the warren* (tight, loopy), *the halls* (vast, open) |
 | **relic** | a thing you wear — blade, charm, boots, lens. Better replaces worse on its own; worse stays on the floor |
-| **satchel** | one carried thing, spent with `q`. Walking over another swaps them and leaves the old one lying there |
+| **satchel** | two carried things now. Walking fills a free hand; full hands leave the new thing lying (the game says so); `,` swaps your first thing out onto the tile. Two of the same is fine — two flares are two flares |
 | **vital draught** | drink it: healed whole, and your health ceiling rises for good. Early or late, never wasted |
 | **still smoke** | break it: for a few turns every hunt chases where you *were*. Useless against anything already beside you |
 | **tallow flare** | strike it: the floor admits its shape for seven paces around — walls and ways, never what stands in them |
@@ -61,7 +61,7 @@ That is the whole game. Everything else is reading.
 | **brace** | your guard, for one round: harder to hit, no trample can move you, a coiled spring breaks on it — and whatever misses you reels |
 | **reeling** | what a staggered thing does: it loses its next turn. Shoves into walls, tangles, and blows that break on a set guard all cause it |
 | **venom** | some bites keep costing: one point a round for three rounds after. Breaking off a fight no longer ends it |
-| **leaden sling** | a weapon that reaches. It takes the blade's place in your hand — sword or sling, you choose with `,` — and fights in two beats: draw, then let fly |
+| **leaden sling** | a weapon that reaches, worn in its own hand BESIDE your blade — sword and sling together now. Its might adds to yours (strong arms throw hard), and it fights in two beats: draw, then let fly. What you set down when swapping any gear lands on the floor where the new piece lay |
 | **drawing** | half of every shot, and all of its warning. Drawing costs a turn and everyone can see it. Standing still keeps it; moving, swinging, or being hurt loses it, shot unfired |
 | **what stops a stone** | walls. Hidden doors, until found. Any living body in the way — theirs or yours. Distance past five rings. And anything standing right beside the thrower: up close, the fight belongs to fists and blades |
 | **slinger** | the creature that fights the same way. When it draws back its arm you have one turn: step behind something, close in, brace, or shove it — or take the stone |

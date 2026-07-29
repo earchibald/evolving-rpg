@@ -76,7 +76,7 @@ Kinds are article-free — the Covenant's name rules bind the world's own data.
 | iron charm | max hp | +3 | +1 per depth |
 | fleet boots | speed | +1 | +1 per 3 depths |
 | grey lens | wits | +1 | +1 per 2 depths |
-| leaden sling | might | +1 | +1 per 3 depths — and the 'ranged' trait: the volley discipline. Weapon slot, so sword-or-sling is a `,` decision (the keen edge out-grants it; walking never swaps them) |
+| leaden sling | might | +1 | +1 per 3 depths — and the 'ranged' trait: the volley discipline. Its own `sling` slot beside the blade (dual wield, panel verdict 2026-07-28); grants stack into the one might stat — strong arms throw hard. Depth 2 guarantees a ranged relic: the slinger's debut floor arms the answer |
 
 ## The volley (covenant M7/M8)
 

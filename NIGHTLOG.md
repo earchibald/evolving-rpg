@@ -1058,3 +1058,38 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > prize are on your road before turn ten. Your dead-letter rest rule
 > still sits in Chalk Shambles' law; a wipe sheds it, or leave it as a
 > monument.
+
+> [!IMPORTANT]
+> **22:18 — Both hands full: dual wield by panel, a second satchel slot, diagonals tabled**
+> Your three rulings from the voiced run, executed. **Dual wield went to
+> a competitive panel** — three independent reviewers, three lenses
+> (mechanics & covenant, game feel & tradition, codebase & cost), three
+> proposals: A strong-arms-throw-hard (a sling slot beside the blade,
+> grants stack), B the-off-hand-grants-no-arm (trait only, zero grants),
+> C both-hands-priced (a speed cost, the heavy-edge idiom). Unanimous:
+> **A > C > B**. B died on the item-value grammar (a zero-grant relic
+> misroutes, can never be walk-taken, and makes the tempo-expensive verb
+> the weak-number verb); C died on feel and telemetry (every sling a ,
+> ceremony forever, −1 defence on the archer, and no bot can ever be
+> observed holding one). A shipped with all three panel improvements:
+> ITEM_TAKEN v4 records gearSlot AND shed — so trait routing is
+> replay-exact and the set-down relic finally LANDS ON THE FLOOR, grants
+> intact, retiring the vanish-and-misname family you dictated into the
+> mic ("nothing drops when we set down the old item… that's a bug").
+> Depth 1 now guarantees the keen edge by name; depth 2 owes a ranged
+> relic — the slinger's debut floor arms the answer.
+> **The satchel holds two**: q spends the first hand, Q the second;
+> walking fills a free hand; duplicates welcome (your two-flares wish);
+> full hands refuse the walk-over out loud (your silence bug). ITEM_USED
+> v2, WORLD_INIT v9, upcasts in place.
+> **Diagonal movement: tabled**, on the record — it touches the
+> supercover line, every BFS hunt, and every Manhattan-spoken range;
+> designed whole or not at all.
+> Proven live on a proving floor: wielding "keen edge +2 might", sling
+> hand "leaden sling +1 might", you deal 3–6 off the stacked band, the
+> satchel reading "vital draught — q · tallow flare — Q". 885/885
+> green, sawtooth held inside the re-pinned bands, golden regenerated.
+>
+> **Try it:** next depth-2 floor owes you a sling; wear it beside the
+> edge and press <kbd>f</kbd>. Your satchel has room for the flare AND
+> the draught now — <kbd>Q</kbd> is the second hand.

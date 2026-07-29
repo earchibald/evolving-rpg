@@ -252,7 +252,8 @@ describe('the volley enters the tables', () => {
     const sling = ARMORY.find((r) => r.kind === 'leaden sling');
     const edge = ARMORY.find((r) => r.kind === 'keen edge');
     expect(sling).toBeDefined();
-    // Sword-or-sling is chosen with the , key, never walked into.
+    // They live in different hands now (dual wield) — this pins only that
+    // the sling's grant stays the modest one, never the edge's rival.
     expect(dominates(relicGrant(sling!, 3), relicGrant(edge!, 3))).toBe(false);
     expect(wearsTrait({ weapon: { kind: 'leaden sling' } }, 'ranged')).toBe(true);
     expect(wearsTrait({ weapon: { kind: 'keen edge' } }, 'ranged')).toBe(false);

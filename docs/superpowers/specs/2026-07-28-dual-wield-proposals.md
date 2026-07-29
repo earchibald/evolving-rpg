@@ -75,4 +75,31 @@ is implemented; the losers stay documented here with the panel's reasons.
 
 ## Verdict
 
-*(filled after the panel)*
+Three reviewers, three lenses, one answer: **A > C > B, unanimous.**
+
+- **Mechanics & covenant:** A's only real costs are tuning drift (stacked
+  might is a band-jump by depth 5) and a shared M4 hazard — trait routing
+  must not be re-derived at fold time. Its improvement: record the
+  resolved slot on ITEM_TAKEN v4. B breaks the item-value grammar
+  (`slotOf` misroutes zero grants to the weapon slot; `dominates` can
+  never walk-take a worthless sling; the never-zero law falls). C inverts
+  threat pricing (−1 speed makes every creature land 5 points more often
+  than its priced threat) and has no doff verb to escape.
+- **Game feel & tradition:** A is the Sil lineage exactly — a launcher
+  beside the blade, priced in tempo. B makes the tempo-expensive verb
+  also the weak-number verb and deletes every ranged upgrade moment. C
+  hands the archer the toy pre-nerfed through the `,` ceremony — the
+  buggiest surface of the voiced run — against DCSS's cited
+  delete-the-fiddling lesson.
+- **Codebase & cost:** A and B touch the same files; B cuts deeper into
+  exactly the file whose header says its numbers are promises. C is the
+  cheapest diff but ships a slot no bot can ever be observed using — the
+  sawtooth cannot measure the feature it exists to watch.
+
+**Implemented: A**, with all three improvements folded in — ITEM_TAKEN v4
+records `gearSlot` (replay-exact trait routing) and `shed` (the set-down
+relic finally lands on the floor, grants intact — retiring the
+vanish-and-misname bug family from the voiced run); depth 2 owes a ranged
+relic (the slinger's debut floor arms the answer); depth 1's keen edge is
+guaranteed by name, not by stat-order luck. B and C stay here, unbuilt,
+with the reasons above.

@@ -134,6 +134,20 @@ re-pinned [1,13] — the wider pipeline feeds the deep, per-floor bite
 unchanged (budget inflation rejected: it pays the fighter more XP than
 it costs).
 
+**Dual wield and two hands of satchel** (the designer's voiced-run
+directives, panel-reviewed 2026-07-28): ranged relics route BY TRAIT to
+their own `sling` gear slot beside the blade (slotFor; grants stack into
+the one might stat); ITEM_TAKEN v4 records `gearSlot` and `shed` (the
+set-down relic lands on the floor, grants intact — the vanish/misname
+family from the voiced run is retired; old chains refold legacy).
+Depth 1 guarantees the keen edge BY NAME; depth 2 owes a ranged relic.
+The satchel holds TWO (q first hand, Q second; ITEM_USED v2 slot;
+WORLD_INIT v9 kinds list; duplicates welcome; full hands refuse the
+walk-over out loud). Diagonal movement: TABLED by the designer —
+touches supercover LOS, BFS hunts, Manhattan verb ranges; design whole
+or not at all. Proposals + panel verdict:
+docs/superpowers/specs/2026-07-28-dual-wield-proposals.md.
+
 **The player has verbs too** (SHOVE v1 / BRACED v1, zero draws): x+dir
 shoves an adjacent hostile one pace — open ground displaces, walls and the
 door frame slam (SLAM_DAMAGE + stagger), a body behind tangles both;

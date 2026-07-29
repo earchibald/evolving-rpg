@@ -235,11 +235,14 @@ function reduce(state: GameState, event: GameEvent): GameState {
         };
       }
 
-      // Equipment, not accumulation. The item goes into its slot; whatever was
-      // worn there comes off, its grants subtracted, before the new grants
-      // apply. Derived from state rather than recorded in the payload, so the
-      // event's shape never changed — replay just re-derives the same swap.
-      const slot = slotOf(p.grants);
+      // Equipment, not accumulation. The item goes into its slot; whatever
+      // was worn there comes off, its grants subtracted, before the new
+      // grants apply — and (v4) the shed relic LANDS where the new one lay,
+      // kind and grants recorded so replay mints it identically forever.
+      // Old events carried neither field: the slot re-derives from grants
+      // and nothing is minted, exactly as their present always was.
+      const slot = p.gearSlot ?? slotOf(p.grants);
+      const taken = state.items.find((i) => i.id === p.itemId);
 
       return {
         ...state,
@@ -261,7 +264,15 @@ function reduce(state: GameState, event: GameEvent): GameState {
             gear: { ...e.gear, [slot]: { kind: item?.kind ?? 'worn', grants: { ...p.grants } } },
           };
         }),
-        items: state.items.filter((i) => i.id !== p.itemId),
+        items: [
+          ...state.items.filter((i) => i.id !== p.itemId),
+          ...(p.shed === undefined || p.shed === null || taken === undefined ? [] : [{
+            id: `drop-${p.itemId}`,
+            kind: p.shed.kind,
+            pos: { x: taken.pos.x, y: taken.pos.y },
+            grants: { ...p.shed.grants },
+          }]),
+        ],
       };
     }
 

@@ -3,7 +3,7 @@ import { inBounds, isPassable } from './grid.js';
 import { findEntity, isAlive } from './entity.js';
 import { intBetween } from './rng.js';
 import { clearShot, withinReach } from './sight.js';
-import { neededToHit, chanceIn20, damageDice, critFloor, WHIFF, BESTIARY, creatureStats, threatOf, spawnBudget, depthBands, wardenAt, ARMORY, relicGrant, slotOf, motifAt, verbOf, wardenLevel, AMBUSH_MIGHT_BONUS, AMBUSH_FROM_DEPTH, braceWall, CALL_RISERS, CALL_DISTANCE, dominates, wearsTrait, FLARE_RADIUS, PROVISIONS, provisionOf, draughtCeiling, smokeTurns, BOTTOM_DEPTH, HEART_KIND, WAVE_DISTANCE, SHOT_RANGE } from './tables.js';
+import { neededToHit, chanceIn20, damageDice, critFloor, WHIFF, BESTIARY, creatureStats, threatOf, spawnBudget, depthBands, wardenAt, ARMORY, relicGrant, slotFor, RELIC_TRAITS, motifAt, verbOf, wardenLevel, AMBUSH_MIGHT_BONUS, AMBUSH_FROM_DEPTH, braceWall, CALL_RISERS, CALL_DISTANCE, dominates, wearsTrait, FLARE_RADIUS, PROVISIONS, provisionOf, draughtCeiling, smokeTurns, BOTTOM_DEPTH, HEART_KIND, WAVE_DISTANCE, SHOT_RANGE } from './tables.js';
 import type { Relic } from './tables.js';
 import type { Entity, Stats, Pos } from './entity.js';
 import { itemAt } from './item.js';
@@ -243,7 +243,10 @@ export function createWorld(
   // weighted maybe, floor-one deaths quadrupled and the depth-3 inversion
   // collapsed. Variety starts at depth 2, where the floors owe two relics.
   const relicCount = depth >= 2 ? 2 : 1;
-  const pool = depth === 1 ? [ARMORY.find((r) => r.grants === 'might')!] : [...ARMORY];
+  // Depth 1 guarantees the keen edge BY NAME — the fighter's curve keys on
+  // it, and finding it by granted stat was one armory reorder away from
+  // handing the teaching floor a sling instead (the panel's fragility note).
+  const pool = depth === 1 ? [ARMORY.find((r) => r.kind === 'keen edge')!] : [...ARMORY];
   const relics: Relic[] = [];
   let c = population.counterAfter;
   for (let i = 0; i < relicCount && pool.length > 0; i += 1) {
@@ -256,6 +259,14 @@ export function createWorld(
     }
     relics.push(picked);
     pool.splice(pool.indexOf(picked), 1);
+  }
+  // Depth 2 owes a ranged relic (the panel's verdict, 2026-07-28): the
+  // slinger debuts here, and the floor that first volleys AT you is the
+  // floor that puts the volley in your hand. The draws stand as drawn —
+  // this is a drawless adjustment, like every placement decision — and
+  // only the second prize gives way.
+  if (depth === 2 && !relics.some((r) => RELIC_TRAITS[r.kind] === 'ranged')) {
+    relics[relics.length - 1] = ARMORY.find((r) => RELIC_TRAITS[r.kind] === 'ranged')!;
   }
 
   // The floor's one provision, drawn by weight like everything else and laid
@@ -1020,7 +1031,15 @@ export function takeUnderfoot(
   // take; a strict downgrade waits forever unless chosen too. The old total
   // order produced zero decisions by definition — this is the smallest
   // possible concession to there being a choice.
-  const worn = taker.gear?.[slotOf(item.grants)];
+  //
+  // The slot resolves HERE, kind in hand (slotFor: trait first, grants for
+  // the rest — the sling to the sling hand), and rides the event, so replay
+  // never re-derives routing. What comes off rides too, kind and grants,
+  // and the reducer lands it on this tile — a set-down relic that used to
+  // vanish (found by the first voiced run: "nothing drops when we set down
+  // the old item").
+  const gearSlot = slotFor(item.kind, item.grants);
+  const worn = taker.gear?.[gearSlot];
   if (!deliberate && !dominates(item.grants, worn?.grants ?? { hp: 0, might: 0, wits: 0, speed: 0 })) {
     return null;
   }
@@ -1030,7 +1049,11 @@ export function takeUnderfoot(
     schemaVersion: SCHEMA_VERSIONS.ITEM_TAKEN,
     rngCounter: state.rngCounter,
     rngDraws: 0,
-    payload: { entityId, itemId: item.id, grants: { ...item.grants } },
+    payload: {
+      entityId, itemId: item.id, grants: { ...item.grants },
+      gearSlot,
+      shed: worn === undefined ? null : { kind: worn.kind, grants: { ...worn.grants } },
+    },
   };
 }
 

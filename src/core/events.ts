@@ -119,6 +119,14 @@ export interface ItemTakenPayload {
    *  slots the take filled (absence reads the first — old chains carried
    *  one thing and it lived there). */
   satchel?: { swappedOut: string | null; slot?: number };
+  /** v4, gear takes: the slot this relic was resolved into at command time
+   *  (trait routing — a sling to the sling hand), and what came off it —
+   *  kind AND grants, so the shed relic lands on the floor still worth
+   *  wearing. Absence on either reads the legacy way: slot re-derived
+   *  from grants, nothing minted — old chains refold exactly as they
+   *  always did (M4: replay applies, never re-decides). */
+  gearSlot?: string;
+  shed?: { kind: string; grants: Stats } | null;
 }
 
 /**

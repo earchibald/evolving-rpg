@@ -516,10 +516,11 @@ export const ARMORY: readonly Relic[] = Object.freeze([
   // the fold can honor).
   Object.freeze({ kind: 'sure edge', grants: 'might' as const, base: 2, per: 4, weight: 1 }),
   Object.freeze({ kind: 'steady boots', grants: 'speed' as const, base: 1, per: 4, weight: 1 }),
-  // The distance weapon. Modest might on purpose — it is a weapon, so it
-  // takes the sword's slot, and the keen edge out-grants it: sword-or-sling
-  // is a decision the , key makes, never the walk. Its real grant is the
-  // 'ranged' trait: the draw-and-loose discipline (covenant M8).
+  // The distance weapon. Modest might on purpose: it rides its own hand
+  // (the sling slot — dual wield, the panel's verdict 2026-07-28) beside
+  // the blade, and its grant stacks into the one might stat — strong arms
+  // throw hard, and the number the rail shows stays the number every blow
+  // obeys. Its real grant is the 'ranged' trait: draw and loose (M8).
   Object.freeze({ kind: 'leaden sling', grants: 'might' as const, base: 1, per: 3, weight: 2 }),
 ]);
 
@@ -555,7 +556,7 @@ export function dominates(a: Stats, b: Stats): boolean {
  * a second keen edge REPLACES the first rather than stacking — two swords do
  * not make you twice as strong, they make you a person holding two swords.
  */
-export const SLOTS = ['weapon', 'armor', 'boots', 'trinket'] as const;
+export const SLOTS = ['weapon', 'sling', 'armor', 'boots', 'trinket'] as const;
 export type Slot = (typeof SLOTS)[number];
 
 export function slotOf(grants: Stats): Slot {
@@ -563,6 +564,16 @@ export function slotOf(grants: Stats): Slot {
   if (grants.hp >= Math.max(grants.speed, grants.wits)) return 'armor';
   if (grants.speed >= grants.wits) return 'boots';
   return 'trinket';
+}
+
+/** Where a relic goes, KNOWING what it is: the trait routes first (a
+ *  ranged relic lives in the sling hand — dual wield, the panel's verdict
+ *  2026-07-28), the grants route the rest. New takes record the resolved
+ *  slot on the event (ITEM_TAKEN v4 gearSlot); old chains never carried
+ *  it and refold by grants alone, exactly as they always did. */
+export function slotFor(kind: string, grants: Stats): Slot {
+  if (RELIC_TRAITS[kind] === 'ranged') return 'sling';
+  return slotOf(grants);
 }
 
 /** One number for "how much item": what replacement compares. */
