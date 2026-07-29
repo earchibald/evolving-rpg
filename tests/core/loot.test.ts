@@ -1,7 +1,7 @@
-import { attemptMove, takeUnderfoot, useCarried } from '../../src/core/commands.js';
+import { attemptMove, takeUnderfoot, takeOrRefuse, endsTurn, useCarried } from '../../src/core/commands.js';
 import { apply } from '../../src/core/apply.js';
 import { intBetween } from '../../src/core/rng.js';
-import { ARMORY, PROVISIONS, provisionsAt, relicGrant, dominates, wearsTrait, critFloor, FLARE_RADIUS } from '../../src/core/tables.js';
+import { ARMORY, PROVISIONS, provisionsAt, relicGrant, dominates, wearsTrait, critFloor, FLARE_RADIUS, HEART_KIND } from '../../src/core/tables.js';
 import { fogAt } from '../../src/ui/fov.js';
 import { append, emptyLog } from '../../src/log/chain.js';
 import { createWorld } from '../../src/core/commands.js';
@@ -67,6 +67,50 @@ function counterRolling(predicate: (roll: number) => boolean): number {
 }
 
 const asEvent = (draft: object): GameEvent => ({ ...draft, id: 'x', parent: null, seq: 0 } as GameEvent);
+
+describe('the chosen take is answered either way', () => {
+  // The , key is a question asked out loud, and silence read as a bug —
+  // "press , and get nothing, hear nothing" (the player's filing,
+  // 2026-07-29). takeOrRefuse never answers a standing player with null:
+  // the take when the engine agrees, ITEM_REFUSED with the true reason
+  // when it does not. Only the deliberate key records refusals — the
+  // walk-over's silence stays machinery, explained by the view.
+
+  it('a bare floor refuses out loud: nothing', () => {
+    const draft = takeOrRefuse(room([you(5, 5)], []), 'player');
+    expect(draft).not.toBeNull();
+    if (draft!.type !== 'ITEM_REFUSED') throw new Error(`expected refusal, got ${draft!.type}`);
+    expect(draft!.payload.reason).toBe('nothing');
+    expect(draft!.payload.itemId).toBeNull();
+    expect(draft!.rngDraws).toBe(0);
+  });
+
+  it('heart-sealed hands over a provision refuse out loud: sealed, naming the item', () => {
+    const state = room(
+      [you(5, 5, { satchel: [{ kind: HEART_KIND }] })],
+      [{ id: 'p1', kind: 'still smoke', pos: { x: 5, y: 5 }, grants: GRANTLESS }],
+    );
+    const draft = takeOrRefuse(state, 'player');
+    if (draft!.type !== 'ITEM_REFUSED') throw new Error(`expected refusal, got ${draft!.type}`);
+    expect(draft!.payload.reason).toBe('sealed');
+    expect(draft!.payload.itemId).toBe('p1');
+  });
+
+  it('a strict downgrade is still TAKEN when chosen — the "no better than" line was the liar', () => {
+    const worn = { weapon: { kind: 'keen edge', grants: { ...GRANTLESS, might: 2 } } };
+    const state = room([you(5, 5, { gear: worn })], [relicItem('wax blade', { ...GRANTLESS, might: 1 }, 5, 5)]);
+    expect(takeUnderfoot(state, 'player')).toBeNull();
+    const draft = takeOrRefuse(state, 'player');
+    expect(draft!.type).toBe('ITEM_TAKEN');
+  });
+
+  it('a refusal spends no turn and folds to nothing', () => {
+    const state = room([you(5, 5)], []);
+    const draft = takeOrRefuse(state, 'player')!;
+    expect(endsTurn(draft)).toBe(false);
+    expect(apply(state, asEvent(draft))).toEqual(state);
+  });
+});
 
 describe('the dominance rule', () => {
   it('takes a strict upgrade by walking, as ever', () => {

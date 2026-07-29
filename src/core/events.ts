@@ -22,6 +22,7 @@ export const SCHEMA_VERSIONS = {
   WAIT: 1,
   DRAWN: 1,
   ITEM_TAKEN: 5,
+  ITEM_REFUSED: 1,
   ITEM_USED: 2,
   SCROLL_READ: 1,
   RULE_RATIFIED: 1,
@@ -177,6 +178,19 @@ export interface ItemTakenPayload {
  * payload with a kind discriminant rather than two event types, because
  * "the satchel was spent" is one fact about the turn whichever it held.
  */
+/** The world saying no to a chosen take, on the record. Only the deliberate
+ *  key (the , press) earns one — walk-over refusals stay silent machinery the
+ *  view explains — so the chain records every time a player asked and was
+ *  refused, and lenses can count the game's most confusing beat. `nothing`
+ *  is a bare floor; `sealed` is the heart filling the hands. Applying one
+ *  changes no state: it exists to be read, the epitaph's precedent. */
+export interface ItemRefusedPayload {
+  entityId: string;
+  /** What stayed where it lay, when anything did. */
+  itemId: string | null;
+  reason: 'nothing' | 'sealed';
+}
+
 export interface ItemUsedPayload {
   entityId: string;
   kind: string;
@@ -452,6 +466,7 @@ export type DraftEvent =
   | { type: 'STRIKE'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: StrikePayload }
   | { type: 'WAIT'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: WaitPayload }
   | { type: 'ITEM_TAKEN'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: ItemTakenPayload }
+  | { type: 'ITEM_REFUSED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: ItemRefusedPayload }
   | { type: 'ITEM_USED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: ItemUsedPayload }
   | { type: 'RULE_RATIFIED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: RuleRatifiedPayload }
   | { type: 'RULE_FIRED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: RuleFiredPayload }

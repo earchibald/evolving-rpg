@@ -109,7 +109,9 @@ Walking over a relic takes it only when it is better in every way; anything
 that asks a trade — the heavy blade that costs you a pace of speed, a
 sidegrade, even a downgrade you have reasons for — waits on the floor until
 you take it on purpose with `,`. The journal always says which kind of
-refusal you are looking at.
+refusal you are looking at, and always names the key that answers it. A
+`,` that comes up empty answers too — "nothing lies here", or the heart
+sealing your hands — and it never costs a turn.
 
 **Carry two things.** Every floor also leaves one provision lying somewhere
 off the path, free. Floor one keeps to the first three kinds — the draught,
@@ -281,6 +283,8 @@ something else, that is a finding worth reporting.
 | let a stinger bite you, then walk away | the venom burns 1 a round for 3 rounds — the rail counts it down |
 | walk toward a *caller* | one cry, and two more things rise far off — kill it first next time |
 | walk over the heavy blade | it stays put and the journal says it asks a trade; `,` takes it, speed and all |
+| walk over a relic worse than yours | "no better than your … — it stays where it lies; type , to take it anyway" — and `,` does |
+| press `,` on bare floor | "you stoop — nothing lies here to take", and no turn passes |
 | strike a flare in a corridor | the map fills in for seven paces around — shape only, nothing that stands in it |
 | wear the ward, then let a warden swing | its blow lands and is drunk whole; the rail's ward row disappears — one blow, exactly |
 | cast the burr in a surround | everything beside you reels; the far ones keep coming |

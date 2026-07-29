@@ -487,6 +487,12 @@ function reduce(state: GameState, event: GameEvent): GameState {
       };
     }
 
+    // The world saying no, kept where it can be read. Applying one changes
+    // nothing — WORLD_REMEMBERED's precedent: an event that exists for the
+    // chain's readers, not the fold.
+    case 'ITEM_REFUSED':
+      return state;
+
     case 'ITEM_USED': {
       // The satchel spent. Effects were resolved when the command ran and
       // are applied verbatim — replay never re-decides how much a draught

@@ -1626,6 +1626,14 @@ function narrate(fresh: readonly GameEvent[], state: ReturnType<typeof fold>): s
       lines.push(`you take up ${calledItem(event.payload.itemId, state)} — ${deltas.join(', ')}${swap}`);
       continue;
     }
+    if (event.type === 'ITEM_REFUSED') {
+      // The world's no, read off the chain rather than guessed by the view —
+      // the , key never answers with silence (the filed bug, 2026-07-29).
+      lines.push(event.payload.reason === 'nothing'
+        ? 'you stoop — nothing lies here to take'
+        : `you reach for ${calledItem(event.payload.itemId ?? '', state)} — the heart seals your satchel; it stays where it lies`);
+      continue;
+    }
     if (event.type === 'RULE_FIRED') {
       // Named by what it did, not by which rule did it. "rule-3 fired" tells a
       // player nothing; "the world gives back 2" is the thing they can feel.
@@ -1773,13 +1781,14 @@ function finish(before: number, head: string): void {
       const worn = me.gear?.[slotFor(underfoot.kind, g)];
       const allGeq = (a: typeof g, b: typeof g): boolean =>
         a.hp >= b.hp && a.might >= b.might && a.wits >= b.wits && a.speed >= b.speed;
-      // Two refusals, two truths: strictly-no-better stays a shrug; a
-      // tradeoff is a standing question, and the key that answers it is
-      // said right there.
+      // Two refusals, two truths — and BOTH name the key, because the
+      // engine accepts a chosen downgrade (takeUnderfoot's deliberate
+      // flag) and a line that says otherwise is the view contradicting
+      // the game (the filed bug: pickup / swap / no-better-than).
       told.push(worn !== undefined && allGeq(worn.grants, g)
         ? `the ${calledItem(underfoot.id, nowHere)} is no better than your ${
           oracle.ask(describeQuestion('item', worn.kind, { grants: worn.grants }, worldRoot())).name
-        } — it stays where it lies`
+        } — it stays where it lies; type , to take it anyway`
         : `the ${calledItem(underfoot.id, nowHere)} asks a trade — type , to take it`);
     }
   }
@@ -2304,10 +2313,11 @@ function take(): void {
 
   const before = chain(log, head).length;
   const took = playerTake({ log, head }, 'player');
-  if (took.draft === null) {
-    say('nothing underfoot to take');
-    return;
-  }
+  // Null only for a finished run — a live , is always answered: the take,
+  // or ITEM_REFUSED with the true reason, spoken by narrate off the chain.
+  // (The old view-side guess here said "nothing underfoot" over a flare the
+  // heart had sealed away — the filed bug's second face.)
+  if (took.draft === null) return;
   // Free, like the walking take — no world turn follows a stoop.
   log = took.position.log;
   refs = setHead(refs, active, took.position.head);

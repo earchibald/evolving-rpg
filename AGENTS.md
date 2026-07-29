@@ -183,6 +183,14 @@ SEEN — shape, never occupants; rewind un-knows it). Walk-over swaps and
 leaves the old one lying. One provision per floor, unguarded, off the path
 — the armory pays for fighting, the satchel pays for scouting.
 
+**A chosen take is answered either way** (the 08:30 filing, 2026-07-29):
+takeOrRefuse backs the `,` key — the take when the engine agrees,
+ITEM_REFUSED v1 (`nothing` | `sealed`, apply no-op, no turn, no draws)
+when it does not, narrated off the chain. Deliberate key ONLY — walk-over
+refusals stay view-explained (both dominance lines name `,` now), bots
+never press `,`, so the golden fixture never saw the new event. Walk-over
+refusal events: deferred on the record.
+
 **Loot obeys the dominance rule**: walking takes only strict upgrades
 (≥ every axis, > in total — tables.dominates); tradeoffs, sidegrades and
 downgrades wait for the , key (takeUnderfoot's deliberate flag). The

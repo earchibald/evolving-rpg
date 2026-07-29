@@ -1,7 +1,7 @@
 import { append, fold, chain } from '../log/chain.js';
 import { getRef, fork, setHead, listRefs } from '../log/refs.js';
 import type { Refs } from '../log/refs.js';
-import { attemptMove, advanceTurn, endsTurn, wait, takeUnderfoot, outcome, ratifyRule, foundWorld, createWorld, recordBodies, lungeStrike, vigilKept, useCarried, stirWorld, heartHeld, shoveAt, braceSelf, callOut, drawStance, looseShot, shotTarget, senseTrap, springTrap, readScroll } from '../core/commands.js';
+import { attemptMove, advanceTurn, endsTurn, wait, takeUnderfoot, takeOrRefuse, outcome, ratifyRule, foundWorld, createWorld, recordBodies, lungeStrike, vigilKept, useCarried, stirWorld, heartHeld, shoveAt, braceSelf, callOut, drawStance, looseShot, shotTarget, senseTrap, springTrap, readScroll } from '../core/commands.js';
 import { BOTTOM_DEPTH, WAVE_EVERY } from '../core/tables.js';
 import { u32 } from '../core/rng.js';
 import { decide } from '../core/ai.js';
@@ -279,7 +279,9 @@ export function playerRead(position: Position, playerId: string): {
 
 /** Take what is underfoot, deliberately — tradeoffs and downgrades
  *  included. Free like the walking take: stooping is not a turn;
- *  deciding was the work. */
+ *  deciding was the work. Answered either way: when the engine says no,
+ *  ITEM_REFUSED lands on the chain with the true reason, so the view
+ *  never has to guess why. Null only for a finished run. */
 export function playerTake(position: Position, playerId: string): {
   position: Position;
   draft: DraftEvent | null;
@@ -287,7 +289,7 @@ export function playerTake(position: Position, playerId: string): {
   const state = fold(position.log, position.head);
   if (outcome(state, playerId) !== 'playing') return { position, draft: null };
 
-  const draft = takeUnderfoot(state, playerId, true);
+  const draft = takeOrRefuse(state, playerId);
   if (draft === null) return { position, draft: null };
   return { position: settleTraps(commit(position, draft, playerId, playerId), playerId), draft };
 }

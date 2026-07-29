@@ -1330,3 +1330,42 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > unit-tested and the doorway is two lines. The next real wipe of a
 > scratch world is the honest proof: no "the listener takes this run
 > away" line should print.
+
+## 2026-07-29 — 09:27 — the world learns to say no out loud
+
+> Dear Designer,
+>
+> Your first filing of the morning — "bug with item pickup / swap /
+> no-better-than" — is closed, and the listener's reading of it held up
+> on every point.
+>
+> **The line that lied is honest now.** "No better than your wax blade
+> — it stays where it lies" was the one refusal that hid the escape
+> key, and it was wrong twice over: the engine happily hands you a
+> downgrade you choose. It says "; type , to take it anyway" now, like
+> every refusal beside it.
+>
+> **And `,` never answers with silence.** The old handler guessed —
+> and guessed wrong: it said "nothing underfoot" over a flare your
+> sealed hands couldn't reach. The world answers on the record now:
+> a chosen take that the engine refuses lands an ITEM_REFUSED event on
+> the chain — a bare floor says "you stoop — nothing lies here to
+> take"; sealed hands say the heart is why. Proven live in your own
+> world's copy: the line printed at turn 71 and the turn stayed 71 —
+> stooping still costs nothing, refused or not.
+>
+> The event is the listener's "one big swing," taken at half its
+> size on purpose: only the deliberate key records a refusal. Your
+> walks over dominated relics stay silent machinery with the view's
+> explanation — putting those on the chain would grow every chain with
+> every step over every spurned relic, and it would have forced the
+> golden ceremony. As built, bots never press `,`, the golden fixture
+> replayed bit-identical untouched, and the save round-trips (356
+> events restored, the new event among them). Walk-over refusal
+> events: deferred on the record.
+>
+> Still open from that reading, on the record: a note should be able
+> to travel without burning a world to carry it.
+>
+> 966 tests — four new on the answered take — typecheck clean, no
+> draws touched, no schema bumped past the new event's own v1.

@@ -830,8 +830,10 @@ export function endsTurn(draft: DraftEvent): boolean {
   // ITEM_TAKEN rides along with the move that reached it, so it must not
   // spend a second turn of its own — and the trap events ride the action
   // that earned them the same way: the step was the turn, the trap is
-  // what the step cost (or taught).
+  // what the step cost (or taught). A REFUSED take is even lighter: the
+  // stoop that takes nothing costs nothing, exactly like the one that takes.
   return draft.type !== 'MOVE_BLOCKED' && draft.type !== 'ITEM_TAKEN'
+    && draft.type !== 'ITEM_REFUSED'
     && draft.type !== 'TRAP_SENSED' && draft.type !== 'TRAP_SPRUNG';
 }
 
@@ -1513,6 +1515,37 @@ export function takeUnderfoot(
       gearSlot,
       shed: worn === undefined ? null : { kind: worn.kind, grants: { ...worn.grants } },
     },
+  };
+}
+
+/**
+ * The chosen take, answered either way — what the , key means. A walk-over
+ * refusal stays silent machinery (the view explains the comparison), but a
+ * deliberate take is a question asked out loud, and the world must answer:
+ * silence here was filed as a bug ("press , and get nothing, hear nothing").
+ *
+ * The reason derives, never re-decides: when takeUnderfoot(deliberate)
+ * returns null with a taker standing, every branch that could have said yes
+ * has said it — what remains is a bare floor ('nothing') or hands the heart
+ * has sealed ('sealed'). A refusal spends no draws and no turn.
+ */
+export function takeOrRefuse(
+  state: GameState,
+  entityId: string,
+): Extract<DraftEvent, { type: 'ITEM_TAKEN' | 'ITEM_REFUSED' }> | null {
+  const taker = findEntity(state.entities, entityId);
+  if (taker === undefined) return null;
+
+  const taken = takeUnderfoot(state, entityId, true);
+  if (taken !== null) return taken;
+
+  const item = itemAt(state.items, taker.pos.x, taker.pos.y);
+  return {
+    type: 'ITEM_REFUSED',
+    schemaVersion: SCHEMA_VERSIONS.ITEM_REFUSED,
+    rngCounter: state.rngCounter,
+    rngDraws: 0,
+    payload: { entityId, itemId: item?.id ?? null, reason: item === undefined ? 'nothing' : 'sealed' },
   };
 }
 
