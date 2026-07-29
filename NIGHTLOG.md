@@ -1167,3 +1167,95 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > provisions never keyed levels and are untouched. 898/898, the
 > overturned "levelled kinds apart" pin re-pinned to the new law with
 > your reasoning in the comment.
+
+---
+
+## 2026-07-29 — 02:24 — the dungeon comes alive: three grounds, patrols, lies, traps, pockets, pages — and the commands step into the light
+
+> Dear Designer,
+>
+> Your whole goal landed tonight, in eleven commits, and the reasoning
+> is on the record beside every number.
+>
+> **The ground first, because everything stands on it.** "Another world"
+> asks now: **the vale** (the old board), **the expanse** (four times
+> the ground — the default), or **the waste** (eight) — and a seed, if
+> you want one. Type a word: "ashfall" is a seed you can tell a friend.
+> The map became a window that follows you, with a small fog-true map of
+> the whole journey beside it, your frame drawn on. A world keeps its
+> size all the way down.
+>
+> **The math, honestly, including the wrong turn.** I first scaled the
+> monster budget with the full board stretch, and the sawtooth caught
+> the sin of it: twice the fights per floor at the same heal cadence,
+> and at depth 3 the RUNNER out-survived the FIGHTER — the one
+> domination the covenant forbids. So the fight economy scales by a
+> gentler **bounty** (budget and XP ladder together, one factor, threat
+> in XP out) while the ground economy — provisions, prizes, traps, the
+> sheer room — keeps the whole stretch. Measured after: the expanse
+> door is gentle 10/10, depth-3 fighter 7 over runner 4, the deep 4/10.
+> The expanse now holds its own pins beside the vale's five, which
+> never moved. Full chapter: BALANCE.md, "The board breathes."
+>
+> **The floor is inhabited now.** Guards — the keeper and every relic
+> guard — own their posts: leash anchored to the POST, and they walk
+> home instead of freezing wherever a chase went cold. Past the
+> teaching floor, a third of the free spawns walk **rounds** of the
+> floor, routes drawn at birth and walked forever. An empty corridor is
+> a fact about *now*.
+>
+> **One thing here is not what it seems.** One floor in six, past the
+> teaching floor, holds an item that was never an item. The lie is
+> complete: it wears the item's name and family color, its panel row
+> shows exactly the grants the real relic would show, it is remembered
+> out of sight the way items are — and the beasts walk wide of it,
+> which is the honest tell I kept on purpose. Only the bump asks.
+> Proven live tonight: "you reach for sunken phial — it unfolds, teeth
+> first. it was crooked grinner all along." It always carries treasure.
+>
+> **The ground keeps its own counsel.** Eight trap kinds from floor two
+> down: spikes, the venom needle, the strangling snare, the alarm bell,
+> the hatch and the nest, the maw, the lodestone. Your wits get two
+> recorded looks at each — first sight, then up close — and the misses
+> stay silent, because a failed roll must not itself be a detector.
+> Most traps are found things you route around, marked in ember, warned
+> about when they lie beside you; the rare miss is the story. Speed
+> dodges what the kind's law allows. The maw drops you a floor with no
+> stair-rest — arriving hard. And one measured ruling: hatch risers are
+> level-1 BODIES, the call's own law, because floor-band risers fed the
+> depth-5 fighter to 14-in-20 against a pinned 13 — a trap must never
+> be the efficient farm.
+>
+> **Fighting pays twice.** About one creature in three is born carrying
+> — the drop is decided at birth, so any death spills it exactly, blow
+> or slam or law. What the floor owns is visible; what a body carries
+> is not — your reconsidered policy, and the item layer's first hidden
+> information. "Something spills from it as it falls — wire spur."
+>
+> **One page in the hand.** Scrolls: read with r (begin-again lost that
+> key — a one-press run reset was a footgun; it lives safe in the world
+> sheet now). Five kinds, none of them damage: unveiling, the still
+> hour, the trap eater, the blink step, stone song. Unread, a scroll
+> wears this world's own strange mark — "a scroll marked KOR-VETH" —
+> and the first reading names it forever. Proven live: "you read shale
+> page — the floor confesses: 1 hidden tile of door, 1 waiting trap,
+> marked."
+>
+> **And the commands stepped into the light.** The dimness had one
+> root — key badges were faint text at .6 opacity, about #3c434e on
+> near-black — and it is dead: keys wear ink on raised ground
+> everywhere. The dungeon-running set lives on an always-visible bar
+> under the map, never hidden behind ? again. Everything else — talk,
+> forge, screen, verify, fork, rewind — moved into a palette on p,
+> searchable, and help, bar and palette all render from the ONE keymap,
+> so no surface can drift from the truth.
+>
+> 959 tests, typecheck clean, golden regenerated per schema step
+> (WORLD_INIT walked v9→v14, one bump per feature, old absences always
+> reading legacy). Chests deferred on the record. Diagonal movement
+> stays tabled, as you ruled.
+>
+> **Try it:** press n, choose the waste, type "ashfall". Watch the
+> little map grow. Find the item the beasts won't touch. Read the page
+> you cannot name. And when the floor clicks under your boot — believe
+> it.

@@ -230,9 +230,12 @@ targets AA (4.5:1).
 
 ## 9. Schema and events, in one place
 
-- **WORLD_INIT v10** (one bump for the whole brood; all optional,
-  absence reads legacy): opponents gain `disposition?`, `route?`,
-  `guise?`, `pocket?`; payload gains `traps?`.
+- **WORLD_INIT v10–v14** — implemented as one bump per feature rather
+  than the single bump first sketched here (amended in the building: the
+  doctrine is bump-per-change, and per-feature commits each regenerated
+  the golden honestly): v10 dispositions (`disposition?`, `route?`), v11
+  the mimic (`guise?`), v12 `traps?`, v13 `playerScroll?`, v14
+  `pocket?`. All optional; absence reads legacy at every step.
 - **ITEM_TAKEN v5**: `scroll?: { swappedOut: string | null }`.
 - **New events** (v1): `TRAP_SENSED`, `TRAP_SPRUNG`, `UNMASKED`,
   `SCROLL_READ`. TRAP_* ride the action that caused them (no turn);

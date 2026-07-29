@@ -32,14 +32,19 @@ doubt, read the last three lines — they always say what just happened.
 | `z` | brace — set yourself against the coming round |
 | `f` | the sling — press once to draw (everyone sees it), again to let fly |
 | `q` / `Q` | use what your satchel holds — `q` the first thing, `Q` the second |
-| `,` | take what is underfoot on purpose — trades and downgrades included |
+| `,` | take what is underfoot on purpose — trades, downgrades and scroll swaps included |
+| `r` | read the scroll you carry — one turn, and the page is spent |
 | `c` | the witness — the microphone listens while you play; again to stop |
 | `t` | talk to the gamemaster — your character speaking, in there |
 | `g` | the forge — where new laws are offered and accepted |
 | `m` | the gamemaster's screen — the founding, your notes to the designer, and everything else |
 | `n` | worlds — begin again, start another, wipe everything |
-| `r` | begin this world again right away |
+| `p` | the palette — every command in one searchable sheet |
 | `?` | the keys, on screen |
+
+The dungeon keys also sit on the bar under the map, always. Begin-again
+lives in the worlds sheet now (`n`) — one stray keypress no longer resets
+a run.
 
 That is the whole game. Everything else is reading.
 
@@ -60,6 +65,15 @@ That is the whole game. Everything else is reading.
 | **ash ward** | wear it: the next blow that lands on you is drunk whole — no wound, no venom, no flinch — then it is spent. One warding at a time; it even holds a drawn shot steady through a hit |
 | **iron burr** | cast it at your feet: everything hostile beside you reels and loses its next action. Worthless at range — they must already be on you |
 | **hollow bell** | ring it: the way out answers from wherever it stands, and every unfound prize on the floor glints onto your map. Knowledge, never power |
+| **scroll** | one page carried at a time, read with `r`, gone when read. Unread it wears a strange mark — "a scroll marked KOR-VETH" — and the first reading teaches this world what that mark means, forever. No scroll deals damage: they buy knowledge, position and time |
+| **the boards** | a new world's ground, chosen at the door: **the vale** (the old 48×32), **the expanse** (four times the ground — the default), **the waste** (eight times). Bigger boards hold more of everything but thinner per step — the journey is the point |
+| **the window** | on big boards the map shows a window that follows you; the small map beside it keeps the whole journey, fog and all, with the window's frame drawn on |
+| **patrol** | some creatures walk rounds of the floor now instead of standing. A corridor that was empty is not empty forever |
+| **a guard's post** | the keeper and every relic guard own their ground: chase or flee, they return to it rather than drifting off across the floor |
+| **mimic** | very rarely, an item on the floor was never an item. The floor's story admits when something here is not what it seems; beasts give it a wide berth; reaching for it is how it is asked. It strikes first, and it always carries something worth the teeth |
+| **trap** | marked ground you were sharp enough to see — or unmarked ground you were not. Two chances to know each one: a wits look when it first comes into view, a second, easier look the first time you pass close. A revealed trap wears an ember ring on the map, and the rail warns when one lies beside you |
+| **the trap kinds** | spikes (blood, dodgeable), the venom needle (fast — learn to dodge it by level 3), the strangling snare (holds your legs a few rounds; blows still swing), the alarm bell (the whole floor knows you, for a while), the hatch and nest (things climb out, paces off), the maw (the floor gives way — the next floor down, no rest), the lodestone (elsewhere, instantly) |
+| **spill** | what a slain creature was carrying, set down where it fell. About one in three carries something — the reason a fight in a corridor can pay |
 | **shove** | your push. It never misses: open ground moves them, a wall hurts them, another body tangles both. The wall is the argument |
 | **brace** | your guard, for one round: harder to hit, no trample can move you, a coiled spring breaks on it — and whatever misses you reels |
 | **reeling** | what a staggered thing does: it loses its next turn. Shoves into walls, tangles, and blows that break on a set guard all cause it |
@@ -103,8 +117,28 @@ the smoke, the flare — and deeper floors add the ward, the bell, and the
 burr to what may turn up. Which two to carry, and when to spend them, is
 yours to get wrong.
 
+**Choose your ground.** "Another world" (`n`) asks first: the vale, the
+expanse, or the waste — and a seed, if you want one. Type a number, or a
+word: "ashfall" is a seed you can tell a friend. A world keeps its size
+all the way down.
+
+**Watch the ground.** From floor two the floors keep traps. Most are
+found things — your eyes do the work as you walk — and found traps are
+marked and warned about. The unfound ones are the stories. If the floor
+gives way under you, that is not a death: it is the next floor, arrived
+at hard.
+
+**Trust carefully.** The floor's story tells you when one thing here is
+not what it seems. Items the beasts walk wide of deserve a second look —
+or a stone from range... which the sling refuses. The bump is the only
+question a lie answers.
+
+**Fighting pays twice now.** Kills pay experience as always — and about
+one in three creatures spills what it carried. The mimic always does.
+
 **Descend** by stepping on the green square. The strongest thing on the
-floor watches it. Clear the whole floor first and you descend healed.
+floor watches it. Clear the whole floor first and you descend healed —
+unless the floor descended *you* (the maw earns no rest).
 
 **Die** and the world keeps your fall: the run becomes a grave, your body
 stays where it dropped, a one-line stone is cut on the spot — floor, turn,
@@ -118,7 +152,7 @@ it is how you hear what the world remembers of you.
 
 ---
 
-## 5. The six creatures
+## 5. The creatures
 
 They do not differ by numbers. They differ by what they *do*:
 
@@ -130,11 +164,16 @@ They do not differ by numbers. They differ by what they *do*:
 | **stinger** | its bite is small; the venom in it is not. Three rounds of burning after every landed bite | "the bite burns" |
 | **caller** | frail, and it does not want to fight you — it wants you heard. One cry and the floor sends two more | "it cries out — and the floor answers" |
 | **warden** | holds its post and cannot be lured away. Flee past its leash and it walks home and knits shut | "it resumes its vigil" |
+| **mimic** | is an item, until you reach for it. First blow lands harder — then it fights plain, and it dies carrying treasure | "it unfolds, teeth first" |
 
 A thing standing eerily still in an open room is not decoration. The rail
 says *coiled* next to its name. A caller's rail line says *unspent voice*.
 Believe both. And you have moves of your own now: shove them into walls
 and into each other, brace when you have read what is coming.
+
+Some of them have somewhere to be: guards keep their rooms and walk home
+when a chase empties, and from floor two a share of the floor walks
+patrol rounds. An empty corridor is a fact about *now*.
 
 ---
 
@@ -257,6 +296,13 @@ something else, that is a finding worth reporting.
 | kill the floor-three warden | "the promise holds — …" |
 | reach floor nine, take the heart | satchel sealed, waves begin, echoes rise if you ever died there |
 | carry it back to the entry stairs | **won** |
+| `n` → another world → type "ashfall" → the waste | a 128×96 world; the map becomes a window that follows you, with the journey map beside it |
+| stand still where you can see far, on floor 2+ | sooner or later: "your eye catches it — a spike pit, marked" — an ember ring on the map |
+| step onto a marked trap anyway | a dodge roll with real numbers — or the price, itemized |
+| pick up a scroll, press `r` | "you read … —" and the mark on it becomes a name, in this world, forever |
+| kill things until one folds mid-corridor | "something spills from it as it falls — …" and a prize lies where it fell |
+| find the item the beasts walk around | reach for it. "it unfolds, teeth first." you were warned |
+| press `p` | every command, searchable; type "forge", enter — the forge opens |
 | press `v` any time | "chain verified" — the whole history checks out |
 | press `c`, allow the microphone | the indicator burns red and breathes; "the witness listens" in the journal |
 | say "this fight is boring" mid-fight, press `c` again | "the witness has your words — …s, being written down" |

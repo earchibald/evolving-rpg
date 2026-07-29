@@ -216,7 +216,48 @@ as journal beats: whisper on 2/5/8, kept on the warden's fall at 3/6/9.
 Bodies lend their eyes: standing where you fell merges that life's explored
 map into yours (knowledge, never stats — BONES.md, decided).
 
-**The boards are rooms and corridors** (48x32, docs/design/MAPS.md): total
+**The living dungeon** (the designer's goal, 2026-07-29 — spec:
+docs/superpowers/specs/2026-07-29-living-dungeon-design.md, math in
+BALANCE.md "The board breathes"): worlds choose their ground at the door
+— the vale 48x32, the **expanse 96x64 (default)**, the waste 128x96 —
+with a typed seed (words hash via fnv1a). `sizeStretch` (1/2/3) scales
+the GROUND economy (rooms cap, provisions, owed relics, traps, the
+camera+minimap exist for it); `bountyStretch` ((S+1)/2) scales the FIGHT
+economy — spawn budget AND XP ladder together, measured in after the
+full stretch handed depth 3 to the runner (the forbidden domination).
+WORLD_INIT walked v9→v14 in one night, one bump per feature, absence
+always reading legacy: v10 dispositions (guards return to POST-anchored
+leashes, GUARD_LEASH 4; wanderers d2+ walk recorded routes of room
+centers, leg advanced by the reducer on ANY waypoint landing, forward
+only), v11 the mimic (1 floor in 6 d2+, `hidden` tag + `guise` item kind;
+the lie lives on the render side — item paint, item panel row with the
+real relic's theater grants, remembered out of sight; every tool reads
+it as furniture; the bump UNMASKs (v1 event) and loads the stalker's own
+`ambush` spring; always pockets), v12 traps (eight kinds; two recorded
+wits chances each — sight then near, once ever, misses silent in the
+journal; speed dodges where the kind's law allows; TRAP_SENSED/
+TRAP_SPRUNG ride the action, `endsTurn` false; the maw descends by
+`descendThrough`, the stairs' ceremony with no rest; hatch risers are
+level-1 BODIES — floor-band risers measured as an XP vending machine,
+14/20 at a d5 ceiling of 13; snared steps become recorded WAIT strains
+or bots deadlock; the alarm lifts the AWARENESS cap floor-wide on a
+clock), v13 scrolls (one hand, `r` — the begin-again key proxy is
+retired; five knowledge/position/time kinds, no damage by the felt-
+overpowered guard; world-minted labels via namesmith `scrollLabel`,
+identification derived from SCROLL_READ history — a rewind un-identifies;
+stone song only ever ADDS floor; the fog learned blink/unveiling/song
+plus two old debts, trample- and lodestone-moved sight), v14 pockets
+(1 in 3 born carrying, 70/25/5 provision/scroll/relic drawn at BIRTH —
+zero draws at death, any death spills via `dropPockets` beside
+`creditKills` at every site; visibility policy reconsidered: what the
+floor owns is visible, what a body carries is not). The expanse holds
+its own sawtooth pins (door 10/10 gentle, d3 fighter 7 over runner 4,
+deep 4/10); the vale's five pins never moved. The UI run: kbd wears ink
+(the .6-opacity faint stack is dead), the dungeon set lives on an
+always-on bar, the meta set in a `p` palette — help, bar and palette all
+render from the ONE KEYMAP. Chests deferred on the record.
+
+**The boards are rooms and corridors** (three sizes, docs/design/MAPS.md): total
 connectivity mutation-proofed; creatures hunt by BFS walking distance 8 (a
 wall you cannot walk through, they cannot smell through). **Secret
 passages** (~1 floor in 3): a room's every doorway paints as wall and

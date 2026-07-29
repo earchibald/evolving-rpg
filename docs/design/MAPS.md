@@ -8,7 +8,7 @@ rooms-and-corridors generator (`src/core/mapgen.ts`). Companion: BALANCE.md
 
 | Property | Value | Why |
 |---|---|---|
-| Board | 48x32 (4x the old area) | room for rooms; fog of war has something to hide |
+| Board | three, chosen at the door: **the vale** 48x32, **the expanse** 96x64 (default), **the waste** 128x96 | the living-dungeon pass (2026-07-29): the new elements — patrols, traps, the rare mimic — need to be rare enough to differ and have room to happen. Motif density holds at any size (room cap scales with area); the play view is a 48x32 camera window with a fog-true minimap; budgets stretch by BALANCE.md's two factors |
 | Rooms | 3–13 per floor, 4–8 x 3–6 interior | one per ~110 tiles — the "mostly rooms" end of the genre (see §3) |
 | Placement | rejection sampling, 1-tile wall margin | NetHack's method (40-attempt cap there, 10x target here) |
 | Connection | each room joins its **nearest already-connected** room | spanning tree → whole map connected **by construction** |
