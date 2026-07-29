@@ -105,10 +105,10 @@ body {
   margin: 0; font-size: .95rem; font-weight: 600;
   letter-spacing: .16em; text-transform: uppercase;
 }
-.keys { margin: 0; color: var(--faint); font-size: .8rem; }
+.keys { margin: 0; color: var(--soft); font-size: .8rem; }
 kbd {
   background: var(--raised); border: 1px solid var(--rule); border-radius: 3px;
-  padding: 0 .3rem; color: var(--soft);
+  padding: 0 .3rem; color: var(--ink);
 }
 
 /* Same reason: this grows as questions queue up, and it sits in a wrapping
@@ -130,9 +130,9 @@ kbd {
    ambiguous. The key (c) clicks this button; one code path. */
 .witness {
   background: none; border: 1px solid var(--rule); border-radius: 3px;
-  color: var(--faint); font: inherit; font-size: .8rem; padding: 0 .5rem;
+  color: var(--soft); font: inherit; font-size: .8rem; padding: 0 .5rem;
   cursor: pointer; display: inline-flex; align-items: center; gap: .4rem;
-  opacity: .55;
+  opacity: .8;
 }
 .witness:hover { opacity: .85; }
 .witness .dot {
@@ -158,6 +158,35 @@ kbd {
 .board { display: flex; flex-direction: column; gap: .6rem; }
 
 .grid { display: grid; gap: 1px; width: max-content; }
+
+/* The dungeon's commands, always on screen under the map. Bright by law:
+   the designer called the old key hints "very dim and hard to see", and a
+   command you must remember is a command you do not have. */
+.command-bar {
+  margin: 0; font-size: .78rem; color: var(--soft);
+  max-width: 46rem; line-height: 1.9;
+}
+
+/* The palette: every command, one searchable sheet. */
+#palette-filter {
+  font: inherit; background: var(--raised); color: var(--ink);
+  border: 1px solid var(--rule); border-radius: 3px; padding: .4rem .6rem;
+  width: 100%;
+}
+#palette-filter::placeholder { color: #4a515d; }
+.palette-list {
+  list-style: none; margin: .4rem 0 0; padding: 0;
+  max-height: 18rem; display: flex; flex-direction: column; gap: .15rem;
+}
+.palette-list li {
+  display: flex; gap: .6rem; align-items: baseline;
+  padding: .25rem .4rem; border-radius: 3px; font-size: .82rem;
+}
+.palette-list li kbd { flex: none; min-width: 2.2rem; text-align: center; }
+.palette-list li.runs { cursor: pointer; }
+.palette-list li.runs:hover { background: var(--raised); }
+.palette-list li.note { color: var(--soft); }
+.palette-list li.note kbd { opacity: .8; }
 
 /* The journey so far: a few pixels per tile, fog-respecting, camera frame
    drawn on. A map, not a control. Hidden on the vale, where the window
@@ -445,10 +474,10 @@ button:focus-visible { outline: 2px solid var(--player); outline-offset: 2px; }
 /* Quiet by default. Anything that acts on the game rather than destroying it
    should not shout. */
 .ghost {
-  background: transparent; color: var(--faint);
+  background: transparent; color: var(--soft);
   border-color: var(--rule); font-size: .75rem; padding: .2rem .5rem;
 }
-.ghost:hover { background: var(--raised); color: var(--soft); border-color: var(--soft); }
+.ghost:hover { background: var(--raised); color: var(--ink); border-color: var(--soft); }
 
 /* One world action per row: the button, then plainly what it keeps and what
    it costs. The old sheet made new/wipe/again three scattered controls and
@@ -457,8 +486,10 @@ button:focus-visible { outline: 2px solid var(--player); outline-offset: 2px; }
 .world-option { display: flex; flex-direction: column; gap: .25rem; }
 .world-option button { align-self: flex-start; }
 
-/* Key hints live inside the buttons they press. */
-button kbd { margin-left: .3rem; font-size: .68rem; background: transparent; border-color: currentColor; opacity: .6; color: inherit; }
+/* Key hints live inside the buttons they press — full-strength ink on
+   raised ground. The old rule multiplied faint text by .6 opacity and the
+   designer called the commands "very dim and hard to see"; he was right. */
+button kbd { margin-left: .3rem; font-size: .68rem; background: var(--raised); border-color: var(--rule); color: var(--ink); }
 
 /* Making and destroying worlds lives behind a deliberate step, because one of
    them cannot be undone. */
@@ -506,7 +537,7 @@ button.danger:hover { background: #c9564a; border-color: #c9564a; }
 .editor input[type="number"] { width: 4.5rem; }
 .editor input[type="text"] { flex: 1 1 16rem; }
 .editor option:disabled { color: var(--faint); }
-.hint { color: var(--faint); font-size: .72rem; margin: .3rem 0 0; }
+.hint { color: var(--soft); font-size: .72rem; margin: .3rem 0 0; }
 
 /* What the rule will actually say, live. Editing a rule you cannot read is not
    editing anything. */

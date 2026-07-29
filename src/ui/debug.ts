@@ -2329,15 +2329,20 @@ wire('gm-form', 'gm-said', 'gamemaster');
  * Button keys .click() the real button rather than calling its function, so
  * a key and a mouse take exactly one code path each.
  */
-const KEYMAP: ReadonlyArray<{ shown: string; what: string; button?: string }> = [
-  { shown: '← ↑ → ↓ · wasd', what: 'move — into a creature is a strike, into a wall is free' },
-  { shown: '. · space', what: 'hold still (this is a turn)' },
-  { shown: 'q · Q', what: 'use what the satchel holds — q the first thing, Q the second (a turn either way)' },
-  { shown: 'x, then a direction', what: 'shove — drive what stands beside you one pace; walls hurt, bodies tangle' },
-  { shown: 'z', what: 'brace — set against the coming round; a blow that misses you staggers' },
-  { shown: 'f', what: 'the sling — draw first (a turn, seen by all), loose second; waiting holds the draw' },
-  { shown: ',', what: 'take what is underfoot, deliberately — tradeoffs, downgrades and scroll swaps included' },
-  { shown: 'r', what: 'read the carried scroll — a turn, and the page is spent' },
+/** The one keymap. The help sheet, the always-on command bar and the
+ *  palette all render FROM this — three surfaces, one truth (the sibling
+ *  survey's bug report for not doing so: a discovery surface that drifted
+ *  from the real verb table). `terse` marks and words the bar's rows —
+ *  the dungeon-running set, never hidden behind ? again. */
+const KEYMAP: ReadonlyArray<{ shown: string; what: string; button?: string; terse?: string }> = [
+  { shown: '← ↑ → ↓ · wasd', what: 'move — into a creature is a strike, into a wall is free', terse: 'move · strike' },
+  { shown: '. · space', what: 'hold still (this is a turn)', terse: 'hold' },
+  { shown: 'q · Q', what: 'use what the satchel holds — q the first thing, Q the second (a turn either way)', terse: 'satchel' },
+  { shown: 'x, then a direction', what: 'shove — drive what stands beside you one pace; walls hurt, bodies tangle', terse: 'shove' },
+  { shown: 'z', what: 'brace — set against the coming round; a blow that misses you staggers', terse: 'brace' },
+  { shown: 'f', what: 'the sling — draw first (a turn, seen by all), loose second; waiting holds the draw', terse: 'sling' },
+  { shown: ',', what: 'take what is underfoot, deliberately — tradeoffs, downgrades and scroll swaps included', terse: 'take' },
+  { shown: 'r', what: 'read the carried scroll — a turn, and the page is spent', terse: 'read' },
   { shown: 'c', what: 'the witness — speak while you play; the mic listens, stamped to the turn', button: 'witness' },
   { shown: 'PgUp · PgDn', what: 'read back through the journal' },
   { shown: 't', what: 'talk to the gamemaster — your character, in there', button: 'open-talk' },
@@ -2351,6 +2356,7 @@ const KEYMAP: ReadonlyArray<{ shown: string; what: string; button?: string }> = 
   { shown: 'v', what: 'verify every hash and counter in the chain', button: 'verify' },
   { shown: 'k', what: 'fork a new timeline from this moment', button: 'fork' },
   { shown: 'b', what: 'rewind 10 events (the log keeps them)', button: 'rewind' },
+  { shown: 'p', what: 'the palette — every command, searchable', button: 'open-palette' },
   { shown: '?', what: 'this sheet', button: 'open-help' },
   { shown: 'esc', what: 'close a sheet · leave a writing box' },
   { shown: 'enter', what: 'send, in a writing box' },
@@ -2478,6 +2484,67 @@ el('open-help').addEventListener('click', () => {
     dl.append(dt, dd);
   }
   helpSheet.showModal();
+});
+
+// The dungeon's own commands, always on screen under the map — never
+// hidden behind ? again (the designer's ask). Rendered once from KEYMAP's
+// terse rows; the keys never change at runtime, so neither does the bar.
+{
+  const bar = el('command-bar');
+  KEYMAP.filter((k) => k.terse !== undefined).forEach((k, i) => {
+    if (i > 0) bar.append(' · ');
+    const kbd = document.createElement('kbd');
+    kbd.textContent = k.shown;
+    bar.append(kbd, ` ${k.terse!}`);
+  });
+}
+
+// The palette: every command in one searchable sheet, rendered from the
+// same KEYMAP. Rows with a button RUN (the palette presses the button —
+// one code path with the keyboard); play keys are reference rows, because
+// a turn should be taken standing at the board, not through a menu.
+const paletteSheet = el('palette') as HTMLDialogElement;
+const paletteFilter = el('palette-filter') as HTMLInputElement;
+
+function renderPalette(): void {
+  const said = paletteFilter.value.trim().toLowerCase();
+  const list = el('palette-list');
+  list.textContent = '';
+  for (const k of KEYMAP) {
+    if (k.button === 'open-palette') continue;
+    if (said !== '' && !`${k.shown} ${k.what}`.toLowerCase().includes(said)) continue;
+    const li = document.createElement('li');
+    const kbd = document.createElement('kbd');
+    kbd.textContent = k.shown;
+    const what = document.createElement('span');
+    what.textContent = k.what;
+    li.append(kbd, what);
+    if (k.button !== undefined) {
+      li.classList.add('runs');
+      li.addEventListener('click', () => {
+        paletteSheet.close();
+        el(k.button!).click();
+      });
+    } else {
+      li.classList.add('note');
+      li.title = 'a play key — press it at the board';
+    }
+    list.appendChild(li);
+  }
+}
+
+el('open-palette').addEventListener('click', () => {
+  paletteFilter.value = '';
+  renderPalette();
+  paletteSheet.showModal();
+  paletteFilter.focus();
+});
+paletteFilter.addEventListener('input', renderPalette);
+paletteFilter.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter') return;
+  e.preventDefault();
+  const first = el('palette-list').querySelector('li.runs');
+  if (first instanceof HTMLElement) first.click();
 });
 
 el('verify').addEventListener('click', () => {

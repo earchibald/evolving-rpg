@@ -20,6 +20,7 @@
       <main class="play">
         <div class="board">
           <div id="grid" class="grid" role="img" aria-label="the world"></div>
+          <p id="command-bar" class="command-bar" aria-label="the dungeon's commands"></p>
           <canvas id="minimap" class="minimap" role="img" aria-label="the journey so far" hidden></canvas>
           <p id="status" class="status" role="status"></p>
         </div>
@@ -31,14 +32,20 @@
           <dl id="vitals" class="vitals"></dl>
         </section>
         <div class="turn-controls">
-          <button id="open-talk" type="button" class="ghost">talk&hellip; <kbd>t</kbd></button>
           <button id="open-worlds" type="button" class="ghost">world&hellip; <kbd>n</kbd></button>
-          <button id="open-forge" type="button" class="ghost">the forge&hellip; <kbd>g</kbd></button>
-          <button id="open-screen" type="button" class="ghost">the screen&hellip; <kbd>m</kbd></button>
-          <button id="verify" type="button" class="ghost">verify chain <kbd>v</kbd></button>
-          <button id="fork" type="button" class="ghost">fork here <kbd>k</kbd></button>
-          <button id="rewind" type="button" class="ghost">back 10 <kbd>b</kbd></button>
+          <button id="open-palette" type="button" class="ghost">everything&hellip; <kbd>p</kbd></button>
           <button id="open-help" type="button" class="ghost">keys <kbd>?</kbd></button>
+        </div>
+        <!-- The meta commands live in the palette now; their buttons remain
+             (hidden) because the single keydown path presses buttons — one
+             code path for key, palette row, and any future caller. -->
+        <div hidden>
+          <button id="open-talk" type="button">talk</button>
+          <button id="open-forge" type="button">forge</button>
+          <button id="open-screen" type="button">screen</button>
+          <button id="verify" type="button">verify</button>
+          <button id="fork" type="button">fork</button>
+          <button id="rewind" type="button">rewind</button>
         </div>
         <section>
           <h2>what is here</h2>
@@ -201,6 +208,13 @@
           <button value="cancel" class="ghost">close <kbd>esc</kbd></button>
         </menu>
       </form>
+    </dialog>
+
+    <dialog id="palette" class="sheet">
+      <h2>everything</h2>
+      <p class="sheet-line">every command, searchable &middot; <kbd>enter</kbd> runs the first match &middot; <kbd>esc</kbd> back to play</p>
+      <input id="palette-filter" type="text" autocomplete="off" placeholder="type to filter&hellip;" />
+      <ul id="palette-list" class="palette-list scrolls"></ul>
     </dialog>
 
     <dialog id="forge" class="sheet forge">
