@@ -1435,3 +1435,48 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > depth." It shipped last night as the maw: it drops you a floor,
 > 1d6+2, and you arrive with no stair-rest. Your instinct was already
 > in the game before the question surfaced in the mirror.
+
+## 2026-07-29 — 15:28 — the door fills: six meetings where three bored you
+
+> Dear Designer,
+>
+> You said proceed, so I proceeded — and the afternoon went to
+> measuring, because my morning proposal was wrong twice before it
+> was right. The ladder, every rung on the pinned seeds:
+>
+> Doubling the door's rent as proposed: six-in-ten survive the first
+> floor. Not gentle — the extra budget kept buying stalkers, and two
+> 23-point stalkers is not a lesson. Patrols from floor one, the other
+> half of the proposal: six-in-ten again, at the OLD budget — the
+> walkers converge on a fight already happening, and the pinned bot
+> has no shove, no brace, no sling to refuse the swarm. Patrols alone
+> cost four escapes in ten. Splitting the rent difference: gentle
+> again, but the census moved from 3.0 to 3.4 bodies — you would never
+> feel it, so it was no fix at all.
+>
+> **What landed instead: the door spends its doubled rent on numbers,
+> not menace.** The stretched teaching floor pays the full stretch and
+> buys only the teaching kind — six skirmishers on the expanse where
+> you counted three bodies, nine on the waste. Door survival: eight in
+> ten, the vale door's own gentleness. All eight sawtooth pins held —
+> vale untouched to the bit (the golden lives there), depth 3 still
+> pays the fighter, the deep still bites.
+>
+> **The trades, so you can veto them:** on stretched boards the first
+> bruiser and the first coil are now floor-TWO lessons — the vale
+> keeps its old variety. If you want one heavy body at the stretched
+> door, say so; it is one exempt slot, priced against that 6/10
+> measurement. And patrols at the door are deferred with their number
+> (−4), not abandoned — humans can refuse a converging patrol in ways
+> the bot cannot; if the door still reads static to you in play, we
+> revisit it as a human-first call.
+>
+> **The next place the boredom will walk:** floor two on stretched
+> boards now sits QUIETER than floor one — bounty rent, three or four
+> mixed bodies, no patrol boost. If floor two bores you next, that is
+> the fights-per-heal territory and takes its own measured pass; the
+> math and the watch line are in BALANCE.md "The door fills".
+>
+> 968 tests, typecheck clean, no schema, no golden ceremony — the vale
+> never moved. Wipe into a fresh expanse when you want to feel it: the
+> door should be busy now.

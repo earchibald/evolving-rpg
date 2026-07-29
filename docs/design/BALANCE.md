@@ -375,3 +375,52 @@ worth taking) is unchanged.
 - Bots leave scrolls as dead cargo and blunder revealed traps — the
   collapse-canary policy, unchanged on purpose. Human-vs-bot divergence on
   trap floors is expected and worth listening for in voiced runs.
+
+## The door fills (2026-07-29 — the boring-floor filing, math run)
+
+The designer, live on the expanse, turn 679 of floor one: **"There were
+only two monsters on the whole first floor! We need to figure out how to
+rebalance that. It was quite boring."** Then, at turn 976: "okay, three
+monsters." Measured exact: the expanse door's budget of 59 over level-1
+prices of 13–23 bought three bodies on four vales of ground — and every
+element built to fill stretched quiet (patrols, traps, the mimic,
+scrolls) gates depth 2+. The teaching floor got all of the stretch and
+none of the filling.
+
+### The ladder of candidates, all measured (brawler, the 10 pin seeds)
+
+| candidate | door census | door survival | verdict |
+|---|---|---|---|
+| standing law (B rent, mixed kinds) | 3 | 10/10 | the filing: boring |
+| full-S rent, mixed kinds | 3–5 | 6/10 | two 23-point stalkers is not a lesson |
+| B rent + patrols from d1 | 3 | 6/10 | patrols ALONE cost four escapes — wanderers converge mid-fight and the bot has no verbs to refuse the swarm |
+| midpoint rent (×1.75), mixed | 3–4 | 10/10 | gentle held, count moved 13% — not a fix anyone would feel |
+| **full-S rent, kinds capped ≤15 (landed)** | **6** (waste: 9) | **8/10** | count doubled, gentle held — the cliff was composition, not count |
+
+### The landed law
+
+`spawnBudget` pays the teaching floor the **full stretch** (deeper floors
+keep the bounty — the fights-per-heal wound was a depth-3 measurement),
+and `chooseSpawns` spends a stretched door's budget only on kinds priced
+at or under `DOOR_PRICE_CAP = 15` (level-1 threat): six skirmishers on
+the expanse, nine on the waste. The vale's floor one is bit-untouched —
+its variety (the first bruiser, the first coil) stays canon there, and
+the golden fixture lives on it. All eight sawtooth pins held unchanged:
+vale five, expanse door 8/10 ≥ 7, depth-3 fighter over runner inside its
+band, depth-5 inside its band.
+
+### Traded and deferred, on the record
+
+- **Variety moves one floor down on stretched boards**: the first
+  bruiser and the first coil are floor-2 lessons there. If the designer
+  wants one heavy body at the stretched door, that is one line
+  (an exempt slot) — priced against the 6/10 measurement above.
+- **Patrols at the door: deferred**, with the −4 measurement. Humans
+  have shove/brace/sling against a converging patrol; the pinned bot
+  does not. If voiced runs keep reading the door as static, revisit
+  patrols-from-d1 as a human-first change with a re-pinned door band —
+  the designer's call, not a table's.
+- **Floor two on stretched boards now sits quieter than floor one**
+  (bounty rent 81 buys 3–4 mixed bodies; no patrol boost landed). The
+  boredom filing may walk one floor down. That is the bounty's
+  territory — fights-per-heal — and takes its own measured pass.

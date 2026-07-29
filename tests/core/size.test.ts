@@ -24,16 +24,44 @@ describe('the board stretches', () => {
     expect(sizeStretch(15, 7)).toBe(1);
   });
 
-  it('multiplies the rent by the BOUNTY — gentler than the ground', () => {
+  it('multiplies the rent by the BOUNTY past the teaching floor — gentler than the ground', () => {
     // Measured (2026-07-29): the full stretch doubled fights-per-heal and
     // the depth-3 runner out-survived the fighter 2/10 v 1/10 — the one
     // domination the covenant forbids. The bounty (1 / 1.5 / 2) holds
     // fights-per-heal near the vale's while the ground stretches whole.
-    for (const depth of [1, 3, 5, 9]) {
+    for (const depth of [3, 5, 9]) {
       expect(spawnBudget(depth, 1)).toBe(spawnBudget(depth));
       expect(spawnBudget(depth, 2)).toBe(Math.round(spawnBudget(depth) * 1.5));
       expect(spawnBudget(depth, 3)).toBe(spawnBudget(depth) * 2);
     }
+  });
+
+  it('the teaching floor pays the FULL stretch — three bodies on four vales of ground taught nothing', () => {
+    // The designer's filing (2026-07-29, played live on the expanse):
+    // "only two monsters on the whole first floor! ... quite boring."
+    // Measured true: budget 59 against level-1 prices of 13–23 buys 3,
+    // and every filler element (patrols, traps, mimic, scrolls) gates
+    // depth 2+. The fights-per-heal wound was a depth-3 phenomenon; the
+    // door pin stays the judge of gentle.
+    expect(spawnBudget(1, 1)).toBe(spawnBudget(1));
+    expect(spawnBudget(1, 2)).toBe(spawnBudget(1) * 2);
+    expect(spawnBudget(1, 3)).toBe(spawnBudget(1) * 3);
+  });
+
+  it('the stretched door spends on numbers, not menace — and the vale keeps its variety', () => {
+    // The cliff was composition, not count: the same doubled rent spent
+    // on mixed kinds (two 23-point stalkers) measured 6/10 at the door;
+    // capped to the teaching kind it measured 8/10 with the population
+    // doubled. Patrols at the door were measured too (they alone cost
+    // four escapes in ten) and deferred — density carries the filing.
+    const seeds = [100, 101, 102, 103, 104];
+    for (const s of seeds) {
+      const door = createWorld(s, EXPANSE.width, EXPANSE.height).payload.opponents;
+      expect(door.length).toBeGreaterThanOrEqual(5);
+      for (const o of door) expect(o.kind.startsWith('skirmisher')).toBe(true);
+    }
+    const vale = seeds.flatMap((s) => createWorld(s, VALE.width, VALE.height).payload.opponents);
+    expect(vale.some((o) => !o.kind.startsWith('skirmisher'))).toBe(true);
   });
 
   it('stretches the XP ladder by the same bounty — threat in, XP out, one factor', () => {

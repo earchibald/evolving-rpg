@@ -490,8 +490,26 @@ export function spawnBudget(depth: number, stretch = 1): number {
   // domination, measured 2/10 v 1/10 before this held it). A bigger
   // board fields more creatures in absolute count and far fewer per
   // tile — the breathing room, with the patrols keeping it alive.
-  return Math.round((24 + 15 * d + 4 * deep * deep) * bountyStretch(stretch));
+  //
+  // The teaching floor is the one exception (the designer's filing,
+  // 2026-07-29: "only two monsters on the whole first floor! ... quite
+  // boring" — measured exact: budget 59 over prices 13–23 bought 3
+  // bodies on four vales of ground): floor one pays the FULL stretch,
+  // and chooseSpawns spends it on price-capped kinds there (numbers,
+  // not menace — DOOR_PRICE_CAP). Measured: a full-stretch budget on
+  // MIXED kinds read 6/10 at the door (two 23-point stalkers is not a
+  // lesson), capped kinds read 8/10 with the count doubled; every
+  // vale and expanse pin held. The door pin stays the judge.
+  const factor = d === 1 ? Math.max(1, stretch) : bountyStretch(stretch);
+  return Math.round((24 + 15 * d + 4 * deep * deep) * factor);
 }
+
+/** The stretched teaching floor spends its full-stretch budget on kinds
+ *  priced at or under this (level-1 threat). Six skirmishers teach the
+ *  game; three bodies on four vales of ground taught boredom, and the
+ *  same rent in stalkers taught death. Vale floor one is untouched —
+ *  its variety (the first bruiser, the first coil) is canon there. */
+export const DOOR_PRICE_CAP = 15;
 
 /** Out-of-depth overlap: which creature-levels a floor may draw, with weights.
  *  Mostly your depth, sometimes one shallower, rarely one deeper — the Brogue

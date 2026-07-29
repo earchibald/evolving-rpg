@@ -231,7 +231,14 @@ BALANCE.md "The board breathes"): worlds choose their ground at the door
 with a typed seed (words hash via fnv1a); the wipe passes the SAME door
 (the chosen board is the one world left; Escape there wipes nothing),
 and the minimap floats translucent over the board's corner (2px/tile,
-pointer-events off — below the command bar it lived below the fold). `sizeStretch` (1/2/3) scales
+pointer-events off — below the command bar it lived below the fold).
+THE DOOR FILLS (the boring-floor filing, 2026-07-29, BALANCE.md "The
+door fills"): the teaching floor's rent pays the FULL stretch and is
+spent on kinds ≤ DOOR_PRICE_CAP only (expanse 6 skirmishers, waste 9;
+vale bit-untouched; door pin 8/10). Patrols-from-d1 and mixed-kind
+full rent both measured 6/10 at the door and are deferred/refused on
+the record; stretched floor 2 now reads quieter than floor 1 — the
+bounty's territory, its own pass. `sizeStretch` (1/2/3) scales
 the GROUND economy (rooms cap, provisions, owed relics, traps, the
 camera+minimap exist for it); `bountyStretch` ((S+1)/2) scales the FIGHT
 economy — spawn budget AND XP ladder together, measured in after the

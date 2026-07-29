@@ -3,7 +3,7 @@ import { inBounds, isPassable } from './grid.js';
 import { findEntity, isAlive } from './entity.js';
 import { intBetween } from './rng.js';
 import { clearShot, withinReach } from './sight.js';
-import { neededToHit, chanceIn20, damageDice, critFloor, WHIFF, BESTIARY, creatureStats, threatOf, spawnBudget, depthBands, wardenAt, ARMORY, relicGrant, slotFor, RELIC_TRAITS, motifAt, verbOf, wardenLevel, AMBUSH_MIGHT_BONUS, AMBUSH_FROM_DEPTH, braceWall, CALL_RISERS, CALL_DISTANCE, dominates, wearsTrait, FLARE_RADIUS, provisionsAt, provisionOf, draughtCeiling, smokeTurns, BOTTOM_DEPTH, HEART_KIND, WAVE_DISTANCE, SHOT_RANGE, sizeStretch, MAX_BOARD_DIM, WANDER_FROM_DEPTH, ROUTE_STOPS, MIMIC_IN, MIMIC_FROM_DEPTH, mimicGuises, sightAt, trapOf, trapKindsAt, trapCount, trapLevelAt, TRAP_SIGHT_NEED, TRAP_NEAR_NEED, TRAP_DODGE_NEED, TRAP_NEAR_RADIUS, SPIKE_DIE, NEEDLE_VENOM_TURNS, SNARE_TURNS, ALARM_TURNS, MAW_DIE, MAW_FLAT, HATCH_BAND, scrollOf, scrollsAt, SCROLL_IN, BLINK_CLEAR, SUNDER_RADIUS, TRAP_EATER_REACH, POCKET_IN, POCKET_SHARES } from './tables.js';
+import { neededToHit, chanceIn20, damageDice, critFloor, WHIFF, BESTIARY, creatureStats, threatOf, spawnBudget, depthBands, wardenAt, ARMORY, relicGrant, slotFor, RELIC_TRAITS, motifAt, verbOf, wardenLevel, DOOR_PRICE_CAP, AMBUSH_MIGHT_BONUS, AMBUSH_FROM_DEPTH, braceWall, CALL_RISERS, CALL_DISTANCE, dominates, wearsTrait, FLARE_RADIUS, provisionsAt, provisionOf, draughtCeiling, smokeTurns, BOTTOM_DEPTH, HEART_KIND, WAVE_DISTANCE, SHOT_RANGE, sizeStretch, MAX_BOARD_DIM, WANDER_FROM_DEPTH, ROUTE_STOPS, MIMIC_IN, MIMIC_FROM_DEPTH, mimicGuises, sightAt, trapOf, trapKindsAt, trapCount, trapLevelAt, TRAP_SIGHT_NEED, TRAP_NEAR_NEED, TRAP_DODGE_NEED, TRAP_NEAR_RADIUS, SPIKE_DIE, NEEDLE_VENOM_TURNS, SNARE_TURNS, ALARM_TURNS, MAW_DIE, MAW_FLAT, HATCH_BAND, scrollOf, scrollsAt, SCROLL_IN, BLINK_CLEAR, SUNDER_RADIUS, TRAP_EATER_REACH, POCKET_IN, POCKET_SHARES } from './tables.js';
 import type { Relic } from './tables.js';
 import type { Entity, Stats, Pos } from './entity.js';
 import { itemAt } from './item.js';
@@ -147,7 +147,18 @@ function chooseSpawns(seed: number, counter: number, depth: number, stretch = 1)
   counterAfter: number;
 } {
   const chosen: { kind: string; level: number; stats: Stats }[] = [];
-  const spawnable = BESTIARY.filter((a) => a.weight > 0 && depth >= (a.fromDepth ?? 1));
+  let spawnable = BESTIARY.filter((a) => a.weight > 0 && depth >= (a.fromDepth ?? 1));
+  // The stretched teaching floor spends its (full-stretch) budget on the
+  // cheap kinds only: numbers, not menace. The designer read three bodies
+  // on four vales of ground as boring — correctly — and the same rent
+  // spent on mixed kinds measured 6/10 at the door (below the gentle
+  // pin): the cliff was composition, not count. The vale's door keeps
+  // its variety and its exact stream; the stretched door meets the
+  // heavier kinds one floor down.
+  if (depth === 1 && stretch >= 2) {
+    const cheap = spawnable.filter((a) => threatOf(creatureStats(a.kind, 1)!, a.kind) <= DOOR_PRICE_CAP);
+    if (cheap.length > 0) spawnable = cheap;
+  }
   let budget = spawnBudget(depth, stretch);
   let c = counter;
 
@@ -415,6 +426,11 @@ export function createWorld(
   const centers = generated.rooms.map((r) => ({ x: r.x + Math.floor(r.w / 2), y: r.y + Math.floor(r.h / 2) }));
   const temper: (undefined | { disposition: 'guard' } | { disposition: 'wander'; route: Pos[] })[] =
     population.chosen.map(() => undefined);
+  // Patrols on the stretched teaching floor were measured and DEFERRED
+  // (2026-07-29): at the door they cost the pinned bot four escapes in
+  // ten all by themselves — wanderers converge mid-fight, and the bot
+  // has no verbs to refuse the swarm. The density fix (spawnBudget's
+  // teaching-floor exception) carries the boring-floor filing alone.
   let after = spawned.counterAfter;
   population.chosen.forEach((_ch, i) => {
     if (guardOf.has(i) || i === keeper) { temper[i] = { disposition: 'guard' }; return; }
