@@ -46,8 +46,14 @@
   --foe: #b5483c;
   --exit: #2f8f74;
   /* Loot is violet — mid-high luminance, per the designer. It used to be
-     gold, which collided with the player's own colour and the grave ring. */
+     gold, which collided with the player's own colour and the grave ring.
+     The 929-second run asked that violet stop meaning "any item": the blade
+     keeps the violet, and the other families wear their own. */
   --item: #a78bfa;
+  --sling-item: #64a9e8;
+  --worn-item: #8ea4c8;
+  --tool-item: #e08fd4;
+  --heart-item: #efe6d8;
   --designer: #8fb0d6;
   --gamemaster: #d8a13c;
 }
@@ -168,7 +174,14 @@ kbd {
    that; the fog itself was audited sound — presentation was the liar). */
 .cell.passage { background: var(--floor); box-shadow: inset 0 0 0 1px rgba(153, 161, 176, .38); }
 .cell.passage.dim { box-shadow: inset 0 0 0 1px rgba(153, 161, 176, .14); }
+/* Item families — a square says what kind of prize it is before you walk
+   there: violet blade, sky sling, steel wearables, rose satchel goods, and
+   the heart in bone. Ruled after the 929-second run. */
 .cell.item { background: var(--item); }
+.cell.item.sling { background: var(--sling-item); }
+.cell.item.worn { background: var(--worn-item); }
+.cell.item.tool { background: var(--tool-item); }
+.cell.item.heart { background: var(--heart-item); }
 /* The fog. Never seen: nothing — not even the wall's silhouette, because a
    mapped outline is knowledge too. Seen but out of sight: the geometry and
    the still things, dimmed but *readable* — the first cut sat at 45%
@@ -176,15 +189,29 @@ kbd {
    Memory reads clearly; only the living is reserved for the lit. */
 .cell.veil { background: #090b0e; }
 .cell.dim { filter: brightness(.74) saturate(.7); }
+/* Walls are exempt: a remembered wall is the same fact as a lit one, and
+   the designer ruled discovered walls keep the visible wall's gray — the
+   929-second run found the dimmed ones hard to read against the floor. */
+.cell.dim.wall { filter: none; }
 /* Ringed rather than filled, so a creature standing on the prize stays visible
-   as a creature while the square still reads as worth taking. */
+   as a creature while the square still reads as worth taking. The ring wears
+   the prize's family color. */
 .cell.guarding { box-shadow: inset 0 0 0 2px var(--item); }
+.cell.guarding.sling { box-shadow: inset 0 0 0 2px var(--sling-item); }
+.cell.guarding.worn { box-shadow: inset 0 0 0 2px var(--worn-item); }
+.cell.guarding.tool { box-shadow: inset 0 0 0 2px var(--tool-item); }
+.cell.guarding.heart { box-shadow: inset 0 0 0 2px var(--heart-item); }
 /* At full draw — the volley's warning (covenant M8), worn on the map by
    whoever holds it, you included. Amber: the color of a held breath. */
 .cell.drawn { box-shadow: inset 0 0 0 2px #d08a3e; }
-/* The drawn player's mark: where the next press of f looses. Ring inside
-   ring stays legible when the mark is itself drawn, or guarding. */
-.cell.marked { outline: 1px dashed var(--player); outline-offset: 1px; }
+/* The drawn player's mark: where the next press of f looses. An inset ring
+   like every other ring here — the old dashed outline drew outside the cell
+   and neighboring squares painted over its arcs, so it never closed (found
+   by the 929-second run). Combined rules keep ring-inside-ring legible when
+   the mark is itself drawn, or guarding. */
+.cell.marked { box-shadow: inset 0 0 0 1px var(--player); }
+.cell.drawn.marked { box-shadow: inset 0 0 0 2px #d08a3e, inset 0 0 0 3px var(--player); }
+.cell.guarding.marked { box-shadow: inset 0 0 0 2px var(--item), inset 0 0 0 3px var(--player); }
 
 /* The journal, under the map, because that is where the eye already is after
  * a move. Fixed height, scrolls inside, keeps history — it used to be two
@@ -237,9 +264,8 @@ h2 {
    is in green, for a few turns — then ordinary again. The selector covers
    whole rows and single segments alike, so a stat row can light one number
    without lying about its neighbours. */
-.vitals .changed { background: rgba(240, 173, 60, .1); border-radius: 2px; padding: 0 .25rem; }
-.vitals .was { color: var(--player); }
-.vitals .now { color: var(--exit); }
+/* The vitals rows are static — the before→after glow retired with the
+   929-second run; the journal speaks the changes now. */
 
 /* What a number IS, on hover: the derivation rides in the native title —
    one popup, the browser's own. The dotted underline is the standing hint

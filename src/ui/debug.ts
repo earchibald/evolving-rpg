@@ -39,6 +39,10 @@ const WIDTH = 48;
 const HEIGHT = 32;
 const MAIN = 'main';
 
+/** A grant with its sign said right — +2, or -1, never "+-1" (read aloud,
+ *  bemused, in the 929-second run). Callers filter zeroes before this. */
+const signed = (n: number): string => (n > 0 ? `+${n}` : `${n}`);
+
 let log: EventLog = emptyLog();
 let refs: Refs = emptyRefs();
 let active = MAIN;
@@ -56,14 +60,6 @@ let booted = '';
  * It is recorded in WORLD_INIT, so this world stays exactly as reproducible as
  * any other, and it is on screen so you can note one you liked.
  */
-/** Last seen vitals values, what each was before it changed, and the turn
- *  until which the change stays lit. Declared above the world-makers because
- *  they clear it: the before→after memory belongs to one character's run,
- *  and carrying it across a wipe showed a fresh game diffing its empty
- *  hands against a dead game's gear — "iron charm +4 hp → —". Descending
- *  keeps it (same character, same run); everything else forgets. */
-const lastVitals = new Map<string, { value: string; was: string; until: number }>();
-
 function freshWorld(): void {
   const seed = Math.floor(Math.random() * 2 ** 31);
   const session = emptySession(MAIN);
@@ -71,7 +67,6 @@ function freshWorld(): void {
   log = first.log;
   refs = createRef(session.refs, MAIN, first.event.id, 0, `opening run · seed ${seed}`);
   active = MAIN;
-  lastVitals.clear();
 }
 
 /**
@@ -100,7 +95,6 @@ function anotherWorld(): string {
   log = born.log;
   refs = createRef(refs, name, born.event.id, 0, `seed ${seed}`);
   active = name;
-  lastVitals.clear();
   return name;
 }
 
@@ -392,7 +386,27 @@ function nameWhatIsHere(state: ReturnType<typeof fold>): void {
   for (const i of state.items) {
     questions.push(describeQuestion('item', i.kind, { grants: i.grants, ...palette }, root));
   }
+  // The satchel too. A provision carried from birth was never a floor item,
+  // so it alone went unnamed: the first voiced run's starting flare wore its
+  // bare kind in the panel while its floor twin had a world-name. Nothing is
+  // more touched than what you carry.
+  for (const e of state.entities) {
+    if (e.kind !== 'you') continue;
+    for (const c of e.satchel ?? []) {
+      questions.push(describeQuestion('item', c.kind, { ...palette }, root));
+    }
+  }
   oracle.askMany(questions);
+}
+
+/** Which family a floor item belongs to, for the map's colors — blade and
+ *  sling by the slot they would take, everything else wearable is 'worn',
+ *  satchel goods are 'tool', the heart is only itself. */
+function itemFamily(kind: string, grants: Parameters<typeof slotFor>[1]): string {
+  if (kind === HEART_KIND) return 'heart';
+  if (provisionOf(kind) !== undefined) return 'tool';
+  const slot = slotFor(kind, grants);
+  return slot === 'weapon' ? 'blade' : slot === 'sling' ? 'sling' : 'worn';
 }
 
 /** What the world calls a kind of thing, whether or not it has answered yet. */
@@ -646,6 +660,7 @@ function render(): void {
       const at = idx(state.grid, x, y);
       const tile = state.grid.tiles[at];
       const here = occupant.get(at);
+      const prize = itemAt(state.items, x, y);
 
       // Three kinds of knowledge, three renders. Never seen: nothing at all —
       // not even the wall, because a mapped silhouette is knowledge too.
@@ -679,8 +694,10 @@ function render(): void {
         cell.classList.add(fog.revealed.has(at) ? 'passage' : 'wall');
       } else if (tile === EXIT) {
         cell.classList.add('exit');
-      } else if (itemAt(state.items, x, y) !== undefined) {
-        cell.classList.add('item');
+      } else if (prize !== undefined) {
+        // Wearing its family, not just "item" — the 929-second run asked
+        // that violet stop meaning everything.
+        cell.classList.add('item', itemFamily(prize.kind, prize.grants));
       } else if (lying.has(at)) {
         // Bodies hold still like the floor does: remembered once seen,
         // dimmed out of sight, never vanishing the way creatures do.
@@ -689,8 +706,9 @@ function render(): void {
 
       // A guarded prize still needs to read as a prize, so mark the square even
       // when something is standing on it — but only while you can see them.
-      if (inView && here !== undefined && itemAt(state.items, x, y) !== undefined) {
-        cell.classList.add('guarding');
+      // The ring wears the prize's family color, same as the square would.
+      if (inView && here !== undefined && prize !== undefined) {
+        cell.classList.add('guarding', itemFamily(prize.kind, prize.grants));
       }
       if (!inView) cell.classList.add('dim');
       grid.appendChild(cell);
@@ -724,10 +742,10 @@ function render(): void {
     if (g === undefined) return '—';
     const called = oracle.ask(describeQuestion('item', g.kind, { grants: g.grants }, worldRoot())).name;
     const parts = [
-      g.grants.might === 0 ? '' : `+${g.grants.might} might`,
-      g.grants.hp === 0 ? '' : `+${g.grants.hp} hp`,
-      g.grants.speed === 0 ? '' : `+${g.grants.speed} speed`,
-      g.grants.wits === 0 ? '' : `+${g.grants.wits} wits`,
+      g.grants.might === 0 ? '' : `${signed(g.grants.might)} might`,
+      g.grants.hp === 0 ? '' : `${signed(g.grants.hp)} hp`,
+      g.grants.speed === 0 ? '' : `${signed(g.grants.speed)} speed`,
+      g.grants.wits === 0 ? '' : `${signed(g.grants.wits)} wits`,
     ].filter((p) => p !== '');
     return `${called} ${parts.join(' ')}`;
   };
@@ -781,32 +799,11 @@ function render(): void {
     ['depth', String(state.depth), ''],
   ];
 
-  // A changed value shows its history for a few turns: what it was (orange),
-  // then what it is (green) — "1–4 → 3–6" — so a pickup or a level explains
-  // itself in place. Only rows that change rarely; position and the turn
-  // counter change every step, and a glow that is always on means nothing.
-  const NOTABLE = ['hit points', 'level', 'you deal', 'might · speed · wits', 'wielding', 'sling hand', 'wearing', 'satchel', 'depth'];
-  const remember = (key: string, value: string): { lit: boolean; was: string } => {
-    const prior = lastVitals.get(key);
-    if (prior === undefined) {
-      lastVitals.set(key, { value, was: value, until: 0 });
-      return { lit: false, was: value };
-    }
-    if (prior.value !== value) {
-      lastVitals.set(key, { value, was: prior.value, until: state.turn + 3 });
-    }
-    const mark = lastVitals.get(key)!;
-    return { lit: mark.until >= state.turn && mark.until > 0, was: mark.was };
-  };
-  const beforeAfter = (into: HTMLElement, was: string, now: string): void => {
-    const old = document.createElement('span');
-    old.className = 'was';
-    old.textContent = was;
-    const fresh = document.createElement('span');
-    fresh.className = 'now';
-    fresh.textContent = now;
-    into.append(old, document.createTextNode(' → '), fresh);
-  };
+  // The rows are static. They used to glow was→after for a few turns — the
+  // 929-second run found the arrows overflowing the panel (a satchel's whole
+  // contents, twice) and lingering while the player thought out loud, and
+  // the designer retired the mechanism: every change speaks in the journal
+  // instead, and this panel only ever says what IS.
 
   // What each number IS, on hover — the derivation with today's values in it,
   // not a rulebook reference. Covenant L1 at the row level: a stat you cannot
@@ -867,28 +864,12 @@ function render(): void {
     tipped(dd, label);
 
     if (typeof value === 'string') {
-      if (NOTABLE.includes(label)) {
-        const mark = remember(label, value);
-        if (mark.lit) {
-          dd.className = `${dd.className} changed`.trim();
-          beforeAfter(dd, mark.was, value);
-        } else {
-          dd.textContent = value;
-        }
-      } else {
-        dd.textContent = value;
-      }
+      dd.textContent = value;
     } else {
       value.forEach((seg, i) => {
         if (i > 0) dd.append(document.createTextNode(' · '));
         const span = document.createElement('span');
-        const mark = remember(`${label}#${seg.key}`, seg.text);
-        if (mark.lit) {
-          span.className = 'changed';
-          beforeAfter(span, mark.was, seg.text);
-        } else {
-          span.textContent = seg.text;
-        }
+        span.textContent = seg.text;
         tipped(span, seg.key);
         dd.append(span);
       });
@@ -916,10 +897,10 @@ function render(): void {
     // Say what it actually grants — this row once printed "+0 might" on an
     // iron charm, which is the opposite of an explanation.
     const gives = [
-      i.grants.might === 0 ? '' : `+${i.grants.might} might`,
-      i.grants.hp === 0 ? '' : `+${i.grants.hp} hp`,
-      i.grants.speed === 0 ? '' : `+${i.grants.speed} speed`,
-      i.grants.wits === 0 ? '' : `+${i.grants.wits} wits`,
+      i.grants.might === 0 ? '' : `${signed(i.grants.might)} might`,
+      i.grants.hp === 0 ? '' : `${signed(i.grants.hp)} hp`,
+      i.grants.speed === 0 ? '' : `${signed(i.grants.speed)} speed`,
+      i.grants.wits === 0 ? '' : `${signed(i.grants.wits)} wits`,
     ].filter((g) => g !== '').join(' ');
     odds.textContent = `${reach} away · ${gives}`;
     li.append(who, odds);
@@ -1205,9 +1186,6 @@ function render(): void {
     li.style.cursor = 'pointer';
     li.addEventListener('click', () => {
       active = ref.name;
-      // Another world is another character's story: their gear diffed
-      // against this one's would light nonsense.
-      lastVitals.clear();
       persist();
       say(`switched to ${ref.name}`);
       render();
@@ -1290,7 +1268,7 @@ function narrate(fresh: readonly GameEvent[], state: ReturnType<typeof fold>): s
       if (p.effect.kind === 'draught') {
         lines.push(`you drink ${drunk} — whole again, and your ceiling rises to ${p.effect.ceilingTo}`);
       } else if (p.effect.kind === 'flare') {
-        lines.push(`${drunk} takes — the floor admits its shape for ${p.effect.radius} paces around`);
+        lines.push(`${drunk} takes — light reaches ${p.effect.radius} paces around`);
       } else {
         lines.push(`${drunk} swallows the floor — the hunts chase where you were${
           p.effect.unfooled.length > 0 ? ', but what stands beside you is not fooled' : ''}`);
@@ -1301,7 +1279,7 @@ function narrate(fresh: readonly GameEvent[], state: ReturnType<typeof fold>): s
       const swapped = event.payload.satchel.swappedOut;
       const takenKind = state.items.find((i) => i.id === event.payload.itemId)?.kind;
       if (takenKind === HEART_KIND) {
-        lines.push(`you take up ${calledItem(event.payload.itemId, state)} — your hands are full now, and the way out is the stair you came down by`);
+        lines.push(`you take up ${calledItem(event.payload.itemId, state)} — it seals your satchel, and the way out is the stair you came down by`);
         continue;
       }
       lines.push(`${calledItem(event.payload.itemId, state)} goes into your satchel${
@@ -1325,10 +1303,10 @@ function narrate(fresh: readonly GameEvent[], state: ReturnType<typeof fold>): s
       // because the number moved in a corner of the readout and never spoke.
       const g = event.payload.grants;
       const deltas = [
-        g.might === 0 ? '' : `might +${g.might}`,
-        g.hp === 0 ? '' : `hp +${g.hp}`,
-        g.wits === 0 ? '' : `wits +${g.wits}`,
-        g.speed === 0 ? '' : `speed +${g.speed}`,
+        g.might === 0 ? '' : `might ${signed(g.might)}`,
+        g.hp === 0 ? '' : `hp ${signed(g.hp)}`,
+        g.wits === 0 ? '' : `wits ${signed(g.wits)}`,
+        g.speed === 0 ? '' : `speed ${signed(g.speed)}`,
       ].filter((d) => d !== '');
       // Say the swap when there is one: what came off matters as much as what
       // went on — under the world's name for it, same as the rail.
@@ -1454,9 +1432,9 @@ function finish(before: number, head: string): void {
     if (underfoot !== undefined && provisionOf(underfoot.kind) !== undefined) {
       const held = me.satchel ?? [];
       if (held.some((c) => provisionOf(c.kind) === undefined)) {
-        told.push(`the ${calledItem(underfoot.id, nowHere)} stays where it lies — your hands are sealed`);
+        told.push(`the ${calledItem(underfoot.id, nowHere)} stays where it lies — the heart seals your satchel`);
       } else if (held.length >= 2) {
-        told.push(`the ${calledItem(underfoot.id, nowHere)} stays where it lies — both hands are full; , swaps your first thing out`);
+        told.push(`the ${calledItem(underfoot.id, nowHere)} stays where it lies — your satchel is full; type , to swap your first thing out`);
       }
     }
     if (underfoot !== undefined
@@ -1469,8 +1447,10 @@ function finish(before: number, head: string): void {
       // tradeoff is a standing question, and the key that answers it is
       // said right there.
       told.push(worn !== undefined && allGeq(worn.grants, g)
-        ? `the ${calledItem(underfoot.id, nowHere)} is no better than your ${worn.kind} — it stays where it lies`
-        : `the ${calledItem(underfoot.id, nowHere)} asks a trade — , takes it deliberately`);
+        ? `the ${calledItem(underfoot.id, nowHere)} is no better than your ${
+          oracle.ask(describeQuestion('item', worn.kind, { grants: worn.grants }, worldRoot())).name
+        } — it stays where it lies`
+        : `the ${calledItem(underfoot.id, nowHere)} asks a trade — type , to take it`);
     }
   }
 
@@ -1506,6 +1486,21 @@ function finish(before: number, head: string): void {
   const nowState = fold(log, head);
   if (nowState.level > priorState.level) {
     told.push(`you are level ${nowState.level}. your wounds close; something settles into place`);
+  }
+
+  // The damage band, said the moment it moves. A take, a swap or a level can
+  // shift what your blows deal, and with the panel static (the designer
+  // retired the before→after glow) the journal carries the change instead.
+  const bandOf = (s: typeof nowState): { lo: number; hi: number } | null => {
+    const you = s.entities.find((e) => e.kind === 'you' && isAlive(e));
+    if (you === undefined) return null;
+    const d = damageDice(you.stats.might);
+    return { lo: 1 + d.flat, hi: d.die + d.flat };
+  };
+  const wasBand = bandOf(priorState);
+  const isBand = bandOf(nowState);
+  if (wasBand !== null && isBand !== null && (wasBand.lo !== isBand.lo || wasBand.hi !== isBand.hi)) {
+    told.push(`your blows deal ${isBand.lo}–${isBand.hi} now`);
   }
 
   // Finding your own body says so. What finding it CONFERS is deliberately
@@ -2576,9 +2571,6 @@ el('again').addEventListener('click', () => {
   const begun = beginAgain(log, refs, active);
   log = begun.log;
   refs = begun.refs;
-  // A fresh run is a fresh sheet: diffing turn 1 against the death that
-  // ended the last run would glow with borrowed history.
-  lastVitals.clear();
   persist();
   say(kept === 0
     ? 'back to the start of this world'

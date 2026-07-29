@@ -619,10 +619,9 @@ export interface Provision {
 export const PROVISIONS: readonly Provision[] = Object.freeze([
   Object.freeze({ kind: 'vital draught', weight: 3 }),
   Object.freeze({ kind: 'still smoke', weight: 2 }),
-  // The information tool: break it and the floor admits its shape to
-  // FLARE_RADIUS paces — layout, never occupants. Third and (per the
-  // research's ceiling) close to last: past four types the satchel is a
-  // checklist, not a dilemma.
+  // The information tool: break it and light reaches FLARE_RADIUS paces —
+  // layout, never occupants. Third and (per the research's ceiling) close
+  // to last: past four types the satchel is a checklist, not a dilemma.
   Object.freeze({ kind: 'tallow flare', weight: 2 }),
 ]);
 
