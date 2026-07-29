@@ -45,6 +45,7 @@ const CREATURE_BODIES: Readonly<Record<string, readonly string[]>> = Object.free
   warden: Object.freeze(['warden', 'keeper', 'porter', 'sentinel']),
   stinger: Object.freeze(['wasp', 'asp', 'midge', 'thorn', 'fly']),
   caller: Object.freeze(['crier', 'piper', 'herald', 'bell', 'horn']),
+  slinger: Object.freeze(['slinger', 'pelter', 'hurler', 'stoner']),
   echo: Object.freeze(['echo', 'shade', 'double']),
 });
 
@@ -59,6 +60,7 @@ const ITEM_BODIES: Readonly<Record<string, readonly string[]>> = Object.freeze({
   'heavy edge': Object.freeze(['maul', 'cleaver', 'brand', 'axe']),
   'sure edge': Object.freeze(['needle', 'point', 'sliver', 'awl']),
   'steady boots': Object.freeze(['greaves', 'clogs', 'anchors', 'stumps']),
+  'leaden sling': Object.freeze(['sling', 'strap', 'cord', 'lash']),
   'vital draught': Object.freeze(['draught', 'phial', 'flask', 'vial']),
   'still smoke': Object.freeze(['smoke', 'censer', 'pot', 'ember']),
   'tallow flare': Object.freeze(['flare', 'taper', 'wick', 'torch']),
@@ -103,6 +105,11 @@ const CREATURE_LINES: Readonly<Record<string, readonly string[]>> = Object.freez
     'It does not want to fight you. It wants you heard.',
     'Its voice carries further than your reach.',
     'Silence it first. Everything else is negotiable.',
+  ]),
+  slinger: Object.freeze([
+    'The ground between you belongs to it, not to you.',
+    'When it goes still and draws back its arm, move.',
+    'Close the distance or break its line. Standing there is the wrong answer.',
   ]),
 });
 

@@ -6,9 +6,9 @@ import { smithName, DEFAULT_WORDS } from '../canon/namesmith.js';
 import { strikeLine, crossings } from './words.js';
 import { storyOf, remember, rememberedOn, epitaphOf, notable } from '../canon/chronicler.js';
 import { SCHEMA_VERSIONS } from '../core/events.js';
-import { playerStep, playerWait, playerUse, playerShove, playerBrace, playerTake, runWorldTurns, buryIfDead, beginAgain, descend, isGrave } from '../play/session.js';
+import { playerStep, playerWait, playerUse, playerShove, playerBrace, playerTake, playerVolley, runWorldTurns, buryIfDead, beginAgain, descend, isGrave } from '../play/session.js';
 import { isAlive } from '../core/entity.js';
-import { outcome, hitChance } from '../core/commands.js';
+import { outcome, hitChance, shotTarget } from '../core/commands.js';
 import { damageDice, XP_TO_REACH, slotOf, critFloor, verbOf, provisionOf, HEART_KIND, SLAM_DAMAGE, VENOM_TURNS } from '../core/tables.js';
 import { itemAt } from '../core/item.js';
 import { save, load, clear, emptySession } from '../play/store.js';
@@ -629,6 +629,13 @@ function render(): void {
   // read must be a place the eye can read — covenant L1.
   const lying = new Set(state.bodies.map((b) => idx(state.grid, b.x, b.y)));
 
+  // The drawn player's mark: which square the next press of f looses at.
+  // Computed exactly the way the command will compute it, so the highlight
+  // can never promise a shot the dice never see.
+  const you = state.entities.find((e) => e.kind === 'you');
+  const mark = you !== undefined && you.tags.includes('drawn') ? shotTarget(state, you.id) : null;
+  const markedAt = mark === null ? -1 : idx(state.grid, mark.pos.x, mark.pos.y);
+
   const grid = el('grid');
   grid.style.gridTemplateColumns = `repeat(${state.grid.width}, 15px)`;
   grid.textContent = '';
@@ -659,6 +666,10 @@ function render(): void {
         if (!isAlive(here)) cell.classList.add(here.kind === 'you' ? 'you-dead' : 'dead');
         else if (here.kind === 'you') cell.classList.add('player');
         else cell.classList.add('foe');
+        // The drawn stance is the warning (covenant M8): anyone at full
+        // draw — you included — wears it on the map.
+        if (isAlive(here) && here.tags.includes('drawn')) cell.classList.add('drawn');
+        if (at === markedAt) cell.classList.add('marked');
       } else if (tile === WALL) {
         cell.classList.add('wall');
       } else if (tile === SECRET) {
@@ -945,9 +956,11 @@ function render(): void {
       const coiled = e.tags.includes('ambush') ? ' · coiled — its first blow lands harder' : '';
       const crying = e.tags.includes('call') ? ' · unspent voice — it will wake the floor' : '';
       const bites = verbOf(e.kind) === 'venom' ? ' · venomed teeth — its wounds keep burning' : '';
+      const slings = verbOf(e.kind) === 'volley' ? ' · slung stones — it draws, then it looses' : '';
+      const drawnTell = e.tags.includes('drawn') ? ' · drawn — answer it: break the line, close, brace, or shove' : '';
       odds.textContent = player === undefined
         ? `hp ${e.stats.hp}`
-        : `hp ${e.stats.hp} · ${away} away · you ${pct(player, e)} ${swing(player.stats.might)} · it ${pct(e, player)} ${swing(e.stats.might)}${coiled}${crying}${bites}`;
+        : `hp ${e.stats.hp} · ${away} away · you ${pct(player, e)} ${swing(player.stats.might)} · it ${pct(e, player)} ${swing(e.stats.might)}${coiled}${crying}${bites}${slings}${drawnTell}`;
     }
     li.append(who, odds);
     threats.appendChild(li);
@@ -1228,6 +1241,14 @@ function narrate(fresh: readonly GameEvent[], state: ReturnType<typeof fold>): s
       lines.push('you set yourself against the coming round');
       continue;
     }
+    if (event.type === 'DRAWN') {
+      // The warning is the mechanic (covenant M8) — so the journal says it
+      // the moment it exists, whoever's arm is drawn back.
+      lines.push(event.payload.entityId === 'player'
+        ? 'you draw — the sling waits on your stillness'
+        : `${named(state, event.payload.entityId)} draws back its arm — a shot is coming`);
+      continue;
+    }
     if (event.type === 'CALLED') {
       const n = event.payload.opponents.length;
       lines.push(`${named(state, event.payload.callerId)} cries out — and the floor answers: ${
@@ -1355,7 +1376,9 @@ function narrate(fresh: readonly GameEvent[], state: ReturnType<typeof fold>): s
       ? ` — the blow drives you back a pace and ${them} lumbers after`
       : '';
     // The brace's tooth, said out loud: a miss against a set guard reels.
-    const countered = !mine && !p.hit
+    // Melee only — a stone that misses costs its thrower nothing, and the
+    // journal must not claim a reel the reducer never wrote.
+    const countered = !mine && !p.hit && (p.mode ?? 'melee') === 'melee'
       && state.entities.find((x) => x.id === 'player')?.tags.includes('braced') === true
       ? ' — it breaks on your set guard and reels'
       : '';
@@ -1367,6 +1390,7 @@ function narrate(fresh: readonly GameEvent[], state: ReturnType<typeof fold>): s
 
     const told = strikeLine({
       mine,
+      ranged: p.mode === 'ranged',
       attackerKind: state.entities.find((x) => x.id === p.attackerId)?.kind ?? '',
       them, damage: p.damage, roll, tier, seq: event.seq,
     });
@@ -1854,6 +1878,29 @@ function brace(): void {
   finish(before, after.head);
 }
 
+function volley(): void {
+  const head = getRef(refs, active).head;
+  if (head === null) return;
+
+  const state = fold(log, head);
+  const me = state.entities.find((e) => e.kind === 'you');
+  const wasDrawn = me?.tags.includes('drawn') === true;
+
+  const before = chain(log, head).length;
+  const acted = playerVolley({ log, head }, 'player');
+  if (acted.draft === null) {
+    say(wasDrawn
+      ? 'no mark in reach — the draw holds, no turn spent'
+      : 'nothing to draw — distance wants a weapon that flies');
+    return;
+  }
+  const after = runWorldTurns(acted.position, 'player');
+  log = after.log;
+  refs = setHead(refs, active, after.head);
+
+  finish(before, after.head);
+}
+
 function take(): void {
   const head = getRef(refs, active).head;
   if (head === null) return;
@@ -1900,6 +1947,7 @@ const KEYMAP: ReadonlyArray<{ shown: string; what: string; button?: string }> = 
   { shown: 'q', what: 'use what the satchel holds (this is a turn too)' },
   { shown: 'x, then a direction', what: 'shove — drive what stands beside you one pace; walls hurt, bodies tangle' },
   { shown: 'z', what: 'brace — set against the coming round; a blow that misses you staggers' },
+  { shown: 'f', what: 'the sling — draw first (a turn, seen by all), loose second; waiting holds the draw' },
   { shown: ',', what: 'take what is underfoot, deliberately — tradeoffs and downgrades included' },
   { shown: 'c', what: 'the witness — speak while you play; the mic listens, stamped to the turn', button: 'witness' },
   { shown: 'PgUp · PgDn', what: 'read back through the journal' },
@@ -1910,7 +1958,7 @@ const KEYMAP: ReadonlyArray<{ shown: string; what: string; button?: string }> = 
   { shown: '1', what: 'in the screen: pick up the designer’s pen' },
   { shown: 'r', what: 'begin this world again, straight away', button: 'again' },
   { shown: 'v', what: 'verify every hash and counter in the chain', button: 'verify' },
-  { shown: 'f', what: 'fork a new timeline from this moment', button: 'fork' },
+  { shown: 'k', what: 'fork a new timeline from this moment', button: 'fork' },
   { shown: 'b', what: 'rewind 10 events (the log keeps them)', button: 'rewind' },
   { shown: '?', what: 'this sheet', button: 'open-help' },
   { shown: 'esc', what: 'close a sheet · leave a writing box' },
@@ -1980,6 +2028,12 @@ window.addEventListener('keydown', (event) => {
     event.preventDefault();
     shoveArmed = false;
     brace();
+    return;
+  }
+  if (event.key === 'f') {
+    event.preventDefault();
+    shoveArmed = false;
+    volley();
     return;
   }
   if (event.key === ',') {

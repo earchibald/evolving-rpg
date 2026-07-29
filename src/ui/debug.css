@@ -179,6 +179,12 @@ kbd {
 /* Ringed rather than filled, so a creature standing on the prize stays visible
    as a creature while the square still reads as worth taking. */
 .cell.guarding { box-shadow: inset 0 0 0 2px var(--item); }
+/* At full draw — the volley's warning (covenant M8), worn on the map by
+   whoever holds it, you included. Amber: the color of a held breath. */
+.cell.drawn { box-shadow: inset 0 0 0 2px #d08a3e; }
+/* The drawn player's mark: where the next press of f looses. Ring inside
+   ring stays legible when the mark is itself drawn, or guarding. */
+.cell.marked { outline: 1px dashed var(--player); outline-offset: 1px; }
 
 /* The journal, under the map, because that is where the eye already is after
  * a move. Fixed height, scrolls inside, keeps history — it used to be two

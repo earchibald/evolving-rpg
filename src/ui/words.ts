@@ -25,6 +25,7 @@ const SWINGS: Readonly<Record<string, readonly string[]>> = Object.freeze({
   vigil: Object.freeze(['hammers', 'checks']),
   venom: Object.freeze(['bites', 'stings']),
   call: Object.freeze(['claws', 'rakes']),
+  volley: Object.freeze(['stings', 'cracks']),
   plain: Object.freeze(['hits', 'strikes']),
 });
 
@@ -63,6 +64,10 @@ function pick(poolKey: string, size: number, h: number, seq: number): number {
 export interface Blow {
   /** True when the player threw it. */
   mine: boolean;
+  /** True when the blow flew — a STRIKE whose mode is ranged. Your shots
+   *  get their own pool (the stone, not the swing); theirs wear the
+   *  volley's swing word on the shared templates. */
+  ranged?: boolean;
   /** The attacker's kind — picks the swing word when it is not yours. */
   attackerKind: string;
   /** What the journal calls the other party. */
@@ -81,6 +86,31 @@ export interface Blow {
 export function strikeLine(blow: Blow): string {
   const { them, damage, roll, seq } = blow;
   const h = mix(seq, `${blow.attackerKind}|${blow.tier}`);
+
+  if (blow.mine && blow.ranged === true) {
+    const pools: Record<Tier, string[]> = {
+      miss: [
+        `your stone goes wide ${roll}`,
+        `${them} leans off the line ${roll}`,
+        `the stone skips past ${them} ${roll}`,
+      ],
+      hit: [
+        `your stone takes ${them} for ${damage} ${roll}`,
+        `you strike ${them} from afar — ${damage} ${roll}`,
+        `the stone lands — ${damage} to ${them} ${roll}`,
+      ],
+      crit: [
+        `the stone finds the seam — ${damage}, doubled ${roll}`,
+        `clean across the room — ${damage} to ${them} ${roll}`,
+      ],
+      kill: [
+        `${them} drops at distance — ${damage}, and the floor is quieter ${roll}`,
+        `your stone finishes ${them} where it stands ${roll}`,
+      ],
+    };
+    const pool = pools[blow.tier];
+    return pool[pick(`you-shot|${blow.tier}`, pool.length, h, seq)]!;
+  }
 
   if (blow.mine) {
     const pools: Record<Tier, string[]> = {

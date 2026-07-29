@@ -84,3 +84,21 @@ describe('the thresholds', () => {
     expect(crossings(5, 0, 10)).toEqual([]);
   });
 });
+
+describe('the shot, told', () => {
+  it('a loosed blow of mine mentions the stone, not the swing', () => {
+    const mine = strikeLine(blow({ mine: true, ranged: true, tier: 'hit', seq: 9 }));
+    expect(mine).toMatch(/stone|afar/u);
+    expect(strikeLine(blow({ mine: true, ranged: true, tier: 'miss', seq: 10 }))).toMatch(/stone|line/u);
+  });
+
+  it('answers the same seq the same way twice — the idempotence law holds for the new pool', () => {
+    const once = strikeLine(blow({ mine: true, ranged: true, tier: 'kill', seq: 77 }));
+    expect(strikeLine(blow({ mine: true, ranged: true, tier: 'kill', seq: 77 }))).toBe(once);
+  });
+
+  it('a slinger\'s landed shot wears the volley\'s swing word', () => {
+    const theirs = strikeLine(blow({ mine: false, ranged: true, attackerKind: 'slinger', them: 'the pale slinger', tier: 'hit', seq: 12 }));
+    expect(theirs).toMatch(/stings|cracks/u);
+  });
+});
