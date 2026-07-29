@@ -1,7 +1,7 @@
 import { apply } from '../../src/core/apply.js';
 import { drawStance, shotTarget, looseShot, STRIKE_DRAWS } from '../../src/core/commands.js';
 import { SCHEMA_VERSIONS } from '../../src/core/events.js';
-import type { GameEvent } from '../../src/core/events.js';
+import type { GameEvent, DraftEvent } from '../../src/core/events.js';
 import { EMPTY_STATE } from '../../src/core/state.js';
 import type { GameState } from '../../src/core/state.js';
 import { FLOOR, WALL } from '../../src/core/grid.js';
@@ -181,7 +181,7 @@ describe('looseShot — the shot itself', () => {
         player: { id: 'player', kind: 'you', pos: { x: 0, y: 0 }, stats: { hp: 10, might: 9, wits: 3, speed: 4 }, tags: ['drawn'] },
         opponents: [{ id: 'foe-1', kind: 'slinger', pos: { x: 2, y: 0 }, stats: { hp: 1, might: 2, wits: 2, speed: 2 }, tags: [] }],
       },
-    } as Extract<GameEvent, { type: 'WORLD_INIT' }>);
+    } as Extract<DraftEvent, { type: 'WORLD_INIT' }>);
     const state = fold(born.log, born.event.id);
     const draft = looseShot(state, 'player', 'foe-1');
     expect(draft).not.toBeNull();

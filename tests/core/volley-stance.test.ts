@@ -44,7 +44,7 @@ const braced = (id: string): GameEvent => ev('BRACED', { entityId: id });
 
 function strike(attackerId: string, targetId: string, over: Partial<{
   roll: number; needed: number; hit: boolean; crit: boolean; damage: number; mode: 'melee' | 'ranged';
-}> = {}, version = SCHEMA_VERSIONS.STRIKE): GameEvent {
+}> = {}, version: number = SCHEMA_VERSIONS.STRIKE): GameEvent {
   const p = { attackerId, targetId, roll: 10, needed: 8, hit: true, crit: false, damage: 1, ...over };
   return ev('STRIKE', p, { schemaVersion: version });
 }
