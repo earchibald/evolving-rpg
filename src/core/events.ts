@@ -12,7 +12,7 @@ import type { Item } from './item.js';
  *  payload — a special case that could not survive any second consumer of
  *  randomness, and combat is one. */
 export const SCHEMA_VERSIONS = {
-  WORLD_INIT: 12,
+  WORLD_INIT: 13,
   WORLD_BIBLE: 1,
   WORLD_BODIES: 1,
   MOVE: 2,
@@ -21,8 +21,9 @@ export const SCHEMA_VERSIONS = {
   STRIKE: 5,
   WAIT: 1,
   DRAWN: 1,
-  ITEM_TAKEN: 4,
+  ITEM_TAKEN: 5,
   ITEM_USED: 2,
+  SCROLL_READ: 1,
   RULE_RATIFIED: 1,
   RULE_FIRED: 1,
   VIGIL_KEPT: 1,
@@ -82,6 +83,8 @@ export interface WorldInitPayload {
   /** v8 carried one kind; v9 carries the ordered list (the second slot) —
    *  same reason as gear: a floor is new, what you carry is not. */
   playerSatchel?: { kinds: readonly string[] };
+  /** v13. The one scroll, crossing the stairs like everything carried. */
+  playerScroll?: { kind: string };
   width: number;
   height: number;
   tiles: number[];
@@ -155,6 +158,11 @@ export interface ItemTakenPayload {
    *  always did (M4: replay applies, never re-decides). */
   gearSlot?: string;
   shed?: { kind: string; grants: Stats } | null;
+  /** v5, the scroll hand: this take fills it, and what it displaced (the
+   *  chosen swap) lies where the new one lay — recorded because the swap
+   *  mints a floor item and replay must mint the same one forever, the
+   *  satchel's own law. */
+  scroll?: { swappedOut: string | null };
 }
 
 /**
@@ -322,6 +330,26 @@ export interface WorldRememberedPayload {
 }
 
 /**
+ * A scroll spent by the reading. Effects resolve at command time and are
+ * recorded whole — the blink's landing drawn, the unveiling's secrets and
+ * traps listed, the song's broken walls enumerated — so replay applies,
+ * never re-decides (M4), and the fog can read knowledge straight off the
+ * chain the way it reads the flare. The reading is also the identifying:
+ * whether a world knows a kind is derived from whether any SCROLL_READ of
+ * it stands behind you on the chain — never stored, never disagreeing.
+ */
+export interface ScrollReadPayload {
+  entityId: string;
+  kind: string;
+  effect:
+    | { kind: 'unveiling'; secrets: Pos[]; traps: string[] }
+    | { kind: 'still hour'; staggered: string[] }
+    | { kind: 'trap eater'; eaten: string[] }
+    | { kind: 'blink'; to: Pos }
+    | { kind: 'stone song'; broken: Pos[] };
+}
+
+/**
  * One chance to know, recorded whether it was taken or missed. Each trap
  * offers two: `sight` the first time it stands in the engine's own sight
  * disc with a clear line, `near` the first time you walk within two steps
@@ -431,6 +459,7 @@ export type DraftEvent =
   | { type: 'WORLD_REMEMBERED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: WorldRememberedPayload }
   | { type: 'UNMASKED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: UnmaskedPayload }
   | { type: 'TRAP_SENSED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: TrapSensedPayload }
-  | { type: 'TRAP_SPRUNG'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: TrapSprungPayload };
+  | { type: 'TRAP_SPRUNG'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: TrapSprungPayload }
+  | { type: 'SCROLL_READ'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: ScrollReadPayload };
 
 export type GameEvent = DraftEvent & { id: string; parent: string | null; seq: number };

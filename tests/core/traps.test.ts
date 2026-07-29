@@ -35,7 +35,7 @@ function corridor(entities: Entity[], traps: Trap[], over: Partial<GameState> = 
     level: 1,
     depth: 4,
     story: '', motif: null, bodies: [], bible: null, smoke: null,
-    traps, alarm: null, ...over,
+    traps, alarm: null, unveiled: [], ...over,
   };
 }
 

@@ -48,6 +48,8 @@
   /* Known peril — the revealed trap's ring. Ember, deliberately apart
      from the foe's blood-red and the player's gold. */
   --peril: #d08770;
+  /* The scroll's parchment — pale and warm, unlike anything worn. */
+  --scroll-item: #d9c8a0;
   /* Loot is violet — mid-high luminance, per the designer. It used to be
      gold, which collided with the player's own colour and the grave ring.
      The 929-second run asked that violet stop meaning "any item": the blade
@@ -204,6 +206,7 @@ kbd {
 .cell.item.worn { background: var(--worn-item); }
 .cell.item.tool { background: var(--tool-item); }
 .cell.item.heart { background: var(--heart-item); }
+.cell.item.scroll { background: var(--scroll-item); }
 /* The fog. Never seen: nothing — not even the wall's silhouette, because a
    mapped outline is knowledge too. Seen but out of sight: the geometry and
    the still things, dimmed but *readable* — the first cut sat at 45%

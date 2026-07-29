@@ -1,4 +1,4 @@
-import { WALL, SECRET, tileAt, idx, inBounds } from '../core/grid.js';
+import { WALL, SECRET, FLOOR, tileAt, idx, inBounds } from '../core/grid.js';
 import { sightAt } from '../core/tables.js';
 import type { Grid } from '../core/grid.js';
 import type { EventLog } from '../log/chain.js';
@@ -179,6 +179,42 @@ function absorb(
       }
     }
     return;
+  } else if (event.type === 'SCROLL_READ' && event.payload.entityId === 'player') {
+    const eff = event.payload.effect;
+    if (acc.grid === null) return;
+    if (eff.kind === 'unveiling') {
+      // Named doors join the map as single known tiles — like the bell's
+      // gifts. They keep occluding until walked: you know the door is
+      // there; you cannot see through it.
+      for (const s of eff.secrets) {
+        if (inBounds(acc.grid, s.x, s.y)) acc.seen.add(idx(acc.grid, s.x, s.y));
+      }
+      return;
+    }
+    if (eff.kind === 'stone song') {
+      // The walls fall in the fog's own copy of the grid too, or sight
+      // would forever stop at ground that is no longer there.
+      const tiles = [...acc.grid.tiles];
+      for (const b of eff.broken) {
+        if (inBounds(acc.grid, b.x, b.y)) tiles[idx(acc.grid, b.x, b.y)] = FLOOR;
+      }
+      acc.grid = gridOf({ width: acc.grid.width, height: acc.grid.height, tiles: tiles as number[] });
+      // Fall through: light floods the opened ground from where you stand.
+    } else if (eff.kind === 'blink') {
+      acc.pos = { x: eff.to.x, y: eff.to.y };
+      // Fall through: you see from where you landed.
+    } else {
+      return;
+    }
+  } else if (event.type === 'TRAP_SPRUNG' && event.payload.victimId === 'player'
+    && !event.payload.dodged && event.payload.effect.kind === 'lodestone') {
+    // The lodestone moved you; the fog follows (the trample taught this).
+    acc.pos = { x: event.payload.effect.to.x, y: event.payload.effect.to.y };
+  } else if (event.type === 'STRIKE' && event.payload.targetId === 'player'
+    && event.payload.targetTo !== undefined) {
+    // The trample drives you back a pace — found defect: the fog lagged a
+    // tile behind a shoved player until their next own step.
+    acc.pos = { x: event.payload.targetTo.x, y: event.payload.targetTo.y };
   } else if (event.type === 'MOVE' && event.payload.entityId === 'player') {
     acc.pos = { x: event.payload.to.x, y: event.payload.to.y };
   } else if (event.type === 'RULE_FIRED') {

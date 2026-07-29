@@ -38,6 +38,9 @@ export interface Entity {
    *  map while the `hidden` tag stands. A fact of birth — it stays after
    *  the unmasking; only the tag decides who is fooled. */
   guise?: string;
+  /** The one scroll carried (v13): read with r, spent by the reading,
+   *  swapped with , like everything the hands hold. Absent is empty. */
+  scroll?: { readonly kind: string };
   /**
    * What is worn, by slot. Optional so the many hand-built fixtures that
    * predate equipment stay valid; absent means bare. Replacement arithmetic

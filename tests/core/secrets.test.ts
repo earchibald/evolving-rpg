@@ -86,7 +86,7 @@ describe('what creatures believe', () => {
     const state: GameState = {
       grid: makeGrid(width, height, tiles),
       entities: [beast, you], items: [], turn: 1, activeEntityId: 'thing-1',
-      seed: 7, rngCounter: 0, rules: [], xp: 0, level: 1, depth: 1, story: '', motif: null, bodies: [], bible: null, smoke: null, traps: [], alarm: null,
+      seed: 7, rngCounter: 0, rules: [], xp: 0, level: 1, depth: 1, story: '', motif: null, bodies: [], bible: null, smoke: null, traps: [], alarm: null, unveiled: [],
     };
     expect(decide(state, 'thing-1')).toEqual({ kind: 'step', dx: 1, dy: 0 });
   });

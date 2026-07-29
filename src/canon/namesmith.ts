@@ -70,6 +70,11 @@ const ITEM_BODIES: Readonly<Record<string, readonly string[]>> = Object.freeze({
   'ash ward': Object.freeze(['ward', 'charm', 'knot', 'sigil']),
   'iron burr': Object.freeze(['burr', 'spur', 'thorn', 'jack']),
   'hollow bell': Object.freeze(['bell', 'chime', 'knell', 'clapper']),
+  'scroll of unveiling': Object.freeze(['scroll', 'page', 'folio', 'leaf']),
+  'scroll of the still hour': Object.freeze(['scroll', 'page', 'psalm', 'leaf']),
+  'scroll of the trap eater': Object.freeze(['scroll', 'page', 'writ', 'leaf']),
+  'scroll of the blink step': Object.freeze(['scroll', 'page', 'fold', 'leaf']),
+  'scroll of stone song': Object.freeze(['scroll', 'page', 'stave', 'leaf']),
   heart: Object.freeze(['heart']),
 });
 
@@ -175,7 +180,55 @@ const ITEM_LINES: Readonly<Record<string, readonly string[]>> = Object.freeze({
     'Strike it, and the dark files a confession.',
     'One bright breath, and the floor forgets to hide.',
   ]),
+  'scroll of unveiling': Object.freeze([
+    'Read it, and every lie in the walls stands named.',
+    'The floor keeps no secrets from this page.',
+  ]),
+  'scroll of the still hour': Object.freeze([
+    'One spoken line, and everything with teeth forgets its footing.',
+    'The floor holds its breath so you need not hold yours.',
+  ]),
+  'scroll of the trap eater': Object.freeze([
+    'It is hungry for exactly one kind of cruelty.',
+    'Read it near the marked ground, and the ground unmarks.',
+  ]),
+  'scroll of the blink step': Object.freeze([
+    'The distance between here and elsewhere is one read wide.',
+    'It does not ask where you would rather be. It decides.',
+  ]),
+  'scroll of stone song': Object.freeze([
+    'The walls know this song, and they cannot bear to hear it.',
+    'Sung once, stone remembers being sand.',
+  ]),
 });
+
+/** The unread scroll's label: two harsh syllables minted from the world
+ *  root and the kind — deterministic, model-free, and meaningless on
+ *  purpose (the meaning is what reading buys). Labels are dealt over the
+ *  scroll shelf in order with a taken-set, so no two kinds in one world
+ *  can wear the same mark — a shared label would be a lie about identity,
+ *  which is the one lie the register never permits. */
+const LABEL_SYLLABLES = Object.freeze(['ULM', 'KOR', 'VETH', 'SHA', 'DRUM', 'OKT', 'MIR', 'ZAL', 'THEN', 'BOR', 'ASK', 'VUN']);
+
+export function scrollLabel(worldRoot: string | undefined, kind: string, shelf: readonly string[]): string {
+  const mint = (h: number): string => {
+    const a = LABEL_SYLLABLES[h % LABEL_SYLLABLES.length]!;
+    const b = LABEL_SYLLABLES[Math.floor(h / LABEL_SYLLABLES.length) % LABEL_SYLLABLES.length]!;
+    return `${a}-${b}`;
+  };
+  const taken = new Set<string>();
+  for (const each of shelf) {
+    let h = fnv1a(`${worldRoot ?? ''}|label|${each}`);
+    let label = mint(h);
+    while (taken.has(label)) {
+      h = fnv1a(String(h));
+      label = mint(h);
+    }
+    taken.add(label);
+    if (each === kind) return label;
+  }
+  return mint(fnv1a(`${worldRoot ?? ''}|label|${kind}`));
+}
 
 /** FNV-1a, 32-bit — stable, fast, and good enough to spread a few dozen
  *  names across a palette. Not cryptography; just a fair coin that always

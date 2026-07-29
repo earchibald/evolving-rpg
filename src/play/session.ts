@@ -1,7 +1,7 @@
 import { append, fold, chain } from '../log/chain.js';
 import { getRef, fork, setHead, listRefs } from '../log/refs.js';
 import type { Refs } from '../log/refs.js';
-import { attemptMove, advanceTurn, endsTurn, wait, takeUnderfoot, outcome, ratifyRule, foundWorld, createWorld, recordBodies, lungeStrike, vigilKept, useCarried, stirWorld, heartHeld, shoveAt, braceSelf, callOut, drawStance, looseShot, shotTarget, senseTrap, springTrap } from '../core/commands.js';
+import { attemptMove, advanceTurn, endsTurn, wait, takeUnderfoot, outcome, ratifyRule, foundWorld, createWorld, recordBodies, lungeStrike, vigilKept, useCarried, stirWorld, heartHeld, shoveAt, braceSelf, callOut, drawStance, looseShot, shotTarget, senseTrap, springTrap, readScroll } from '../core/commands.js';
 import { BOTTOM_DEPTH, WAVE_EVERY } from '../core/tables.js';
 import { u32 } from '../core/rng.js';
 import { decide } from '../core/ai.js';
@@ -259,6 +259,21 @@ export function playerUse(position: Position, playerId: string, slot = 0): {
 
   const draft = useCarried(state, playerId, slot);
   if (draft === null) return { position, draft: null };
+  return { position: settleTraps(commit(position, draft, playerId, playerId), playerId), draft };
+}
+
+/** Read the carried scroll — a turn spent, a page spent, an effect kept.
+ *  Refuses quietly on empty hands (and while the heart fills them). */
+export function playerRead(position: Position, playerId: string): {
+  position: Position;
+  draft: DraftEvent | null;
+} {
+  const state = fold(position.log, position.head);
+  if (outcome(state, playerId) !== 'playing') return { position, draft: null };
+
+  const draft = readScroll(state, playerId);
+  if (draft === null) return { position, draft: null };
+  // The blink can land you anywhere — including on ground that bites.
   return { position: settleTraps(commit(position, draft, playerId, playerId), playerId), draft };
 }
 
@@ -534,6 +549,7 @@ export function descend(
       stats: { ...you.stats, hp }, maxHp: you.maxHp, xp: state.xp, level: state.level,
       ...(you.gear === undefined ? {} : { gear: { ...you.gear } as Record<string, { kind: string; grants: typeof you.stats }> }),
       ...(you.satchel === undefined ? {} : { satchel: { kinds: you.satchel.map((c) => c.kind) } }),
+      ...(you.scroll === undefined ? {} : { scroll: { kind: you.scroll.kind } }),
     },
   ));
 
@@ -590,6 +606,7 @@ export function descendThrough(
       stats: { ...you.stats }, maxHp: you.maxHp, xp: state.xp, level: state.level,
       ...(you.gear === undefined ? {} : { gear: { ...you.gear } as Record<string, { kind: string; grants: typeof you.stats }> }),
       ...(you.satchel === undefined ? {} : { satchel: { kinds: you.satchel.map((c) => c.kind) } }),
+      ...(you.scroll === undefined ? {} : { scroll: { kind: you.scroll.kind } }),
     },
   ));
 

@@ -2,14 +2,14 @@ import { emptyLog, append, chain, fold, verifyChain } from '../log/chain.js';
 import { emptyRefs, createRef, getRef, setHead, fork, reset, listRefs } from '../log/refs.js';
 import { createWorld, ratifyRule, foundWorld } from '../core/commands.js';
 import { validateBible, isRefusedBible } from '../canon/bible.js';
-import { smithName, DEFAULT_WORDS, fnv1a } from '../canon/namesmith.js';
+import { smithName, DEFAULT_WORDS, fnv1a, scrollLabel } from '../canon/namesmith.js';
 import { strikeLine, crossings } from './words.js';
 import { storyOf, remember, rememberedOn, epitaphOf, notable } from '../canon/chronicler.js';
 import { SCHEMA_VERSIONS } from '../core/events.js';
-import { playerStep, playerWait, playerUse, playerShove, playerBrace, playerTake, playerVolley, runWorldTurns, buryIfDead, beginAgain, descend, descendThrough, isGrave } from '../play/session.js';
+import { playerStep, playerWait, playerUse, playerShove, playerBrace, playerTake, playerVolley, playerRead, runWorldTurns, buryIfDead, beginAgain, descend, descendThrough, isGrave } from '../play/session.js';
 import { isAlive } from '../core/entity.js';
 import { outcome, hitChance, shotTarget } from '../core/commands.js';
-import { damageDice, XP_TO_REACH, slotFor, critFloor, verbOf, provisionOf, HEART_KIND, SLAM_DAMAGE, VENOM_TURNS, ARMORY, relicGrant } from '../core/tables.js';
+import { damageDice, XP_TO_REACH, slotFor, critFloor, verbOf, provisionOf, HEART_KIND, SLAM_DAMAGE, VENOM_TURNS, ARMORY, relicGrant, scrollOf, SCROLLS } from '../core/tables.js';
 import { itemAt } from '../core/item.js';
 import { save, load, clear, emptySession } from '../play/store.js';
 import {
@@ -422,11 +422,15 @@ function nameWhatIsHere(state: ReturnType<typeof fold>): void {
   // The satchel too. A provision carried from birth was never a floor item,
   // so it alone went unnamed: the first voiced run's starting flare wore its
   // bare kind in the panel while its floor twin had a world-name. Nothing is
-  // more touched than what you carry.
+  // more touched than what you carry. The scroll rides along — its NAME
+  // exists from the start; whether the panel shows it is the chain's say.
   for (const e of state.entities) {
     if (e.kind !== 'you') continue;
     for (const c of e.satchel ?? []) {
       questions.push(describeQuestion('item', c.kind, { ...palette }, root));
+    }
+    if (e.scroll !== undefined) {
+      questions.push(describeQuestion('item', e.scroll.kind, { ...palette }, root));
     }
   }
   oracle.askMany(questions);
@@ -437,9 +441,23 @@ function nameWhatIsHere(state: ReturnType<typeof fold>): void {
  *  satchel goods are 'tool', the heart is only itself. */
 function itemFamily(kind: string, grants: Parameters<typeof slotFor>[1]): string {
   if (kind === HEART_KIND) return 'heart';
+  if (scrollOf(kind) !== undefined) return 'scroll';
   if (provisionOf(kind) !== undefined) return 'tool';
   const slot = slotFor(kind, grants);
   return slot === 'weapon' ? 'blade' : slot === 'sling' ? 'sling' : 'worn';
+}
+
+/**
+ * What a scroll is CALLED right now: the world's own name once any
+ * reading of the kind stands behind this head; the minted label until
+ * then. Derived from the chain, never stored — a rewind un-identifies
+ * exactly, and a fork that never read one still squints at the mark.
+ */
+function scrollShown(kind: string, head: string | null): string {
+  const identified = head !== null
+    && chain(log, head).some((e) => e.type === 'SCROLL_READ' && e.payload.kind === kind);
+  if (identified) return oracle.ask(describeQuestion('item', kind, {}, worldRoot())).name;
+  return `a scroll marked ${scrollLabel(worldRoot(), kind, SCROLLS.map((s) => s.kind))}`;
 }
 
 /** The stats a guise PRETENDS to grant — exactly what the real relic of
@@ -812,9 +830,12 @@ function render(): void {
         cell.classList.add('wall');
       } else if (tile === SECRET) {
         // An illusory wall paints as the wall it pretends to be until the
-        // player has walked through it; after that, a passage, marked so
-        // once found it is never mistaken for wall again.
-        cell.classList.add(fog.revealed.has(at) ? 'passage' : 'wall');
+        // player has walked through it — or the unveiling has named it:
+        // known doors paint as passage though never trodden (they still
+        // occlude sight; you know the door, you cannot see through it).
+        cell.classList.add(fog.revealed.has(at)
+          || state.unveiled.some((u) => idx(state.grid, u.x, u.y) === at)
+          ? 'passage' : 'wall');
       } else if (tile === EXIT) {
         cell.classList.add('exit');
       } else if (prize !== undefined) {
@@ -911,6 +932,8 @@ function render(): void {
     ['satchel', player?.satchel === undefined || player.satchel.length === 0 ? 'empty' : player.satchel.map((c, i) => `${
       oracle.ask(describeQuestion('item', c.kind, {}, worldRoot())).name
     } — ${i === 0 ? 'q' : 'Q'}`).join(' · '), ''],
+    // The scroll hand: label until read, the world's name after — r reads.
+    ['the scroll', player?.scroll === undefined ? 'none' : `${scrollShown(player.scroll.kind, head)} — r`, ''],
     ...(state.smoke !== null && state.turn < state.smoke.until
       ? [['the air', `smoke holds for ${state.smoke.until - state.turn} more turn(s) — hunts chase where you were`, 'good'] as [string, string, string]]
       : []),
@@ -1040,7 +1063,9 @@ function render(): void {
 
   for (const i of state.items) {
     if (!fog.seen.has(idx(state.grid, i.pos.x, i.pos.y))) continue;
-    const called = oracle.ask(describeQuestion('item', i.kind, { grants: i.grants }, worldRoot())).name;
+    const called = scrollOf(i.kind) !== undefined
+      ? scrollShown(i.kind, head)
+      : oracle.ask(describeQuestion('item', i.kind, { grants: i.grants }, worldRoot())).name;
     const li = document.createElement('li');
     li.style.borderLeftColor = 'var(--item)';
     const who = document.createElement('span');
@@ -1448,6 +1473,32 @@ function narrate(fresh: readonly GameEvent[], state: ReturnType<typeof fold>): s
       lines.push(`${named(state, event.payload.entityId)} resumes its vigil — its wounds knit shut`);
       continue;
     }
+    if (event.type === 'SCROLL_READ') {
+      const p = event.payload;
+      // The reading IS the identifying: the name is spoken here first.
+      const truly = oracle.ask(describeQuestion('item', p.kind, {}, worldRoot())).name;
+      const e = p.effect;
+      if (e.kind === 'unveiling') {
+        const doors = e.secrets.length;
+        const marked = e.traps.length;
+        lines.push(`you read ${truly} — the floor confesses: ${doors === 0 ? 'no hidden doors' : `${doors} hidden tile(s) of door`}, ${marked === 0 ? 'no waiting traps' : `${marked} waiting trap(s), marked`}`);
+      } else if (e.kind === 'still hour') {
+        lines.push(e.staggered.length === 0
+          ? `you read ${truly} — the floor holds its breath, and nothing was breathing`
+          : `you read ${truly} — the floor holds its breath: ${e.staggered.length} reel`);
+      } else if (e.kind === 'trap eater') {
+        lines.push(e.eaten.length === 0
+          ? `you read ${truly} — it finds nothing to eat; the page is spent`
+          : `you read ${truly} — it devours ${e.eaten.length} trap(s) within reach`);
+      } else if (e.kind === 'blink') {
+        lines.push(`you read ${truly} — the world folds, and you are elsewhere`);
+      } else {
+        lines.push(e.broken.length === 0
+          ? `you read ${truly} — no wall stands close enough to hear`
+          : `you read ${truly} — ${e.broken.length} wall(s) sing to dust`);
+      }
+      continue;
+    }
     if (event.type === 'TRAP_SENSED') {
       // Only the reveals speak. A failed attempt announcing itself would
       // be the trap detector the roll just refused to be — the misses are
@@ -1686,8 +1737,13 @@ function finish(before: number, head: string): void {
         told.push(`the ${calledItem(underfoot.id, nowHere)} stays where it lies — your satchel is full; type , to swap your first thing out`);
       }
     }
+    // A scroll refused: one hand, already full — the swap key said plainly.
+    if (underfoot !== undefined && scrollOf(underfoot.kind) !== undefined && me.scroll !== undefined) {
+      told.push(`${scrollShown(underfoot.kind, head)} stays where it lies — one scroll is all the hand holds; type , to swap`);
+    }
     if (underfoot !== undefined
-      && provisionOf(underfoot.kind) === undefined && underfoot.kind !== HEART_KIND) {
+      && provisionOf(underfoot.kind) === undefined && scrollOf(underfoot.kind) === undefined
+      && underfoot.kind !== HEART_KIND) {
       const g = underfoot.grants;
       const worn = me.gear?.[slotFor(underfoot.kind, g)];
       const allGeq = (a: typeof g, b: typeof g): boolean =>
@@ -2133,6 +2189,31 @@ function use(slot = 0): void {
   finish(before, after.head);
 }
 
+function read(): void {
+  const head = getRef(refs, active).head;
+  if (head === null) return;
+
+  const state = fold(log, head);
+  const you = state.entities.find((e) => e.kind === 'you');
+  if (you?.scroll === undefined) {
+    say('you carry no scroll');
+    return;
+  }
+  if (you.satchel?.some((c) => c.kind === HEART_KIND) === true) {
+    say('the heart fills your hands — the scroll stays furled');
+    return;
+  }
+
+  const before = chain(log, head).length;
+  const spoken = playerRead({ log, head }, 'player');
+  if (spoken.draft === null) return;
+  const after = runWorldTurns(spoken.position, 'player');
+  log = after.log;
+  refs = setHead(refs, active, after.head);
+
+  finish(before, after.head);
+}
+
 /** Armed by x: the next direction key shoves instead of steps. Any other
  *  key stands down — a mode you can be trapped in is a mode that walks you
  *  into something. */
@@ -2239,7 +2320,8 @@ const KEYMAP: ReadonlyArray<{ shown: string; what: string; button?: string }> = 
   { shown: 'x, then a direction', what: 'shove — drive what stands beside you one pace; walls hurt, bodies tangle' },
   { shown: 'z', what: 'brace — set against the coming round; a blow that misses you staggers' },
   { shown: 'f', what: 'the sling — draw first (a turn, seen by all), loose second; waiting holds the draw' },
-  { shown: ',', what: 'take what is underfoot, deliberately — tradeoffs and downgrades included' },
+  { shown: ',', what: 'take what is underfoot, deliberately — tradeoffs, downgrades and scroll swaps included' },
+  { shown: 'r', what: 'read the carried scroll — a turn, and the page is spent' },
   { shown: 'c', what: 'the witness — speak while you play; the mic listens, stamped to the turn', button: 'witness' },
   { shown: 'PgUp · PgDn', what: 'read back through the journal' },
   { shown: 't', what: 'talk to the gamemaster — your character, in there', button: 'open-talk' },
@@ -2247,7 +2329,9 @@ const KEYMAP: ReadonlyArray<{ shown: string; what: string; button?: string }> = 
   { shown: 'g', what: 'the forge — ask the world for a rule', button: 'open-forge' },
   { shown: 'm', what: 'the gamemaster’s screen — the founding, lenses, rules, names, the ledger', button: 'open-screen' },
   { shown: '1', what: 'in the screen: pick up the designer’s pen' },
-  { shown: 'r', what: 'begin this world again, straight away', button: 'again' },
+  // The r = begin-again proxy is retired: a one-key full run reset was a
+  // footgun, begin-again lives in the world sheet where its warning is —
+  // and r now reads scrolls, a key you press often and gladly.
   { shown: 'v', what: 'verify every hash and counter in the chain', button: 'verify' },
   { shown: 'k', what: 'fork a new timeline from this moment', button: 'fork' },
   { shown: 'b', what: 'rewind 10 events (the log keeps them)', button: 'rewind' },
@@ -2313,6 +2397,12 @@ window.addEventListener('keydown', (event) => {
     event.preventDefault();
     shoveArmed = false;
     use(1);
+    return;
+  }
+  if (event.key === 'r') {
+    event.preventDefault();
+    shoveArmed = false;
+    read();
     return;
   }
   if (event.key === 'x') {

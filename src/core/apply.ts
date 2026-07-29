@@ -1,4 +1,4 @@
-import { makeGrid } from './grid.js';
+import { makeGrid, FLOOR } from './grid.js';
 import { applyResolved } from '../canon/interpret.js';
 import { threatOf, levelForXp, growthAt, slotOf, SLAM_DAMAGE, verbOf, VENOM_TURNS, VENOM_HARM, wearsTrait, sizeStretch } from './tables.js';
 import { NO_BODIES } from './state.js';
@@ -113,6 +113,7 @@ function reduce(state: GameState, event: GameEvent): GameState {
         maxHp: s.id === p.player.id ? (p.playerMaxHp ?? s.stats.hp) : s.stats.hp,
         ...(s.id === p.player.id && p.playerGear !== undefined ? { gear: p.playerGear } : {}),
         ...(s.id === p.player.id && p.playerSatchel !== undefined ? { satchel: p.playerSatchel.kinds.map((k) => ({ kind: k })) } : {}),
+        ...(s.id === p.player.id && p.playerScroll !== undefined ? { scroll: { kind: p.playerScroll.kind } } : {}),
       }));
       return {
         grid: makeGrid(p.width, p.height, p.tiles),
@@ -150,6 +151,7 @@ function reduce(state: GameState, event: GameEvent): GameState {
         smoke: null,
         // The traps as generation laid them (v12), nothing yet known about
         // any of them. Absence reads a trapless floor — every floor before.
+        unveiled: [],
         traps: (p.traps ?? []).map((t) => ({
           id: t.id,
           kind: t.kind,
@@ -261,6 +263,26 @@ function reduce(state: GameState, event: GameEvent): GameState {
             ...(droppedKind === null || item === undefined ? [] : [{
               id: `drop-${p.itemId}`,
               kind: droppedKind,
+              pos: { x: item.pos.x, y: item.pos.y },
+              grants: { hp: 0, might: 0, wits: 0, speed: 0 },
+            }]),
+          ],
+        };
+      }
+
+      // The scroll hand (v5): filled, and any displaced scroll set down
+      // where the new one lay — the satchel swap's law, one hand's worth.
+      if (p.scroll !== undefined) {
+        const swapped = p.scroll.swappedOut;
+        return {
+          ...state,
+          entities: state.entities.map((e) =>
+            e.id === p.entityId ? { ...e, scroll: { kind: item?.kind ?? 'scroll' } } : e),
+          items: [
+            ...state.items.filter((i) => i.id !== p.itemId),
+            ...(swapped === null || item === undefined ? [] : [{
+              id: `drop-${p.itemId}`,
+              kind: swapped,
               pos: { x: item.pos.x, y: item.pos.y },
               grants: { hp: 0, might: 0, wits: 0, speed: 0 },
             }]),
@@ -522,6 +544,58 @@ function reduce(state: GameState, event: GameEvent): GameState {
     // after the last turn a run will ever take. State passes through whole.
     case 'WORLD_REMEMBERED':
       return state;
+
+    case 'SCROLL_READ': {
+      // The scroll leaves the hand whatever it did; the effects were
+      // resolved when the reading happened and apply verbatim forever.
+      const p = event.payload;
+      const unhanded = state.entities.map((e) => {
+        if (e.id !== p.entityId) return e;
+        const { scroll: _spent, ...rest } = e;
+        return rest;
+      });
+      const effect = p.effect;
+      if (effect.kind === 'unveiling') {
+        return {
+          ...state,
+          entities: unhanded,
+          unveiled: [...state.unveiled, ...effect.secrets.map((s) => ({ x: s.x, y: s.y }))],
+          traps: state.traps.map((t) => (effect.traps.includes(t.id) ? { ...t, revealed: true } : t)),
+        };
+      }
+      if (effect.kind === 'still hour') {
+        const reeling = new Set(effect.staggered);
+        return {
+          ...state,
+          entities: unhanded.map((e) => (reeling.has(e.id) ? { ...e, tags: staggered(e.tags) } : e)),
+        };
+      }
+      if (effect.kind === 'trap eater') {
+        return {
+          ...state,
+          entities: unhanded,
+          traps: state.traps.map((t) => (effect.eaten.includes(t.id) ? { ...t, revealed: true, sprung: true } : t)),
+        };
+      }
+      if (effect.kind === 'blink') {
+        return {
+          ...state,
+          entities: unhanded.map((e) => (e.id === p.entityId ? { ...e, pos: { x: effect.to.x, y: effect.to.y } } : e)),
+        };
+      }
+      // Stone song: the enumerated walls become floor. Only ever ADDS
+      // ground, so total-reachability (M5) cannot break — the grid is
+      // rebuilt because grids are frozen, like every honest copy here.
+      const tiles = [...state.grid.tiles];
+      for (const b of effect.broken) {
+        tiles[b.y * state.grid.width + b.x] = FLOOR;
+      }
+      return {
+        ...state,
+        entities: unhanded,
+        grid: makeGrid(state.grid.width, state.grid.height, tiles),
+      };
+    }
 
     case 'TRAP_SENSED': {
       // The chance is spent whether it was taken: the flags are what stop

@@ -774,6 +774,56 @@ export function smokeTurns(depth: number): number {
 export const BOT_QUAFF_BELOW = 0.35;
 export const BOT_SMOKE_WITHIN = 3;
 
+/* ── scrolls ─────────────────────────────────────────────────────────────── */
+
+/**
+ * The scrolls: one carried at a time, read with r, spent by the reading.
+ * Every kind buys knowledge, position or time — never damage (the
+ * designer already felt overpowered; the scroll school is Brogue's
+ * knowledge-not-power lineage, and the compass in the designer's own
+ * hide-and-seek: found information as a consumable). Unread, a scroll
+ * wears a world-minted label; the first reading identifies the kind for
+ * that world forever — derived from the chain, never stored.
+ */
+export interface Scroll {
+  readonly kind: string;
+  readonly weight: number;
+  readonly fromDepth?: number;
+}
+
+export const SCROLLS: readonly Scroll[] = Object.freeze([
+  // Knowledge whole: every secret door and every trap on the floor.
+  Object.freeze({ kind: 'scroll of unveiling', weight: 3, fromDepth: 2 }),
+  // Time: every hostile on the floor spends its next action reeling —
+  // the burr's law at the floor's scale.
+  Object.freeze({ kind: 'scroll of the still hour', weight: 2, fromDepth: 2 }),
+  // The counter-trap: eats every trap within reach of walking.
+  Object.freeze({ kind: 'scroll of the trap eater', weight: 2, fromDepth: 3 }),
+  // Position: a drawn tile clear of every hostile swallows you.
+  Object.freeze({ kind: 'scroll of the blink step', weight: 2, fromDepth: 3 }),
+  // The walls within reach sing to dust — wall becomes floor; the border,
+  // the way out and the secrets keep their shapes. Only ever ADDS ground,
+  // so reachability cannot break.
+  Object.freeze({ kind: 'scroll of stone song', weight: 1, fromDepth: 4 }),
+]);
+
+export function scrollOf(kind: string): Scroll | undefined {
+  return SCROLLS.find((s) => s.kind === kind);
+}
+
+export function scrollsAt(depth: number): readonly Scroll[] {
+  return SCROLLS.filter((s) => (s.fromDepth ?? 1) <= depth);
+}
+
+/** How often a floor lays a scroll: 1 in this, from depth 2. */
+export const SCROLL_IN = 3;
+/** The blink's clearance: steps of walking from every living hostile. */
+export const BLINK_CLEAR = 4;
+/** Stone song's reach, in tiles around the reader. */
+export const SUNDER_RADIUS = 2;
+/** The trap eater's reach, in steps of walking. */
+export const TRAP_EATER_REACH = 3;
+
 /* ── traps ───────────────────────────────────────────────────────────────── */
 
 /**

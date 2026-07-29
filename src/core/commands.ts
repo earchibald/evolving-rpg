@@ -3,11 +3,11 @@ import { inBounds, isPassable } from './grid.js';
 import { findEntity, isAlive } from './entity.js';
 import { intBetween } from './rng.js';
 import { clearShot, withinReach } from './sight.js';
-import { neededToHit, chanceIn20, damageDice, critFloor, WHIFF, BESTIARY, creatureStats, threatOf, spawnBudget, depthBands, wardenAt, ARMORY, relicGrant, slotFor, RELIC_TRAITS, motifAt, verbOf, wardenLevel, AMBUSH_MIGHT_BONUS, AMBUSH_FROM_DEPTH, braceWall, CALL_RISERS, CALL_DISTANCE, dominates, wearsTrait, FLARE_RADIUS, provisionsAt, provisionOf, draughtCeiling, smokeTurns, BOTTOM_DEPTH, HEART_KIND, WAVE_DISTANCE, SHOT_RANGE, sizeStretch, MAX_BOARD_DIM, WANDER_FROM_DEPTH, ROUTE_STOPS, MIMIC_IN, MIMIC_FROM_DEPTH, mimicGuises, sightAt, trapOf, trapKindsAt, trapCount, trapLevelAt, TRAP_SIGHT_NEED, TRAP_NEAR_NEED, TRAP_DODGE_NEED, TRAP_NEAR_RADIUS, SPIKE_DIE, NEEDLE_VENOM_TURNS, SNARE_TURNS, ALARM_TURNS, MAW_DIE, MAW_FLAT, HATCH_BAND } from './tables.js';
+import { neededToHit, chanceIn20, damageDice, critFloor, WHIFF, BESTIARY, creatureStats, threatOf, spawnBudget, depthBands, wardenAt, ARMORY, relicGrant, slotFor, RELIC_TRAITS, motifAt, verbOf, wardenLevel, AMBUSH_MIGHT_BONUS, AMBUSH_FROM_DEPTH, braceWall, CALL_RISERS, CALL_DISTANCE, dominates, wearsTrait, FLARE_RADIUS, provisionsAt, provisionOf, draughtCeiling, smokeTurns, BOTTOM_DEPTH, HEART_KIND, WAVE_DISTANCE, SHOT_RANGE, sizeStretch, MAX_BOARD_DIM, WANDER_FROM_DEPTH, ROUTE_STOPS, MIMIC_IN, MIMIC_FROM_DEPTH, mimicGuises, sightAt, trapOf, trapKindsAt, trapCount, trapLevelAt, TRAP_SIGHT_NEED, TRAP_NEAR_NEED, TRAP_DODGE_NEED, TRAP_NEAR_RADIUS, SPIKE_DIE, NEEDLE_VENOM_TURNS, SNARE_TURNS, ALARM_TURNS, MAW_DIE, MAW_FLAT, HATCH_BAND, scrollOf, scrollsAt, SCROLL_IN, BLINK_CLEAR, SUNDER_RADIUS, TRAP_EATER_REACH } from './tables.js';
 import type { Relic } from './tables.js';
 import type { Entity, Stats, Pos } from './entity.js';
 import { itemAt } from './item.js';
-import { EXIT, SECRET, tileAt, idx } from './grid.js';
+import { EXIT, SECRET, WALL, tileAt, idx } from './grid.js';
 import { nextActive } from './turns.js';
 import { MAX_RULES } from '../canon/rule.js';
 import type { Rule } from '../canon/rule.js';
@@ -128,6 +128,7 @@ export interface CarriedPlayer {
   level: number;
   gear?: Record<string, { kind: string; grants: Stats }>;
   satchel?: { kinds: readonly string[] };
+  scroll?: { kind: string };
 }
 
 /**
@@ -500,6 +501,42 @@ export function createWorld(
     }
   }
 
+  // A scroll on the floor (v13): 1 floor in SCROLL_IN from depth 2, laid
+  // on a drawn free tile, visible like every floor item — what the floor
+  // owns is visible; the scroll's secret is its KIND, not its place.
+  let scrollLaid: { id: string; kind: string; pos: Pos; grants: Stats } | null = null;
+  if (depth >= 2 && scrollsAt(depth).length > 0) {
+    const roll = intBetween(seed, after, 1, SCROLL_IN); after += 1;
+    if (roll === 1) {
+      const shelf = scrollsAt(depth);
+      const total = shelf.reduce((n, s) => n + s.weight, 0);
+      let pick = intBetween(seed, after, 1, total); after += 1;
+      let chosen = shelf[0]!;
+      for (const s of shelf) {
+        pick -= s.weight;
+        if (pick <= 0) { chosen = s; break; }
+      }
+      const spots = pickSpawnPoints(seed, after, grid, generated.start, 4, OPPONENT_MIN_DISTANCE);
+      after = spots.counterAfter;
+      const held = (p: { x: number; y: number }): boolean =>
+        spawned.points.some((q) => q.x === p.x && q.y === p.y)
+        || (keeperTile !== undefined && p.x === keeperTile.x && p.y === keeperTile.y)
+        || (p.x === exit.x && p.y === exit.y)
+        || (p.x === far.x && p.y === far.y)
+        || (mimicSeed !== null && p.x === mimicSeed.pos.x && p.y === mimicSeed.pos.y)
+        || trapSeeds.some((t) => t.pos.x === p.x && t.pos.y === p.y);
+      const tile = spots.points.find((p) => !held(p));
+      if (tile !== undefined) {
+        scrollLaid = {
+          id: 'scroll-1',
+          kind: chosen.kind,
+          pos: { x: tile.x, y: tile.y },
+          grants: { hp: 0, might: 0, wits: 0, speed: 0 },
+        };
+      }
+    }
+  }
+
   // The floor's whole account, recorded where facts live — covenant L1: the
   // shape, the journey, the rent and what it bought, who watches the door,
   // what lies guarded. This is the generation reasoning chain, in the event,
@@ -548,6 +585,7 @@ export function createWorld(
       ...(carried === undefined ? {} : { playerMaxHp: carried.maxHp }),
       ...(carried?.gear === undefined ? {} : { playerGear: carried.gear }),
       ...(carried?.satchel === undefined ? {} : { playerSatchel: { kinds: [...carried.satchel.kinds] } }),
+      ...(carried?.scroll === undefined ? {} : { playerScroll: { kind: carried.scroll.kind } }),
       items: [
         ...relics.map((r, i) => ({
           id: `relic-${String(i + 1)}`,
@@ -569,6 +607,7 @@ export function createWorld(
           pos: { x: far.x, y: far.y },
           grants: { hp: 0, might: 0, wits: 0, speed: 0 },
         }] : []),
+        ...(scrollLaid === null ? [] : [scrollLaid]),
       ],
       player: {
         id: playerId,
@@ -1374,6 +1413,31 @@ export function takeUnderfoot(
     };
   }
 
+  // The scroll hand (v13): one carried. Walking fills an empty hand; a
+  // held scroll refuses the walk-over (the view says so) and the , key
+  // swaps — the satchel's law, one hand's worth. The heart fills your
+  // hands entirely: no scroll joins the carry.
+  if (scrollOf(item.kind) !== undefined) {
+    if (taker.satchel?.some((s) => s.kind === HEART_KIND) === true) return null;
+    if (taker.scroll === undefined) {
+      return {
+        type: 'ITEM_TAKEN',
+        schemaVersion: SCHEMA_VERSIONS.ITEM_TAKEN,
+        rngCounter: state.rngCounter,
+        rngDraws: 0,
+        payload: { entityId, itemId: item.id, grants: { ...item.grants }, scroll: { swappedOut: null } },
+      };
+    }
+    if (!deliberate) return null;
+    return {
+      type: 'ITEM_TAKEN',
+      schemaVersion: SCHEMA_VERSIONS.ITEM_TAKEN,
+      rngCounter: state.rngCounter,
+      rngDraws: 0,
+      payload: { entityId, itemId: item.id, grants: { ...item.grants }, scroll: { swappedOut: taker.scroll.kind } },
+    };
+  }
+
   // Walking takes only what DOMINATES — at least as good on every axis,
   // better in total. A tradeoff relic (the heavy edge's speed for its blow)
   // is incomparable by construction, so it waits on the floor for a chosen
@@ -1532,6 +1596,116 @@ export function useCarried(
       slot,
       effect: { kind: 'smoke', until: state.turn + smokeTurns(state.depth), at: { x: user.pos.x, y: user.pos.y }, unfooled },
     },
+  };
+}
+
+/**
+ * The scroll spent by the reading. Effects resolve HERE and record whole
+ * (M4): the unveiling enumerates, the still hour lists who reels, the
+ * eater names what it ate, the blink draws its landing, the song counts
+ * its broken walls. Null when no scroll is held — or while the heart is:
+ * the world's ending fills both hands, and the ending will not be
+ * trivialized by a pocketful of elsewhere.
+ */
+export function readScroll(state: GameState, entityId: string): Extract<DraftEvent, { type: 'SCROLL_READ' }> | null {
+  const reader = findEntity(state.entities, entityId);
+  if (reader === undefined || !isAlive(reader)) return null;
+  if (reader.satchel?.some((c) => c.kind === HEART_KIND) === true) return null;
+  const kind = reader.scroll?.kind;
+  if (kind === undefined || scrollOf(kind) === undefined) return null;
+
+  let c = state.rngCounter;
+  const effect = ((): Extract<DraftEvent, { type: 'SCROLL_READ' }>['payload']['effect'] => {
+    if (kind === 'scroll of unveiling') {
+      const secrets: Pos[] = [];
+      for (let y = 0; y < state.grid.height; y += 1) {
+        for (let x = 0; x < state.grid.width; x += 1) {
+          if (tileAt(state.grid, x, y) === SECRET) secrets.push({ x, y });
+        }
+      }
+      return {
+        kind: 'unveiling',
+        secrets,
+        traps: state.traps.filter((t) => !t.revealed && !t.sprung).map((t) => t.id),
+      };
+    }
+    if (kind === 'scroll of the still hour') {
+      // Everything hostile and breathing reels — except the hidden mimic,
+      // furniture to this tool like every other (naming it would be the
+      // detector the guise forbids).
+      return {
+        kind: 'still hour',
+        staggered: state.entities
+          .filter((e) => e.id !== entityId && isAlive(e) && isHostile(reader, e) && !e.tags.includes('hidden'))
+          .map((e) => e.id),
+      };
+    }
+    if (kind === 'scroll of the trap eater') {
+      return {
+        kind: 'trap eater',
+        eaten: state.traps
+          .filter((t) => !t.sprung && walkDistance(state.grid, reader.pos, t.pos) <= TRAP_EATER_REACH)
+          .map((t) => t.id),
+      };
+    }
+    if (kind === 'scroll of the blink step') {
+      // A drawn tile at least BLINK_CLEAR steps of walking from every
+      // living hostile: multi-source flood from the hostiles marks the
+      // forbidden ground, one draw picks from what remains. A floor with
+      // nowhere clear leaves you standing — a spent page, honestly.
+      const forbidden = new Set<number>();
+      const frontier: Array<{ x: number; y: number; d: number }> = [];
+      for (const e of state.entities) {
+        if (e.id === entityId || !isAlive(e) || !isHostile(reader, e)) continue;
+        frontier.push({ x: e.pos.x, y: e.pos.y, d: 0 });
+        forbidden.add(idx(state.grid, e.pos.x, e.pos.y));
+      }
+      while (frontier.length > 0) {
+        const here = frontier.shift()!;
+        if (here.d >= BLINK_CLEAR) continue;
+        for (const [nx, ny] of [[here.x + 1, here.y], [here.x - 1, here.y], [here.x, here.y + 1], [here.x, here.y - 1]] as const) {
+          if (!isPassable(state.grid, nx, ny)) continue;
+          const key = idx(state.grid, nx, ny);
+          if (forbidden.has(key)) continue;
+          forbidden.add(key);
+          frontier.push({ x: nx, y: ny, d: here.d + 1 });
+        }
+      }
+      const candidates: Pos[] = [];
+      for (let y = 0; y < state.grid.height; y += 1) {
+        for (let x = 0; x < state.grid.width; x += 1) {
+          if (!isPassable(state.grid, x, y)) continue;
+          if (tileAt(state.grid, x, y) === EXIT) continue;
+          if (forbidden.has(idx(state.grid, x, y))) continue;
+          if (state.entities.some((e) => isAlive(e) && e.pos.x === x && e.pos.y === y)) continue;
+          candidates.push({ x, y });
+        }
+      }
+      if (candidates.length === 0) return { kind: 'blink', to: { x: reader.pos.x, y: reader.pos.y } };
+      const at = intBetween(state.seed, c, 0, candidates.length - 1); c += 1;
+      return { kind: 'blink', to: candidates[at]! };
+    }
+    // Stone song: the walls within the disc sing to dust. The border, the
+    // way out and the secrets keep their shapes; only plain wall breaks.
+    const broken: Pos[] = [];
+    for (let y = Math.max(1, reader.pos.y - SUNDER_RADIUS); y <= Math.min(state.grid.height - 2, reader.pos.y + SUNDER_RADIUS); y += 1) {
+      for (let x = Math.max(1, reader.pos.x - SUNDER_RADIUS); x <= Math.min(state.grid.width - 2, reader.pos.x + SUNDER_RADIUS); x += 1) {
+        const dx = x - reader.pos.x;
+        const dy = y - reader.pos.y;
+        if (dx * dx + dy * dy > SUNDER_RADIUS * SUNDER_RADIUS + SUNDER_RADIUS) continue;
+        if (tileAt(state.grid, x, y) !== WALL) continue;
+        broken.push({ x, y });
+      }
+    }
+    return { kind: 'stone song', broken };
+  })();
+
+  return {
+    type: 'SCROLL_READ',
+    schemaVersion: SCHEMA_VERSIONS.SCROLL_READ,
+    rngCounter: state.rngCounter,
+    rngDraws: c - state.rngCounter,
+    payload: { entityId, kind, effect },
   };
 }
 

@@ -67,6 +67,10 @@ export interface GameState {
   /** The alarm ringing: until this turn, every hunt ignores its awareness
    *  cap — the floor knows where you are. Null is quiet. */
   readonly alarm: { readonly until: number } | null;
+  /** Secret doors the unveiling has named (SCROLL_READ): known but not
+   *  yet walked — painted as passage, still occluding sight until trodden
+   *  (you know the door is there; you cannot see through it). */
+  readonly unveiled: readonly Pos[];
 }
 
 const NO_ENTITIES: readonly Entity[] = Object.freeze([]);
@@ -98,4 +102,5 @@ export const EMPTY_STATE: GameState = Object.freeze({
   smoke: null,
   traps: NO_TRAPS,
   alarm: null,
+  unveiled: NO_BODIES,
 });
