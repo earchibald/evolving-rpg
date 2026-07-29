@@ -110,6 +110,16 @@ export function meanDamage(might: number): number {
  */
 export const XP_TO_REACH: readonly number[] = Object.freeze([0, 0, 16, 40, 72, 112, 160, 224, 304, 400]);
 
+/** The XP that reaches a level, on this board — the ONE place the ladder
+ *  wears the stretch. The readout and the reducer both ask here, because
+ *  they once disagreed in front of the designer: the vitals row read the
+ *  raw table and promised "22/16 xp" at level 1 on the expanse while the
+ *  engine, lawfully, held out for 24. Undefined past the table's end. */
+export function xpToReach(level: number, stretch = 1): number | undefined {
+  const raw = XP_TO_REACH[level];
+  return raw === undefined ? undefined : Math.round(raw * bountyStretch(stretch));
+}
+
 export function levelForXp(xp: number, stretch = 1): number {
   // The BOUNTY scales the thresholds — the same factor the spawn budget
   // carries (threat in, XP out: one number or the symmetry breaks), so
@@ -117,10 +127,9 @@ export function levelForXp(xp: number, stretch = 1): number {
   // threshold is even, so the 1.5× expanse ladder stays integer-exact.
   // Derived from the grid's own dims at apply time — never evented, so
   // the log and the level still cannot disagree.
-  const b = bountyStretch(stretch);
   let level = 1;
   for (let l = XP_TO_REACH.length - 1; l >= 1; l -= 1) {
-    if (xp >= Math.round(XP_TO_REACH[l]! * b)) { level = l; break; }
+    if (xp >= xpToReach(l, stretch)!) { level = l; break; }
   }
   return level;
 }

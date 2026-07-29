@@ -9,7 +9,7 @@ import { SCHEMA_VERSIONS } from '../core/events.js';
 import { playerStep, playerWait, playerUse, playerShove, playerBrace, playerTake, playerVolley, playerRead, runWorldTurns, buryIfDead, beginAgain, descend, descendThrough, isGrave } from '../play/session.js';
 import { isAlive } from '../core/entity.js';
 import { outcome, hitChance, shotTarget } from '../core/commands.js';
-import { damageDice, XP_TO_REACH, slotFor, critFloor, verbOf, provisionOf, HEART_KIND, SLAM_DAMAGE, VENOM_TURNS, ARMORY, relicGrant, scrollOf, SCROLLS } from '../core/tables.js';
+import { damageDice, xpToReach, sizeStretch, slotFor, critFloor, verbOf, provisionOf, HEART_KIND, SLAM_DAMAGE, VENOM_TURNS, ARMORY, relicGrant, scrollOf, SCROLLS } from '../core/tables.js';
 import { itemAt } from '../core/item.js';
 import { save, load, clear, emptySession } from '../play/store.js';
 import {
@@ -923,7 +923,10 @@ function render(): void {
     ['this run', done, done === 'dead' ? 'urgent' : done === 'escaped' || done === 'won' ? 'good' : ''],
     ['hit points', player === undefined ? '—' : `${player.stats.hp} / ${player.maxHp}`, hurt ? 'urgent' : ''],
     ['level', (() => {
-      const next = XP_TO_REACH[state.level + 1];
+      // The ladder wears the board's stretch (xpToReach, the reducer's own
+      // gate) — the raw table once promised 16 here while the expanse
+      // lawfully held out for 24, in front of the designer.
+      const next = xpToReach(state.level + 1, sizeStretch(state.grid.width, state.grid.height));
       return next === undefined ? `${state.level} · ${state.xp} xp` : `${state.level} · ${state.xp}/${next} xp`;
     })(), ''],
     ['you deal', player === undefined ? '—' : (() => { const d = damageDice(player.stats.might); return `${1 + d.flat}–${d.die + d.flat}`; })(), ''],

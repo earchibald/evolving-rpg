@@ -1,4 +1,4 @@
-import { sizeStretch, spawnBudget, levelForXp, MAX_BOARD_DIM } from '../../src/core/tables.js';
+import { sizeStretch, spawnBudget, levelForXp, xpToReach, MAX_BOARD_DIM } from '../../src/core/tables.js';
 import { createWorld } from '../../src/core/commands.js';
 import { generateMap } from '../../src/core/mapgen.js';
 import { apply } from '../../src/core/apply.js';
@@ -62,6 +62,21 @@ describe('the board stretches', () => {
     }
     const vale = seeds.flatMap((s) => createWorld(s, VALE.width, VALE.height).payload.opponents);
     expect(vale.some((o) => !o.kind.startsWith('skirmisher'))).toBe(true);
+  });
+
+  it('the readout and the reducer share one ladder — xpToReach wears the stretch', () => {
+    // The vitals row once read the raw table and told an expanse player
+    // "22/16 xp" at level 1 (the designer's filing, 2026-07-29): the
+    // engine levelled at 24, the view promised 16. One helper now, so
+    // the two cannot drift.
+    expect(xpToReach(2)).toBe(16);
+    expect(xpToReach(2, 2)).toBe(24);
+    expect(xpToReach(2, 3)).toBe(32);
+    expect(xpToReach(3, 2)).toBe(60);
+    expect(xpToReach(99, 2)).toBeUndefined();
+    // The helper IS levelForXp's own gate, proven at the boundary.
+    expect(levelForXp(xpToReach(2, 2)! - 1, 2)).toBe(1);
+    expect(levelForXp(xpToReach(2, 2)!, 2)).toBe(2);
   });
 
   it('stretches the XP ladder by the same bounty — threat in, XP out, one factor', () => {

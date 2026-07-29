@@ -1480,3 +1480,21 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > 968 tests, typecheck clean, no schema, no golden ceremony — the vale
 > never moved. Wipe into a fresh expanse when you want to feel it: the
 > door should be busy now.
+
+## 2026-07-29 — 15:47 — the readout learns the ladder it already climbs
+
+> Dear Designer,
+>
+> You caught the vitals row lying: "level 1 · 22/16 xp". The engine was
+> lawful — on the expanse the ladder stretches with the board, and
+> level 2 costs 24, not 16 — but the readout was quoting the vale's
+> raw table at an expanse player. The same disease as the morning's
+> pickup line: the view deriving what the engine already knows.
+>
+> One helper now (xpToReach), and it IS the reducer's own gate — the
+> level-up comparison and the vitals row ask the same function, so
+> they cannot drift apart again. Proven at the boundary in tests
+> (23 xp is level 1 on the expanse, 24 is level 2) and live in your
+> own world's copy: the row reads n/24 there now.
+>
+> 969 tests, typecheck clean. One row, one law, one source.
