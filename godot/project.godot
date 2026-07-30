@@ -17,7 +17,6 @@ config/features=PackedStringArray("4.6")
 
 [autoload]
 
-; The chain, and the only writer to it. Every stage node reads through this.
 Chronicle="*res://autoload/Chronicle.gd"
 
 [rendering]
