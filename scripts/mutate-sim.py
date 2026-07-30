@@ -454,6 +454,104 @@ MUTATIONS: dict[str, tuple[str, str, str]] = {
         "\tvar next: int = (at + 1) % order.size()",
         "\tvar next: int = (at + 1) % entities.size()",
     ),
+    # --- Task 2.E2: ai.gd, the brain. decide()'s answer becomes a recorded
+    # event, so every row below is a different GAME, not a different number.
+    # The golden run never witnesses a decision at all (it replays events that
+    # were already decided), so these four rows plus test_ai.gd and
+    # test_dispositions.gd are the entire witness for this file. ---
+    # Raises the awareness wall by one step — the mutation Task 2.E2's brief
+    # makes mandatory. MEASURED TWICE, and the first measurement is the
+    # interesting one: against the SIXTEEN PORTED REFERENCE CASES ALONE this
+    # mutation is a NULL RESULT — 27 scripts, 344 tests, all passing, exit 0.
+    # ai.test.ts writes both of its awareness cases as offsets FROM the
+    # constant (`you(5 + AWARENESS + 1, 5)` and `you(5 + AWARENESS, 5)`), so
+    # raising AWARENESS moves their quarry with it and the wall is never
+    # actually located. The brief's "confirm failure" was therefore
+    # unsatisfiable as the reference suite stood. test_ai.gd's
+    # test_the_awareness_wall_stands_at_exactly_eight_walking_steps was added
+    # to close that, spelling the distance in literal tiles; with it present,
+    # MEASURED: exactly 1 test fails, on its second assertion ("nine steps
+    # away: beyond the wall of awareness"), and nothing else in 344 does.
+    "ai-awareness-plus-one": (
+        "godot/sim/ai.gd",
+        "const AWARENESS := 8",
+        "const AWARENESS := 9",
+    ),
+    # Re-anchors the posted guard's leash to WHEREVER THE CHASE HAS DRAGGED IT
+    # instead of to its post — the exact mistake ai.ts's own v10 comment warns
+    # against by name ("the leash anchored to the POST, not to wherever the
+    # chase has dragged it"). A displaced guard would then hunt anything that
+    # walked up to it and never go home, which is the pre-v10 world the
+    # disposition was introduced to end. MEASURED: exactly 1 test fails,
+    # test_dispositions.gd's
+    # test_ignores_prey_beyond_the_leash_of_its_post_even_prey_at_arms_reach_
+    # and_walks_home — the guard strikes the adjacent player instead of
+    # turning west for its post. That case is one of the six this task adopted
+    # out of the eleven Task 2.C1 had to defer, and it is the ONLY witness
+    # anywhere for which end of the leash is nailed down.
+    "ai-guard-leash-anchored-to-self": (
+        "godot/sim/ai.gd",
+        '\t\tvar intruder_near: bool = _walk_distance(grid, post, scent) <= SimTables.GUARD_LEASH',
+        '\t\tvar intruder_near: bool = _walk_distance(grid, my_pos, scent) <= SimTables.GUARD_LEASH',
+    ),
+    # Moves _first_step's bounds check BELOW the key and the goal test, which
+    # revives the LATENT HUNT BUG NIGHTLOG records against ai.ts's own
+    # firstStep: idx() is plain y*width+x, so one column east of the map is
+    # the next row's west door by arithmetic, and a quarry standing at x=0
+    # reads as reachable one step EAST off the world. The reference found and
+    # fixed this (borderless volley test grids exposed it; walled borders had
+    # been hiding it), and Task 2.D2 pinned the same shape in reachability.gd
+    # with the sibling row "reach-bounds-before-key".
+    # MEASURED: exactly 1 test fails, and it is the one with no counterpart in
+    # the reference — test_a_quarry_off_the_east_edge_is_never_smelled_
+    # through_the_wrap. ALL SIXTEEN ported ai.test.ts cases are blind to it:
+    # every grid in that file is borderless, so the wrap is live in all of
+    # them, but no case ever stands the quarry on column 0, which is the only
+    # place the wrapped key lands. That is precisely why the guard was added.
+    "ai-first-step-key-before-bounds": (
+        "godot/sim/ai.gd",
+        "\t\t\t\tif x < 0 or y < 0 or x >= width or y >= height:\n"
+        "\t\t\t\t\tcontinue\n"
+        "\t\t\t\tvar k: int = SimGrid.idx(grid, x, y)\n"
+        "\t\t\t\tif seen.has(k):\n"
+        "\t\t\t\t\tcontinue\n"
+        "\t\t\t\tseen[k] = true\n"
+        "\t\t\t\tvar first: Variant = at[2]\n"
+        "\t\t\t\tif first == null:\n"
+        '\t\t\t\t\tfirst = {"dx": int(d[0]), "dy": int(d[1])}\n'
+        "\t\t\t\tif k == goal_key:\n"
+        "\t\t\t\t\treturn first",
+        "\t\t\t\tvar k: int = SimGrid.idx(grid, x, y)\n"
+        "\t\t\t\tif seen.has(k):\n"
+        "\t\t\t\t\tcontinue\n"
+        "\t\t\t\tseen[k] = true\n"
+        "\t\t\t\tvar first: Variant = at[2]\n"
+        "\t\t\t\tif first == null:\n"
+        '\t\t\t\t\tfirst = {"dx": int(d[0]), "dy": int(d[1])}\n'
+        "\t\t\t\tif k == goal_key:\n"
+        "\t\t\t\t\treturn first\n"
+        "\t\t\t\tif x < 0 or y < 0 or x >= width or y >= height:\n"
+        "\t\t\t\t\tcontinue",
+    ),
+    # Stops a wanderer's round from yielding a blocked waypoint to the next
+    # stop, so a body standing on its own goal — or one whose goal another
+    # body is parked on — jams on its own doorstep instead of walking on.
+    # NOTE for future editors: the tempting mutant here is reversing the
+    # round's direction ((leg + 1) -> (leg - 1 + n)), but every route in the
+    # ported suite has exactly TWO stops, where those two expressions are
+    # arithmetically identical — an EQUIVALENT REWRITE, and a null result
+    # dressed as a proof. This mutant removes the fallback instead.
+    # MEASURED: exactly 2 tests fail, both adopted from
+    # dispositions.test.ts — test_standing_on_its_own_goal_it_heads_for_the_
+    # next_stop_rather_than_stalling (the walker waits instead of stepping,
+    # because _first_step from a tile to itself is null) and test_a_goal_
+    # another_body_is_parked_on_yields_to_the_next_stop (it walks WEST toward
+    # the taken stop instead of east to the free one).
+    "ai-wander-round-never-yields": (
+        "godot/sim/ai.gd",
+        "\t\t\tgoal = route[(leg + 1) % route.size()]",
+        "\t\t\tpass  # MUTATED: the round never yields, it jams on its own doorstep",
+    ),
 }
 
 if len(sys.argv) > 1 and sys.argv[1] == "--list":

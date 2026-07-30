@@ -4,28 +4,27 @@ extends GutTest
 ## REDUCER rather than the brain — a wanderer's `leg` advancing when a step
 ## lands on a waypoint (apply.gd's MOVE case, apply.ts:242-249).
 ##
-## Only that one case ports today. The reference's other eleven drive
-## `decide()` (src/core/ai.ts) or `createWorld()` (src/core/commands.ts), and
-## neither has a GDScript body yet: `sim/ai.gd` is Task 2.E2, and
-## `sim/commands/movement.gd` (createWorld's new home) is Task 2.E3a — both
-## Wave E, both BLOCKED BY this task rather than the reverse. Porting their
-## assertions now would mean hand-rolling the very functions those tasks
-## exist to write, which is a redundant reducer wearing a test's clothes, not
-## a test. The numeric tables they will need — GUARD_LEASH, ROUTE_STOPS — are
-## already ported (tables.gd:250, 269); only the two decision functions
-## themselves are missing.
+## When Task 2.C1 ported this file only that one reducer case could land: the
+## other eleven drive `decide()` (src/core/ai.ts) or `createWorld()`
+## (src/core/commands.ts), and neither had a GDScript body yet. **Task 2.E2
+## has since shipped `sim/ai.gd`, and ADOPTS the six `decide()` cases that
+## were deferred to it** — describe('the guard') whole, and
+## describe('the wanderer') other than the reducer case. They live here
+## rather than in test_ai.gd because they are this reference file's cases and
+## reuse its corridor; test_ai.gd's own header names them as adopted so the
+## two ledgers agree. Five remain deferred, all to Task 2.E3a: `createWorld()`
+## still has no GDScript body (`sim/commands/movement.gd`).
 ##
-## 12 = 1 ported + 11 deferred. Reference line numbers below are
+## 12 = 7 ported + 5 deferred. Reference line numbers below are
 ## tests/core/dispositions.test.ts at ts-baseline.
 ##
-## PORTED
+## PORTED by Task 2.C1
 ##   :103 "the reducer advances the leg when a step lands on a waypoint — any
 ##        waypoint, forward only" — drives SimApply.apply directly against a
 ##        hand-built state and a hand-built MOVE event; no decide(), no
 ##        createWorld().
 ##
-## DEFERRED to Task 2.E2 (sim/ai.gd, decide()) — describe('the guard') whole,
-## and describe('the wanderer') other than the case ported above:
+## PORTED by Task 2.E2 (adopted with sim/ai.gd's decide())
 ##   :52  "ignores prey beyond the leash of its post — even prey at arm's
 ##        reach — and walks home"
 ##   :64  "hunts what comes inside the leash, and rests at its post when the
@@ -116,6 +115,66 @@ func _move_to(state: Dictionary, id: String, to: Dictionary) -> Dictionary:
 		{"entityId": id, "from": {"x": 0, "y": 0}, "to": to})
 
 
+## The reference's `round`, a two-stop patrol declared once at describe scope.
+## Rebuilt fresh per call rather than held in a `const`, which Godot 4 makes
+## read-only — the same reasoning test_sight.gd's `_open()` records.
+func _round() -> Array:
+	return [{"x": 4, "y": 1}, {"x": 20, "y": 1}]
+
+
+# ── the guard ───────────────────────────────────────────────────────────────
+
+
+func test_ignores_prey_beyond_the_leash_of_its_post_even_prey_at_arms_reach_and_walks_home() -> void:
+	# Displaced to x=13 with its post at x=8; the player stands ADJACENT at
+	# x=14, but the post reads the leash and the player is 6 from it. The
+	# old stillness would have struck; the guard turns for home instead.
+	var state: Dictionary = _corridor([
+		_being("g", 13, {"disposition": "guard", "post": {"x": 8, "y": 1}}),
+		_you(14),
+	])
+	assert_gt(14 - 8, SimTables.GUARD_LEASH)
+	assert_eq(SimAi.decide(state, "g"), {"kind": "step", "dx": -1, "dy": 0})
+
+
+func test_hunts_what_comes_inside_the_leash_and_rests_at_its_post_when_the_floor_is_quiet() -> void:
+	# The player 3 from the post: inside the leash, ordinary hunt.
+	var hunting: Dictionary = _corridor([
+		_being("g", 8, {"disposition": "guard", "post": {"x": 8, "y": 1}}),
+		_you(11),
+	])
+	assert_eq(SimAi.decide(hunting, "g"), {"kind": "step", "dx": 1, "dy": 0})
+
+	# Home, leash empty: it stands. (The old behavior also stood here —
+	# what changed is only ever the walk back.)
+	var quiet: Dictionary = _corridor([
+		_being("g", 8, {"disposition": "guard", "post": {"x": 8, "y": 1}}),
+		_you(24),
+	])
+	assert_eq(SimAi.decide(quiet, "g"), {"kind": "wait"})
+
+
+# ── the wanderer ────────────────────────────────────────────────────────────
+
+
+func test_walks_its_round_when_nothing_is_in_reach_to_hunt() -> void:
+	var state: Dictionary = _corridor([
+		_being("w", 12, {"disposition": "wander", "route": _round(), "leg": 0}),
+		_you(24),
+	])
+	# Leg 0 points at x=4, west.
+	assert_eq(SimAi.decide(state, "w"), {"kind": "step", "dx": -1, "dy": 0})
+
+
+func test_the_hunt_interrupts_the_round() -> void:
+	var state: Dictionary = _corridor([
+		_being("w", 12, {"disposition": "wander", "route": _round(), "leg": 0}),
+		_you(17),
+	])
+	# The round says west; the prey at 5 steps says east. Teeth win.
+	assert_eq(SimAi.decide(state, "w"), {"kind": "step", "dx": 1, "dy": 0})
+
+
 func test_the_reducer_advances_the_leg_when_a_step_lands_on_a_waypoint_any_waypoint_forward_only() -> void:
 	var three_stop: Dictionary = _corridor([
 		_being("w", 7, {
@@ -130,3 +189,21 @@ func test_the_reducer_advances_the_leg_when_a_step_lands_on_a_waypoint_any_waypo
 	# the third, never back to the one behind.
 	var walker: Dictionary = SimEntity.find(landed["entities"], "w")
 	assert_eq(walker["leg"], 2)
+
+
+func test_standing_on_its_own_goal_it_heads_for_the_next_stop_rather_than_stalling() -> void:
+	var state: Dictionary = _corridor([
+		_being("w", 4, {"disposition": "wander", "route": _round(), "leg": 0}),
+		_you(24),
+	])
+	assert_eq(SimAi.decide(state, "w"), {"kind": "step", "dx": 1, "dy": 0})
+
+
+func test_a_goal_another_body_is_parked_on_yields_to_the_next_stop() -> void:
+	var state: Dictionary = _corridor([
+		_being("w", 12, {"disposition": "wander", "route": _round(), "leg": 0}),
+		_being("parked", 4),
+		_you(24),
+	])
+	# x=4 is taken; the round turns east for x=20 instead of jamming.
+	assert_eq(SimAi.decide(state, "w"), {"kind": "step", "dx": 1, "dy": 0})
