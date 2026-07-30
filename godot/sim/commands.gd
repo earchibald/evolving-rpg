@@ -143,7 +143,6 @@ static func call_out(state: Dictionary, entity_id: String, prey_id: String = "pl
 
 static func wait(state: Dictionary, entity_id: String) -> Dictionary:
 	return SimStances.wait(state, entity_id)
-    ),
 # ── Task 2.E3e: sim/commands/purse.gd ──────────────────────────────────────
 #
 # No delegations here on purpose, not a missed row: commands.ts has no
@@ -152,7 +151,6 @@ static func wait(state: Dictionary, entity_id: String) -> Dictionary:
 # sim/commands/purse.gd's header for the full account. This section marks
 # the family present and accounted for, so the table of contents above stays
 # honest about all five rather than silently reading as four.
-    ),
 # ── Task 2.E3b: sim/commands/items.gd ─────────────────────────────────────
 
 static func take_underfoot(state: Dictionary, entity_id: String, deliberate: bool = false) -> Variant:
