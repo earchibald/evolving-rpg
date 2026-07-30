@@ -8,7 +8,7 @@ extends GutTest
 ##   "walks a shortest path whose length is the walk distance" — ported with
 ##     its WORLD SUBSTITUTED, and that substitution is the disclosure: the TS
 ##     case builds its board with createWorld (src/core/commands.ts, Wave E's
-##     Task 2.E3) and then asserts three properties of walkPath — root-first,
+##     Task 2.E3a) and then asserts three properties of walkPath — root-first,
 ##     length equal to walk_distance, every step orthogonal and adjacent.
 ##     Those properties are walkPath's; createWorld is the scaffolding that
 ##     produces a board with an exit on it. Here the same board comes from
@@ -16,7 +16,8 @@ extends GutTest
 ##     createWorld does to build it (commands.ts:236-255), so the assertions
 ##     port unchanged and only their scaffolding differs.
 ##
-## DEFERRED to Task 2.E3 (`sim/commands.gd`) — each one's SUBJECT is
+## DEFERRED to Task 2.E3a (`commands/movement.gd`, which ships create_world)
+## — each one's SUBJECT is
 ## createWorld's item placement, not walk_path. walk_path is the ruler they
 ## hold up to it, and there is nothing here to substitute:
 ##   "lays the keen edge on the path, eight steps of walking in, on every
@@ -31,7 +32,7 @@ extends GutTest
 ## The teaching floor's rule those three guard (depth 1's one relic stands ON
 ## the walked path, eight steps in, so a human who simply walks the floor meets
 ## its guard early and its prize on the way) is untested anywhere in sim/ until
-## Task 2.E3 lands them.
+## Task 2.E3a lands them.
 
 
 ## The board createWorld builds, minus everything createWorld does that is not
