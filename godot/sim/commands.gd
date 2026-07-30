@@ -167,3 +167,11 @@ static func use_carried(state: Dictionary, entity_id: String, slot: int = 0) -> 
 
 static func read_scroll(state: Dictionary, entity_id: String) -> Variant:
 	return SimItems.read_scroll(state, entity_id)
+# ── Task 2.E3c: sim/commands/hazards.gd ───────────────────────────────────
+
+static func sense_trap(state: Dictionary, player_id: String = "player") -> Variant:
+	return SimHazards.sense_trap(state, player_id)
+
+
+static func spring_trap(state: Dictionary, victim_id: String = "player") -> Variant:
+	return SimHazards.spring_trap(state, victim_id)

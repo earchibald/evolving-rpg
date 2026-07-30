@@ -1,0 +1,172 @@
+extends GutTest
+## The mimic's whole lie — the byte-twin of tests/core/mimics.test.ts (6
+## cases across two describe blocks). Every function this suite exercises
+## already shipped in an earlier task (movement.gd's create_world and
+## attempt_move, apply.gd's UNMASKED and _drop_pockets, resolve_strike's
+## ambush bonus) — this file is their first reference-suite witness, the
+## same relationship test_secrets.gd has to mapgen.gd's two functions.
+##
+## ── Reconciliation ────────────────────────────────────────────────────────
+## 6 = 5 PORTED + 1 DEFERRED. Line numbers are tests/core/mimics.test.ts at
+## ts-baseline.
+##
+## describe('the mimic') — 5, 4 PORTED + 1 DEFERRED
+##   :48  is unmasked by the walk, never struck through its guise — PORTED
+##   :62  holds perfectly still while hidden, whatever stands beside it —
+##        PORTED
+##   :67  gets the first strike one band harder — the stalker's own spring,
+##        recorded — PORTED
+##   :82  "reads as furniture to every tool: no shove, no mark, no burr" —
+##        DEFERRED. Calls shoveAt and shotTarget (src/core/commands.ts,
+##        assigned to Task 2.E3d's stances.gd) and useCarried (assigned to
+##        Task 2.E3b's items.gd). Both are sibling Wave E worktrees running
+##        CONCURRENTLY with this one and not yet merged: godot/sim/commands/
+##        holds only movement.gd and hazards.gd as this task starts, and
+##        SimCommands has no shove_at, shot_target or use_carried to call —
+##        writing this case would not compile, let alone run, tripping
+##        test.sh's script-count guard for the whole suite. Owning tasks:
+##        2.E3d (shoveAt, shotTarget) and 2.E3b (useCarried). Once both land
+##        and this worktree merges with theirs, this case belongs wherever
+##        the merged commands.gd's own cross-family suite lives — nothing
+##        about it is specific to hazards.gd, it is a property THOSE three
+##        functions must hold about a hidden mimic.
+##   :95  pays feign-priced XP when it dies — the disguise is threat, threat
+##        is reward — PORTED
+##
+## describe('generation deals the lie') — 1, PORTED
+##   :102 never on the teaching floor; rarely, at most once, past it —
+##        wearing a plausible kind
+##
+## 4 + 1 = 5 ported. 1 deferred. 5 + 1 = 6.
+
+
+func _corridor(entities: Array) -> Dictionary:
+	var width := 20
+	var height := 3
+	var tiles: Array = []
+	tiles.resize(width * height)
+	tiles.fill(SimGrid.WALL)
+	for x in range(1, width - 1):
+		tiles[width + x] = SimGrid.FLOOR
+	var state: Dictionary = SimState.empty()
+	state["grid"] = SimGrid.make(width, height, tiles)
+	state["entities"] = entities
+	state["turn"] = 1
+	state["activeEntityId"] = entities[0]["id"] if entities.size() > 0 else null
+	state["seed"] = 7
+	state["depth"] = 3
+	return state
+
+
+func _mimic(x: int, hidden: bool = true) -> Dictionary:
+	var stats: Dictionary = (SimTables.creature_stats("mimic", 1) as Dictionary).duplicate()
+	return {
+		"id": "mimic-1", "kind": "mimic", "pos": {"x": x, "y": 1},
+		"stats": stats, "tags": (["hidden"] if hidden else ["ambush"]),
+		"maxHp": int(stats["hp"]), "guise": "vital draught",
+	}
+
+
+func _you(x: int) -> Dictionary:
+	return {
+		"id": "player", "kind": "you", "pos": {"x": x, "y": 1},
+		"stats": {"hp": 10, "might": 3, "wits": 3, "speed": 4}, "tags": [], "maxHp": 10,
+	}
+
+
+func _seal(draft: Dictionary) -> Dictionary:
+	var event: Dictionary = draft.duplicate()
+	event["id"] = "e"
+	event["parent"] = null
+	event["seq"] = 1
+	return event
+
+
+# ── describe('the mimic') ─────────────────────────────────────────────────
+
+func test_is_unmasked_by_the_walk_never_struck_through_its_guise() -> void:
+	var state: Dictionary = _corridor([_you(5), _mimic(6)])
+	var draft: Dictionary = SimCommands.attempt_move(state, "player", 1, 0)
+	assert_eq(draft["type"], "UNMASKED")
+	assert_true(SimCommands.ends_turn(draft))
+
+	var after: Dictionary = SimApply.apply(state, _seal(draft))
+	var it: Dictionary = SimEntity.find(after["entities"], "mimic-1")
+	var tags: Array = it["tags"]
+	assert_false(tags.has("hidden"))
+	assert_true(tags.has("ambush"))
+	# The player did not move: the reach was the whole turn.
+	var player: Dictionary = SimEntity.find(after["entities"], "player")
+	assert_eq(int((player["pos"] as Dictionary)["x"]), 5)
+
+
+func test_holds_perfectly_still_while_hidden_whatever_stands_beside_it() -> void:
+	var state: Dictionary = _corridor([_mimic(6), _you(5)])
+	assert_eq(SimAi.decide(state, "mimic-1"), {"kind": "wait"})
+
+
+func test_gets_the_first_strike_one_band_harder_the_stalkers_own_spring_recorded() -> void:
+	# Scan seeds until the unmasked mimic's blow lands: the payload must say
+	# ambush, the spring spent by the reducer like any stalker's.
+	for seed in range(1, 80):
+		var state: Dictionary = _corridor([_mimic(6, false), _you(5)])
+		state["seed"] = seed
+		var draft: Dictionary = SimCommands.attempt_move(state, "mimic-1", -1, 0)
+		var payload: Dictionary = draft["payload"]
+		if draft.get("type", "") != "STRIKE" or not bool(payload.get("hit", false)):
+			continue
+		assert_true(bool(payload["ambush"]))
+		var after: Dictionary = SimApply.apply(state, _seal(draft))
+		var it: Dictionary = SimEntity.find(after["entities"], "mimic-1")
+		assert_false((it["tags"] as Array).has("ambush"))
+		return
+	assert_true(false, "no seed under 80 landed the mimic's first blow")
+
+
+# :82 "reads as furniture to every tool: no shove, no mark, no burr" —
+# DEFERRED. See the file header's reconciliation.
+
+
+func test_pays_feign_priced_xp_when_it_dies_the_disguise_is_threat_threat_is_reward() -> void:
+	var stats: Dictionary = SimTables.creature_stats("mimic", 1)
+	assert_gt(SimTables.threat_of(stats, "mimic"), SimTables.threat_of(stats))
+
+
+# ── describe('generation deals the lie') ──────────────────────────────────
+
+func test_never_on_the_teaching_floor_rarely_at_most_once_past_it_wearing_a_plausible_kind() -> void:
+	var held := 0
+	var trials := 60
+	for seed in range(1, trials + 1):
+		var d1: Dictionary = SimCommands.create_world(seed, 96, 64, "player", 1)
+		var d1_opponents: Array = (d1["payload"] as Dictionary)["opponents"]
+		for o: Dictionary in d1_opponents:
+			assert_false(o.has("guise"), "seed %d: depth 1 wears a guise" % seed)
+
+		var d3: Dictionary = SimCommands.create_world(seed, 96, 64, "player", 3)
+		var d3_payload: Dictionary = d3["payload"]
+		var d3_opponents: Array = d3_payload["opponents"]
+		var lies: Array = []
+		for o: Dictionary in d3_opponents:
+			if o.has("guise"):
+				lies.append(o)
+		assert_lte(lies.size(), 1, "seed %d: more than one lie on the floor" % seed)
+		if lies.is_empty():
+			continue
+		held += 1
+		var it: Dictionary = lies[0]
+		assert_true((it["tags"] as Array).has("hidden"))
+		assert_true((SimTables.mimic_guises(3) as Array).has(it["guise"]))
+		# Never on a real prize's tile: the mimic IS the item of its square.
+		var pos: Dictionary = it["pos"]
+		var items: Array = d3_payload["items"]
+		for i: Dictionary in items:
+			var ipos: Dictionary = i["pos"]
+			assert_false(int(ipos["x"]) == int(pos["x"]) and int(ipos["y"]) == int(pos["y"]),
+				"seed %d: the mimic shares a tile with a real prize" % seed)
+		# The floor admits a lie exists — like the secret room, never where.
+		assert_true(str(d3_payload["story"]).contains("not what it seems"))
+	# 1-in-MIMIC_IN over 60 floors: mean 10 — the band is loose on purpose,
+	# it exists to catch the rate collapsing to 0 or exploding.
+	assert_gte(held, 3)
+	assert_lte(held, ceili((float(trials) / float(SimTables.MIMIC_IN)) * 2.0))
