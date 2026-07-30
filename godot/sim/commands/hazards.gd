@@ -47,14 +47,22 @@ class_name SimHazards
 ## in THIS file is deferred.
 ##
 ## See test_traps.gd / test_secrets.gd / test_mimics.gd / test_pockets.gd for
-## the four TEST SUITES' own per-case reconciliations: six of their combined
-## 39 reference cases are deferred there — to Phase 3 (the stage, which will
-## own src/play/session.ts and src/ui/fov.ts; neither exists under godot/
-## yet, and sight.gd's own header already calls the fog "a stage-side
-## concern, not sim's") and to Tasks 2.E3b/2.E3d (sibling Wave E worktrees,
-## running concurrently and not yet merged into this one, whose
-## useCarried/shoveAt/shotTarget those six cases also need). None of the six
-## touches senseTrap, ringAround or springTrap themselves.
+## the four TEST SUITES' own per-case reconciliations: FOUR of their combined
+## 39 reference cases are deferred there, and all four name PHASE 3 — the
+## stage, which will own src/play/session.ts and src/ui/fov.ts; neither
+## exists under godot/ yet, and sight.gd's own header already calls the fog
+## "a stage-side concern, not sim's".
+##
+## This header once read SIX, two of them owed to Tasks 2.E3b/2.E3d — sibling
+## Wave E worktrees that were running concurrently and not yet merged when
+## this file was written, whose useCarried/shoveAt/shotTarget those two cases
+## needed. Both landed, and commit 712ddc7 DISCHARGED both:
+##   tests/core/mimics.test.ts :82  -> test_mimics.gd, "reads as furniture to
+##                                     every tool"
+##   tests/core/pockets.test.ts :70 -> test_pockets.gd, "a slam kill spills
+##                                     too — any death, one law"
+## Nothing is owed within Phase 2. None of the four remaining touches
+## senseTrap, ringAround or springTrap themselves.
 
 
 ## The next pending chance to know a trap, or null when every chance is

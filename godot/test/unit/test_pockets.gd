@@ -196,9 +196,19 @@ func test_about_one_in_three_carries_the_carried_kind_is_always_a_real_kind_the_
 			carried += 1
 			var pocket: Dictionary = o["pocket"]
 			assert_true(known.has(pocket["kind"]), "seed %d: unknown pocket kind %s" % [seed, pocket["kind"]])
+	# The band, in LITERALS rather than read off POCKET_IN. MEASURED during the
+	# Wave E review: POCKET_IN 3 -> 4 failed ZERO of 629 tests, because both
+	# goalposts were `1/POCKET_IN ± 0.15` and moved down with the rate.
+	#
+	# The arithmetic that sets the width: one body in three is 0.333, one in
+	# four is 0.250, one in two is 0.500. A band of ±0.05 around a third —
+	# 0.283 to 0.383 — excludes both neighbours and still leaves room for
+	# sampling noise, which over these thirty seeds is about 0.04 (132 bodies,
+	# so one standard deviation is sqrt(.333*.667/132)). Measured on the
+	# shipped constant: 44 of 132, dead on 0.3333.
 	var rate: float = float(carried) / float(bodies)
-	assert_gt(rate, 1.0 / float(SimTables.POCKET_IN) - 0.15)
-	assert_lt(rate, 1.0 / float(SimTables.POCKET_IN) + 0.15)
+	assert_gt(rate, 0.283, "one body in FOUR would carry at 0.250")
+	assert_lt(rate, 0.383, "one body in TWO would carry at 0.500")
 	assert_gt(mimics, 0)
 
 

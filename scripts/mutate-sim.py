@@ -489,10 +489,19 @@ MUTATIONS: dict[str, tuple[str, str, str]] = {
     # turning west for its post. That case is one of the six this task adopted
     # out of the eleven Task 2.C1 had to defer, and it is the ONLY witness
     # anywhere for which end of the leash is nailed down.
+    #
+    # RE-ANCHORED 2026-07-30 (Wave E review, I-1). The row was written against
+    # ai.gd's own private `_walk_distance`; commit b385671 ("The second twin
+    # goes the way of the first") collapsed that twin into
+    # SimMapgen.walk_distance and left this needle behind, so every later sweep
+    # aborted here with "expected exactly 1 occurrence ... found 0" instead of
+    # measuring the leash. The mutation itself is unchanged — only the text it
+    # anchors to. Re-measured after the repoint: still exactly 1 test fails,
+    # still the same named test.
     "ai-guard-leash-anchored-to-self": (
         "godot/sim/ai.gd",
-        '\t\tvar intruder_near: bool = _walk_distance(grid, post, scent) <= SimTables.GUARD_LEASH',
-        '\t\tvar intruder_near: bool = _walk_distance(grid, my_pos, scent) <= SimTables.GUARD_LEASH',
+        '\t\tvar intruder_near: bool = SimMapgen.walk_distance(grid, post, scent) <= SimTables.GUARD_LEASH',
+        '\t\tvar intruder_near: bool = SimMapgen.walk_distance(grid, my_pos, scent) <= SimTables.GUARD_LEASH',
     ),
     # Moves _first_step's bounds check BELOW the key and the goal test, which
     # revives the LATENT HUNT BUG NIGHTLOG records against ai.ts's own
@@ -896,6 +905,125 @@ MUTATIONS: dict[str, tuple[str, str, str]] = {
         "godot/sim/commands/hazards.gd",
         "SimRng.int_between(seed, c, 1, SimTables.SPIKE_DIE)",
         "SimRng.int_between(seed, c + 1, 1, SimTables.SPIKE_DIE)",
+    ),
+    # --- Wave E fix pass: the EIGHT GAMEPLAY CONSTANTS with no guard ---
+    #
+    # The Wave E review changed all eight of these and 629 tests stayed green.
+    # Every test that named one of them built its fixture FROM the constant and
+    # then asserted the branch that reads it, so both goalposts moved together:
+    # the exact anti-pattern all five E3 briefs name verbatim and in bold, and
+    # the second time this migration has measured it (ai.test.ts's AWARENESS
+    # cases were the first, in Task 2.E2).
+    #
+    # The wave shipped 23 mutation rows and not one of them moved a constant of
+    # this class, which is why review caught it and the sweep did not. These
+    # eight close that: one row per constant, so the next sweep MEASURES the
+    # gameplay numbers instead of trusting a docstring about them. Each was
+    # applied and confirmed against a NAMED failing test after the fix.
+    #
+    # LURK_RANGE — the coiled stalker's spring. Was guarded only by
+    # test_verbs.gd's two cases, which both wrote the quarry's tile as
+    # `5 + LURK_RANGE (+ 1)`. Both now spell the tile as a literal (x = 8 is
+    # inside the spring, x = 9 is one past), which pins the range from both
+    # sides: no other value satisfies both lines.
+    # MEASURED: exactly 1 test fails —
+    # test_holds_perfectly_still_while_the_quarry_is_beyond_its_spring.
+    "tables-lurk-range-wider": (
+        "godot/sim/tables.gd",
+        "const LURK_RANGE := 3",
+        "const LURK_RANGE := 5",
+    ),
+    # VIGIL_LEASH — how far a warden is drawn from its post. Was guarded only
+    # by `5 + VIGIL_LEASH` and `5 + VIGIL_LEASH + 2`; spelling those as the
+    # literals 10 and 12 pins the leash from BELOW only (5 and 7 leave 6 free),
+    # so test_verbs.gd's new
+    # test_the_vigils_leash_stands_at_exactly_five_steps_of_walking closes the
+    # gap at exactly six steps.
+    # MEASURED: exactly 1 test fails — that one, on its second assertion
+    # ("six steps from the post is one past the leash — it turns for home").
+    "tables-vigil-leash-longer": (
+        "godot/sim/tables.gd",
+        "const VIGIL_LEASH := 5",
+        "const VIGIL_LEASH := 6",
+    ),
+    # FLARE_RADIUS — how far the flare's knowledge reaches. The reference
+    # writes the constant into its own expected payload, so the recorded radius
+    # was compared against the number that produced it. test_loot.gd now spells
+    # the literal 7.
+    # MEASURED: exactly 1 test fails — test_records_where_it_burst_and_how_far.
+    "tables-flare-radius-wider": (
+        "godot/sim/tables.gd",
+        "const FLARE_RADIUS := 7",
+        "const FLARE_RADIUS := 9",
+    ),
+    # BLINK_CLEAR — the blink step's clearance from every living hostile. The
+    # reference asserts `|to - foe| >= BLINK_CLEAR`, which re-reads the bound
+    # the flood just enforced: a WIDER clearance satisfies it even harder, so
+    # the literal alone cannot catch a raise. test_scrolls.gd's new
+    # test_the_blinks_clearance_stands_at_exactly_four_steps_of_walking stands
+    # two one-tile corridors whose length brackets the bound — an eight-tile
+    # corridor must leave the page spent, a nine-tile one must land on x = 9.
+    # MEASURED: exactly 1 test fails — that one, on the nine-tile corridor
+    # (the page goes spent there too once the clearance is 6).
+    "tables-blink-clear-wider": (
+        "godot/sim/tables.gd",
+        "const BLINK_CLEAR := 4",
+        "const BLINK_CLEAR := 6",
+    ),
+    # TRAP_EATER_REACH — how far the trap eater eats. The reference lays its
+    # near trap at `5 + TRAP_EATER_REACH` and its far one nineteen steps off,
+    # so any reach from 3 to 18 eats exactly the same one trap. test_scrolls.gd
+    # now lays a second trap at FOUR steps — the first tile past the reach —
+    # in test_the_trap_eaters_reach_stops_at_three_steps_of_walking.
+    # MEASURED: exactly 1 test fails — that one: `eaten` comes back with both
+    # traps instead of one.
+    "tables-trap-eater-reach-longer": (
+        "godot/sim/tables.gd",
+        "const TRAP_EATER_REACH := 3",
+        "const TRAP_EATER_REACH := 5",
+    ),
+    # HATCH_BAND — where a hatch's risers stand up. The sharpest of the eight:
+    # [1, 5] stands a riser DIRECTLY BESIDE the victim, and the reference case
+    # named "...never beside you..." went on passing, because it drew the riser
+    # FROM the band and then asserted it was IN the band. The bounds are
+    # literals now, and test_traps.gd's new
+    # test_no_hatch_ever_stands_a_riser_beside_you_over_a_swept_floor sweeps
+    # twenty-four seeds so a widened band cannot hide in a single draw.
+    # MEASURED: exactly 2 tests fail — the sweep, and the ported :216 case
+    # whose bounds are now literal.
+    "tables-hatch-band-reaches-beside-you": (
+        "godot/sim/tables.gd",
+        "const HATCH_BAND: Array[int] = [3, 5]",
+        "const HATCH_BAND: Array[int] = [1, 5]",
+    ),
+    # MIMIC_IN — the mimic's rarity, 1 floor in this many. Was guarded by a
+    # ceiling of `2 * trials / MIMIC_IN`, which comes DOWN to meet a thinner
+    # rate. A band cannot be made to work at this sample size and that is
+    # measured, not assumed: 1-in-6 over 60 floors predicts 10 with sigma 2.9,
+    # this seed range actually draws 14, and 1-in-8 draws 9 — any band holding
+    # 14 also holds 9. test_mimics.gd pins the count as the literal 14.
+    # MEASURED: exactly 1 test fails —
+    # test_never_on_the_teaching_floor_rarely_at_most_once_past_it_wearing_a_
+    # plausible_kind, reporting 9 where 14 was pinned.
+    "tables-mimic-in-rarer": (
+        "godot/sim/tables.gd",
+        "const MIMIC_IN := 6",
+        "const MIMIC_IN := 8",
+    ),
+    # POCKET_IN — roughly one creature in this many is born carrying. Both
+    # goalposts were `1/POCKET_IN ± 0.15` and moved down with the rate.
+    # test_pockets.gd now spells the band as the literals 0.283 and 0.383: one
+    # body in three is 0.333, one in four is 0.250, one in two is 0.500, so the
+    # band excludes both neighbours while still clearing the sampling noise
+    # (132 bodies over thirty seeds, sigma about 0.04). Measured on the shipped
+    # constant: 44 of 132, dead on 0.3333.
+    # MEASURED: exactly 1 test fails —
+    # test_about_one_in_three_carries_the_carried_kind_is_always_a_real_kind_
+    # the_mimic_always_hoards, at 0.250.
+    "tables-pocket-in-rarer": (
+        "godot/sim/tables.gd",
+        "const POCKET_IN := 3",
+        "const POCKET_IN := 4",
     ),
 }
 

@@ -36,6 +36,27 @@ extends GutTest
 ##      rulesmith,chronicler}.ts"). `scrollLabel` has no port anywhere in
 ##      `godot/sim/` yet — no `canon/` directory exists under `sim/` at all,
 ##      only the two files (interpret.gd, rule.gd) Wave E itself consumes.
+##
+## ── Non-reference tests, and why each exists ──────────────────────────────
+## TWO tests under the banner at the bottom of this file have no counterpart
+## in scrolls.test.ts, so the file holds 12. Both are boundary pins on a
+## constant a mutation MEASURED as unguarded:
+##
+##   test_the_blinks_clearance_stands_at_exactly_four_steps_of_walking
+##   test_the_trap_eaters_reach_stops_at_three_steps_of_walking
+##
+## The reference's :105 and :93 both write their expectation as the constant
+## itself (`>= BLINK_CLEAR`, `5 + TRAP_EATER_REACH`), so both goalposts move
+## together and neither case can witness the number drifting. Changed and
+## measured: `BLINK_CLEAR` 4 -> 6 and `TRAP_EATER_REACH` 3 -> 5 each failed
+## ZERO of 629 tests. The ported cases now spell their tiles as literals and
+## these two pin the boundary from both sides. Rows for both live in
+## scripts/mutate-sim.py.
+##
+## :121 (stone song) was also given the witness its own name promises — the
+## reference's fixture makes both of its loops iterate zero times. Disclosed
+## in full at the test itself; the reference's assertions are untouched, a
+## second reading beside real interior wall is added beneath them.
 
 
 func _default_tiles() -> Array:
@@ -160,10 +181,18 @@ func test_the_still_hour_reels_everything_hostile_and_breathing_except_the_hidde
 
 
 func test_the_trap_eater_eats_what_it_can_walk_to_and_the_eaten_ground_reads_as_spent() -> void:
+	# The reader stands at (5,5) and trap-1 at LITERAL (8,5) — three steps of
+	# walking east, which is what TRAP_EATER_REACH is. The reference writes
+	# `5 + TRAP_EATER_REACH`; spelled out here because an expectation derived
+	# from the constant it guards moves both goalposts together and can never
+	# fail. Even as a literal this case only pins the reach from BELOW — a
+	# longer reach still eats a trap three steps away — so the boundary itself
+	# is pinned by test_the_trap_eaters_reach_stops_at_three_steps_of_walking
+	# under the NON-REFERENCE banner at the bottom of this file.
 	var state: Dictionary = _room(
 		[_you(5, 5, _holding("scroll of the trap eater"))],
 		null,
-		[_trap("trap-1", 5 + SimTables.TRAP_EATER_REACH, 5), _trap("trap-2", 20, 9)])
+		[_trap("trap-1", 8, 5), _trap("trap-2", 20, 9)])
 	var draft: Dictionary = SimCommands.read_scroll(state, "player")
 	var effect: Dictionary = (draft["payload"] as Dictionary)["effect"]
 	assert_eq(effect["kind"], "trap eater")
@@ -190,13 +219,30 @@ func test_the_blink_step_lands_clear_of_every_hostile_drawn_and_recorded() -> vo
 	assert_eq(effect["kind"], "blink")
 	var to: Dictionary = effect["to"]
 	assert_eq(int(draft["rngDraws"]), 1)
-	assert_gte(absi(int(to["x"]) - 4) + absi(int(to["y"]) - 3), SimTables.BLINK_CLEAR)
+	# The LITERAL 4, not SimTables.BLINK_CLEAR: the reference writes the
+	# constant, which re-reads the bound the flood itself enforced, so both
+	# sides of the comparison move together and no drift can show. Manhattan is
+	# a lower bound on walking, so this stays the strict check. A one-sided
+	# floor still cannot see the clearance GROW; the exact boundary is pinned by
+	# test_the_blinks_clearance_stands_at_exactly_four_steps_of_walking under
+	# the NON-REFERENCE banner at the bottom of this file.
+	assert_gte(absi(int(to["x"]) - 4) + absi(int(to["y"]) - 3), 4)
 	var after: Dictionary = SimApply.apply(state, _sealed(draft))
 	var after_entities: Array = after["entities"]
 	assert_eq((after_entities[0] as Dictionary)["pos"], to)
 
 
 func test_stone_song_breaks_only_plain_wall_never_the_border_and_the_grid_truly_opens() -> void:
+	# ── the reference's own fixture, unchanged: the reader beside the border ──
+	# Its two loops iterate ZERO times, and that is a property of the REFERENCE,
+	# not of this port: room() is floor everywhere inside the border, the scan
+	# clamps to x,y in 1..3 around a reader at (1,1), so every candidate is
+	# floor and `broken` comes back empty. MEASURED by the Wave E reviewer:
+	# removing the border clamp moved the run's assert total 63338 -> 63359,
+	# i.e. these loops contributed exactly 0 asserts before and 21 after.
+	#
+	# The half that IS witnessed here is the important one — the clamp. With it
+	# gone, the border wall enters `broken` and assert_gt(b.x, 0) fails.
 	var state: Dictionary = _room([_you(1, 1, _holding("scroll of stone song"))])
 	var draft: Dictionary = SimCommands.read_scroll(state, "player")
 	var effect: Dictionary = (draft["payload"] as Dictionary)["effect"]
@@ -208,6 +254,39 @@ func test_stone_song_breaks_only_plain_wall_never_the_border_and_the_grid_truly_
 	var after: Dictionary = SimApply.apply(state, _sealed(draft))
 	for b: Dictionary in broken:
 		assert_eq(SimGrid.tile_at(after["grid"], int(b["x"]), int(b["y"])), SimGrid.FLOOR)
+
+	# ── the half of the case's own name that the reference never witnesses ──
+	# "and the grid truly opens" had no witness anywhere, in any run, ever. A
+	# second reading, beside REAL interior wall, gives it one. The reader stands
+	# at (2,2); the walls are laid by hand at (4,2), (3,3), (2,4) and (4,4).
+	#
+	# SUNDER_RADIUS is 2 and the disc keeps `dx*dx + dy*dy <= r*r + r` = 6:
+	#   (4,2)  dx 2, dy 0 -> 4  breaks
+	#   (3,3)  dx 1, dy 1 -> 2  breaks
+	#   (2,4)  dx 0, dy 2 -> 4  breaks
+	#   (4,4)  dx 2, dy 2 -> 8  OUTSIDE the disc — stays wall
+	# Written as literals: the count 3, the tiles themselves, and the corner
+	# left standing. A reader at (2,2) also keeps the border half alive, because
+	# the unclamped window would reach column 0 and row 0.
+	var tiles: Array = _default_tiles()
+	tiles[2 * 24 + 4] = SimGrid.WALL
+	tiles[3 * 24 + 3] = SimGrid.WALL
+	tiles[4 * 24 + 2] = SimGrid.WALL
+	tiles[4 * 24 + 4] = SimGrid.WALL
+	var walled: Dictionary = _room(
+		[_you(2, 2, _holding("scroll of stone song"))], SimGrid.make(24, 12, tiles))
+	var song: Dictionary = SimCommands.read_scroll(walled, "player")
+	var sung: Array = ((song["payload"] as Dictionary)["effect"] as Dictionary)["broken"]
+	assert_eq(sung.size(), 3, "three walls stand inside the disc")
+	assert_eq(sung, [{"x": 4, "y": 2}, {"x": 3, "y": 3}, {"x": 2, "y": 4}])
+	var opened: Dictionary = SimApply.apply(walled, _sealed(song))
+	for b: Dictionary in sung:
+		assert_gt(int(b["x"]), 0)
+		assert_gt(int(b["y"]), 0)
+		assert_eq(SimGrid.tile_at(opened["grid"], int(b["x"]), int(b["y"])), SimGrid.FLOOR,
+			"the grid truly opens at %d,%d" % [int(b["x"]), int(b["y"])])
+	assert_eq(SimGrid.tile_at(opened["grid"], 4, 4), SimGrid.WALL,
+		"the corner lies outside the disc and keeps its shape")
 
 
 func test_empty_hands_read_nothing_the_heart_seals_the_reading() -> void:
@@ -316,3 +395,87 @@ func test_the_deeper_shelf_only_ever_grows() -> void:
 	for s: Dictionary in SimTables.SCROLLS:
 		all.append(s["kind"])
 	assert_eq(at9, all)
+
+
+# ── NON-REFERENCE ─────────────────────────────────────────────────────────
+# Two boundary pins. Both constants they guard were changed with ZERO tests
+# failing, because every assertion that named them read its expectation OFF
+# them — the exact anti-pattern this migration's quality rules forbid.
+
+
+func test_the_blinks_clearance_stands_at_exactly_four_steps_of_walking() -> void:
+	## NON-REFERENCE, and it exists because a mutation MEASURED the hole:
+	## BLINK_CLEAR 4 -> 6 failed nothing in 629 tests. scrolls.test.ts's own
+	## case asserts `|to - foe| >= BLINK_CLEAR`, which re-reads the bound the
+	## flood just enforced — a WIDER clearance satisfies it even harder.
+	##
+	## The arithmetic, spelled out: the flood marks every tile within
+	## BLINK_CLEAR steps of a hostile as forbidden, so the nearest tile the
+	## blink may choose stands at BLINK_CLEAR + 1 = 5 steps of walking. Both
+	## fixtures are one-tile corridors at y = 1 with the reader at x = 3 and
+	## the one hostile at x = 4, so walking distance from the hostile is just
+	## |x - 4| and the whole question is where the corridor ends.
+	##
+	##   floor x in 1..8   nothing reaches 5 -> the page is spent, the reader
+	##                     stands exactly where it stood, 0 draws
+	##   floor x in 1..9   exactly one tile reaches 5 -> x = 9, 1 draw
+	##
+	## Raise the clearance to 5 and the second corridor empties too; lower it
+	## to 3 and the first corridor blinks to x = 8 instead of standing still.
+	## Pinned from both sides, in literal tiles.
+	var spent: Dictionary = SimCommands.read_scroll(_blink_corridor(10), "player")
+	var spent_effect: Dictionary = (spent["payload"] as Dictionary)["effect"]
+	assert_eq(int(spent["rngDraws"]), 0, "nowhere clear: nothing is drawn")
+	assert_eq(spent_effect["to"], {"x": 3, "y": 1},
+		"an eight-tile corridor holds no tile five steps off the foe")
+
+	var blinked: Dictionary = SimCommands.read_scroll(_blink_corridor(11), "player")
+	var blink_effect: Dictionary = (blinked["payload"] as Dictionary)["effect"]
+	assert_eq(int(blinked["rngDraws"]), 1)
+	assert_eq(blink_effect["to"], {"x": 9, "y": 1},
+		"the one tile at five steps is the one tile the blink may take")
+
+
+## A one-tile corridor `width` wide: wall everywhere but y = 1, x in
+## 1..width-2. The reader holds the blink at (3,1); one hostile stands at
+## (4,1). Local to the boundary pin above — the file's own _room() is an open
+## 24x12 hall, where the clearance never binds.
+func _blink_corridor(width: int) -> Dictionary:
+	var height := 3
+	var tiles: Array = []
+	tiles.resize(width * height)
+	tiles.fill(SimGrid.WALL)
+	for x in range(1, width - 1):
+		tiles[width + x] = SimGrid.FLOOR
+	return _room(
+		[_you(3, 1, _holding("scroll of the blink step")), _foe("foe-1", 4, 1)],
+		SimGrid.make(width, height, tiles))
+
+
+func test_the_trap_eaters_reach_stops_at_three_steps_of_walking() -> void:
+	## NON-REFERENCE, and it exists because a mutation MEASURED the hole:
+	## TRAP_EATER_REACH 3 -> 5 failed nothing in 629 tests. scrolls.test.ts's
+	## own case lays its near trap at `5 + TRAP_EATER_REACH` and its far one
+	## nineteen steps off, so ANY reach from 3 to 18 eats exactly one trap.
+	##
+	## The arithmetic, in literal tiles on a one-tile corridor at y = 1: the
+	## reader stands at x = 5, `trap-near` at x = 8 (three steps — eaten) and
+	## `trap-far` at x = 9 (FOUR steps — the first one past the reach, and it
+	## must survive). Lengthen the reach and trap-far joins the meal; shorten
+	## it and trap-near stops being one.
+	var width := 26
+	var height := 3
+	var tiles: Array = []
+	tiles.resize(width * height)
+	tiles.fill(SimGrid.WALL)
+	for x in range(1, width - 1):
+		tiles[width + x] = SimGrid.FLOOR
+	var state: Dictionary = _room(
+		[_you(5, 1, _holding("scroll of the trap eater"))],
+		SimGrid.make(width, height, tiles),
+		[_trap("trap-near", 8, 1), _trap("trap-far", 9, 1)])
+	var draft: Dictionary = SimCommands.read_scroll(state, "player")
+	var effect: Dictionary = (draft["payload"] as Dictionary)["effect"]
+	assert_eq(effect["kind"], "trap eater")
+	assert_eq(effect["eaten"], ["trap-near"],
+		"three steps is inside the reach and four steps is not")

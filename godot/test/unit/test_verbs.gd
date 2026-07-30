@@ -49,6 +49,27 @@ extends GutTest
 ## describe('the verbs are the archetypes\'') — 1
 ##   :286 reads the verb through a level suffix
 ##
+## ── Non-reference tests, and why each exists ──────────────────────────────
+## FOUR tests under the banner at the bottom of this file have no counterpart
+## in verbs.test.ts, so the file holds 28. Each carries its own docstring;
+## listed here because a header that counts only its ported cases reads as a
+## file with 24 tests in it.
+##
+##   test_the_ward_drinks_one_landing_blow_whole_and_is_spent_by_it
+##   test_a_miss_never_wards_however_worn_the_ward        mutation-found
+##   test_the_set_guard_raises_the_bar_by_two_plus_half_their_wits
+##   test_the_vigils_leash_stands_at_exactly_five_steps   mutation-found
+##
+## ── Two constants this file is the only guard for ─────────────────────────
+## `LURK_RANGE` and `VIGIL_LEASH` were both changed by the Wave E reviewer
+## with ZERO of 629 tests failing, because all four cases that name them
+## placed the quarry at an offset FROM the constant — `5 + LURK_RANGE + 1`,
+## `5 + VIGIL_LEASH + 2` — so raising the constant moved the goalposts with
+## it. All four now spell the tile as a literal. The ambush's pair pins its
+## range from both sides on its own (hold at four steps, commit at three);
+## the vigil's pair does not, so the boundary pin above closes it. Rows for
+## both live in scripts/mutate-sim.py.
+##
 ## ── What this file is the ONLY witness for ────────────────────────────────
 ## test_ai.gd's header records that `decide()` has eight branches with no
 ## witness anywhere in the migration — vigil, ambush, call, lunge, volley,
@@ -280,24 +301,34 @@ func test_refuses_at_any_distance_but_two() -> void:
 # ── describe('the ambush (stalker)') ──────────────────────────────────────
 
 func test_holds_perfectly_still_while_the_quarry_is_beyond_its_spring() -> void:
-	# LURK_RANGE is 3; the quarry stands at 5 + 3 + 1 = four tiles east, one
-	# past the spring. Written as the reference writes it, because the offset
-	# FROM the constant is what the reference means here — the case is about
-	# "one past", not about the number three. The literal pin on the range
-	# itself is the extra test at the bottom of this block.
+	# The stalker stands at x = 5 and the quarry at LITERAL x = 9 — FOUR steps
+	# of walking east, one past LURK_RANGE's three.
+	#
+	# The reference writes `you(5 + LURK_RANGE + 1, 5)`, and this file used to
+	# copy it. That form cannot fail: raise the range and the quarry walks the
+	# same distance further off, so the coil stays uncommitted and the test
+	# stays green. MEASURED during the Wave E review — LURK_RANGE 3 -> 5 failed
+	# ZERO of 629 tests. Spelled as a literal, this case and its partner below
+	# pin the spring from BOTH sides: at four steps it must hold, at three it
+	# must commit, and no other value of LURK_RANGE satisfies both.
 	var state: Dictionary = _room([
 		_being("foe-1", "stalker", 5, 5, {"tags": ["ambush"]}),
-		_you(5 + SimTables.LURK_RANGE + 1, 5),
+		_you(9, 5),
 	])
-	assert_eq(SimAi.decide(state, "foe-1"), {"kind": "wait"})
+	assert_eq(SimAi.decide(state, "foe-1"), {"kind": "wait"},
+		"four steps of walking is one past the spring")
 
 
 func test_commits_when_the_quarry_walks_inside_the_spring() -> void:
+	# x = 8 — LITERAL three steps of walking east, exactly the spring's reach.
+	# See the test above for why the reference's `5 + LURK_RANGE` is not
+	# written here.
 	var state: Dictionary = _room([
 		_being("foe-1", "stalker", 5, 5, {"tags": ["ambush"]}),
-		_you(5 + SimTables.LURK_RANGE, 5),
+		_you(8, 5),
 	])
-	assert_eq((SimAi.decide(state, "foe-1") as Dictionary)["kind"], "step")
+	assert_eq((SimAi.decide(state, "foe-1") as Dictionary)["kind"], "step",
+		"three steps of walking is inside the spring")
 
 
 func test_hunts_plain_once_the_spring_is_spent() -> void:
@@ -364,14 +395,20 @@ func _warden(x: int, y: int, hp: int) -> Dictionary:
 
 
 func test_hunts_what_comes_inside_the_leash() -> void:
-	var state: Dictionary = _room([_warden(5, 5, 16), _you(5 + SimTables.VIGIL_LEASH, 5)])
-	assert_eq((SimAi.decide(state, "foe-1") as Dictionary)["kind"], "step")
+	# The post is (5,5) and the intruder stands at LITERAL x = 10 — five steps
+	# of walking, exactly VIGIL_LEASH. The reference writes
+	# `you(5 + VIGIL_LEASH, 5)`, which moves with the constant; see the pin at
+	# the bottom of this file for what that cost.
+	var state: Dictionary = _room([_warden(5, 5, 16), _you(10, 5)])
+	assert_eq((SimAi.decide(state, "foe-1") as Dictionary)["kind"], "step",
+		"five steps of walking from the post is inside the leash")
 
 
 func test_will_not_be_drawn_past_the_leash_it_turns_for_home() -> void:
 	# Dragged two tiles off its post, the intruder beyond the leash: the warden
-	# walks back rather than chasing across the floor.
-	var state: Dictionary = _room([_warden(7, 5, 16), _you(5 + SimTables.VIGIL_LEASH + 2, 5)])
+	# walks back rather than chasing across the floor. LITERAL x = 12 — seven
+	# steps of walking from the post at (5,5), two past the leash.
+	var state: Dictionary = _room([_warden(7, 5, 16), _you(12, 5)])
 	assert_eq(SimAi.decide(state, "foe-1"), {"kind": "step", "dx": -1, "dy": 0})
 
 
@@ -492,3 +529,27 @@ func test_the_set_guard_raises_the_bar_by_two_plus_half_their_wits() -> void:
 	# The roll is the same roll — the guard raises the bar, it does not
 	# re-draw. Same seed, same counter, same d20.
 	assert_eq(int(plain["roll"]), int(guarded["roll"]))
+
+
+func test_the_vigils_leash_stands_at_exactly_five_steps_of_walking() -> void:
+	## NON-REFERENCE, and it exists because a mutation MEASURED the hole:
+	## VIGIL_LEASH 5 -> 6 failed ZERO of 629 tests. verbs.test.ts's own two
+	## leash cases stand the intruder at `5 + VIGIL_LEASH` and
+	## `5 + VIGIL_LEASH + 2`, so the constant carries them both with it. Even
+	## rewritten as the literals 10 and 12 — which they now are — they pin the
+	## leash only from BELOW: at five steps it must hunt, at seven it must go
+	## home, and 6 satisfies both.
+	##
+	## The arithmetic, in literal tiles: the post is (5,5), the warden is
+	## dragged two east to (7,5) so "home" and "hunt" point opposite ways, and
+	## the intruder walks the open floor at y = 5.
+	##   x = 10  -> five steps from the post, AT the leash    -> hunts, east
+	##   x = 11  -> six steps from the post, ONE past it      -> home, west
+	## Nothing but 5 satisfies both lines. Six would hunt the second; four
+	## would go home on the first.
+	assert_eq(SimAi.decide(_room([_warden(7, 5, 16), _you(10, 5)]), "foe-1"),
+		{"kind": "step", "dx": 1, "dy": 0},
+		"five steps from the post is inside the leash — it hunts")
+	assert_eq(SimAi.decide(_room([_warden(7, 5, 16), _you(11, 5)]), "foe-1"),
+		{"kind": "step", "dx": -1, "dy": 0},
+		"six steps from the post is one past the leash — it turns for home")

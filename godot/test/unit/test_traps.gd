@@ -75,6 +75,15 @@ extends GutTest
 ## into the riser's stats would pass every ported case above.
 ##
 ##   test_hatch_risers_are_level_1_bodies_never_the_floors_own_band
+##
+## A fifth pins HATCH_BAND itself, so the file holds 21. Reference case :216
+## reads its two bounds off the constant that placed the riser, and springs
+## one hatch on one seed: MEASURED, HATCH_BAND [3,5] -> [1,5] stood a riser
+## directly beside the victim and failed ZERO of 629 tests, the case named
+## "...never beside you..." included. The bounds are literals now, and this
+## sweeps twenty-four seeds so a widened band cannot hide in one draw.
+##
+##   test_no_hatch_ever_stands_a_riser_beside_you_over_a_swept_floor
 
 
 func _corridor(entities: Array, traps: Array, over: Dictionary = {}) -> Dictionary:
@@ -330,8 +339,18 @@ func test_the_hatch_stands_its_risers_up_inside_the_band_never_beside_you_and_th
 	var riser: Dictionary = opponents[0]
 	var rpos: Dictionary = riser["pos"]
 	var away := absi(int(rpos["x"]) - 10) + absi(int(rpos["y"]) - 1)
-	assert_gte(away, SimTables.HATCH_BAND[0])
-	assert_lte(away, SimTables.HATCH_BAND[1])
+	# The LITERALS 3 and 5, not SimTables.HATCH_BAND[0] and [1]. The reference
+	# draws the riser FROM the band and then asserts it is IN the band, so both
+	# sides move together and the assertion is a tautology dressed as a test.
+	# MEASURED during the Wave E review: HATCH_BAND [3,5] -> [1,5] — which
+	# stands a riser DIRECTLY BESIDE the victim, the one thing this test is
+	# named for forbidding — failed ZERO of 629 tests.
+	#
+	# One spring on one seed still only samples one draw off the ring, so the
+	# floor is swept across twenty-four seeds by
+	# test_no_hatch_ever_stands_a_riser_beside_you_over_a_swept_floor below.
+	assert_gte(away, 3, "never beside you: three steps of walking is the floor")
+	assert_lte(away, 5, "always a chase: five steps of walking is the ceiling")
 
 	var after: Dictionary = SimApply.apply(state, _seal(sprung))
 	var found := false
@@ -503,3 +522,33 @@ func test_hatch_risers_are_level_1_bodies_never_the_floors_own_band() -> void:
 	var riser: Dictionary = (effect["opponents"] as Array)[0]
 	var level_1_stats: Dictionary = SimTables.creature_stats(riser["kind"], 1)
 	assert_eq(riser["stats"], level_1_stats)
+
+
+func test_no_hatch_ever_stands_a_riser_beside_you_over_a_swept_floor() -> void:
+	## NON-REFERENCE, and it exists because a mutation MEASURED the hole:
+	## HATCH_BAND [3,5] -> [1,5] failed ZERO of 629 tests, while the reference
+	## case named "...never beside you..." went on passing. It passed because
+	## it reads its two bounds off the very constant that placed the riser.
+	##
+	## Reference case :216 springs ONE hatch on ONE seed, so even with the
+	## bounds spelled as literals it samples a single index into the ring —
+	## a widened band would be caught only when that one draw happens to land
+	## on a newly-legal tile. This sweeps twenty-four seeds of the same
+	## corridor instead, and asserts the band as LITERALS 3 and 5 on every
+	## riser that stands up.
+	##
+	## The arithmetic: the corridor is one tile tall at y = 1, the trap and
+	## the victim share (10,1), so a riser's walking distance is just
+	## |x - 10|. HATCH_BAND is [3,5], so the legal ring is x in 5..7 and
+	## 13..15 — six tiles. Widen the floor to 1 and four more tiles open at
+	## x in 8,9,11,12, and this sweep lands on them.
+	for seed in range(1, 25):
+		var state: Dictionary = _corridor([_you(10)], [_trap("hatch", 10)], {"seed": seed})
+		var sprung: Variant = SimCommands.spring_trap(state, "player")
+		assert_not_null(sprung, "seed %d sprang nothing" % seed)
+		var effect: Dictionary = ((sprung as Dictionary)["payload"] as Dictionary)["effect"]
+		for riser: Dictionary in (effect["opponents"] as Array):
+			var p: Dictionary = riser["pos"]
+			var away := absi(int(p["x"]) - 10) + absi(int(p["y"]) - 1)
+			assert_gte(away, 3, "seed %d stood a riser %d steps away — beside you" % [seed, away])
+			assert_lte(away, 5, "seed %d stood a riser %d steps away — out of the chase" % [seed, away])

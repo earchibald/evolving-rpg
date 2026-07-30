@@ -65,17 +65,45 @@ extends GutTest
 ## same reason. All five are DISCHARGED and live in test_dispositions.gd; its
 ## header now reads 12 = 12 ported + 0 deferred.
 ##
+## ── Deferrals ADOPTED from Task 2.B3's ledger ─────────────────────────────
+## test_tables.gd's header has carried EIGHT cases since Task 2.B3, every one
+## of them naming `commands.gd` as its owner because every one of them calls
+## createWorld. `commands.gd` shipped in Wave E, so they land here, in
+## createWorld's own suite, under the ADOPTED banner below. Seven were ported
+## by the Wave E fix pass; the eighth (`size.test.ts:137`) was already written
+## as a non-reference test and is now credited to the case it was always a
+## port of. test_tables.gd's ledger closes on all eight.
+##
+##   size.test.ts:51  the stretched door spends on numbers, not menace — and
+##                    the vale keeps its variety
+##   size.test.ts:92  a stretch-1 world is bit-identical to the world before
+##                    boards could breathe
+##   size.test.ts:101 the expanse pays a doubled budget for a bigger
+##                    population, spread thinner            (+ apply.gd's fold)
+##   size.test.ts:112 the expanse owes more prizes and a fuller pantry; the
+##                    teaching floor holds one whatever the acreage
+##   size.test.ts:137 refuses a board past the chokepoint
+##   size.test.ts:142 every floor of the expanse still stands its whole
+##                    account in the story
+##   motifs.test.ts:80  names the band in the story, where the ledger reads it
+##   motifs.test.ts:136 records the cut in the birth event, matching the band
+##
+## Why the Wave E audit missed them: it enumerated `commands.ts`'s 28 exports
+## and asked "is each ported?", which is the right question and got the right
+## answer. It never asked the inverse — "does any existing ledger name
+## commands.gd as an owner?" — and these eight were addressed to a MODULE, not
+## to a task number, so no `Task 2.E3x` grep could surface them.
+##
 ## ── Non-reference tests, and why each exists ──────────────────────────────
-## SIX tests at the bottom of this file have no counterpart in
-## commands.test.ts, so the file holds 38. Each is marked where it stands, and
-## THREE of the six exist because a mutation MEASURED a hole rather than
-## because one was predicted:
+## FIVE tests at the bottom of this file have no counterpart in ANY reference
+## suite. With 32 ported + 8 adopted + 5 non-reference, the file holds 45.
+## Each is marked where it stands, and THREE of the five exist because a
+## mutation MEASURED a hole rather than because one was predicted:
 ##
 ##   test_the_golden_world_is_rebuilt_byte_for_byte              (see below)
 ##   test_the_walking_distance_..._never_rendered_as_a_float     (see below)
 ##   test_the_keeper_never_stands_in_what_paints_as_wall         mutation-found
 ##   test_a_strikes_two_draws_are_the_two_CONSECUTIVE_draws_...  mutation-found
-##   test_a_board_over_the_cap_is_refused_rather_than_allocated  unwitnessed throw
 ##   test_the_descent_ceremony_drafts_are_drawless_...           unwitnessed API
 ##
 ## The two mutation-found ones are recorded with their measurements in
@@ -602,8 +630,199 @@ func test_cannot_promise_a_certainty_or_an_impossibility() -> void:
 	assert_gte(SimCommands.hit_chance(feeble, _thing()), 0)
 
 
+# ── ADOPTED: the cases Task 2.B3 addressed to commands.gd ─────────────────
+# Seven reference cases from tests/core/size.test.ts and tests/core/motifs.test.ts
+# that test_tables.gd's header has been holding since Task 2.B3, every one of
+# them naming `commands.gd` as its owner because every one of them calls
+# createWorld. commands.gd shipped in Wave E; they land here, in the file that
+# is createWorld's own suite. See the reconciliation in test_tables.gd's
+# header, which now closes.
+#
+# The three boards the door offers, by the names size.test.ts uses for them
+# (test-local constants there too, not exports — test_mapgen.gd declares the
+# same two for the same reason).
+const _VALE := {"width": 48, "height": 32}
+const _EXPANSE := {"width": 96, "height": 64}
+const _WASTE := {"width": 128, "height": 96}
+
+
+## The reference's module-level `fold()`: a WORLD_INIT draft, sealed, folded
+## onto EMPTY_STATE. Only two of the seven need it.
+func _fold(draft: Dictionary) -> Dictionary:
+	return SimApply.apply(SimState.empty(), _seal(draft))
+
+
+## Every item whose id begins with `prefix`, the reference's
+## `payload.items.filter((i) => i.id.startsWith(...))`.
+func _items_named(payload: Dictionary, prefix: String) -> Array:
+	var out: Array = []
+	for i: Dictionary in (payload["items"] as Array):
+		if str(i["id"]).begins_with(prefix):
+			out.append(i)
+	return out
+
+
+func test_the_stretched_door_spends_on_numbers_not_menace_and_the_vale_keeps_its_variety() -> void:
+	## ADOPTED — tests/core/size.test.ts:51.
+	##
+	## The cliff was composition, not count: the same doubled rent spent on
+	## mixed kinds measured 6/10 at the door; capped to the teaching kind it
+	## measured 8/10 with the population doubled.
+	var seeds: Array = [100, 101, 102, 103, 104]
+	for s: int in seeds:
+		var door: Array = ((SimCommands.create_world(
+			s, _EXPANSE["width"], _EXPANSE["height"]) as Dictionary)["payload"] as Dictionary)["opponents"]
+		assert_gte(door.size(), 5, "seed %d underfills the stretched door" % s)
+		for o: Dictionary in door:
+			assert_true(str(o["kind"]).begins_with("skirmisher"),
+				"seed %d put a %s on the teaching floor" % [s, o["kind"]])
+
+	var vale: Array = []
+	for s: int in seeds:
+		vale.append_array(((SimCommands.create_world(
+			s, _VALE["width"], _VALE["height"]) as Dictionary)["payload"] as Dictionary)["opponents"])
+	var varied := false
+	for o: Dictionary in vale:
+		if not str(o["kind"]).begins_with("skirmisher"):
+			varied = true
+			break
+	assert_true(varied, "the vale's own door lost its variety")
+
+
+func test_a_stretch_1_world_is_bit_identical_to_the_world_before_boards_could_breathe() -> void:
+	## ADOPTED — tests/core/size.test.ts:92.
+	##
+	## The load-bearing identity: every sawtooth pin, the golden fixture and
+	## every standing chain rest on the vale meaning exactly what it meant.
+	## test_the_golden_world_is_rebuilt_byte_for_byte below is the deep proof;
+	## this is the fast tripwire.
+	var payload: Dictionary = (SimCommands.create_world(
+		15, _VALE["width"], _VALE["height"]) as Dictionary)["payload"]
+	assert_eq(_items_named(payload, "provision-").size(), 1,
+		"the vale lays exactly one provision")
+	assert_true(str(payload["story"]).contains("lies where the path does not go"),
+		"one provision speaks in the singular")
+
+
+func test_the_expanse_pays_a_doubled_budget_for_a_bigger_population_spread_thinner() -> void:
+	## ADOPTED — tests/core/size.test.ts:101. The one adopted case that needs
+	## apply.gd's fold as well as create_world, which is why Task 2.B3's ledger
+	## names both.
+	var vale: Dictionary = _fold(SimCommands.create_world(
+		21, _VALE["width"], _VALE["height"], "player", 3))
+	var expanse: Dictionary = _fold(SimCommands.create_world(
+		21, _EXPANSE["width"], _EXPANSE["height"], "player", 3))
+
+	var vale_foes := _foes(vale)
+	var expanse_foes := _foes(expanse)
+	# More creatures in absolute count...
+	assert_gt(expanse_foes, vale_foes)
+	# ...but fewer per tile: the breathing room is the point.
+	assert_lt(
+		float(expanse_foes) / float(_EXPANSE["width"] * _EXPANSE["height"]),
+		float(vale_foes) / float(_VALE["width"] * _VALE["height"]),
+		"the expanse packs its population tighter than the vale")
+
+
+## Everything folded into the world that is not the player.
+func _foes(state: Dictionary) -> int:
+	var n := 0
+	for e: Dictionary in (state["entities"] as Array):
+		if e["id"] != "player":
+			n += 1
+	return n
+
+
+func test_the_expanse_owes_more_prizes_and_a_fuller_pantry_the_teaching_floor_holds_one_whatever_the_acreage() -> void:
+	## ADOPTED — tests/core/size.test.ts:112. Every count is the reference's
+	## own literal.
+	var d1: Dictionary = (SimCommands.create_world(
+		7, _EXPANSE["width"], _EXPANSE["height"], "player", 1) as Dictionary)["payload"]
+	assert_eq(_items_named(d1, "relic-").size(), 1,
+		"the teaching floor holds ONE prize whatever the acreage")
+	assert_eq(_items_named(d1, "provision-").size(), 2)
+
+	var d3: Dictionary = (SimCommands.create_world(
+		7, _EXPANSE["width"], _EXPANSE["height"], "player", 3) as Dictionary)["payload"]
+	assert_eq(_items_named(d3, "relic-").size(), 3)
+	assert_eq(_items_named(d3, "provision-").size(), 2)
+
+	var waste3: Dictionary = (SimCommands.create_world(
+		7, _WASTE["width"], _WASTE["height"], "player", 3) as Dictionary)["payload"]
+	assert_eq(_items_named(waste3, "relic-").size(), 4)
+	assert_eq(_items_named(waste3, "provision-").size(), 3)
+
+
+func test_every_floor_of_the_expanse_still_stands_its_whole_account_in_the_story() -> void:
+	## ADOPTED — tests/core/size.test.ts:142. Covenant L1: the floor's whole
+	## account is recorded where facts live, at every size.
+	var story := str(((SimCommands.create_world(
+		33, _EXPANSE["width"], _EXPANSE["height"], "player", 2) as Dictionary)["payload"] as Dictionary)["story"])
+	assert_true(story.contains("a budget of"), "the rent is missing from the account")
+	assert_true(story.contains("lie where the path does not go"),
+		"the pantry is missing from the account")
+
+
+func test_names_the_band_in_the_story_where_the_ledger_reads_it() -> void:
+	## ADOPTED — tests/core/motifs.test.ts:80. The four bands, by the depths
+	## that cut them, each spelled as the literal the reference spells.
+	for case: Array in [[1, "the door"], [3, "the warren"], [5, "the halls"], [8, "the deep"]]:
+		var depth: int = case[0]
+		var band: String = case[1]
+		var story := str(((SimCommands.create_world(
+			5, 48, 32, "player", depth) as Dictionary)["payload"] as Dictionary)["story"])
+		assert_true(story.begins_with(band),
+			"depth %d opens '%s', not '%s'" % [depth, story.substr(0, 16), band])
+
+
+func test_records_the_cut_in_the_birth_event_matching_the_band() -> void:
+	## ADOPTED — tests/core/motifs.test.ts:136.
+	##
+	## The payload token and the band function must never drift: a rule reads
+	## the recorded cut, a player reads the story's name, and they are the same
+	## fact or the game is lying to one of them.
+	for depth: int in [1, 3, 5, 7]:
+		for seed: int in [7, 23]:
+			var payload: Dictionary = (SimCommands.create_world(
+				seed, 48, 32, "player", depth) as Dictionary)["payload"]
+			var cut: Dictionary = SimTables.motif_at(seed, 0, depth)
+			assert_eq(payload["motif"], (cut["motif"] as Dictionary)["key"],
+				"seed %d depth %d records a cut its own band disowns" % [seed, depth])
+
+
+func test_a_board_over_the_cap_is_refused_rather_than_allocated() -> void:
+	## ADOPTED — tests/core/size.test.ts:137, "refuses a board past the
+	## chokepoint". The eighth of the eight cases Task 2.B3 parked in
+	## test_tables.gd naming `commands.gd` as their owner, and the only one
+	## that was already written when Wave E was reviewed.
+	##
+	## MIS-CREDITED until the Wave E fix pass: this docstring used to read
+	## "NON-REFERENCE ... No reference case exercises the throw", which was
+	## false — size.test.ts:137 exercises exactly this throw, on exactly these
+	## two dimensions. The test itself was already BETTER than the reference
+	## and is unchanged: the reference writes `MAX_BOARD_DIM + 1`, deriving its
+	## input from the constant it guards; 257 is spelled here as a literal.
+	## Only the attribution was wrong.
+	##
+	## The reference THROWS above MAX_BOARD_DIM (commands.ts:224 — "above the
+	## cap a mistyped dimension allocates a country"). GDScript's assert()
+	## unwinds one frame and hands back `{}`, and the explicit return produces
+	## the same `{}` in a release build where the assert does not exist;
+	## push_error rides alongside because it survives the strip. Both are
+	## asserted.
+	assert_true(SimCommands.create_world(1, 257, 32).is_empty(), "257 wide is refused")
+	assert_engine_error("exceeds the 256 board cap")
+	assert_push_error("exceeds the 256 board cap")
+	assert_true(SimCommands.create_world(1, 48, 257).is_empty(), "257 tall is refused")
+	assert_engine_error("exceeds the 256 board cap")
+	assert_push_error("exceeds the 256 board cap")
+	# And the cap itself is not over the cap — the boundary belongs to the
+	# board, not to the refusal.
+	assert_false(SimCommands.create_world(1, 256, 32).is_empty(), "256 wide is allowed")
+
+
 # ── NON-REFERENCE ─────────────────────────────────────────────────────────
-# Four tests with no counterpart in commands.test.ts. See the file header.
+# Five tests with no counterpart in any reference suite. See the file header.
 
 func test_the_golden_world_is_rebuilt_byte_for_byte() -> void:
 	## NON-REFERENCE. The committed golden run's first event is
@@ -736,23 +955,6 @@ func test_a_strikes_two_draws_are_the_two_CONSECUTIVE_draws_it_declares() -> voi
 	assert_false(bool(p["crit"]), "the chosen counter rolls under the crit floor")
 	assert_eq(int(p["damage"]), SimRng.int_between(5, counter + 1, 1, 3) + 1,
 		"the damage is draw two, immediately after the roll")
-
-
-func test_a_board_over_the_cap_is_refused_rather_than_allocated() -> void:
-	## NON-REFERENCE. The reference THROWS above MAX_BOARD_DIM (commands.ts:224
-	## — "above the cap a mistyped dimension allocates a country"). No
-	## reference case exercises the throw, and it is the one guard standing
-	## between a typo and a 65536-tile allocation, so it gets a witness here.
-	## 257 is MAX_BOARD_DIM (256) plus one, spelled as a literal.
-	assert_true(SimCommands.create_world(1, 257, 32).is_empty(), "257 wide is refused")
-	assert_engine_error("exceeds the 256 board cap")
-	assert_push_error("exceeds the 256 board cap")
-	assert_true(SimCommands.create_world(1, 48, 257).is_empty(), "257 tall is refused")
-	assert_engine_error("exceeds the 256 board cap")
-	assert_push_error("exceeds the 256 board cap")
-	# And the cap itself is not over the cap — the boundary belongs to the
-	# board, not to the refusal.
-	assert_false(SimCommands.create_world(1, 256, 32).is_empty(), "256 wide is allowed")
 
 
 func test_the_descent_ceremony_drafts_are_drawless_and_carry_their_facts() -> void:

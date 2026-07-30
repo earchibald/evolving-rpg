@@ -39,11 +39,13 @@ class_name SimMapgen
 ##
 ## ── Reference cases, reconciled ─────────────────────────────────────────
 ## tests/core/mapgen.test.ts (11): 11 ported, 0 deferred.
-## tests/core/path-pull.test.ts (5): 2 ported (one with its world substituted,
-##   disclosed there), 3 deferred to Task 2.E3a (`commands/movement.gd`, which
-##   ships create_world) — each of those three is ABOUT where createWorld puts
-##   the relic and the provision; walk_path is the ruler they hold up to it,
-##   not their subject. Named individually in test_path_pull.gd.
+## tests/core/path-pull.test.ts (5): 5 ported, 0 deferred. Two landed with
+##   this file (one with its world substituted, disclosed there); the other
+##   three waited on Task 2.E3a's create_world — each of those three is ABOUT
+##   where createWorld puts the relic and the provision; walk_path is the
+##   ruler they hold up to it, not their subject. 2.E3a shipped, and all
+##   three are DISCHARGED in test_path_pull.gd (:140+), whose own header now
+##   reads 5 = 5 ported + 0 deferred.
 ## Adopted from Task 2.B3's deferral list (godot/test/unit/test_tables.gd
 ##   names mapgen.gd as their owner): 2 from tests/core/motifs.test.ts and 1
 ##   from tests/core/size.test.ts. All 3 ported here.
