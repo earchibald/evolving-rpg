@@ -190,12 +190,12 @@ func test_never_on_the_teaching_floor_rarely_at_most_once_past_it_wearing_a_plau
 	#
 	# A band cannot be made to work at this sample size, and that is measured
 	# too, not assumed. 1-in-6 over 60 floors predicts 10 with a standard
-	# deviation of 2.9; this seed range actually draws 14, and 1-in-8 draws 9.
-	# Any band wide enough to hold 14 also holds 9. So the count itself is the
+	# deviation of 2.9; this seed range actually draws 14, and 1-in-8 draws 8.
+	# Any band wide enough to hold 14 also holds 8. So the count itself is the
 	# assertion: sixty fixed seeds are a deterministic sample, and 14 is what
 	# the shipped rarity yields from them. If generation legitimately changes,
 	# this number is meant to be re-measured by hand — the same contract the
 	# golden-run pin carries.
 	assert_eq(trials, 60, "the count below is pinned to this many floors")
 	assert_eq(held, 14,
-		"1-in-6 over 60 floors: predicted 10, drawn 14 (1-in-8 would draw 9)")
+		"1-in-6 over 60 floors: predicted 10, drawn 14 (1-in-8 draws 8)")

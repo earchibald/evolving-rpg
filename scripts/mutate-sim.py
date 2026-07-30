@@ -921,12 +921,22 @@ MUTATIONS: dict[str, tuple[str, str, str]] = {
     # gameplay numbers instead of trusting a docstring about them. Each was
     # applied and confirmed against a NAMED failing test after the fix.
     #
+    # A NOTE ON SCOPE. Every "MEASURED" below is a run of the ONE suite that
+    # guards the constant, named with it, except tables-hatch-band, which was
+    # measured against the whole suite. The narrow runs are deliberate: the
+    # sawtooth suite alone costs ~535s, so eight whole-suite runs is over an
+    # hour of wall clock to re-derive a number that only ever needed to be
+    # "the named test fails". Two of the eight (MIMIC_IN, POCKET_IN) move
+    # generation's draw stream and would ripple into the sawtooth pins by
+    # design, so a whole-suite count for them would measure the ripple, not
+    # the guard.
+    #
     # LURK_RANGE — the coiled stalker's spring. Was guarded only by
     # test_verbs.gd's two cases, which both wrote the quarry's tile as
     # `5 + LURK_RANGE (+ 1)`. Both now spell the tile as a literal (x = 8 is
     # inside the spring, x = 9 is one past), which pins the range from both
     # sides: no other value satisfies both lines.
-    # MEASURED: exactly 1 test fails —
+    # MEASURED against test_verbs.gd: exactly 1 of its 28 fails —
     # test_holds_perfectly_still_while_the_quarry_is_beyond_its_spring.
     "tables-lurk-range-wider": (
         "godot/sim/tables.gd",
@@ -939,8 +949,9 @@ MUTATIONS: dict[str, tuple[str, str, str]] = {
     # so test_verbs.gd's new
     # test_the_vigils_leash_stands_at_exactly_five_steps_of_walking closes the
     # gap at exactly six steps.
-    # MEASURED: exactly 1 test fails — that one, on its second assertion
-    # ("six steps from the post is one past the leash — it turns for home").
+    # MEASURED against test_verbs.gd: exactly 1 of its 28 fails — that one,
+    # on its second assertion ("six steps from the post is one past the leash
+    # — it turns for home").
     "tables-vigil-leash-longer": (
         "godot/sim/tables.gd",
         "const VIGIL_LEASH := 5",
@@ -950,7 +961,8 @@ MUTATIONS: dict[str, tuple[str, str, str]] = {
     # writes the constant into its own expected payload, so the recorded radius
     # was compared against the number that produced it. test_loot.gd now spells
     # the literal 7.
-    # MEASURED: exactly 1 test fails — test_records_where_it_burst_and_how_far.
+    # MEASURED against test_loot.gd: exactly 1 of its 14 fails —
+    # test_records_where_it_burst_and_how_far.
     "tables-flare-radius-wider": (
         "godot/sim/tables.gd",
         "const FLARE_RADIUS := 7",
@@ -963,8 +975,8 @@ MUTATIONS: dict[str, tuple[str, str, str]] = {
     # test_the_blinks_clearance_stands_at_exactly_four_steps_of_walking stands
     # two one-tile corridors whose length brackets the bound — an eight-tile
     # corridor must leave the page spent, a nine-tile one must land on x = 9.
-    # MEASURED: exactly 1 test fails — that one, on the nine-tile corridor
-    # (the page goes spent there too once the clearance is 6).
+    # MEASURED against test_scrolls.gd: exactly 1 of its 12 fails — that one,
+    # on the nine-tile corridor (the page goes spent there too at clearance 6).
     "tables-blink-clear-wider": (
         "godot/sim/tables.gd",
         "const BLINK_CLEAR := 4",
@@ -975,8 +987,8 @@ MUTATIONS: dict[str, tuple[str, str, str]] = {
     # so any reach from 3 to 18 eats exactly the same one trap. test_scrolls.gd
     # now lays a second trap at FOUR steps — the first tile past the reach —
     # in test_the_trap_eaters_reach_stops_at_three_steps_of_walking.
-    # MEASURED: exactly 1 test fails — that one: `eaten` comes back with both
-    # traps instead of one.
+    # MEASURED against test_scrolls.gd: exactly 1 of its 12 fails — that one:
+    # `eaten` comes back with both traps instead of one.
     "tables-trap-eater-reach-longer": (
         "godot/sim/tables.gd",
         "const TRAP_EATER_REACH := 3",
@@ -989,8 +1001,10 @@ MUTATIONS: dict[str, tuple[str, str, str]] = {
     # literals now, and test_traps.gd's new
     # test_no_hatch_ever_stands_a_riser_beside_you_over_a_swept_floor sweeps
     # twenty-four seeds so a widened band cannot hide in a single draw.
-    # MEASURED: exactly 2 tests fail — the sweep, and the ported :216 case
-    # whose bounds are now literal.
+    # MEASURED against the WHOLE suite: 650 tests, 648 pass, exactly 2 fail —
+    # the ported :216 case (a riser 2 steps away against a floor of 3) and the
+    # sweep, which reports risers at 1 or 2 steps on eight of its twenty-four
+    # seeds (2, 7, 10, 11, 15, 18, 22, 24). Nothing else in the suite moves.
     "tables-hatch-band-reaches-beside-you": (
         "godot/sim/tables.gd",
         "const HATCH_BAND: Array[int] = [3, 5]",
@@ -1000,11 +1014,11 @@ MUTATIONS: dict[str, tuple[str, str, str]] = {
     # ceiling of `2 * trials / MIMIC_IN`, which comes DOWN to meet a thinner
     # rate. A band cannot be made to work at this sample size and that is
     # measured, not assumed: 1-in-6 over 60 floors predicts 10 with sigma 2.9,
-    # this seed range actually draws 14, and 1-in-8 draws 9 — any band holding
-    # 14 also holds 9. test_mimics.gd pins the count as the literal 14.
-    # MEASURED: exactly 1 test fails —
+    # this seed range actually draws 14, and 1-in-8 draws 8 — any band holding
+    # 14 also holds 8. test_mimics.gd pins the count as the literal 14.
+    # MEASURED against test_mimics.gd: exactly 1 of its 6 fails —
     # test_never_on_the_teaching_floor_rarely_at_most_once_past_it_wearing_a_
-    # plausible_kind, reporting 9 where 14 was pinned.
+    # plausible_kind, reporting 8 where 14 was pinned.
     "tables-mimic-in-rarer": (
         "godot/sim/tables.gd",
         "const MIMIC_IN := 6",
@@ -1017,7 +1031,7 @@ MUTATIONS: dict[str, tuple[str, str, str]] = {
     # band excludes both neighbours while still clearing the sampling noise
     # (132 bodies over thirty seeds, sigma about 0.04). Measured on the shipped
     # constant: 44 of 132, dead on 0.3333.
-    # MEASURED: exactly 1 test fails —
+    # MEASURED against test_pockets.gd: exactly 1 of its 6 fails —
     # test_about_one_in_three_carries_the_carried_kind_is_always_a_real_kind_
     # the_mimic_always_hoards, at 0.250.
     "tables-pocket-in-rarer": (

@@ -335,9 +335,8 @@ static func loose_shot(state: Dictionary, entity_id: String, target_id: String) 
 ##   counter + 2i      the archetype, one weighted pick over `answering`
 ##   counter + 2i + 1  the tile, one index into `candidates`
 ## `candidates` is rebuilt for every riser because a riser already placed
-## occupies its tile (`SimMovement.stood` reads `risen` as well as
-## `entities`), so the
-## second draw's RANGE depends on the first riser's answer. That is why the
+## occupies its tile (`SimMovement.stood` reads `risen` as well as `entities`),
+## so the second draw's RANGE depends on the first riser's answer. That is why the
 ## offsets matter and a plausible-band assertion cannot see them move: shift
 ## the tile draw by one and every riser still lands on legal ground at a legal
 ## distance — a different tile, on a chain that still verifies.

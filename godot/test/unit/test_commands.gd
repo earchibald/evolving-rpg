@@ -647,7 +647,9 @@ const _WASTE := {"width": 128, "height": 96}
 
 
 ## The reference's module-level `fold()`: a WORLD_INIT draft, sealed, folded
-## onto EMPTY_STATE. Only two of the seven need it.
+## onto EMPTY_STATE. Only one of the seven needs it — size.test.ts:101, which
+## is why Task 2.B3's ledger names apply.gd beside commands.gd for that case
+## and for no other.
 func _fold(draft: Dictionary) -> Dictionary:
 	return SimApply.apply(SimState.empty(), _seal(draft))
 
