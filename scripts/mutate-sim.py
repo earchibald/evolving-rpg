@@ -86,6 +86,19 @@ MUTATIONS: dict[str, tuple[str, str, str]] = {
         '\t\t"alarm": null,\n',
         '\t\t# "alarm": null,\n',
     ),
+    # A wrong version number in the schema table — the exact failure this
+    # table exists to prevent. WORLD_INIT is the type with the longest
+    # upcaster history (v9-v15), so a stale entry here is the most
+    # plausible real mistake, not just the easiest string to hit. Caught
+    # by test_the_schema_table_covers_every_type_the_golden_run_uses,
+    # which checks the table against schemaVersion as actually recorded
+    # on every golden-run event, not against a second reading of the
+    # reference.
+    "events-schema-version": (
+        "godot/sim/events.gd",
+        '"WORLD_INIT": 15,',
+        '"WORLD_INIT": 14,',
+    ),
     # --- Known EQUIVALENT REWRITES, kept as documentation, not as proofs. ---
     # Both produce identical bits: low bits survive two's-complement wrapping,
     # and u32's second line masks unconditionally. Running these should show NO
