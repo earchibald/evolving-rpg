@@ -33,7 +33,10 @@ extends GutTest
 ## of which already exist. Nothing is stubbed and nothing is deferred.
 ##
 ## ── Non-reference tests, and why each exists ──────────────────────────────
-## ONE test at the bottom of this file has no counterpart in the reference:
+## TWO tests at the bottom of this file have no counterpart in the reference,
+## so the file holds 13 cases for 11 ported. BOTH exist because a mutation
+## MEASURED a hole rather than because one was predicted:
+##
 ##   test_the_calls_four_draws_come_from_four_CONSECUTIVE_counter_offsets
 ## The reference's :130 checks the COUNT of draws and the DISTANCE of the
 ## risers — both of which survive a draw moving to a different counter offset,
@@ -42,6 +45,12 @@ extends GutTest
 ## it off `counter + 1` failed NOTHING across 456 tests. The call spends four
 ## draws, more than any other verb in this family, so the offsets are pinned
 ## here by re-deriving each one from SimRng on the test's side of the fence.
+##
+##   test_no_voice_ever_answers_a_voice_over_a_hundred_cries
+## :130 also asserts that no riser is a caller — and that assertion did NOT
+## fail when the filter enforcing it was deleted, because one cry is two draws
+## and the caller is one weight in twelve. Measured, not predicted; see the
+## test's own docstring.
 
 
 const _SEED := 5
@@ -344,6 +353,37 @@ func test_the_calls_four_draws_come_from_four_CONSECUTIVE_counter_offsets() -> v
 	# The two indices differ, so a swapped pair of offsets could not pass by
 	# coincidence — the guard against a pin that is accidentally vacuous.
 	assert_ne(first_at, second_at, "the two tile draws are genuinely different numbers")
+
+
+func test_no_voice_ever_answers_a_voice_over_a_hundred_cries() -> void:
+	## NON-REFERENCE, and added because a mutation MEASURED the hole. :130
+	## above does assert that no riser is a caller — but it looks at ONE cry,
+	## two draws, on one floor. Deleting the `verbOf(a.kind) !== 'call'` filter
+	## (mutate-sim.py `stances-callers-call-callers`) leaves that assertion
+	## GREEN: at depth 4 the caller is one weight in twelve, and two draws
+	## simply missed it. The rule the filter protects is not a preference, it
+	## is the difference between a clock and a fork bomb, so it gets a witness
+	## that cannot pass by luck.
+	##
+	## Depth 9 opens every gate in the bestiary, the caller's included, so the
+	## filter is the ONLY thing keeping callers out of the pool here.
+	var cries := 0
+	var risers := 0
+	for counter in range(50):
+		var state: Dictionary = _room(
+			[_being("caller-1", "caller", 5, 5, {"tags": ["call"]}), _you(8, 5)],
+			[], counter, 9)
+		var called: Variant = SimCommands.call_out(state, "caller-1")
+		assert_not_null(called, "counter %d: an open floor can always answer" % counter)
+		cries += 1
+		for o: Dictionary in ((called as Dictionary)["payload"]["opponents"] as Array):
+			risers += 1
+			assert_false(str(o["kind"]).begins_with("caller"),
+				"counter %d raised a caller" % counter)
+	# The precondition, so this cannot go quietly vacuous if the call ever
+	# stops raising anything: fifty cries, two risers each.
+	assert_eq(cries, 50)
+	assert_eq(risers, 100)
 
 
 ## One weighted walk over a literal pool, the reference's own loop. Kept here

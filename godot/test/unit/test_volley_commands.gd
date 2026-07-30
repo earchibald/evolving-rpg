@@ -299,6 +299,11 @@ func test_the_shots_two_draws_are_the_two_CONSECUTIVE_draws_it_declares() -> voi
 	## The band is spelled as literals rather than read back through
 	## damage_dice(): might 3 is the 1d3+1 band. Deriving it from the table
 	## would be deriving the expectation from the thing it guards.
+	##
+	## MEASURED, not assumed: this test fails under 2.E3a's own
+	## `mutate-sim.py movement-strike-damage-draw-skips` (2 of 515 fail — this
+	## and its melee twin in test_commands.gd), so the shared blow path now has
+	## a witness at each of its two doors rather than only at the bump's.
 	var counter := 1  # seed 41, counter 1 rolls 14 — a hit, well under the crit floor
 	var s: Dictionary = _armed_world()
 	s = s.duplicate()
@@ -316,8 +321,9 @@ func test_the_shots_two_draws_are_the_two_CONSECUTIVE_draws_it_declares() -> voi
 	assert_eq(int(p["damage"]), SimRng.int_between(_SEED, counter + 1, 1, 3) + 1,
 		"the damage is draw two, immediately after the roll")
 
-	# The two draws are genuinely different numbers at these counters, so an
-	# offset that collapsed them onto each other could not pass by coincidence.
-	assert_ne(SimRng.int_between(_SEED, counter, 1, 20),
-		SimRng.int_between(_SEED, counter + 1, 1, 20),
-		"roll and damage do not share a draw")
+	# Non-vacuity: had the damage been drawn at the ROLL's counter instead of
+	# the next one, it would have come out a different number — so the pin
+	# above cannot be passing by coincidence at these counters.
+	assert_ne(SimRng.int_between(_SEED, counter, 1, 3),
+		SimRng.int_between(_SEED, counter + 1, 1, 3),
+		"the two offsets yield different damage, so the pin can fail")

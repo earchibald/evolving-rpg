@@ -69,9 +69,27 @@ class_name SimStances
 ##
 ## Task 2.E3a MEASURED that moving a draw off its offset failed nothing across
 ## 456 tests: every damage assertion in the reference is a range, and the
-## golden run re-hashes rather than re-derives. test_stances.gd therefore pins
-## the OFFSETS by re-deriving each draw from SimRng on the test's side of the
-## fence, and scripts/mutate-sim.py carries two offset-moving mutants for it.
+## golden run re-hashes rather than re-derives. RE-MEASURED here, on the call:
+## `mutate-sim.py stances-call-tile-draw-offset` moves riser 0's tile from
+## (5,11) to (22,12) and EVERY reference case still passes, the distance check
+## included. So the offsets are pinned by re-deriving each draw from SimRng on
+## the test's side of the fence —
+##   test_new_verbs.gd
+##     test_the_calls_four_draws_come_from_four_CONSECUTIVE_counter_offsets
+##   test_volley_commands.gd
+##     test_the_shots_two_draws_are_the_two_CONSECUTIVE_draws_it_declares
+## — and scripts/mutate-sim.py carries two offset-moving mutants under
+## `# --- Task 2.E3d ---` so the next porter can re-run them.
+##
+## ── The five suites this family answers to ────────────────────────────────
+##   tests/core/player-verbs.test.ts   (14) -> test_player_verbs.gd
+##   tests/core/new-verbs.test.ts      (11) -> test_new_verbs.gd
+##   tests/core/volley-stance.test.ts  (12) -> test_volley_stance.gd
+##   tests/core/volley-commands.test.ts(12) -> test_volley_commands.gd
+##   tests/core/volley-mind.test.ts     (5) -> test_volley_mind.gd
+## 54 reference cases = 53 PORTED + 1 DEFERRED (player-verbs.test.ts:146,
+## which asserts session.ts's `draftFor` wait gate — Phase 3's, not this
+## layer's). Each file's own header carries the case-by-case arithmetic.
 
 
 ## The reference's `wait` is a verb of this family (commands.ts:1421) rather
