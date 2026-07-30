@@ -106,3 +106,33 @@ static func record_bodies(state: Dictionary, bodies: Array) -> Dictionary:
 
 static func found_world(state: Dictionary, bible: Dictionary) -> Dictionary:
 	return SimMovement.found_world(state, bible)
+
+
+# ── Task 2.E3d: sim/commands/stances.gd ───────────────────────────────────
+
+static func shove_at(state: Dictionary, entity_id: String, dx: int, dy: int) -> Variant:
+	return SimStances.shove_at(state, entity_id, dx, dy)
+
+
+static func brace_self(state: Dictionary, entity_id: String) -> Dictionary:
+	return SimStances.brace_self(state, entity_id)
+
+
+static func draw_stance(state: Dictionary, entity_id: String) -> Variant:
+	return SimStances.draw_stance(state, entity_id)
+
+
+static func shot_target(state: Dictionary, entity_id: String) -> Variant:
+	return SimStances.shot_target(state, entity_id)
+
+
+static func loose_shot(state: Dictionary, entity_id: String, target_id: String) -> Variant:
+	return SimStances.loose_shot(state, entity_id, target_id)
+
+
+static func call_out(state: Dictionary, entity_id: String, prey_id: String = "player") -> Variant:
+	return SimStances.call_out(state, entity_id, prey_id)
+
+
+static func wait(state: Dictionary, entity_id: String) -> Dictionary:
+	return SimStances.wait(state, entity_id)

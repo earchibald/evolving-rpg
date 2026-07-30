@@ -630,6 +630,63 @@ MUTATIONS: dict[str, tuple[str, str, str]] = {
         "\t\tif false:  # MUTATED: the keeper may stand in what paints as wall\n"
         "\t\t\tcontinue",
     ),
+    # --- Task 2.E3d: sim/commands/stances.gd ---
+    # THE OFFSET MOVES. Task 2.E3a measured that shifting the strike's damage
+    # draw off `counter + 1` failed NOTHING across 456 tests: every damage
+    # assertion in the reference is a range, and the golden run re-hashes
+    # rather than re-derives. The call spends four draws — more than any other
+    # verb in this family — so both of its offsets get a mutant, and neither
+    # changes a single number's plausibility: every riser still lands on legal
+    # ground at a legal distance, wearing a legal kind, on a chain that still
+    # verifies. Only a test that re-DERIVES the draw can see them.
+    #
+    # Moves riser i's TILE draw from `c` to `c + 1`, so the archetype and the
+    # tile stop being consecutive while rngDraws still says 4.
+    # MEASURED at 514 tests: 513 pass, exactly 1 fails —
+    # test_the_calls_four_draws_come_from_four_CONSECUTIVE_counter_offsets
+    # (riser 0's tile moves from 5,11 to 8,12). Every reference case in
+    # test_new_verbs.gd passes under it, including :130's distance check.
+    "stances-call-tile-draw-offset": (
+        "godot/sim/commands/stances.gd",
+        "\t\tvar at: int = SimRng.int_between(seed, c, 0, candidates.size() - 1)",
+        "\t\tvar at: int = SimRng.int_between(seed, c + 1, 0, candidates.size() - 1)",
+    ),
+    # Moves riser i's ARCHETYPE draw from `c` to `c + 1`, collapsing it onto
+    # the same counter the tile draw then reads — two draws, one number.
+    # MEASURED at 514 tests: 513 pass, exactly 1 fails, the same test (the
+    # kinds move from slinger/bruiser to stalker/slinger while both tiles stay
+    # exactly where they were).
+    "stances-call-archetype-draw-offset": (
+        "godot/sim/commands/stances.gd",
+        "\t\tvar pick: int = SimRng.int_between(seed, c, 1, arch_total)",
+        "\t\tvar pick: int = SimRng.int_between(seed, c + 1, 1, arch_total)",
+    ),
+    # Lets the sling take the tile the bump owns. Adjacency refusing shots is
+    # covenant M7's half that keeps the melee verb from becoming strictly
+    # worse than the ranged one at range 1.
+    "stances-shot-takes-the-adjacent": (
+        "godot/sim/commands/stances.gd",
+        "\tif absi(int(to[\"x\"]) - int(from[\"x\"])) + absi(int(to[\"y\"]) - int(from[\"y\"])) == 1:\n"
+        "\t\treturn false",
+        "\tif false:  # MUTATED: the sling steals the bump's tile\n"
+        "\t\treturn false",
+    ),
+    # Makes the way out an ordinary door: a shoved body walks down the stairs
+    # instead of hitting the frame. The reference stops a body at the EXIT
+    # exactly as a wall does, and nothing derives that from anything else.
+    "stances-shove-through-the-way-out": (
+        "godot/sim/commands/stances.gd",
+        "\t\tor SimGrid.tile_at(grid, int(behind[\"x\"]), int(behind[\"y\"])) == SimGrid.EXIT:",
+        "\t\tor false:  # MUTATED: the stairs are a door, not a frame",
+    ),
+    # Lets callers answer a call. One voice per floor is a clock; a chain of
+    # voices is a fork bomb, and the filter is BY VERB so a levelled
+    # "caller-2" cannot slip through the door its parent is barred from.
+    "stances-callers-call-callers": (
+        "godot/sim/commands/stances.gd",
+        "\t\tif int(a[\"weight\"]) > 0 and depth >= from_depth and SimTables.verb_of(a[\"kind\"]) != \"call\":",
+        "\t\tif int(a[\"weight\"]) > 0 and depth >= from_depth:  # MUTATED: a voice may answer a voice",
+    ),
 }
 
 if len(sys.argv) > 1 and sys.argv[1] == "--list":
