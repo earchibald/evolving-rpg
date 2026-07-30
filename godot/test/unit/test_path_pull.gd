@@ -88,6 +88,30 @@ func test_a_walk_to_where_you_already_stand_is_the_tile_you_stand_on() -> void:
 		[{"x": 1, "y": 0}])
 
 
+func test_the_road_bends_east_before_it_bends_south() -> void:
+	## The neighbour order is east, west, south, north — the hunt's order — and
+	## the reference is explicit that it is load-bearing: "the road a floor is
+	## judged by is the same road every replay judges." Wave E's createWorld
+	## lays the teaching floor's relic ON that road at a fixed number of steps,
+	## so a DIFFERENT shortest path is a different relic tile and a different
+	## game from the same seed.
+	##
+	## Nothing else in this file can see that: every other assertion here is
+	## about the road's LENGTH, and all four orders give shortest paths. So the
+	## tie-break gets pinned where it can be worked out by hand — an open 3x3,
+	## corner to corner, where east-first walks the top edge and south-first
+	## would walk the left one.
+	var open_board: Dictionary = SimGrid.make(3, 3, [
+		SimGrid.FLOOR, SimGrid.FLOOR, SimGrid.FLOOR,
+		SimGrid.FLOOR, SimGrid.FLOOR, SimGrid.FLOOR,
+		SimGrid.FLOOR, SimGrid.FLOOR, SimGrid.FLOOR,
+	])
+	assert_eq(SimMapgen.walk_path(open_board, {"x": 0, "y": 0}, {"x": 2, "y": 2}), [
+		{"x": 0, "y": 0}, {"x": 1, "y": 0}, {"x": 2, "y": 0},
+		{"x": 2, "y": 1}, {"x": 2, "y": 2},
+	])
+
+
 func test_the_road_is_the_same_road_on_every_seed_it_is_asked_for() -> void:
 	## The three deferred cases all sweep seeds; this keeps a sweep in the file
 	## so a walk_path that worked on one hand-picked board and not on real ones
