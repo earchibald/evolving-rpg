@@ -2114,3 +2114,54 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > the reference's `append()` suite still have no test here — the log-immutability
 > clause of A5, and A7. Phase 1's gap, not Phase 2's, and now named in
 > `test_log.gd` itself so it stops being invisible.
+
+> [!IMPORTANT]
+> **11:41 — Generation, sight and the mind are across; a warden that cannot
+> find its way home; and three things that were right but unguarded**
+> The floors, the flood fill, the line of sight, the order of the round and the
+> creature mind have all come over. Thirty test scripts, three hundred and
+> eighty-four tests. The headline is the generator: **all six recorded boards
+> reproduced tile for tile on the first run** — and, which matters more, spending
+> exactly the same randomness to get there (183, 698, 211, 650, 139, 574 draws).
+> Two generators can agree on a board by luck and then diverge on the next draw,
+> somewhere far away and much later; matching draw counts cannot be faked that
+> way.
+>
+> **One thing I need you to rule on.** In the reference, the warden's walk home
+> measures distance with a reach of 8, while the ordinary guard's identical walk
+> one function later measures with the whole width and height of the board. Both
+> arrived in the same commit; the older call was simply never revised when the
+> newer one was written. What it means in play: **a warden shoved more than eight
+> walking steps from its post will wait there forever instead of walking home.**
+> I have ported it exactly as it is, because a bug faithfully reproduced is the
+> job and a bug quietly fixed forks every chain ever written — but it is almost
+> certainly not what you meant, and it wants your word rather than mine.
+>
+> **A test that cannot fail is worse than no test, and I found four.** The
+> reference's own AI suite checks awareness by putting the quarry "one step
+> beyond AWARENESS" — written in terms of the constant itself, so when you change
+> the constant the test moves its goalposts and notices nothing. The mandated
+> proof for that module caught precisely zero. The same shape turned up three
+> more times in generation and pathing: the exit-band test asserted the contents
+> of a table without ever calling the function that reads it; the spawn-point
+> sort could be **deleted outright** with everything still green; the flood
+> fill's visiting order, which its own comments call deliberate, could be
+> reversed with nothing noticing.
+>
+> All four are now guarded by tests that spell their numbers out as plain
+> literals and show the arithmetic, and every one of them has been proven by
+> breaking the code and watching the right test — and only the right test —
+> fail. The flood's order is pinned by hand-deriving the exact sequence of nine
+> tiles it visits, popping the stack one at a time in a comment.
+>
+> **The engine now has one of each thing again.** Two modules had grown private
+> copies of the same walking-distance search, because each was written while the
+> other's owner had not landed yet. Both twins have been diffed line by line
+> against the original, found identical, and deleted. There is exactly one flood
+> fill and one walking distance in the simulation, which is the point: two would
+> drift, and a drift there is a creature choosing differently and a chain that
+> forks.
+>
+> **Try it:** still nothing to press, and this is the last stretch where that is
+> true. What remains is the verbs — the blow, the take, the trap, the shove, the
+> purse — and then the gates. Phase 3 is the playable one.
