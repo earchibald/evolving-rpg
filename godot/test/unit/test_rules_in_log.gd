@@ -4,7 +4,7 @@ extends GutTest
 ## B discharges the deferral Task 2.B6 recorded here: apply.gd exists now,
 ## and with it RULE_RATIFIED/RULE_FIRED folding.
 ##
-## Reconciliation: 11 = 8 ported + 2 deferred + 1 documented as
+## Reconciliation: 11 = 9 ported + 1 deferred + 1 documented as
 ## architecturally inapplicable rather than faked (below). Every case, by
 ## describe block, with the reference line and its outcome:
 ##
@@ -15,7 +15,9 @@ extends GutTest
 ##        PORTED, test_consumes_no_randomness_so_ratifying_cannot_shift_a_later_roll
 ##   :59  "keeps them in the order they were ratified" — PORTED,
 ##        test_keeps_them_in_the_order_they_were_ratified
-##   :70  "still verifies as a chain" — DEFERRED to Task 2.C2: needs
+##   :70  "still verifies as a chain" — PORTED (discharged by Task 2.C2's
+##        review, which caught that this deferral had been left addressed to a
+##        task that had already finished). Was: DEFERRED to Task 2.C2, needs
 ##        SimLog.verify_chain(), which (per log.gd's own docstring, same line
 ##        as fold()) "need[s] the reducer and join[s] in Phase 2" — i.e. now
 ##        that apply.gd exists, but 2.C2 is the task that actually writes it,
@@ -148,17 +150,13 @@ func _ratify_draft(state: Dictionary, rule: Dictionary) -> Dictionary:
 	return SimEvents.draft("RULE_RATIFIED", state["rngCounter"], 0, {"rule": rule})
 
 
-## Hand-rolled fold pending Task 2.C2 (SimLog.fold() does not exist yet —
-## see file header). Replays the chain ending at `head` through
-## SimApply.apply from SimState.empty(); log.chain() already exists and
-## supplies the ordered, real (hashed, sealed) events.
+## Was a hand-rolled fold while SimLog.fold() did not exist; Task 2.C2 shipped
+## the real one, so this is now a one-line delegation kept only so the call
+## sites below read the same as they did when they were written. The stand-in
+## replayed log.chain(head) through SimApply.apply, which is exactly what
+## fold() does — plus the memo.
 func _fold(log: SimLog, head: Variant) -> Dictionary:
-	var state: Dictionary = SimState.empty()
-	if head == null:
-		return state
-	for event: Dictionary in log.chain(head):
-		state = SimApply.apply(state, event)
-	return state
+	return log.fold(head)
 
 
 ## Rule ids, in order — the reference's `.rules.map((r) => r.id)`.
@@ -203,8 +201,32 @@ func test_keeps_them_in_the_order_they_were_ratified() -> void:
 	assert_eq(_rule_ids(_fold(log, head)["rules"]), ["first", "second", "third"])
 
 
-# ":70 still verifies as a chain" — DEFERRED to Task 2.C2 (SimLog.verify_chain()
-# does not exist yet). See file header.
+func test_still_verifies_as_a_chain() -> void:
+	## ":70". Deferred to Task 2.C2 when verify_chain() did not exist; discharged
+	## here now that it does. Ratifying is an ordinary event and must survive an
+	## ordinary audit — hash, type, schema version, sequence and rng counter all
+	## accounted for. It also puts a SIXTH event type through verify_chain:
+	## test_chain.gd drives WORLD_INIT/MOVE/TURN_ADVANCED and the golden run adds
+	## STRIKE/ITEM_TAKEN, so RULE_RATIFIED is audited nowhere but here.
+	var w: Dictionary = _world()
+	var log: SimLog = w["log"]
+	var head: Variant = w["head"]
+	for id: String in ["first", "second"]:
+		head = log.append(head, _ratify_draft(_fold(log, head), _rule(id)))["id"]
+
+	assert_null(log.verify_chain(head), "a chain that ratified rules is still sound")
+
+	# And it is not vacuously null: tamper one ratification's payload after it
+	# was sealed and the audit names that event.
+	var sealed: Dictionary = log.events[head]
+	var tampered: Dictionary = sealed.duplicate(true)
+	(tampered["payload"] as Dictionary)["rule"] = _rule("smuggled")
+	log.events[head] = tampered
+
+	var divergence: Variant = log.verify_chain(head)
+	assert_not_null(divergence, "a rewritten rule does not survive the audit")
+	assert_eq((divergence as Dictionary)["eventId"], head)
+	assert_string_contains((divergence as Dictionary)["reason"], "hash mismatch")
 
 
 # describe('not corrupting what came before') --------------------------------

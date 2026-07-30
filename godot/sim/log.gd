@@ -136,10 +136,21 @@ func fold(head: Variant) -> Dictionary:
 ## which divergence gets reported first when more than one is true at once —
 ## hash, then type, then schema version, then sequence, then rng counter.
 ##
-## Relies on chain() for structural soundness (cycle, missing event) rather
-## than re-checking either here: those two are chain()'s own guards, already
-## walked at the same points on the same kind of pass, and duplicating them
-## would be a second encoding of a fact one function already owns.
+## DOES NOT CHECK STRUCTURAL SOUNDNESS, and cannot as written. The reference
+## leans on chain() for that — a cycle or a missing event THROWS there and the
+## throw propagates straight out through verifyChain — but GDScript's assert()
+## unwinds exactly ONE frame, so chain()'s refusal ends at chain()'s own
+## boundary. chain() returns [] and this function then iterates nothing and
+## returns null, which reads as "sound". A hole in the log is therefore LOUD
+## (chain() pushes an engine error) but not REPORTED (the return value cannot
+## carry it).
+##
+## A caller who needs structural soundness must call chain() itself and watch
+## for the refusal. This is the port's one known divergence from the
+## reference's verifyChain contract; it is pinned by
+## test_verify_chain_cannot_see_a_structurally_broken_log_and_says_so_loudly
+## and written up in NIGHTLOG. Widening the return type to carry it is a
+## behaviour change and belongs to the designer, not to this function.
 func verify_chain(head: Variant) -> Variant:
 	var state: Dictionary = SimState.empty()
 	var expected_seq := 0

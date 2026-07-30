@@ -363,3 +363,117 @@ func test_verify_chain_catches_an_rng_counter_that_does_not_line_up_with_the_sta
 	assert_not_null(divergence)
 	assert_eq((divergence as Dictionary)["seq"], 1)
 	assert_string_contains((divergence as Dictionary)["reason"], "rng counter recorded as 1004 but state is at 5")
+
+
+# ── the ORDER of the five checks, pinned ─────────────────────────────────
+#
+# Added after Task 2.C2's review reversed all five checks in verify_chain
+# (rng -> seq -> type/schema -> hash) and watched the suite pass 298/298. Every
+# divergence test above makes exactly ONE divergence true, so not one of them
+# can discriminate order — and the order is the spec, because it decides which
+# divergence a player is told about when more than one is true at once.
+#
+# Each test below breaks TWO checks at once and asserts the EARLIER one is what
+# gets reported. Together they pin hash -> type -> seq and schema -> seq and
+# seq -> rng. The one adjacency not pinned by a test is type -> schema, and it
+# cannot be: the schema check reads SCHEMA_VERSIONS[type], so an unknown type
+# short-circuits it structurally. There is no chain on which both are true.
+
+
+## Stores an event under an id hashed from its own parent and seq, so the hash
+## check — first in the mandated order — has nothing to catch and cannot be the
+## reason a later check's test fails.
+func _forge(log: SimLog, parent: Variant, draft: Dictionary, seq: int) -> String:
+	var id: String = SimHash.hash_event(draft, parent, seq)
+	var forged: Dictionary = draft.duplicate(true)
+	forged["id"] = id
+	forged["parent"] = parent
+	forged["seq"] = seq
+	log.events[id] = forged
+	return id
+
+
+func test_a_broken_hash_is_reported_before_an_unknown_type() -> void:
+	var log := SimLog.new()
+	var draft := {"type": "SUMMONED_A_GOD", "schemaVersion": 1, "rngCounter": 0,
+		"rngDraws": 0, "payload": {}}
+	var id: String = SimHash.hash_event(draft, null, 0)
+	var forged: Dictionary = draft.duplicate(true)
+	forged["id"] = id
+	forged["parent"] = null
+	forged["seq"] = 0
+	# Tampered AFTER the id was taken, so the recomputed hash disagrees. The
+	# type is alien too — both checks are true, and only one may be reported.
+	forged["payload"] = {"tampered": true}
+	log.events[id] = forged
+
+	var divergence: Variant = log.verify_chain(id)
+	assert_not_null(divergence)
+	assert_string_contains((divergence as Dictionary)["reason"], "hash mismatch",
+		"the hash check runs before the type check")
+
+
+func test_an_unknown_type_is_reported_before_a_sequence_gap() -> void:
+	var log := SimLog.new()
+	var id := _forge(log, null,
+		{"type": "SUMMONED_A_GOD", "schemaVersion": 1, "rngCounter": 0, "rngDraws": 0,
+			"payload": {}}, 7)
+
+	var divergence: Variant = log.verify_chain(id)
+	assert_not_null(divergence)
+	assert_string_contains((divergence as Dictionary)["reason"], "unknown event type",
+		"the type check runs before the sequence check")
+
+
+func test_a_wrong_schema_version_is_reported_before_a_sequence_gap() -> void:
+	var log := SimLog.new()
+	var id := _forge(log, null, {
+		"type": "MOVE", "schemaVersion": 99, "rngCounter": 0, "rngDraws": 0,
+		"payload": {"entityId": "player", "from": {"x": 0, "y": 0}, "to": {"x": 1, "y": 0}},
+	}, 7)
+
+	var divergence: Variant = log.verify_chain(id)
+	assert_not_null(divergence)
+	assert_string_contains((divergence as Dictionary)["reason"], "is schemaVersion 99",
+		"the schema check runs before the sequence check")
+
+
+func test_a_sequence_gap_is_reported_before_an_rng_counter_that_does_not_line_up() -> void:
+	var log := SimLog.new()
+	var id := _forge(log, null, {
+		"type": "MOVE", "schemaVersion": SimEvents.SCHEMA_VERSIONS["MOVE"],
+		"rngCounter": 999, "rngDraws": 0,
+		"payload": {"entityId": "player", "from": {"x": 0, "y": 0}, "to": {"x": 1, "y": 0}},
+	}, 7)
+
+	var divergence: Variant = log.verify_chain(id)
+	assert_not_null(divergence)
+	assert_string_contains((divergence as Dictionary)["reason"], "sequence gap: expected seq 0",
+		"the sequence check runs before the rng counter check")
+
+
+# ── what verify_chain does NOT catch, pinned so nobody assumes it does ────
+
+func test_verify_chain_cannot_see_a_structurally_broken_log_and_says_so_loudly() -> void:
+	## A REAL LIMIT, recorded rather than papered over. The reference's chain()
+	## THROWS on a missing event and the throw propagates straight out through
+	## verifyChain. GDScript's assert() unwinds exactly ONE frame, so chain()'s
+	## refusal ends at chain()'s own boundary: it returns [] and verify_chain
+	## then iterates nothing and reports the chain SOUND.
+	##
+	## So the loud part is the engine error, not the return value, and that is
+	## what this pins. A caller who needs structural soundness must call chain()
+	## itself and watch for the refusal — verify_chain's null cannot carry it.
+	## Written up in NIGHTLOG for the designer; changing the return contract is
+	## not this task's to do unilaterally.
+	var built := _honest_chain()
+	var log: SimLog = built["log"]
+	var head: Variant = built["head"]
+	var chained: Array = log.chain(head)
+	# Erase an event from the middle, leaving the head pointing through a hole.
+	log.events.erase((chained[2] as Dictionary)["id"])
+
+	var divergence: Variant = log.verify_chain(head)
+	assert_engine_error("missing event")
+	assert_null(divergence,
+		"the limit, stated: a hole in the log reads as SOUND to verify_chain")
