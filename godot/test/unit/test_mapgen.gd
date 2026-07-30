@@ -419,3 +419,94 @@ func test_repair_with_secret_cuts_a_way_into_a_stranded_room_and_leaves_a_whole_
 	var untouched: Dictionary = SimMapgen.repair_with_secret(whole, {"x": 0, "y": 1})
 	assert_eq(int(untouched["punched"]), 0, "a whole map is not improved")
 	assert_eq((untouched["grid"] as Dictionary)["tiles"], (whole as Dictionary)["tiles"])
+
+
+# ── two guards added after Wave D's review broke the code and nothing noticed ─
+#
+# Both of these were proven correct by the review and guarded by nothing. The
+# review's own measurements:
+#   * changing EXIT_BANDS[0]'s `from` from 0.8 to 0.5 left 347/347 green;
+#   * deleting pick_spawn_points' (y, x) sort ENTIRELY left 347/347 green with
+#     an identical assert count, meaning no assertion ever reached it.
+# The exit-band test that existed asserted the CONSTANT's own contents and
+# never called choose_exit, so it could not have seen either.
+
+
+## A forty-tile corridor: distances from (0,0) are 0..39, so reach is 39 and
+## every band's bounds are arithmetic that can be done by hand — which is the
+## whole point. The bounds below are LITERALS, never re-derived from
+## EXIT_BANDS, because a test that recomputes its expectation from the constant
+## it is guarding moves its own goalposts when that constant moves. (The
+## reference's own ai.test.ts does exactly that with AWARENESS, and Task 2.E2
+## measured it: the mandated mutation there caught nothing.)
+##
+##   the long way : lo = max(8, ceil(0.80 * 39)) = 32   hi = reach          = 39
+##   the middle   : lo = max(8, ceil(0.45 * 39)) = 18   hi = floor(0.80*39) = 31
+##   close by     : lo = max(8, ceil(0.00 * 39)) =  8   hi = min(floor(0.45*39), 25) = 17
+##
+## And the weights, read where the ROLL can see them: 6/3/1 out of 10 means a
+## roll of 1..6 is the long way, 7..9 the middle, 10 close by.
+func test_choose_exit_puts_the_way_out_inside_the_band_it_actually_rolled() -> void:
+	var tiles: Array = []
+	for i in range(40):
+		tiles.append(SimGrid.FLOOR)
+	var grid: Dictionary = SimGrid.make(40, 1, tiles)
+	var start := {"x": 0, "y": 0}
+
+	var names := ["the long way", "the middle", "close by"]
+	var lows := [32, 18, 8]
+	var highs := [39, 31, 17]
+	var seen_bands: Dictionary = {}
+
+	for seed: int in [1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610]:
+		var roll: int = SimRng.int_between(seed, 0, 1, 10)
+		var want: int = 0 if roll <= 6 else (1 if roll <= 9 else 2)
+		seen_bands[want] = true
+
+		var got: Dictionary = SimMapgen.choose_exit(seed, 0, grid, start)
+		assert_eq(got["band"], names[want],
+			"seed %d rolled %d, which is %s" % [seed, roll, names[want]])
+		var x: int = (got["exit"] as Dictionary)["x"]
+		assert_true(x >= lows[want] and x <= highs[want],
+			"seed %d: %s reaches %d..%d, got x=%d" % [seed, names[want], lows[want], highs[want], x])
+		assert_eq(got["counterAfter"], 2, "two draws per floor, always")
+
+	# If the seeds only ever rolled one band this would be a much weaker test
+	# than it looks, so say out loud how much of the table was exercised.
+	assert_true(seen_bands.size() >= 2,
+		"these seeds must reach more than one band, or the bounds go untested")
+
+
+func test_pick_spawn_points_walks_its_candidates_in_reading_order_not_flood_order() -> void:
+	## The (y, x) sort exists so the choice never depends on the order
+	## reachable_from happened to discover tiles in. Those two orders genuinely
+	## differ — a depth-first flood from a corner reaches the far edge before
+	## the tile next door — so this pins the sorted one by asserting WHICH tiles
+	## come out, on a board small enough to enumerate.
+	##
+	## Deleting the sort changes the answer; that is the mutation row this test
+	## was written for. It is a characterisation test by necessity (the picks
+	## come from the rng stream, which nobody can do in their head), but it is
+	## not circular: the six-board sweep already proved this generator agrees
+	## with the reference, so what is recorded here is agreed behaviour.
+	var tiles: Array = []
+	for i in range(25):
+		tiles.append(SimGrid.FLOOR)
+	var grid: Dictionary = SimGrid.make(5, 5, tiles)
+	var got: Dictionary = SimMapgen.pick_spawn_points(99, 0, grid, {"x": 0, "y": 0}, 4, 3)
+	var points: Array = got["points"]
+
+	assert_eq(points.size(), 4, "four spawn points asked for, four given")
+	for p: Dictionary in points:
+		assert_true(absi(int(p["x"])) + absi(int(p["y"])) >= 3,
+			"every point keeps its distance from the start")
+	# No repeats — the candidate list is consumed, never re-picked from.
+	var keys: Dictionary = {}
+	for p: Dictionary in points:
+		keys["%d,%d" % [p["x"], p["y"]]] = true
+	assert_eq(keys.size(), 4, "no tile is chosen twice")
+	# The exact answer, which is what a lost sort changes.
+	assert_eq(SimCanonical.encode(points),
+		'[{"x":4,"y":4},{"x":4,"y":3},{"x":2,"y":1},{"x":0,"y":3}]',
+		"the sorted candidate order decides which four tiles these are")
+	assert_eq(got["counterAfter"], 4, "one draw per point taken")
