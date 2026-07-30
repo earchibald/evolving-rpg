@@ -28,6 +28,7 @@ function room(entities: Entity[], over: Partial<GameState> = {}): GameState {
     xp: 0,
     level: 1,
     depth: 4,
+    gold: 0,
     story: '', motif: null, bodies: [], bible: null, smoke: null,
     traps: [], alarm: null, unveiled: [], ...over,
   };

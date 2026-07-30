@@ -1680,3 +1680,131 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > which you should know before you trust it.
 >
 > Go and give it a spin.
+
+> [!NOTE]
+> **20:51 — The engine sits for its portrait: `ts-baseline` is cut**
+> The crossing to Godot starts here, and it starts by standing still. The
+> TypeScript engine is committed whole and tagged **`ts-baseline`** — every
+> fixture, every parity check and every "what did the reference actually
+> do?" question for the rest of the migration resolves against that tag and
+> not against `main`. From now on `src/` is bugfix-only; any change there
+> re-runs `npm run fixtures` and gets said out loud to you.
+>
+> **The gate it had to pass:** typecheck clean, **993 tests in 73 files**,
+> green. You greenlit crossing on the economy's current state and I want you
+> to know the greenlight went unspent — the tree was already whole.
+>
+> **What of the economy is inside the tag** (Phase 6 reads this line, so it
+> is a fact and not a flourish): **increment A, the purse, and nothing
+> else.** `GOLD_MOVED` v1, the folded balance, `valueOf(kind)` in tables,
+> M9 in the Covenant, WORLD_INIT at v15 carrying gold across the stairs.
+> The mine, the shop and the merchant — **increments B–D** — never got
+> built in TypeScript, so they are not ported work. They are the Godot
+> sim's own, and the corrected staging is what they get built to: gold
+> chain-derived, the suspended floor's "state stack" as chain events, Deep
+> Echo risers injected on the suspended chain, dice notation becoming named
+> bands with counted draws.
+>
+> **Your two rulings, recorded.** Distribution is **BYOK** — the player
+> brings their own key, so no hosted proxy has to exist and no key ever
+> ships inside GDScript. The dev-time Oracle sidecar still gets built in
+> Phase 5, because a settings screen is not a reason to make mechanics wait
+> on a model; BYOK is where the key comes *from*, not a change to the
+> never-block contract.
+>
+> **The mood board leaves the history.** `watermarked_img_*.png` is now
+> gitignored: 6.3 MB that nothing consumes. It is the picture on the wall
+> we are aiming at, and — since you clarified you generated it yourself —
+> the licence half of my old refusal is withdrawn. The format half stands
+> exactly as written: it is a poster with captions baked into the raster, so
+> art still arrives per-entity through `docs/design/SPRITES.md`, regenerated
+> clean. Placeholder flat colours hold the stage until it does.
+
+> [!IMPORTANT]
+> **02:55 — Your spec, read hard: the good idea, the eight things that
+> would not have compiled, and the purse that now works**
+> You handed me `new-designs-spec.md` and asked me to review, edit,
+> integrate, implement and test it. The direction is the best new idea
+> anyone has put in front of this game in a week — a second loop with its
+> **own currency**, gated behind a wall, paid for in a money the main
+> dungeon cannot mint. That poses a question the game currently cannot:
+> leave with the wealth, or swing once more. Durability as the clock is
+> the right call too (the loop ends when the tool does, no timer), and
+> **the Deep Echo** — a punishment that lands in the floor you suspended,
+> so it arrives when you think you got away with it — is the single best
+> mechanic in the document.
+>
+> The specifics were another matter. Eight findings, all checked against
+> the code, all written up in
+> `docs/superpowers/specs/2026-07-30-economy-mining-and-sprites.md`:
+>
+> - **Gold as "a purely numerical UI state variable"** — this one I simply
+>   cannot build. M4 says replay is exact. A purse outside the chain is
+>   invisible to forks, lost on rewind, and unreadable by the bots, the
+>   assay and the listener. It is folded now, like `xp`.
+> - **Four of the eight files it tells an agent to edit do not exist.**
+>   `core/volley-stance.ts`, `core/dual-wield.ts`, `core/satchel.ts`,
+>   `core/traps.ts` are *test* filenames. The logic is in `commands.ts`,
+>   `apply.ts` and `tables.ts`.
+> - **There is no "trap trigger listener"** to modify, and no event-listener
+>   layer anywhere. The mechanic it wants (shove a creature into a trap) is
+>   good and cheap, but it is an edit to `shove`.
+> - **There is no combat dodge** to hang "Momentum" on — only a trap dodge.
+>   Reinterpreted as *a brace that was actually tested* buys a marked blow,
+>   which is the same idea in this game's words and pays the one verb the
+>   bots never press.
+> - **Encumbrance would overwrite your own decision.** The two-slot satchel
+>   and its spoken refusal came out of a voiced run and a panel. Deferred,
+>   not silently replaced — your call.
+> - **The Critic cannot spawn monsters** without becoming history: it is
+>   memoised by head and it is evidence, never changes. A dungeon that gets
+>   bored of you is a real mechanic and I want it, but it needs its own
+>   invariant and it goes last.
+> - **`1d4`, `1d3`, `$X$`** — no dice notation here (counted draws), and
+>   that last one is LaTeX the generator forgot to render.
+> - **The scroll belt collides with the scrolls you shipped eight days
+>   ago**, and its fireball walks straight through the no-damage guard.
+>
+> **The sprite sheet: refused, and not on a technicality.** The art is
+> good — it even contains a Suspicious Wall, three pickaxes, ore veins, a
+> shopkeeper and a crafting table, so whoever drew it read the spec. But
+> the file is *watermarked*, which is a preview and not a licence, and I am
+> not routing around that. Separately it could not have worked as written:
+> it is a 2816x1536 presentation poster with a title banner and captions
+> baked into the pixels, sprites at wildly different scales on no regular
+> pitch, so the specified `drawImage(sheet, sx, sy, 16, 16, …)` would slice
+> a fragment of one pixel-art pixel. And there is no canvas board to
+> convert — the board is DOM cells; the only `fillRect` in the repo is the
+> minimap. `docs/design/SPRITES.md` now holds your style guide and prompt
+> formula (they needed no correction), plus a licence table and the rule
+> that manifests are generated, never measured off a picture. When the
+> licensed art arrives: DOM sprites on the existing `.cell` first, a day's
+> work, before anyone rewrites the render layer.
+>
+> **What actually landed: the purse.** Increment A, foundation only.
+> **M9** went into the Covenant first, per the rule that a facility states
+> its invariant before it gets code. `GOLD_MOVED` v1 carries a `delta` and
+> a closed `reason`; the balance is folded, never recorded, so the log and
+> the purse cannot disagree. `valueOf(kind)` prices things in tables —
+> relic or scroll 2 G, provision 1 G, unknown 0 — derived from the kind
+> rather than stored on the item, because two iron ores cannot be worth
+> different amounts. **This is a correction to my own spec**: I had agreed
+> with the proposal that `baseValue` should be a field, and implementing it
+> showed both of us were wrong. WORLD_INIT walked v14→v15 so the purse
+> crosses the stairs like the satchel learned to at v9.
+>
+> 992 tests, typecheck clean. Three mutation proofs: break the stairs
+> carry and 2 tests fail, break the fold and 3 fail, and price provisions
+> as relics and — at first — **nothing failed at all**. Every assertion I
+> had written was an inequality against the ceiling, so the band's shape
+> was unpinned. That test exists now. Golden fixture regenerated, but only
+> after proving the draw stream was untouched: 451 events both sides, zero
+> payload or counter differences, one `schemaVersion` bump. That proof is
+> what let me skip the seed probe the regen ceremony otherwise demands.
+>
+> **Try it:** nothing to press yet — deliberately. Nothing spends gold
+> until the mine and the shop exist (increments B–D). What you can do is
+> read the spec's §III and tell me whether the staging is right, and rule
+> on the three deferred items: the scroll belt (which conflicts), the
+> encumbrance redesign (which overwrites your satchel), and whether the
+> mine is worth me building next.

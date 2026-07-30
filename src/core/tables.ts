@@ -791,6 +791,37 @@ export function provisionsAt(depth: number): readonly Provision[] {
  *  than a floor: a room and its neighbours, not the map. */
 export const FLARE_RADIUS = 7;
 
+/** What a relic or a scroll fetches at a counter, in gold. */
+export const LOOT_VALUE = 2;
+/** What a consumable fetches. Strictly less than a relic: the pantry is spent
+ *  by design, and a thing you were going to use up is worth less than a thing
+ *  you were going to wear. */
+export const PROVISION_VALUE = 1;
+
+/**
+ * What a kind is worth in gold (the 2026-07-30 economy spec, covenant M9).
+ *
+ * Deliberately nominal. The main dungeon is an XP economy and has to stay one:
+ * if a floor's loot could fund a pickaxe, the mine would stop being a decision
+ * and become a chore you pay for with someone else's money. Everything the
+ * dungeon drops is pocket change; real money is the mine's to pay, which is
+ * exactly what is supposed to make the mine worth the risk.
+ *
+ * Derived from the kind, never stored on the item: two iron ores are worth the
+ * same, and a per-instance price would give two things that can disagree — the
+ * same reasoning that keeps `xp` folded out of kill history instead of evented.
+ *
+ * An unknown kind is worth nothing rather than throwing. A chain may carry a
+ * kind some later engine renamed, and a purse is not the place to die; a zero
+ * says honestly that this engine cannot price it.
+ */
+export function valueOf(kind: string): number {
+  if (ARMORY.some((r) => r.kind === kind)) return LOOT_VALUE;
+  if (SCROLLS.some((s) => s.kind === kind)) return LOOT_VALUE;
+  if (PROVISIONS.some((p) => p.kind === kind)) return PROVISION_VALUE;
+  return 0;
+}
+
 export function provisionOf(kind: string): Provision | undefined {
   return PROVISIONS.find((p) => p.kind === kind);
 }

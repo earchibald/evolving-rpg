@@ -29,6 +29,10 @@ export interface GameState {
   readonly level: number;
   /** How deep this floor lies. The first is 1. */
   readonly depth: number;
+  /** The purse, summed from GOLD_MOVED — covenant M9. Derived like `xp` and
+   *  for the same reason: a recorded running total could disagree with the
+   *  deltas that produced it. Carried across the stairs by WORLD_INIT v15. */
+  readonly gold: number;
   /** The generator's plain-words account of this floor's shape — covenant L1.
    *  Empty for logs that predate the telling. */
   readonly story: string;
@@ -95,6 +99,7 @@ export const EMPTY_STATE: GameState = Object.freeze({
   xp: 0,
   level: 1,
   depth: 1,
+  gold: 0,
   story: '',
   motif: null,
   bodies: NO_BODIES,

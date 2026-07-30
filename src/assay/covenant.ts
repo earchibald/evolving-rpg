@@ -113,6 +113,18 @@ export const COVENANT: readonly Invariant[] = Object.freeze([
     enforcedBy: 'the drawn-tag gate in looseShot; the reducer\'s stance clearing; the stance tests',
   }),
   Object.freeze({
+    id: 'M9',
+    register: 'mechanical' as const,
+    // Added 2026-07-30 with the economy's first increment, before its code —
+    // the proposal that asked for this wanted gold in view state, which would
+    // have put the game's only fungible quantity outside replay. A currency is
+    // also the first thing here that is fungible, and fungible wealth is the
+    // classic vector for exactly what M2 forbids, so the ceiling is stated
+    // rather than assumed.
+    statement: 'The purse is a fact of the chain. Gold exists only as recorded exchange folded by apply — never as view state — and every source of wealth states its ceiling, so money cannot be minted by repetition.',
+    enforcedBy: 'apply\'s GOLD_MOVED fold; GameState.gold; valueOf in tables.ts; assayRule: trial of greed (M2)',
+  }),
+  Object.freeze({
     id: 'L1',
     register: 'legible' as const,
     statement: 'Every system exposes its mechanics human-readably: what it decided, with the real numbers, where a player will read it. A facility whose reasoning cannot be read cannot be checked, and ships unfinished.',

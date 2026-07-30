@@ -444,7 +444,23 @@ swing across six rerolled fights and says it beside the offer. Finding your
 own body lends you its eyes and reads you its stone (BONES.md, decided —
 knowledge and words, never stats).
 
-The Covenant now spans M1–M6, T1–T3 and L1 (legibility: every system ships
+The Covenant now spans M1–M9, T1–T3 and L1 (legibility: every system ships
 with its human-readable exposure — floor stories in WORLD_INIT, the ledger,
 stat tooltips with live derivations). Old saves break freely pre-RC, by the
 designer's standing rule.
+
+**The purse** (2026-07-30, increment A of the economy — spec:
+docs/superpowers/specs/2026-07-30-economy-mining-and-sprites.md): gold is a
+FOLDED fact, summed from GOLD_MOVED v1 (`delta` + a closed `reason`), never
+view state — the proposal that asked for it wanted a UI variable, which M4
+forbids outright, so **M9** was added first and says so. A kind's worth comes
+from `valueOf(kind)` in tables (relic/scroll 2 G, provision 1 G, unknown 0),
+derived rather than stored for the same reason `xp` is: two iron ores cannot be
+worth different amounts. WORLD_INIT walked v14→v15 to carry `playerGold` across
+the stairs, absence reading an empty purse. Nothing spends it yet — the mine,
+the shop and the merchant are increments B–D, and the scroll belt, encumbrance
+and the diegetic critic are deferred or refused on the record in the spec's §III.
+The sprite pipeline is REFUSED as proposed: the supplied sheet is watermarked,
+carries baked-in captions, and is not a 16px grid — and the board is DOM cells,
+not canvas, so there is no `fillRect` to convert but the minimap's (docs/design/
+SPRITES.md holds the standard and the licence table).

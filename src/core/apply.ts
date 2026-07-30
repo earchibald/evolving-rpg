@@ -171,6 +171,10 @@ function reduce(state: GameState, event: GameEvent): GameState {
         xp: p.xp ?? 0,
         level: p.level ?? 1,
         depth: p.depth ?? 1,
+        // The purse crosses the stairs (v15), like the satchel and the gear.
+        // Absence is an empty purse: every chain written before the economy
+        // carried nothing, and that is simply true of them.
+        gold: p.playerGold ?? 0,
         story: p.story ?? '',
         motif: p.motif ?? null,
         // The floor is born empty; the graveyard speaks separately, via
@@ -585,6 +589,13 @@ function reduce(state: GameState, event: GameEvent): GameState {
     case 'WORLD_REMEMBERED':
       return state;
 
+    case 'GOLD_MOVED': {
+      // A sum, and nothing else. No clamp at zero: the spender is what gates
+      // affordability, and a reducer that quietly floored the purse would turn
+      // a command letting you buy what you cannot afford into a plausible
+      // balance that hides its own bug. An impossible purse should be visible.
+      return { ...state, gold: state.gold + event.payload.delta };
+    }
     case 'SCROLL_READ': {
       // The scroll leaves the hand whatever it did; the effects were
       // resolved when the reading happened and apply verbatim forever.

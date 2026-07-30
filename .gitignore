@@ -1,5 +1,6 @@
 node_modules/
 dist/
+.vite/
 .DS_Store
 # Run artifacts are disposable — except the wardens' bench, which is design
 # content the Forge serves as standing offers. `runs/*` (not `runs/`) so the
@@ -14,3 +15,13 @@ runs/*
 
 # Browser-pane render artifacts
 .clearance-rendered-preview-*/
+
+# The designer's Nano Banana mood board — the visual target on the wall, and
+# nothing else. It is a 2816x1536 presentation poster, not an atlas, so no
+# manifest is ever measured off it (migration spec §4); shipped art arrives
+# per-entity through the docs/design/SPRITES.md pipeline. 6.3 MB consumed by
+# nothing has no business in the history.
+watermarked_img_*.png
+
+# Godot's import cache — regenerated from the committed .tscn/.gd on any open.
+godot/.godot/

@@ -35,6 +35,7 @@ function room(entities: Entity[], items: GameState['items'], opts: { walls?: Arr
     xp: 0,
     level: 1,
     depth: 3,
+    gold: 0,
     story: '', motif: null, bodies: [], bible: null, smoke: null, traps: [], alarm: null, unveiled: [],
   };
 }

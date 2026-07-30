@@ -12,7 +12,7 @@ import type { Item } from './item.js';
  *  payload — a special case that could not survive any second consumer of
  *  randomness, and combat is one. */
 export const SCHEMA_VERSIONS = {
-  WORLD_INIT: 14,
+  WORLD_INIT: 15,
   WORLD_BIBLE: 1,
   WORLD_BODIES: 1,
   MOVE: 2,
@@ -25,6 +25,7 @@ export const SCHEMA_VERSIONS = {
   ITEM_REFUSED: 1,
   ITEM_USED: 2,
   SCROLL_READ: 1,
+  GOLD_MOVED: 1,
   RULE_RATIFIED: 1,
   RULE_FIRED: 1,
   VIGIL_KEPT: 1,
@@ -91,6 +92,12 @@ export interface WorldInitPayload {
   playerSatchel?: { kinds: readonly string[] };
   /** v13. The one scroll, crossing the stairs like everything carried. */
   playerScroll?: { kind: string };
+  /** v15. The purse, crossing the stairs for the same reason the satchel
+   *  learned to at v9: a floor is new, what you are carrying is not. Absent
+   *  reads an empty purse, which is what every chain written before the
+   *  economy honestly says — inventing a balance would be fabricating
+   *  history, not migrating it. */
+  playerGold?: number;
   width: number;
   height: number;
   tiles: number[];
@@ -357,6 +364,24 @@ export interface WorldRememberedPayload {
  * whether a world knows a kind is derived from whether any SCROLL_READ of
  * it stands behind you on the chain — never stored, never disagreeing.
  */
+/**
+ * Money moving, and why (covenant M9).
+ *
+ * `delta` only — the balance is folded, never recorded, so the log and the
+ * purse cannot disagree. The precedent is `xp`, derived from kill history for
+ * exactly this reason; recording a running total beside the deltas would give
+ * two facts that can drift apart, and the drift would surface as an
+ * unreproducible purse long after the cause.
+ *
+ * `reason` is closed rather than free text because covenant L1 wants the ledger
+ * to say WHY money moved, in words a player reads, and an open string would
+ * drift into whatever each call site felt like writing.
+ */
+export interface GoldMovedPayload {
+  delta: number;
+  reason: 'sale' | 'purchase' | 'trove';
+}
+
 export interface ScrollReadPayload {
   entityId: string;
   kind: string;
@@ -480,6 +505,7 @@ export type DraftEvent =
   | { type: 'UNMASKED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: UnmaskedPayload }
   | { type: 'TRAP_SENSED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: TrapSensedPayload }
   | { type: 'TRAP_SPRUNG'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: TrapSprungPayload }
-  | { type: 'SCROLL_READ'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: ScrollReadPayload };
+  | { type: 'SCROLL_READ'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: ScrollReadPayload }
+  | { type: 'GOLD_MOVED'; schemaVersion: number; rngCounter: number; rngDraws: number; payload: GoldMovedPayload };
 
 export type GameEvent = DraftEvent & { id: string; parent: string | null; seq: number };
