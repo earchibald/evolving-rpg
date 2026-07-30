@@ -11,6 +11,22 @@
 **Parent plan:** `docs/superpowers/plans/2026-07-29-godot-migration-master-plan.md` (Phase 2 charter).
 **Corrected spec:** `docs/superpowers/specs/2026-07-29-godot-migration-spec.md`.
 
+## What the gates do NOT cover (measured, and load-bearing on how you work)
+
+The fold gate is the strongest assertion in this migration, and it is also narrower than it looks. Measured against the fixture and independently confirmed by review during Task 2.B4:
+
+> **The golden run's 451 events exercise only 5 of the 25 event types.**
+> `WORLD_INIT` v15, `MOVE` v2, `STRIKE` v5, `TURN_ADVANCED` v2, `ITEM_TAKEN` v5.
+
+The other **20 have no witness in any parity gate**: `WORLD_BIBLE`, `WORLD_BODIES`, `MOVE_BLOCKED`, `WAIT`, `DRAWN`, `ITEM_REFUSED`, `ITEM_USED`, `SCROLL_READ`, `GOLD_MOVED`, `RULE_RATIFIED`, `RULE_FIRED`, `VIGIL_KEPT`, `WORLD_STIRRED`, `SHOVE`, `BRACED`, `CALLED`, `WORLD_REMEMBERED`, `UNMASKED`, `TRAP_SENSED`, `TRAP_SPRUNG`.
+
+What follows from this, and it is not optional:
+
+- **Passing 2.F1 does not mean `apply.gd` is right.** It means five of its twenty-five cases are right. The remaining twenty rest *entirely* on the ported unit suites — `tests/core/{apply,traps,scrolls,secrets,mimics,pockets,loot,purse,player-verbs,new-verbs,dispositions}` and friends. Those suites are therefore not a nice-to-have alongside the gate; for 80% of the reducer they **are** the verification. Port them completely and do not thin them.
+- **The same hole covers four entity fields.** `route`, `scroll`, `pocket` and `satchel` never appear in the golden run's entities either, so the absent-key law is unwitnessed for exactly the fields most likely to get it wrong.
+- **A "green gates" report must say which gates.** When a task claims parity, it says what its evidence covers. "The fold gate passes" is true and insufficient; "the fold gate passes, and these N event types are covered only by ported unit tests" is the honest form.
+- Extending the golden fixture to exercise more types would close this, but regenerating it is a **designer-signed ceremony** (`ALLOW_GOLDEN_REGEN=1`, seed probing, the works) and is explicitly not in this plan's scope. It is on the record as an open question for the designer.
+
 ## Exit gates (all three must hold)
 
 | Gate | Assertion | Task |
