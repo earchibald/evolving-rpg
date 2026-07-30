@@ -62,16 +62,34 @@ extends GutTest
 ##                                                       carried into the next
 ##                                                       WORLD_INIT unchanged
 ##
-## ── Why this suite is the only witness ────────────────────────────────────
+## ── Why this suite is most of the witness, corrected once already ─────────
 ## The golden run's single WORLD_INIT carries no `playerGold` key at all and
 ## the run contains zero GOLD_MOVED events (verified directly against
 ## godot/test/fixtures/golden-run.json: 1 WORLD_INIT, 0 GOLD_MOVED, out of
 ## 451 events). test_apply.gd's own four-law sweep exercises a WORLD_INIT
 ## with no `playerGold` in its payload either — it proves purity, shape, no
 ## fractional numbers and the absent-key law, never a specific gold value.
-## So nothing before this file ever drove `state["gold"]` through a non-zero
-## GOLD_MOVED fold or a non-empty stairs carry. This suite is what does, and
-## scripts/mutate-sim.py's `Task 2.E3e` rows measure exactly that.
+##
+## CORRECTED FROM A FIRST DRAFT: this header used to claim nothing before
+## this file drove a stairs carry at all. Measuring the
+## purse-world-init-gold-carry-dropped mutation (scripts/mutate-sim.py)
+## found that false — test_apply.gd's own
+## test_world_init_carries_the_purse_across_the_stairs already isolates that
+## exact carry (`playerGold: 7` in, `state.gold == 7` out; absent reads 0
+## too), added by Task 2.C1's reviewer with no TS counterpart at all
+## (`git grep playerGold ts-baseline -- tests/` finds it ONLY in
+## purse.test.ts — apply.test.ts never mentions gold), after review found
+## deleting the carry left 268/268 passing and the golden fold still
+## hashing. What THIS suite still owns alone: the GOLD_MOVED fold itself
+## (sum, negative, unclamped — no existing test pins an exact post-fold
+## gold value anywhere else), value_of's design claims, "spends no
+## randomness", and — the one real addition even to the stairs-carry
+## story — test_does_not_let_a_new_floor_forget_money_already_earned_mid_run,
+## which carries a balance actually EARNED through a GOLD_MOVED fold across
+## the descent, where test_apply.gd's version only ever hand-sets
+## `playerGold` on the payload directly and never exercises the fold that
+## would have produced it. scripts/mutate-sim.py's `Task 2.E3e` rows record
+## which of the two suites each mutation actually reaches.
 ##
 ## No draw-arithmetic blind spot to inherit here (Wave D's warning to every
 ## 2.E3x task): test_spends_no_randomness... below is the whole of this

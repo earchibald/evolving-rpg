@@ -33,13 +33,20 @@ class_name SimPurse
 ##   * `WORLD_INIT`'s `playerGold` carry, absence folding to 0 — sim/apply.gd's
 ##     "WORLD_INIT" arm, `"gold": _or(p.get("playerGold"), 0)`.
 ##   * `GOLD_MOVED` schemaVersion 1, `WORLD_INIT` schemaVersion 15 — sim/events.gd.
-## None of that infrastructure had a purse-shaped witness before this task:
-## the golden run carries a single depth-1 WORLD_INIT with no `playerGold`
+## The golden run carries a single depth-1 WORLD_INIT with no `playerGold`
 ## key and zero GOLD_MOVED events (measured directly against
 ## godot/test/fixtures/golden-run.json), so it exercises none of the above.
-## godot/test/unit/test_purse.gd is what closes that gap, and is the entire
-## witness for it. See that file's header for the full 13-case reconciliation
-## and scripts/mutate-sim.py's `Task 2.E3e` rows for the mutation proof.
+## Most of that infrastructure had no OTHER witness either — but not quite
+## all of it: test_apply.gd already isolates the WORLD_INIT `playerGold`
+## carry on its own (test_world_init_carries_the_purse_across_the_stairs,
+## added by Task 2.C1's reviewer with no TS counterpart, after review found
+## deleting the carry left the whole suite green). godot/test/unit/
+## test_purse.gd closes what that test does not reach — the GOLD_MOVED fold
+## itself, value_of's design claims, and a carry actually earned through a
+## fold rather than hand-set on the payload — and is the full port of
+## purse.test.ts regardless. See that file's header for the full 13-case
+## reconciliation and scripts/mutate-sim.py's `Task 2.E3e` rows for the
+## mutation proof.
 ##
 ## The `reason` field's closed union (`'sale' | 'purchase' | 'trove'` in
 ## GoldMovedPayload, core/events.ts:382) is a TypeScript compile-time fact
