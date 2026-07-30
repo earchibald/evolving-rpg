@@ -38,6 +38,12 @@ MUTATIONS: dict[str, tuple[str, str, str]] = {
         '\t\t"seq": seq,',
         '\t\t"seq": 0,',
     ),
+    # --- Phase 2 leaves ---
+    "grid-bounds": (
+        "godot/sim/grid.gd",
+        "\treturn x >= 0 and y >= 0 and x < width and y < height",
+        "\treturn x >= 0 and y >= 0 and x <= width and y <= height",
+    ),
     # --- Known EQUIVALENT REWRITES, kept as documentation, not as proofs. ---
     # Both produce identical bits: low bits survive two's-complement wrapping,
     # and u32's second line masks unconditionally. Running these should show NO
