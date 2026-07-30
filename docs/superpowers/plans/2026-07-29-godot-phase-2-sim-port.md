@@ -996,10 +996,21 @@ static func decide(state: Dictionary, entity_id: String) -> Dictionary   # an Ac
 **Interfaces (2.E3a produces; b–e consume):**
 ```gdscript
 class_name SimCommands
-static func create_world(...) -> Dictionary        # {log, head} — read commands.ts for the parameter list
+static func create_world(...) -> Dictionary        # a DRAFT — read commands.ts for the parameter list
 static func resolve_strike(...) -> Dictionary      # THE one blow path, melee and ranged alike
 static func outcome(state: Dictionary) -> String   # 'escaped' | 'won' | 'died' | ...
 ```
+
+**Two corrections made while executing 2.E3a:**
+
+1. The sketch above annotated `create_world` as returning `{log, head}`. It does
+   not — the reference returns **a draft**, which is what this section's own
+   "every command function returns drafts, not state" rule requires. Resolved
+   toward the reference.
+2. **`lunge_strike` and `vigil_kept` were unclaimed by any of the five rows.**
+   They belong to **2.E3a**: `verbs.test.ts` is their only suite and that suite is
+   2.E3a's, and both are blows resolved through `resolve_strike`. Assigned there
+   and ported there.
 Every command function returns **drafts, not state** — the caller appends them through the log. That is what keeps authority in the chain and lets the stage be a projection.
 
 **Each of 2.E3a–e follows the same step shape:**
@@ -1011,6 +1022,13 @@ Every command function returns **drafts, not state** — the caller appends them
   - **2.E3a:** every blow, melee or ranged, resolves through the ONE `resolve_strike`. `STRIKE` v5 carries `mode` (`'melee'`/`'ranged'`, absent reads melee) and `warded` (the ash ward drinks one landing blow whole — resolved at command time, damage recorded 0). Adjacency refuses shots; the bump owns range 1.
   - **2.E3b:** the dominance rule — walking takes only strict upgrades (`SimTables.dominates`); tradeoffs wait for the deliberate key. `ITEM_TAKEN` v5 records `gearSlot` and `shed`. Ranged relics route BY TRAIT to the `sling` slot. The satchel holds two; full hands refuse out loud.
   - **2.E3c:** traps get **two recorded wits chances each** (sight then near, once ever, misses silent). Hatch risers are **level-1 bodies**, not floor-band. Snared steps become recorded `WAIT` strains or bots deadlock. The mimic's lie lives render-side; the bump `UNMASK`s and loads the stalker's `ambush` spring.
+  - **ALL OF b–e — an inherited blind spot measured by 2.E3a.** Shifting the
+    damage draw off `counter + 1` failed **nothing** across 456 tests, because
+    every damage assertion in the reference is a **range**, and the golden run
+    re-hashes rather than re-derives. 2.E3a added a test pinning the draw
+    protocol itself. **Any verb of yours with its own draw arithmetic — a
+    volley, a lunge, a trap die, a purse roll — inherits the same blind spot and
+    needs its own equivalent.** A range assertion cannot see a draw move.
   - **2.E3d:** `SHOVE`/`BRACED` spend **zero draws**. Staggered things spend their next action as a recorded `WAIT` — the only creature wait that reaches the chain. `DRAWN` is one stance per body, held through `WAIT`s, lost to any other act, any damage, any stagger.
   - **2.E3e:** gold is folded from `GOLD_MOVED` deltas — **never a stored total** (M9). `value_of(kind)` is derived from the kind, never stored on the item: two iron ores cannot be worth different amounts. Nothing spends gold yet; increments B–D are Phase 6.
 - [ ] **Step 5:** Run to GREEN.
