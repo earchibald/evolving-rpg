@@ -991,7 +991,31 @@ static func decide(state: Dictionary, entity_id: String) -> Dictionary   # an Ac
 | **2.E3b** | `commands/items.gd` | take/take_or_refuse, use, satchel (two hands), scrolls, equipment/dual-wield | `loot` (15), `scrolls` (11), `satchel-two` (7), `dual-wield` (8), `provisions-new` (11), `equipment` |
 | **2.E3c** | `commands/hazards.gd` | traps, secrets, mimics, pockets | `traps` (17), `secrets` (10), `mimics` (6), `pockets` (6) |
 | **2.E3d** | `commands/stances.gd` | shove, brace, call, drawn/volley | `player-verbs` (14), `new-verbs` (11), `volley-stance` (12), `volley-commands` (12), `volley-mind` (5) |
-| **2.E3e** | `commands/purse.gd` | the economy verbs (`GOLD_MOVED` producers) | `purse` (13) |
+| **2.E3e** | `commands/purse.gd` | the economy verbs (`GOLD_MOVED` producers) — **there are none; see below** | `purse` (13) |
+
+**PLAN DEFECT FOUND BY 2.E3e: the purse family has no verbs.** The row above
+promises "the economy verbs (`GOLD_MOVED` producers)". At `ts-baseline`,
+`commands.ts` contains **zero** `GOLD_MOVED` producers — verified by grep. All 13
+cases in `purse.test.ts` drive the reducer and the tables directly, never a
+command. That is correct and expected: nothing spends gold yet, because the mine
+and the shop are Phase 6. So `commands/purse.gd` ships with no functions, the
+facade carries a header-only section marking the family present, and the task's
+real work was the 13 ported cases plus mutation proofs against the shared
+`apply.gd`/`tables.gd` infrastructure that suite guards. **When Phase 6 adds the
+first spender, that is when this file gains a function.**
+
+**A SECOND UNOWNED VERB, found by 2.E3d and fixed:** `stirWorld`
+(`commands.ts:1276`), the `WORLD_STIRRED` producer, was handed to none of the
+five rows — so `apply.gd` had a reducer arm for an event nothing in the
+migration could produce. It is a world-level verb like `create_world` and the
+descent, and now lives in `commands/movement.gd` with the movement family. Its
+only suite is `tests/play/bottom.test.ts`, which drives the session layer and is
+therefore **Phase 3's**, deferred there by name; `test_stir.gd` carries the
+invariants checkable without a session (the draw protocol by offset, the
+echo-once law, the distance floor, and the null).
+
+An audit of all 28 `commands.ts` exports against the ported files confirms these
+were the only two gaps.
 
 **Interfaces (2.E3a produces; b–e consume):**
 ```gdscript
