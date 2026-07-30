@@ -71,11 +71,21 @@ npm run golden
 3. **Agentic Closed Loop (`scripts/loop.ts`)**: Integrates playtesting, Critic scorecard generation (`src/critic/critic.ts`), Rulesmith proposal drafting, and Covenant assaying into a single CLI execution loop.
 4. **Balance Analysis (`scripts/balance.ts`)**: Simulates combat encounters across depths 1–9 to verify bounded accuracy, HP sawtooth, and leveling curves against `docs/design/BALANCE.md`.
 
+### Key Test Suites
+
+Core mechanics are validated through focused Vitest suites in `tests/core/`:
+- **Combat**: `volley-commands.test.ts`, `volley-stance.test.ts`, `volley-mind.test.ts` (ranged combat), `dual-wield.test.ts` (two-handed inventory), `path-pull.test.ts` (spawn fairness), `sight.test.ts` (supercover line-of-sight).
+- **Special mechanics**: `traps.test.ts` (sensing/springing), `mimics.test.ts` (hidden/unmasked), `scrolls.test.ts` (scroll reading), `pockets.test.ts` (death drops), `dispositions.test.ts` (guard/wanderer AI), `secrets.test.ts` (secret doors).
+- **Inventory & provisions**: `provisions-new.test.ts`, `satchel-two.test.ts`, `loot.test.ts`.
+- **Board scaling**: `size.test.ts` (sizeStretch, scaled XP/ladder).
+
+Voice-annotated playtesting is validated in `tests/witness/`: `listener.test.ts`, `trace.test.ts`, `wav.test.ts`, `weave.test.ts`.
+
 ---
 
 ## Server Plugin Operations
 
-The local Vite dev server relies on two custom server plugins defined in `/server/`:
+The local Vite dev server relies on three custom server plugins defined in `/server/`:
 
 ### 1. Oracle Plugin (`server/oracle-plugin.ts`)
 
@@ -86,6 +96,11 @@ The local Vite dev server relies on two custom server plugins defined in `/serve
 
 - **Role**: Handles local persistence of session chronicle logs for offline analysis.
 - **Diagnostics**: Listens for chronicle sync payloads on dev server startup.
+
+### 3. Witness Plugin (`server/witness-plugin.ts`)
+
+- **Role**: Two endpoints — `/__witness` receives recorded WAV audio from the browser and transcribes it via a local Swift CLI (`scripts/transcribe.swift`, macOS 26+ SpeechAnalyzer, on-device). `/__listener` receives a submitted run packet, weaves transcribed speech with gameplay traces via `src/witness/weave.ts`, and asks the `claude` CLI for a Listener reading (where is the fun, where does it break). Reports are written to `runs/feedback/` as git-tracked design content.
+- **Diagnostics**: Requires macOS 26+ for on-device transcription. The Swift binary is compiled once into `node_modules/.cache/evolving-rpg/witness-transcribe`. Transcription timeout is 180s; Listener timeout is 240s.
 
 ---
 

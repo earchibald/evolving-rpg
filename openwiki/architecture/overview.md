@@ -19,13 +19,16 @@ The codebase is organized into distinct, unidirectional module layers. Higher-le
 flowchart TD
     UI[ui/ Debug UI & Panels] --> Play[play/ Session Driver & Store]
     UI --> Channels[channels/ Designer & GM Notes]
+    UI --> Witness[witness/ Voice Recording & Trace]
     Play --> Canon[canon/ Rules, Bible, Namesmith]
     Play --> Assay[assay/ Rule Assay & Covenant]
     Play --> Log[log/ Event Chain & Refs]
+    Witness --> Log
+    Witness --> Play
     Critic[critic/ Ensemble Lenses] --> Log
     Assay --> Play
     Channels --> Oracle[oracle/ Async Model Client]
-    Canon --> Core[core/ Tables, Entities, Grid & State]
+    Canon --> Core[core/ Tables, Entities, Grid, Sight & State]
     Oracle --> Canon
     Log --> Core
 ```
@@ -36,9 +39,10 @@ flowchart TD
 
 1. **`core/` (Pure Engine)**
    - Defines core data structures: `GameState`, `Entity`, `Stats` (HP, Might, Wits, Speed), `Item`, and `Grid`.
-   - Centralizes tuning numbers, combat tables, bounded accuracy, dice bands, crits, XP/levels, depth motifs, and verb pools in `src/core/tables.ts`.
-   - Houses the deterministic event reducer `apply(state, event)` in `src/core/apply.ts`.
+   - Centralizes tuning numbers, combat tables, bounded accuracy, dice bands, crits, XP/levels, depth motifs, creature archetypes (including slinger, mimic), provisions, traps, scrolls, and verb pools in `src/core/tables.ts`.
+   - Houses the deterministic event reducer `apply(state, event)` in `src/core/apply.ts`, which also handles pocket drops on death and stance clearing (braced, drawn).
    - Manages seeded random number generation via `src/core/rng.ts`.
+   - Provides supercover line-of-sight via `src/core/sight.ts` (`clearShot`, `withinReach`) for ranged combat (Covenant M7: distance is honest).
    - Has **zero dependencies** on external modules, DOM, or network.
 
 2. **`log/` (History & State Derivation)**
@@ -77,8 +81,15 @@ flowchart TD
    - Provides out-of-world (`designer`) and in-world (`gamemaster`) note channels in `src/channels/channels.ts`.
    - Captures contextual state (`where`, `turn`, `head`, player position) alongside user feedback.
 
-9. **`server/` (Development Server Plugins)**
-   - Vite dev-server plugins in `server/oracle-plugin.ts` (proxies Oracle queries to `claude` CLI) and `server/chronicle-plugin.ts` (persists chronicle logs).
+9. **`witness/` (Voice-Annotated Playtesting)**
+   - Records gameplay traces with wall-clock timestamps in `src/witness/trace.ts` for interleaving player speech with game events.
+   - Handles browser-based WAV audio capture in `src/witness/wav.ts`, feeding recordings to on-device transcription via `server/witness-plugin.ts`.
+   - Weaves transcribed speech segments and trace marks onto a single timeline in `src/witness/weave.ts`, producing a `WovenLine[]` that interleaves voice and play.
+   - Generates Listener prompts in `src/witness/listener.ts` that ask a model to read a completed run for fun — where is the fun, and where does it break — using woven timelines, Critic readings, and player typed notes.
+   - Depends on `core/` and `play/`.
+
+10. **`server/` (Development Server Plugins)**
+   - Vite dev-server plugins in `server/oracle-plugin.ts` (proxies Oracle queries to `claude` CLI), `server/chronicle-plugin.ts` (persists chronicle logs), and `server/witness-plugin.ts` (transcribes voice recordings via local Swift CLI and proxies Listener analysis to `claude`).
 
 ---
 

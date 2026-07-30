@@ -36,7 +36,7 @@ The codebase strictly separates engine logic, state persistence, rules interpret
 
 ```
 src/
-├── core/       # Pure engine: grid, entities, stats, combat tables, seeded RNG, reducers
+├── core/       # Pure engine: grid, entities, stats, combat tables, sight, seeded RNG, reducers
 ├── log/        # Content-addressed append-only event log, SHA-256 hashing, refs
 ├── canon/      # R1 records, R2 rules vocabulary, Worldsmith, Namesmith, Chronicler
 ├── assay/      # Covenant invariants, Rule Assay trials (Greed, Coward, Function)
@@ -44,6 +44,7 @@ src/
 ├── oracle/     # Async LLM ask() interface, transports, and fallback system
 ├── play/       # Session driver, turn loop, autoplay policies, mortality rewinds
 ├── channels/   # Designer & Gamemaster feedback channels
+├── witness/    # Voice recording, trace, transcription weaving, Listener analysis
 ├── ui/         # Debug UI, grid renderer, words pools, FOV, and control panels
 └── version.ts  # Current engine version (0.3.0)
 ```
@@ -111,3 +112,4 @@ The following technical and product areas remain deferred:
 
 - **Artifact Publishing Target**: Inlining assets into a single single-file HTML bundle exposing `window.claude.complete` (Source: `docs/superpowers/specs/2026-07-24-self-evolving-rpg-design.md#modules`).
 - **Judged Register LLM Passes**: Qualitative LLM passes for evaluating voice register and thematic alignment beyond deterministic structural checks (Source: `src/assay/covenant.ts`).
+- **Living Dungeon Mechanics (In Progress)**: Dynamic board scaling via `sizeStretch`, dispositions (guards/wanderers), and the living-dungeon design (Source: `docs/superpowers/specs/2026-07-29-living-dungeon-design.md`) are partially implemented — further depth-driven mapgen evolution remains on the roadmap.

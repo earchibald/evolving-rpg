@@ -7,7 +7,7 @@ import { strikeLine, crossings, whatItDoes } from './words.js';
 import { storyOf, remember, rememberedOn, epitaphOf, notable } from '../canon/chronicler.js';
 import { SCHEMA_VERSIONS } from '../core/events.js';
 import { playerStep, playerWait, playerUse, playerShove, playerBrace, playerTake, playerVolley, playerRead, runWorldTurns, buryIfDead, beginAgain, descend, descendThrough, isGrave } from '../play/session.js';
-import { isAlive } from '../core/entity.js';
+import { isAlive, findEntity } from '../core/entity.js';
 import { outcome, hitChance, shotTarget } from '../core/commands.js';
 import { damageDice, xpToReach, sizeStretch, slotFor, critFloor, verbOf, provisionOf, HEART_KIND, SLAM_DAMAGE, VENOM_TURNS, ARMORY, relicGrant, scrollOf, SCROLLS } from '../core/tables.js';
 import { itemAt } from '../core/item.js';
@@ -1015,7 +1015,7 @@ function render(): void {
     // The snare on your leg: counted down like the venom, and honest about
     // what still works.
     ...((): [string, string, string][] => {
-      const held = player?.tags.find((t) => t.startsWith('snared-'));
+      const held = player?.tags.find((t: string) => t.startsWith('snared-'));
       return held === undefined
         ? []
         : [['your legs', `the snare holds — ${held.slice('snared-'.length)} more round(s); blows still swing`, 'bad']];
@@ -2259,6 +2259,146 @@ function step(dx: number, dy: number): void {
   finish(before, after.head);
 }
 
+/* ── the run ─────────────────────────────────────────────────────────────── */
+
+/**
+ * Walking a corridor, without walking a corridor (the designer's ask,
+ * 2026-07-29: "shift then a direction auto-walks in that direction until it
+ * hits a wall OR until it spots *anything* new… it should animate at about 3
+ * spaces/second").
+ *
+ * Entirely view-side, on purpose: a run is nothing but ordinary steps taken
+ * for you, so it appends the same MOVEs a hand would, mints no event, needs no
+ * schema, leaves the bots and the golden fixture untouched, and rewinds one
+ * pace at a time like anything else. The engine never learns that you were in
+ * a hurry.
+ *
+ * It also stops on what the PLAYER can see rather than on what the world
+ * knows: an untrodden secret door reads as wall here, because it reads as wall
+ * on screen, and a run that walked through a wall the player was looking at
+ * would be a lie about the fog.
+ */
+const RUN_PACE_MS = 330;
+/** A safety stop, in paces. No floor is this wide; a bug might be. */
+const RUN_MAX_PACES = 300;
+/** Newly-seen tiles in ONE pace that read as "it opened up" rather than "it
+ *  went on". A pace down a corridor uncovers a handful; a doorway uncovers a
+ *  room, and a room is something new. */
+const RUN_OPENING = 12;
+
+let runTimer: number | null = null;
+let runPaces = 0;
+
+/** What is worth stopping for, named — so "anything new" is a set difference
+ *  and never a guess. Every creature and item in view, the way out once the
+ *  map holds it, and every trap the run has found. */
+function notables(state: ReturnType<typeof fold>, fog: { seen: ReadonlySet<number>; visible: ReadonlySet<number> }): Set<string> {
+  const out = new Set<string>();
+  for (const e of state.entities) {
+    if (e.kind === 'you' || !isAlive(e)) continue;
+    if (fog.visible.has(idx(state.grid, e.pos.x, e.pos.y))) out.add(`body:${e.id}`);
+  }
+  for (const item of state.items) {
+    if (fog.visible.has(idx(state.grid, item.pos.x, item.pos.y))) out.add(`thing:${item.id}`);
+  }
+  for (const t of state.traps) {
+    if (t.revealed) out.add(`trap:${t.id}`);
+  }
+  for (let at = 0; at < state.grid.tiles.length; at += 1) {
+    if (state.grid.tiles[at] === EXIT && fog.seen.has(at)) { out.add('the way out'); break; }
+  }
+  return out;
+}
+
+function stopRunning(why: string | null): void {
+  if (runTimer !== null) { window.clearInterval(runTimer); runTimer = null; }
+  if (why !== null && runPaces > 0) say(`you stop after ${String(runPaces)} pace${runPaces === 1 ? '' : 's'} — ${why}`);
+  runPaces = 0;
+}
+
+/** Look before the pace: everything knowable without spending a turn. Returns
+ *  the reason to stop, or null to walk. */
+function blocked(dx: number, dy: number): string | null {
+  const head = getRef(refs, active).head;
+  if (head === null) return 'the run is over';
+  const state = fold(log, head);
+  if (outcome(state, 'player') !== 'playing') return 'the run is over';
+  const you = findEntity(state.entities, 'player');
+  if (you === undefined || !isAlive(you)) return 'the run is over';
+  if (you.tags.some((t: string) => t.startsWith('snared-'))) return 'your leg is held';
+
+  const ahead = { x: you.pos.x + dx, y: you.pos.y + dy };
+  const at = idx(state.grid, ahead.x, ahead.y);
+  const tile = tileAt(state.grid, ahead.x, ahead.y);
+  const fog = fogAt(log, head, (p) => makeGrid(p.width, p.height, p.tiles));
+  // A secret not yet trodden is painted as wall, so it stops the run as wall.
+  if (tile === WALL || (tile === SECRET && !fog.revealed.has(at))) return 'the wall';
+  if (state.entities.some((e) => isAlive(e) && e.kind !== 'you' && e.pos.x === ahead.x && e.pos.y === ahead.y)) {
+    return 'something stands in the way';
+  }
+  if (state.items.some((i) => i.pos.x === ahead.x && i.pos.y === ahead.y)) return 'something lies underfoot';
+  if (state.traps.some((t) => t.revealed && !t.sprung && t.pos.x === ahead.x && t.pos.y === ahead.y)) {
+    return 'the trap you found';
+  }
+  return null;
+}
+
+function pace(dx: number, dy: number): void {
+  const stopBefore = blocked(dx, dy);
+  if (stopBefore !== null) { stopRunning(stopBefore); return; }
+
+  const head = getRef(refs, active).head;
+  if (head === null) { stopRunning(null); return; }
+  const state = fold(log, head);
+  const fog = fogAt(log, head, (p) => makeGrid(p.width, p.height, p.tiles));
+  const wasNotable = notables(state, fog);
+  const wasSeen = fog.seen.size;
+  const wasHp = findEntity(state.entities, 'player')?.stats.hp ?? 0;
+
+  step(dx, dy);
+  runPaces += 1;
+
+  const now = getRef(refs, active).head;
+  if (now === null) { stopRunning(null); return; }
+  const after = fold(log, now);
+  const afterFog = fogAt(log, now, (p) => makeGrid(p.width, p.height, p.tiles));
+  const me = findEntity(after.entities, 'player');
+
+  if (outcome(after, 'player') !== 'playing' || me === undefined || !isAlive(me)) { stopRunning(null); return; }
+  if (me.stats.hp < wasHp) { stopRunning('you are hurt'); return; }
+  if (me.tags.some((t: string) => t.startsWith('snared-'))) { stopRunning('your leg is held'); return; }
+
+  const fresh = [...notables(after, afterFog)].filter((n) => !wasNotable.has(n));
+  if (fresh.length > 0) {
+    stopRunning(fresh.includes('the way out') ? 'the way out' : 'something new in sight');
+    return;
+  }
+  if (afterFog.seen.size - wasSeen >= RUN_OPENING) { stopRunning('it opens up'); return; }
+  if (runPaces >= RUN_MAX_PACES) { stopRunning('far enough'); return; }
+}
+
+function running(dx: number, dy: number): void {
+  stopRunning(null);
+  const head = getRef(refs, active).head;
+  if (head === null) return;
+  const state = fold(log, head);
+  const fog = fogAt(log, head, (p) => makeGrid(p.width, p.height, p.tiles));
+  // Nothing auto-walks while something is watching. The genre's own rule, and
+  // the one that keeps this a convenience rather than an autopilot.
+  if ([...notables(state, fog)].some((n) => n.startsWith('body:'))) {
+    say('not while something has you in sight');
+    return;
+  }
+  const why = blocked(dx, dy);
+  if (why !== null) { say(`you cannot run that way — ${why}`); return; }
+
+  runPaces = 0;
+  pace(dx, dy);
+  if (runTimer === null && runPaces > 0) {
+    runTimer = window.setInterval(() => { pace(dx, dy); }, RUN_PACE_MS);
+  }
+}
+
 function hold(): void {
   const head = getRef(refs, active).head;
   if (head === null) return;
@@ -2437,6 +2577,7 @@ wire('gm-form', 'gm-said', 'gamemaster');
 const KEYMAP: ReadonlyArray<{ shown: string; what: string; button?: string; terse?: string }> = [
   { shown: '← ↑ → ↓ · wasd', what: 'move — into a creature is a strike, into a wall is free', terse: 'move · strike' },
   { shown: '. · space', what: 'hold still (this is a turn)', terse: 'hold' },
+  { shown: 'shift + a direction', what: 'run — walk that way on your own until a wall, or until anything new comes into sight', terse: 'run' },
   { shown: 'q · Q', what: 'use what the satchel holds — q the first thing, Q the second (a turn either way)', terse: 'satchel' },
   { shown: 'x, then a direction', what: 'shove — drive what stands beside you one pace; walls hurt, bodies tangle', terse: 'shove' },
   { shown: 'z', what: 'brace — set against the coming round; a blow that misses you staggers', terse: 'brace' },
@@ -2467,6 +2608,10 @@ const BUTTON_KEYS: Readonly<Record<string, string>> = Object.fromEntries(
 );
 
 window.addEventListener('keydown', (event) => {
+  // Any key ends a run — including the one that starts a new one, which is how
+  // you re-aim. Silent: you interrupted it, you know why.
+  if (runTimer !== null) stopRunning(null);
+
   // Typing into a channel is not playing. Without this, writing "search the
   // wall" walks you four squares west. Escape steps back out of the box —
   // and only out of the box: inside a sheet it must not also close the
@@ -2551,6 +2696,19 @@ window.addEventListener('keydown', (event) => {
     take();
     return;
   }
+  // Shift and a direction: the run. Checked before the plain directions so a
+  // shifted arrow is a run and not a step, and keyed off the UNSHIFTED letter
+  // because Shift+w arrives as 'W'.
+  const dash = event.shiftKey
+    ? KEYS[event.key.length === 1 ? event.key.toLowerCase() : event.key]
+    : undefined;
+  if (dash !== undefined) {
+    event.preventDefault();
+    shoveArmed = false;
+    running(dash[0], dash[1]);
+    return;
+  }
+
   const move = KEYS[event.key];
   if (move !== undefined) {
     event.preventDefault();
