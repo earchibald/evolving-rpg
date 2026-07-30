@@ -6,17 +6,17 @@ extends GutTest
 ## (rngDraws derived from payload.counterAfter) has something real to
 ## migrate, rather than a fixture shaped to make the test pass.
 ##
-## Four of the reference's upcastChain cases need fold() to inspect folded
+## Four of the reference's upcastChain cases needed fold() to inspect folded
 ## state (turn progress, EMPTY_STATE equality) or verify_chain() to confirm
-## soundness — neither exists on SimLog yet; its own docstring says both
-## "need the reducer and join in Phase 2". Deferred here, not faked, until
-## apply.gd/commands.gd land and fold()/verify_chain() arrive alongside them:
+## soundness, and were deferred here rather than faked, until Task 2.C2
+## brought both to SimLog:
 ##   - 'produces a chain the current engine verifies'         (verify_chain)
 ##   - 'preserves meaning: every field v1 had folds to...'    (fold)
 ##   - 'folds to a state that still hashes stably...'         (fold)
 ##   - 'does not retroactively change what an old log meant'  (fold)
-## The other two upcastChain cases — chain length, and that ids change — need
-## neither, and are ported below.
+## All four are ported below now, alongside the other two upcastChain cases
+## (chain length, and that ids change) which needed neither and were already
+## ported. Six of six.
 
 
 func _v1() -> Dictionary:
@@ -112,3 +112,72 @@ func test_upcasting_the_golden_chain_changes_nothing() -> void:
 		assert_eq(up["schemaVersion"], event["schemaVersion"], "%s untouched" % event["type"])
 		assert_eq(SimCanonical.encode(up["payload"]), SimCanonical.encode(event["payload"]),
 			"%s payload untouched" % event["type"])
+
+
+# ── the four deferred upcastChain cases (Task 2.C2 discharges them) ───────
+
+func test_upcast_chain_produces_a_chain_the_current_engine_verifies() -> void:
+	var v1 := _v1()
+	var migrated: Dictionary = SimUpcast.upcast_chain(v1["events"])
+	var log: SimLog = migrated["log"]
+	assert_null(log.verify_chain(migrated["head"]))
+
+
+func test_upcast_chain_preserves_meaning_every_field_v1_had_folds_to_the_value_v1_folded_to() -> void:
+	## Compared field by field rather than by digest, and the reason is worth
+	## keeping. This test began, in the reference, as a hash comparison
+	## against v1's own recorded finalStateHash, and that held only as long as
+	## GameState's SHAPE did. The moment state gained an `items` field, an old
+	## log's fold necessarily hashed differently while meaning precisely the
+	## same thing. So the honest invariant is "identical meaning in every
+	## field that existed at the time, and empty in the ones that did not" —
+	## never "identical bytes". A migration cannot promise that a container it
+	## never saw stays the same size.
+	var v1 := _v1()
+	var migrated: Dictionary = SimUpcast.upcast_chain(v1["events"])
+	var log: SimLog = migrated["log"]
+	var state: Dictionary = log.fold(migrated["head"])
+
+	assert_eq(state["turn"], 101)
+	assert_eq(state["seed"], 12345)
+	assert_eq(state["rngCounter"], 122)
+	var grid: Dictionary = state["grid"]
+	assert_eq(grid["width"], 24)
+	assert_eq(grid["height"], 16)
+	var entities: Array = state["entities"]
+	assert_eq(entities.size(), 1)
+	assert_eq((entities[0] as Dictionary)["id"], "player")
+	# Fields that did not exist when the log was written are empty, not
+	# invented.
+	assert_eq(state["items"], [])
+
+
+func test_upcast_chain_folds_to_a_state_that_still_hashes_stably_just_not_to_v1_digest() -> void:
+	## Determinism is unaffected by the shape change: two folds of the
+	## migrated chain agree with each other, which is the property replay
+	## needs — but neither agrees with v1's own digest, computed over a
+	## GameState shape this engine no longer has.
+	var v1 := _v1()
+	var migrated: Dictionary = SimUpcast.upcast_chain(v1["events"])
+	var log: SimLog = migrated["log"]
+	var a: Dictionary = log.fold(migrated["head"])
+	var b: Dictionary = log.fold(migrated["head"])
+	assert_eq(SimCanonical.encode(a), SimCanonical.encode(b))
+
+	# The same recipe test_state_shape.gd pins: sha256 over the canonical
+	# bytes of the whole state.
+	var ctx := HashingContext.new()
+	ctx.start(HashingContext.HASH_SHA256)
+	ctx.update(SimCanonical.encode(a).to_utf8_buffer())
+	assert_ne(ctx.finish().hex_encode(), v1["finalStateHash"])
+
+
+func test_upcast_chain_does_not_retroactively_change_what_an_old_log_meant() -> void:
+	## Blocked moves no longer cost a turn, but a v1 log recorded the turn
+	## advances IT made under the old rule, and still contains them.
+	## Migrating replays history as it was lived, not as the current rules
+	## would have produced it.
+	var v1 := _v1()
+	var migrated: Dictionary = SimUpcast.upcast_chain(v1["events"])
+	var log: SimLog = migrated["log"]
+	assert_eq((log.fold(migrated["head"]) as Dictionary)["turn"], 101)

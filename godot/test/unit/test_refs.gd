@@ -4,39 +4,50 @@ extends GutTest
 ##
 ## The reference's own build() helper drives createWorld / attemptMove / a
 ## fold() / advanceTurn to grow a nine-event chain (1 WORLD_INIT root + four
-## (MOVE, TURN_ADVANCED) pairs). None of that exists yet: commands.gd
-## (createWorld/attemptMove/advanceTurn) is unwritten, and SimLog.fold() —
-## per log.gd's own docstring — "need[s] the reducer and join in Phase 2".
-## Both land once apply.gd exists (Wave C).
+## (MOVE, TURN_ADVANCED) pairs). commands.gd (createWorld/attemptMove/
+## advanceTurn) is still unwritten (Wave E), so this stands in with nine
+## hand-appended drafts of the same shape, built the same way test_log.gd and
+## test_golden_chain.gd already build chains: SimEvents.draft() +
+## SimLog.append(), no commands involved.
 ##
 ## What every test below actually exercises is refs/log STRUCTURE — heads,
-## seq, chain shape, branch membership — never game meaning. So _build()
-## stands in with nine hand-appended drafts of the same shape (1 WORLD_INIT +
-## four (MOVE, TURN_ADVANCED) pairs), built the same way test_log.gd and
-## test_golden_chain.gd already build chains: SimEvents.draft() +
-## SimLog.append(), no reducer involved. Every structural assertion the
-## reference makes still runs. The exception is assertions that inspect
-## FOLDED STATE — fold(...).turn progress, fold(...) == EMPTY_STATE — three
-## tests each have one or two such lines deferred in place with a comment,
-## rather than faked against a fold() that does not exist:
-##   - 'the two worlds then diverge independently'        (fold(...).turn)
+## seq, chain shape, branch membership — never game meaning. Three tests do
+## also fold(): Task 2.C2 brought fold() to SimLog, and _build()'s payloads
+## are shaped to be REDUCER-VALID (a real grid, a real TURN_ADVANCED payload)
+## precisely so those three could stop deferring the assertions they had
+## parked in place with a comment:
+##   - 'the two worlds then diverge independently'         (fold(...).turn)
 ##   - 'can be undone, because the abandoned events...'    (fold(...).turn, x2)
 ##   - 'resets all the way back to nothing'                (fold(...) == EMPTY_STATE)
+## All restored below. None needed commands.gd — only fold() itself, which
+## reads whatever chain it is given regardless of how that chain was built.
 
 
 func _build() -> Dictionary:
 	var log := SimLog.new()
+	var floor_tiles: Array = []
+	for i in range(16 * 12):
+		floor_tiles.append(SimGrid.FLOOR)
 	var root: Dictionary = log.append(null, SimEvents.draft("WORLD_INIT", 0, 0, {
-		"width": 16, "height": 12, "tiles": [], "seed": 31337, "opponents": [], "items": [],
+		"width": 16, "height": 12, "tiles": floor_tiles, "seed": 31337, "opponents": [], "items": [],
 		"player": {"id": "player", "kind": "you", "pos": {"x": 0, "y": 0},
 			"stats": {"hp": 10, "might": 3, "wits": 3, "speed": 4}, "tags": []},
 	}))
 	var head: Variant = root["id"]
+	# Real payloads, not {} — this chain is folded by three tests below, and
+	# an empty TURN_ADVANCED payload would hand apply.gd's _turn_advanced a
+	# missing "turn"/"activeEntityId". Turn climbs 1..5 across the four
+	# pairs, which is also what lets "diverge independently" and "can be
+	# undone" compare an earlier fold's turn against a later one meaningfully
+	# rather than trivially.
+	var turn := 1
 	for d: Array in [[1, 0], [0, 1], [1, 0], [0, 1]]:
 		var moved: Dictionary = log.append(head, SimEvents.draft("MOVE", 0, 0,
 			{"entityId": "player", "from": {"x": 0, "y": 0}, "to": {"x": d[0], "y": d[1]}}))
 		head = moved["id"]
-		var turned: Dictionary = log.append(head, SimEvents.draft("TURN_ADVANCED", 0, 0, {}))
+		turn += 1
+		var turned: Dictionary = log.append(head, SimEvents.draft("TURN_ADVANCED", 0, 0,
+			{"turn": turn, "activeEntityId": "player"}))
 		head = turned["id"]
 	return {"log": log, "head": head}
 
@@ -159,8 +170,12 @@ func test_the_two_worlds_then_diverge_independently() -> void:
 	refs = SimRefs.set_head(refs, "Ashfall-b", grown["id"])
 
 	assert_ne(SimRefs.get_ref(refs, "Ashfall-b")["head"], SimRefs.get_ref(refs, "Ashfall")["head"])
-	# Deferred: fold(grown.log, getRef(refs, 'Ashfall').head).turn >= 1 — needs
-	# fold(), which does not exist on SimLog yet (see file header).
+	# The reference folds `grown.log` — its OWN copy, since EventLog is
+	# immutable there. SimLog mutates in place (see the file header), so
+	# there is only one `log`, already extended by the grow above; folding
+	# Ashfall's own (unmoved) head through it proves the shared log is still
+	# sound after a sibling ref grew a branch off it.
+	assert_gte(log.fold(SimRefs.get_ref(refs, "Ashfall")["head"])["turn"], 1)
 
 
 func test_rejects_a_fork_point_absent_from_the_log() -> void:
@@ -227,11 +242,11 @@ func test_reset_can_be_undone_because_the_abandoned_events_are_still_there() -> 
 	# than only that a pointer can be reassigned. Restoring a string would
 	# pass even if reset had deleted everything it abandoned.
 	assert_eq(log.chain(head).size(), 9)
-	# Deferred: fold(log, head).turn > fold(log, target.id).turn — needs fold().
+	assert_gt(log.fold(head)["turn"], log.fold(target["id"])["turn"])
 
 	refs = SimRefs.set_head(refs, "Ashfall", head)
 	assert_eq(SimRefs.get_ref(refs, "Ashfall")["head"], head)
-	# Deferred: fold(log, getRef(refs,'Ashfall').head).turn == fold(log, head).turn.
+	assert_eq(log.fold(SimRefs.get_ref(refs, "Ashfall")["head"])["turn"], log.fold(head)["turn"])
 
 
 func test_reset_refuses_a_target_that_is_not_an_ancestor_of_the_current_head() -> void:
@@ -251,8 +266,8 @@ func test_reset_resets_all_the_way_back_to_nothing() -> void:
 	refs = SimRefs.reset(log, refs, "Ashfall", null)
 
 	assert_null(SimRefs.get_ref(refs, "Ashfall")["head"])
-	# Deferred: fold(log, null) == EMPTY_STATE — needs fold(); trivially true
-	# by fold's own null-head definition, but there is no fold() here to prove it.
+	assert_eq(SimCanonical.encode(log.fold(null)), SimCanonical.encode(SimState.empty()),
+		"a null head folds to the empty state")
 	assert_eq(log.events.size(), 9)
 
 
