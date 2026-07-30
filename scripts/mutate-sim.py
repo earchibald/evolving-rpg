@@ -60,6 +60,14 @@ MUTATIONS: dict[str, tuple[str, str, str]] = {
         '\t\t"speed": stats["speed"] + grants["speed"],',
         '\t\t"speed": stats["speed"] + maxi(grants["speed"], 0),',
     ),
+    # Widens the rule vocabulary's own bound on how many conditions a single
+    # rule may carry — a balance decision, not a derived value, so nothing
+    # else in the file would catch it drifting.
+    "rule-max-conditions": (
+        "godot/sim/rule.gd",
+        "const MAX_CONDITIONS := 4",
+        "const MAX_CONDITIONS := 5",
+    ),
     # --- Known EQUIVALENT REWRITES, kept as documentation, not as proofs. ---
     # Both produce identical bits: low bits survive two's-complement wrapping,
     # and u32's second line masks unconditionally. Running these should show NO
