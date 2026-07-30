@@ -68,6 +68,19 @@ MUTATIONS: dict[str, tuple[str, str, str]] = {
         "const MAX_CONDITIONS := 4",
         "const MAX_CONDITIONS := 5",
     ),
+    # Drops "alarm" from EMPTY_STATE entirely instead of keeping it present
+    # with value null — the exact failure the absent-key law exists to catch.
+    # canonicalJson only drops a key whose value is `undefined`; null is not
+    # undefined, so a state that OMITS a nullable field forks the encoded
+    # bytes on the very first empty state, not just deep in a replay.
+    # (Commented out rather than deleted: an empty-string mutant defeats this
+    # script's own count==1 safety check on restore, since "" occurs at every
+    # offset in a nonempty string.)
+    "state-null-becomes-absent": (
+        "godot/sim/state.gd",
+        '\t\t"alarm": null,\n',
+        '\t\t# "alarm": null,\n',
+    ),
     # --- Known EQUIVALENT REWRITES, kept as documentation, not as proofs. ---
     # Both produce identical bits: low bits survive two's-complement wrapping,
     # and u32's second line masks unconditionally. Running these should show NO
