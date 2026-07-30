@@ -2006,3 +2006,67 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > on the three deferred items: the scroll belt (which conflicts), the
 > encumbrance redesign (which overwrites your satchel), and whether the
 > mine is worth me building next.
+
+> [!IMPORTANT]
+> **10:18 — The reducer is across, the hash it was written for landed on the
+> first try, and a review broke it three times to find what nothing was
+> watching**
+> `apply.gd` is the file the whole migration turns on: every change the world
+> can undergo, twenty-five of them, and a silent drift in any one forks every
+> chain the game has ever written. It is done. Replaying the recorded golden
+> run through the GDScript reducer reproduces
+> `2272ed6e…b260056` — the exact state hash the TypeScript engine signed —
+> **byte for byte, on the first run**, with all twenty state keys matching the
+> reference's own dump independently. Two different agents re-derived it.
+>
+> **Now the sentence that has to travel with that one.** The golden run
+> exercises **five of the twenty-five** event types. So the hash proves five of
+> the reducer's cases and says nothing about the other twenty. It contains no
+> venom, no pockets, no stances, no satchel, no scroll, no routes. For those,
+> the ported unit tests are not a supplement to the gate — they *are* the
+> verification, and that is why they get ported whole and never thinned.
+>
+> **The review earned its keep by breaking things.** Three holes, each found by
+> damaging the reducer and watching the suite stay green:
+> - **The purse's crossing had no witness at all.** Delete the line that carries
+>   your gold down the stairs and 268 tests still pass *and* the golden fold
+>   still hashes correctly — because that run never descends with money. The
+>   same was true of xp, level, depth, story and the motif. All six are guarded
+>   now.
+> - **The spilled pocket had no witness.** A creature that dies sets down what
+>   it carried, at three different death sites — a blow, a slam, a rule. Each
+>   one could be deleted independently and nothing noticed. Six tests now, and
+>   every mutation dies on its own named test.
+> - **A shipped build strips its own safety checks.** `assert()` is compiled out
+>   of an exported build, which quietly inverted the rule that an unknown event
+>   must be refused: in release it would have been folded as a no-op instead.
+>   Fixed here, and both builds now refuse identically.
+>
+> **Two things for you, neither of which I should decide alone.**
+> 1. **`grid.gd` has the same release-build hole** and has not been fixed,
+>    because reopening an already-reviewed Wave A file from a Wave C task is the
+>    scope creep the plan exists to prevent. In an exported build it would
+>    construct a malformed grid silently rather than refusing. It wants a
+>    deliberate pass over every `assert` in `sim/`, once, as its own piece of
+>    work — not twelve drive-by edits.
+> 2. **Twenty-one named value mutations still survive** the suite *and* the
+>    golden fold — venom's countdown, its harm, the braced WAIT, the ward, the
+>    ITEM_TAKEN grants, the scroll leaving the hand, the trap's reveal, the
+>    vigil's ceiling, the called voice, and more. Every one is Wave E surface:
+>    the verbs and the mind that presses them are not ported yet, and their own
+>    tasks are what close them. The list is written down so Wave E inherits a
+>    target list instead of rediscovering it one debugging session at a time.
+>
+> **Also on the record, because you asked:** the Godot editor's warning that the
+> project "was last edited in 4.6" and opening will move it to 4.7 is
+> **expected, not damage**. The project pins itself to 4.6 on purpose so it
+> still opens in Xogot, which embeds 4.6.2; the 4.7.1 command line runs every
+> gate headless without touching that pin. Only the editor offers to migrate.
+> When Xogot catches up — or stops mattering — that pin gets bumped in one
+> deliberate commit with every gate re-run behind it. Don't let the editor do it
+> silently mid-migration; an accidental save would move the floor under the
+> port.
+>
+> **Try it:** still nothing to press. Phase 3 is the first playable thing, and
+> the reducer was the wall in front of it. Next is the fold itself, then
+> generation and sight, then the verbs.

@@ -1330,12 +1330,19 @@ static func apply(state: Dictionary, event: Dictionary) -> Dictionary:
 	#
 	# Every other `assert` in `sim/` shares the debug-only property. That is a
 	# migration-wide question for the designer rather than one this file may
-	# answer alone — but the reducer is where a silent no-op does the most
-	# damage, so it gets the belt as well as the braces.
+	# answer alone (it is written up in NIGHTLOG) — but the reducer is where a
+	# silent no-op does the most damage, so it gets the belt as well as braces.
+	#
+	# The explicit `return {}` is what makes DEBUG AND RELEASE AGREE. Without it
+	# the two builds refuse differently: debug unwinds out of the assert to `{}`,
+	# while release — where the assert does not exist — falls through _reduce's
+	# match to `return state` and folds the unknown event as a no-op. One
+	# contract in both builds beats a refusal whose shape depends on how the
+	# binary was compiled.
 	if not SimEvents.SCHEMA_VERSIONS.has(event["type"]):
 		push_error("SimApply: unknown event type %s" % event["type"])
-	assert(SimEvents.SCHEMA_VERSIONS.has(event["type"]),
-		"SimApply: unknown event type %s" % event["type"])
+		assert(false, "SimApply: unknown event type %s" % event["type"])
+		return {}
 	var next: Dictionary = _reduce(state, event)
 	var rng_counter: int = int(event["rngCounter"]) + int(event["rngDraws"])
 	if int(next["rngCounter"]) == rng_counter:
