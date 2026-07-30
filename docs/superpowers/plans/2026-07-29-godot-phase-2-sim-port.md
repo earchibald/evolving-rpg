@@ -669,6 +669,8 @@ static func apply_resolved(state: Dictionary, outcomes: Array) -> Dictionary
 
 - [ ] **Step 1: Read `git show ts-baseline:src/canon/interpret.ts`.** This is *sim*, not AI: the reducer folds `RULE_FIRED`, so the interpreter must be byte-faithful.
 
+- [ ] **Step 1b: Adopt the 19 test cases Task 2.A4 deferred to you.** Of the 54 cases across `tests/canon/rule.test.ts` and `tests/canon/vocabulary.test.ts`, 2.A4 ported 34, dropped 1 (a JavaScript prototype-pollution case with no GDScript equivalent — `__proto__` is not a vector for a GDScript Dictionary), and deferred **19** to you: 10 drive `holds`, 9 drive `fireRules`/`applyResolved`. Review verified each deferral is genuine — the `rule()`/`refused()` calls inside them are fixture scaffolding, not the subject. **The list of 19 is committed in `godot/test/unit/test_vocabulary.gd`'s own docstring** — read it there rather than re-deriving it, and account for all 19 in this task. 34 + 19 + 1 = 54; if your count does not reconcile, a case is being lost.
+
 - [ ] **Step 2: Port both suites. Step 3: RED. Step 4: Implement. Step 5: GREEN.**
 
 - [ ] **Step 6: Mutation** — invert one condition kind in `holds`; confirm failures; restore. **Step 7: Commit.**
@@ -700,6 +702,8 @@ static func apply_resolved(state: Dictionary, outcomes: Array) -> Dictionary
   - **`TURN_ADVANCED` does real work:** venom ticks (`VENOM_HARM` per round for `VENOM_TURNS`), and `creditKills`. See the `creditKills` precedent in the TS.
   - **`dropPockets` sits beside `creditKills` at *every* death site.** Miss one and pockets vanish on that path only.
   - **Absent-key discipline** on every entity field the reducer sets or clears. Clearing `DRAWN` means *removing* the key, not setting it null, if that is what the TS does — check each one.
+  - **Do NOT call `SimItem.granted` here — inline the arithmetic, as the reference does.** Established during Task 2.A3's review by direct tracing: `git grep -n "granted("` over `ts-baseline` returns exactly one hit, `item.ts`'s own definition. `apply.ts`'s `ITEM_TAKEN` case (`apply.ts:279-367`) calls neither `granted` nor `itemAt`; it inlines its own id-based `items.find` and its own stat arithmetic (`e.stats.might - off.might + p.grants.might`). `granted` and `NOTHING` are **dead code in the reference**. Routing `apply.gd` through `SimItem.granted` would be a refactor, not a port, and any difference between the two formulations forks the chain. Port the inlined arithmetic verbatim.
+  - **This task owns the absent-key law's only real guard.** See the warning in the absent-key section: the entity-level test in 2.A2 is tautological because `entity.gd` has no builder. `WORLD_INIT` here is where entities are actually constructed, so add a test that builds entities through the reducer and asserts (a) no constructed entity carries a `null`-valued key, and (b) the optional fields that should be unset are absent rather than null. Also settle the open `gear` question: is an unworn slot an absent key *inside* `gear`, or is `gear` itself absent? Check the reference and record the answer.
   - **`WORLD_INIT` replaces state wholesale** and opens a new rng-counter epoch.
 
 - [ ] **Step 5: GREEN on all three suites.**
