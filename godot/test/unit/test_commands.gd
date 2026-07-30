@@ -649,6 +649,82 @@ func test_the_walking_distance_in_the_story_is_never_rendered_as_a_float() -> vo
 			"depth %d lost the walking distance entirely" % depth)
 
 
+func test_the_keeper_never_stands_in_what_paints_as_wall() -> void:
+	## NON-REFERENCE, and the seed is not arbitrary. A keeper standing on an
+	## illusory wall gives the secret away and reads as a haunting, so
+	## create_world skips SECRET tiles when it posts one — but that skip is
+	## only ever CONSULTED on a floor that sealed, and only ever DECIDES
+	## anything when a sealed doorway happens to abut the way out.
+	##
+	## MEASURED across depths 1-9 x seeds 1-60 on the vale board: 172 of 540
+	## worlds seal, and exactly TWO put a SECRET beside their exit — depth 7
+	## and depth 8, both at seed 32. Neither was reachable from any other seed
+	## this suite drives, so without this test the skip shipped executed-never
+	## -witnessed. (Task 2.D1 disclosed seal_secret_room's committing path as
+	## UNREACHED by anything in the migration; create_world reaches it, and
+	## this is the one line of create_world that reads what it wrote.)
+	for depth: int in [7, 8]:
+		var payload: Dictionary = (SimCommands.create_world(
+			32, 48, 32, "player", depth) as Dictionary)["payload"]
+		var grid: Dictionary = SimGrid.make(
+			int(payload["width"]), int(payload["height"]), payload["tiles"])
+		var exit_at: int = (payload["tiles"] as Array).find(SimGrid.EXIT)
+		var width: int = payload["width"]
+		var exit := {"x": exit_at % width, "y": floori(float(exit_at) / float(width))}
+
+		# The precondition, asserted rather than assumed: this floor really
+		# does hide a doorway next to its stairs. If generation ever stops
+		# doing so on this seed, this test must be re-seeded rather than
+		# quietly becoming vacuous.
+		var secret_beside := false
+		for step: Array in [[1, 0], [-1, 0], [0, 1], [0, -1]]:
+			if SimGrid.tile_at(grid, int(exit["x"]) + int(step[0]),
+				int(exit["y"]) + int(step[1])) == SimGrid.SECRET:
+				secret_beside = true
+		assert_true(secret_beside,
+			"depth %d seed 32 no longer hides a doorway beside its stairs" % depth)
+
+		var keeper: Variant = null
+		for o: Dictionary in (payload["opponents"] as Array):
+			var pos: Dictionary = o["pos"]
+			if absi(int(pos["x"]) - int(exit["x"])) + absi(int(pos["y"]) - int(exit["y"])) == 1:
+				keeper = o
+				break
+		assert_not_null(keeper, "depth %d: the stairs stand unwatched" % depth)
+		var at: Dictionary = (keeper as Dictionary)["pos"]
+		assert_ne(SimGrid.tile_at(grid, int(at["x"]), int(at["y"])), SimGrid.SECRET,
+			"depth %d: the keeper haunts an illusory wall" % depth)
+
+
+func test_a_strikes_two_draws_are_the_two_CONSECUTIVE_draws_it_declares() -> void:
+	## NON-REFERENCE, and added because a mutation MEASURED the hole. Moving
+	## the damage draw from `counter + 1` to `counter + 2` — so a strike's two
+	## draws stop being consecutive while `rngDraws` still says 2 — failed
+	## NOTHING in the other 455 tests. Every damage assertion in the reference
+	## suite is a RANGE (2..4 on a hit, 4..8 on a crit, <= 4 uncoiled), and
+	## `takes hit points away on a hit` compares the reducer against the
+	## draft's own damage, so both sides move together.
+	##
+	## That is exactly the divergence class replay verification finds far from
+	## its cause: the counter advances correctly, the numbers are all in band,
+	## and the chain forks anyway. So the draw PROTOCOL is pinned here rather
+	## than the damage: the roll is the counter's own draw and the damage is
+	## the very next one, recomputed from SimRng on the test's side of the
+	## fence so the two cannot move together.
+	var counter := _counter_rolling(func(r: int) -> bool: return r >= 10 and r < 20)
+	var state: Dictionary = _brawl(counter)
+	var p: Dictionary = (SimCommands.attempt_move(state, "player", 1, 0) as Dictionary)["payload"]
+
+	# The roll is drawn at the counter the event declares.
+	assert_eq(int(p["roll"]), SimRng.int_between(5, counter, 1, 20), "the roll is draw one")
+	# might 3 is the 1d3+1 band; the counter is chosen to land a non-crit hit,
+	# so the damage is the undoubled next draw. Both numbers are literals: the
+	# band is spelled out rather than read back through damage_dice().
+	assert_false(bool(p["crit"]), "the chosen counter rolls under the crit floor")
+	assert_eq(int(p["damage"]), SimRng.int_between(5, counter + 1, 1, 3) + 1,
+		"the damage is draw two, immediately after the roll")
+
+
 func test_a_board_over_the_cap_is_refused_rather_than_allocated() -> void:
 	## NON-REFERENCE. The reference THROWS above MAX_BOARD_DIM (commands.ts:224
 	## — "above the cap a mistyped dimension allocates a country"). No
