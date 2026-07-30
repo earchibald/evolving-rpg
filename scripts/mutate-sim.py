@@ -73,6 +73,22 @@ MUTATIONS: dict[str, tuple[str, str, str]] = {
         "const MAX_CONDITIONS := 4",
         "const MAX_CONDITIONS := 5",
     ),
+    # Drifts the lunge multiplier (the skirmisher's verb) — a balance
+    # decision, not a derived value, so nothing else in the file would catch
+    # it changing. Load-bearing by design: with verbs unpriced, depth-5
+    # survival collapsed from a pinned 1-in-10 band to 0 in 20 trials
+    # (tables.ts's own docs). The fixture's threatOf rows exist precisely to
+    # catch this — they dump the SAME stats priced and unpriced, so the gap
+    # IS the multiplier — so every priced-skirmisher threatOf row in the
+    # fixture sweep should mismatch, and with it the bestiary's own
+    # "scales every archetype upward" and "prices the warden above
+    # everything" comparisons, both of which price skirmisher through
+    # threat_of.
+    "tables-verb-threat": (
+        "godot/sim/tables.gd",
+        '"lunge": 1.25,',
+        '"lunge": 1.35,',
+    ),
     # Drops "alarm" from EMPTY_STATE entirely instead of keeping it present
     # with value null — the exact failure the absent-key law exists to catch.
     # canonicalJson only drops a key whose value is `undefined`; null is not
