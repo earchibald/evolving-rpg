@@ -1152,8 +1152,11 @@ func test_golden_chain_verifies_with_no_divergence() -> void:
 	for event: Dictionary in golden["events"]:
 		head = (log.append(head, event) as Dictionary)["id"]
 	var divergence: Variant = log.verify_chain(head)
-	assert_eq(divergence, null,
-		"golden verifies clean; got %s" % [divergence])
+	# NOT assert_eq(divergence, null): GUT 9.7.1's comparator cannot diff a
+	# Dictionary against null and pushes "cannot set differences" instead of the
+	# divergence — exactly on the run where you need the message. The Global
+	# Constraints' assert_null rule governs here as everywhere.
+	assert_null(divergence, "golden verifies clean; got %s" % [divergence])
 
 
 func test_verify_still_catches_a_tampered_chain() -> void:
