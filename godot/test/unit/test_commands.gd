@@ -66,8 +66,21 @@ extends GutTest
 ## header now reads 12 = 12 ported + 0 deferred.
 ##
 ## ── Non-reference tests, and why each exists ──────────────────────────────
-## Four tests at the bottom of this file have no counterpart in
-## commands.test.ts. Each is marked where it stands.
+## SIX tests at the bottom of this file have no counterpart in
+## commands.test.ts, so the file holds 38. Each is marked where it stands, and
+## THREE of the six exist because a mutation MEASURED a hole rather than
+## because one was predicted:
+##
+##   test_the_golden_world_is_rebuilt_byte_for_byte              (see below)
+##   test_the_walking_distance_..._never_rendered_as_a_float     (see below)
+##   test_the_keeper_never_stands_in_what_paints_as_wall         mutation-found
+##   test_a_strikes_two_draws_are_the_two_CONSECUTIVE_draws_...  mutation-found
+##   test_a_board_over_the_cap_is_refused_rather_than_allocated  unwitnessed throw
+##   test_the_descent_ceremony_drafts_are_drawless_...           unwitnessed API
+##
+## The two mutation-found ones are recorded with their measurements in
+## scripts/mutate-sim.py under `# --- Task 2.E3a ---`. Both mutants failed
+## NOTHING on the first sweep with only the 56 ported cases present.
 ##
 ## test_the_golden_world_is_rebuilt_byte_for_byte is the important one. The
 ## committed golden run's first event IS `createWorld(17, 48, 32)` as the
