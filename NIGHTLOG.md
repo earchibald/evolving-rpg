@@ -1788,6 +1788,73 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > `sight`, `commands`), and its gate is the fold. Phase 3 is the first
 > thing you will be able to play.
 
+> [!NOTE]
+> **00:35 — Wave A: the leaves are across, and the plan got four
+> corrections from its own execution**
+> Phase 2 has a written plan (1,000 lines, six waves, three gates) and its
+> first wave is done: **`SimGrid`, `SimEntity`, `SimItem`, `SimRule`** —
+> 13 test scripts, **91 tests, 2114 asserts, 0.5 seconds**, green. TS
+> reference still 993 green, typecheck clean, and `git diff
+> ts-baseline..HEAD -- src/ tests/` is **empty**, so the freeze is a fact
+> rather than a promise.
+>
+> **The thing that de-risked the whole phase.** Before porting anything I
+> had the reference dump the exact `GameState` its golden chain folds to,
+> and made the exporter refuse to write that dump unless it reproduced the
+> recorded `finalStateHash`. Then GDScript hashed the reference's *own*
+> final state — 1536-tile grid, entities, traps, rules, prose — and got
+> **`2272ed6e…`**, the recorded value. So the encoder and the hash recipe
+> are already proven. When Phase 2's fold gate fails, there is exactly one
+> suspect left: `apply`.
+>
+> **Four corrections the plan earned by being executed.** I am listing them
+> because a plan that never changes under contact was not being followed.
+> - The absent-key table said six optional `Entity` fields. There are
+>   **nine** (`post disposition route leg guise scroll pocket gear
+>   satchel`), verified exhaustive against the tag. A name missing there
+>   becomes a silent hash divergence four waves later.
+> - **A test I wrote into the plan proved nothing.** It hand-built a
+>   dictionary without the optional keys, then asserted the dictionary
+>   lacked them — true by construction. `entity.gd` has no builder that
+>   could ever fail it. The real guard moved to where entities are actually
+>   *made*: `WORLD_INIT` in `apply.gd`.
+> - The plan told a task to port `equipment.test.ts` as "item parts". None
+>   of those six cases touches `item.ts` — they all drive `takeUnderfoot`
+>   through the reducer. Reassigned, and `item.gd`'s tests are newly
+>   written rather than ported (and were reviewed harder for it).
+> - **`granted` and `NOTHING` are dead code in your engine.** `git grep
+>   "granted("` over the tag finds only the definition; `apply.ts`'s
+>   `ITEM_TAKEN` inlines its own arithmetic. So `apply.gd` must inline too
+>   — routing it through `SimItem.granted` would be a refactor in a port's
+>   clothing, and any difference between the two forks the chain.
+>
+> **The runner caught something worth catching.** GUT exits **0** when a
+> test file fails to *parse* — the script is skipped, not failed. A
+> migration whose whole claim is "the ported suites pass" cannot have that,
+> so `test.sh` counts `test_*.gd` on disk and refuses any run that executed
+> fewer. It has already fired for real.
+>
+> **Mutation tally: 8 real rows, all caught; 2 recorded as null results.**
+> Two things I tried to break in the RNG turned out to be *equivalent
+> rewrites* — the naive 64-bit multiply and a redundant mask both give
+> identical bits. They are kept in the harness labelled `-EQUIVALENT` so
+> nobody later mistakes their silence for a weakened test. A review also
+> caught one of my own review gates being toothless and sent it back: three
+> junk cases were failing at the first check instead of reaching the deep
+> validators they were written for, leaving three guards in the rule
+> validator with zero coverage. Fixed, and each guard now has a witness
+> that names it.
+>
+> **Still nothing to press.** Waves B–F remain: `tables`, `state`,
+> `events`, the interpreter, then `apply` and the fold gate, then
+> generation, perception, and the verbs. Your two open calls are unchanged
+> and neither blocks anything: `AGENTS.md` still describes the sprite sheet
+> as refused for being watermarked, which your clarification retired, and
+> `route`/`scroll`/`pocket`/`satchel` are exercised by no parity gate at
+> all — Wave E's unit suites will be their only cover unless you want the
+> golden fixture extended, which is a regen ceremony and needs your
+> signature.
+
 > [!IMPORTANT]
 > **02:55 — Your spec, read hard: the good idea, the eight things that
 > would not have compiled, and the purse that now works**
