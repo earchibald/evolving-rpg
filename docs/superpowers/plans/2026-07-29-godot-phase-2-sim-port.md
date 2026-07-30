@@ -748,6 +748,10 @@ static func apply_resolved(state: Dictionary, outcomes: Array) -> Dictionary
 
 - [ ] **Step 1: Read `git show ts-baseline:src/core/apply.ts` in full — all 847 lines, all 25 event cases.** Do not port case-by-case from memory of the type names.
 
+- [ ] **Step 1d: Adopt the 18 tests Task 2.B6 deferred to you, and own `RULE_FIRED`.** 7 from `tests/canon/interpret.test.ts` (the whole "applying what fired" block, plus 2 of "the past does not change") and **all 11 of `tests/canon/rules-in-log.test.ts`**. Each is named with its reference line number in the corresponding GDScript test file's docstring — `godot/test/unit/test_interpret.gd` and `godot/test/unit/test_rules_in_log.gd` (which currently holds zero tests and exists only to carry that record).
+
+  2.B6 noted it could not see a task number for "the general `RULE_FIRED` reduction". **It is this one.** `RULE_FIRED` is one of `apply.gd`'s 25 event cases; folding it is what makes a ratified rule's firing part of history rather than a runtime coincidence. `SimInterpret.fire_rules` and `apply_resolved` are already ported and are what you reduce *through*.
+
 - [ ] **Step 1c: Adopt the 9 tests Task 2.B3 deferred to you — all of `tests/core/leveling.test.ts`.** Every case in that file drives the reducer (XP is folded from kill history, and levelling heals to full), so none of it could be ported before `apply.gd` existed. It is named in `godot/test/unit/test_tables.gd`'s header. Nine cases; reconcile the count.
 
 - [ ] **Step 2: Port the three suites first.**

@@ -1856,6 +1856,69 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > signature.
 
 > [!IMPORTANT]
+> **04:29 — Wave B is across, and the gate is narrower than I told you**
+> Fourteen sim modules now stand in GDScript: the kernel, then grid,
+> entity, item, rule, and this wave's **state, events, tables, upcast,
+> refs, interpret**. **20 test scripts, 208 tests, 6,965 asserts, 0.6
+> seconds.** Your engine is untouched — `git diff ts-baseline..HEAD` over
+> `src/` and `tests/` is still empty — and its 993 still pass.
+>
+> **The finding you should read first, because it changes what the
+> migration proves.** The golden run's 451 events exercise **five of the
+> twenty-five event types**: WORLD_INIT, MOVE, STRIKE, TURN_ADVANCED,
+> ITEM_TAKEN. Measured, then confirmed independently. So when `apply.gd`
+> lands and the fold gate goes green, that will prove **five of its
+> twenty-five cases** are right — not twenty-five. The other twenty rest
+> entirely on the ported unit suites, which makes those suites the
+> verification for eighty per cent of the reducer rather than a supplement
+> to it. The plan now says so ahead of its own gates, with a standing rule
+> that a parity claim must name which gates it rests on. The same hole
+> covers `route`, `scroll`, `pocket` and `satchel` — the absent-key law
+> goes unwitnessed for exactly the fields most likely to get it wrong.
+> Closing it means regenerating the golden fixture, which is your ceremony
+> and your signature. **I am not asking for it; I am telling you the gate's
+> real width so nobody later mistakes green for whole.**
+>
+> **The balance sheet came over intact and checked against itself.** All
+> twenty-three numeric functions in `tables.ts` are asserted row-for-row
+> against ground truth dumped from your engine — no expected number typed
+> by hand anywhere in that sweep. `threatOf` is dumped three ways on
+> identical stats (priced, unpriced, unmapped kind), so **the gap between
+> the priced and unpriced rows *is* the verb multiplier**, a fact in the
+> fixture instead of a claim in a comment. That is the standing guard
+> against the regression that once took depth-5 survival to 0 in 20.
+>
+> **Five things the plan had wrong, all caught by executing it.** The
+> fixture loader refused every fractional number on the premise that this
+> game is all integers — true of chains and state, false of coefficients,
+> since verbs price at 1.1–1.3 and `bountyStretch` returns 1.5. I had
+> `bountyStretch` typed as returning an int; the fixture proved otherwise.
+> Twelve numeric functions had no fixture rows at all, so a porter would
+> have hand-transcribed them. A new fixture arrived by hand-copy and sat
+> outside the exporter, where the first regeneration would have dropped it.
+> And a test the plan mandated asserted a static fact about a constant
+> instead of calling the function it was named for.
+>
+> **What every wave now hands forward, named rather than lost.** 2.C1
+> inherits nine leveling tests, eighteen rule-firing tests, the
+> absent-key law's only real guard, and `RULE_FIRED`; 2.C2 inherits seven
+> assertions parked until `fold` existed. Nothing was dropped silently —
+> every deferral is a comment in the committed test file with its owning
+> task, and the rule vocabulary's ledger closes exactly: 34 ported plus 1
+> dropped plus 19 adopted equals 54.
+>
+> **One thing GDScript quietly took away.** TypeScript froze `EMPTY_STATE`,
+> so a reducer mutating the fold's accumulator threw at the mutation site.
+> The GDScript equivalent returns a fresh dictionary, which kills that
+> corruption outright — but an in-place mutation now fails **silently**,
+> surfacing as a hash mismatch hundreds of events from its cause. `apply.gd`
+> owes a test per mutating event kind proving it never touches its input.
+>
+> **Next is the reducer**, and it is the one file where a quiet drift forks
+> every chain the game has ever written. Then generation, perception, and
+> the verbs. Still nothing to press: Phase 3 is the first playable thing.
+
+> [!IMPORTANT]
 > **02:55 — Your spec, read hard: the good idea, the eight things that
 > would not have compiled, and the purse that now works**
 > You handed me `new-designs-spec.md` and asked me to review, edit,
