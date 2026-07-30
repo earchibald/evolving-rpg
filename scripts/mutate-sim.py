@@ -163,6 +163,49 @@ MUTATIONS: dict[str, tuple[str, str, str]] = {
         '\t\t\treturn a_stats["hp"] <= condition["n"]',
         '\t\t\treturn a_stats["hp"] > condition["n"]',
     ),
+    # --- Task 2.C1 hand-off A: apply.gd's reducer, guarded by the ported
+    # tests/core/apply.test.ts and tests/core/dispositions.test.ts suites ---
+    # Drops the "+ 1" from MOVE's waypoint-struck arithmetic, so a wanderer
+    # that lands on a stop re-reads the SAME leg instead of advancing to the
+    # next one. Real gameplay drift (a wanderer would loiter at its own
+    # waypoint forever rather than continuing its round) that neither the
+    # golden run nor apply.gd's own law suite catches: the golden run never
+    # happens to land a wanderer exactly on a waypoint, and the law suite's
+    # _events() table checks the counter and the key set for MOVE, never the
+    # resulting `leg`. Caught only by test_dispositions.gd's one ported case,
+    # which is the whole reason that case was worth porting out of a suite
+    # eleven-twelfths deferred.
+    "apply-wander-leg-advance": (
+        "godot/sim/apply.gd",
+        '\t\t\t\t\t\t\t\tlanded["leg"] = (i + 1) % route.size()',
+        '\t\t\t\t\t\t\t\tlanded["leg"] = i % route.size()',
+    ),
+    # WORLD_INIT stops reading a floor as born empty and hands every new
+    # world a phantom corpse instead. Not caught by the law suite: bodies is
+    # a plain state-level key, not one of entity.gd's nine optional ones, and
+    # nothing in the law section's _events() sweep checks its VALUE after
+    # WORLD_INIT (only the key set, via assert_shape). Caught by
+    # test_world_bodies_is_reset_by_the_next_world_init_every_floor_is_born_empty,
+    # ported from apply.test.ts's own describe('apply WORLD_BODIES, and the
+    # recorded cut').
+    "apply-world-init-bodies": (
+        "godot/sim/apply.gd",
+        '\t\t\t\t"bodies": [],',
+        '\t\t\t\t"bodies": [{"x": 0, "y": 0}],',
+    ),
+    # WORLD_INIT stops copying a seed's position and aliases the payload's Pos
+    # Dictionary straight into the constructed entity — the exact failure the
+    # docstring's copy-not-alias law exists to catch, on the one field none of
+    # apply.gd's own LAW suite happens to probe (test_world_init_copies_out_
+    # of_the_payload_rather_than_aliasing_it mutates a seeded walker's stats,
+    # tags and route, never its pos). Caught by
+    # test_world_init_copies_the_player_so_mutating_the_event_payload_cannot_
+    # reach_into_state, ported from apply.test.ts's sharpest WORLD_INIT case.
+    "apply-world-init-pos-alias": (
+        "godot/sim/apply.gd",
+        '\t\t\t\t\t"pos": _pos(s["pos"]),',
+        '\t\t\t\t\t"pos": s["pos"],',
+    ),
     # --- Known EQUIVALENT REWRITES, kept as documentation, not as proofs. ---
     # Both produce identical bits: low bits survive two's-complement wrapping,
     # and u32's second line masks unconditionally. Running these should show NO

@@ -450,3 +450,234 @@ func test_an_unknown_event_type_is_refused_rather_than_folded() -> void:
 	}
 	SimApply.apply(_born(), rogue)
 	assert_engine_error("unknown event type")
+
+
+# ── ported from tests/core/apply.test.ts (17 cases, all portable) ────────
+##
+## None of these need decide() or createWorld() — see test_dispositions.gd
+## for the sibling suite where that split actually bites. 17 = 17 ported + 0
+## deferred.
+##
+## Its own fixture: the reference's 3x2 board (this section's own WORLD_INIT
+## payload, not _world_payload()'s 7x7) — kept separate so this section
+## matches ts-baseline case for case rather than borrowing the law suite's
+## larger world. Named `_small_*` to keep the two fixtures visually distinct
+## at every call site.
+
+func _small_world_payload() -> Dictionary:
+	return {
+		"width": 3, "height": 2,
+		"tiles": [SimGrid.FLOOR, SimGrid.FLOOR, SimGrid.WALL, SimGrid.FLOOR, SimGrid.FLOOR, SimGrid.FLOOR],
+		"seed": 99,
+		"items": [],
+		"player": {"id": "player", "kind": "you", "pos": {"x": 0, "y": 0},
+			"stats": {"hp": 10, "might": 3, "wits": 3, "speed": 4}, "tags": []},
+		"opponents": [
+			{"id": "thing-1", "kind": "thing", "pos": {"x": 1, "y": 1},
+				"stats": {"hp": 5, "might": 4, "wits": 1, "speed": 3}, "tags": []},
+		],
+	}
+
+
+## rngDraws 128: what map generation drew before the first event was ever
+## recorded, in the reference fixture this ports.
+func _small_world_init() -> Dictionary:
+	return SimEvents.draft("WORLD_INIT", 0, 128, _small_world_payload())
+
+
+func _small_started() -> Dictionary:
+	return SimApply.apply(SimState.empty(), _small_world_init())
+
+
+func _small_move_event(rng_draws: int = 0) -> Dictionary:
+	return SimEvents.draft("MOVE", 128, rng_draws,
+		{"entityId": "player", "from": {"x": 0, "y": 0}, "to": {"x": 1, "y": 0}})
+
+
+func _small_move_blocked_event() -> Dictionary:
+	return SimEvents.draft("MOVE_BLOCKED", 128, 0,
+		{"entityId": "player", "attempted": {"x": 2, "y": 0}, "reason": "wall"})
+
+
+# describe('apply WORLD_INIT')
+
+func test_world_init_installs_the_grid() -> void:
+	var started: Dictionary = _small_started()
+	var grid: Dictionary = started["grid"]
+	assert_eq(grid["width"], 3)
+	assert_eq(SimGrid.tile_at(grid, 2, 0), SimGrid.WALL)
+
+
+func test_world_init_seats_the_player_first_then_the_world_inhabitants_and_starts_on_turn_1() -> void:
+	## Player first is load-bearing: several readouts and the AI's quarry
+	## lookup assume entities[0] is you.
+	var started: Dictionary = _small_started()
+	var entities: Array = started["entities"]
+	assert_eq(entities.size(), 2)
+	var first: Dictionary = entities[0]
+	var second: Dictionary = entities[1]
+	assert_eq(first["id"], "player")
+	assert_eq(second["id"], "thing-1")
+	assert_eq(first["pos"], {"x": 0, "y": 0})
+	assert_eq(started["activeEntityId"], "player")
+	assert_eq(started["turn"], 1)
+
+
+func test_world_init_records_the_seed_and_a_counter_advanced_by_the_draws_generation_made() -> void:
+	var started: Dictionary = _small_started()
+	assert_eq(started["seed"], 99)
+	assert_eq(started["rngCounter"], 128)
+
+
+func test_world_init_copies_the_player_so_mutating_the_event_payload_cannot_reach_into_state() -> void:
+	## Every nested part, not just position: stats and tags are separate
+	## structures in the payload too, and aliasing any of them would let a
+	## later event rewrite history that has already been folded. The
+	## reference mutates its module-level `worldInit` and restores it
+	## afterward so sibling cases sharing the const are not corrupted; that
+	## restore has nothing to protect here, because `event` below is local to
+	## this test alone.
+	var event: Dictionary = _small_world_init()
+	var started: Dictionary = SimApply.apply(SimState.empty(), event)
+
+	var payload: Dictionary = event["payload"]
+	var player_payload: Dictionary = payload["player"]
+	var pos_payload: Dictionary = player_payload["pos"]
+	var stats_payload: Dictionary = player_payload["stats"]
+	pos_payload["x"] = 999
+	stats_payload["hp"] = 999
+	(player_payload["tags"] as Array).append("injected")
+
+	var seated: Dictionary = (started["entities"] as Array)[0]
+	assert_eq((seated["pos"] as Dictionary)["x"], 0)
+	assert_eq((seated["stats"] as Dictionary)["hp"], 10)
+	assert_eq(seated["tags"], [])
+
+
+# describe('apply MOVE')
+
+func test_move_moves_the_named_entity_to_the_recorded_destination() -> void:
+	var moved: Dictionary = SimApply.apply(_small_started(), _small_move_event())
+	var first: Dictionary = (moved["entities"] as Array)[0]
+	assert_eq(first["pos"], {"x": 1, "y": 0})
+
+
+func test_move_leaves_the_previous_state_untouched() -> void:
+	var started: Dictionary = _small_started()
+	SimApply.apply(started, _small_move_event())
+	var first: Dictionary = (started["entities"] as Array)[0]
+	assert_eq(first["pos"], {"x": 0, "y": 0})
+
+
+func test_move_does_not_advance_the_rng_counter_because_a_move_draws_nothing() -> void:
+	var moved: Dictionary = SimApply.apply(_small_started(), _small_move_event())
+	assert_eq(moved["rngCounter"], 128)
+
+
+func test_move_advances_the_counter_by_the_events_own_draws_and_by_nothing_else() -> void:
+	## v1's rule was "only WORLD_INIT can move the counter"; v2 replaced it
+	## with every event declaring its own draws, and apply advancing by
+	## precisely that. So this is a test of the NEW rule, not the old one
+	## patched into passing.
+	var drew: Dictionary = SimApply.apply(_small_started(), _small_move_event(3))
+	assert_eq(drew["rngCounter"], 131)
+
+
+func test_move_leaves_every_entity_alone_when_the_id_matches_nobody() -> void:
+	var started: Dictionary = _small_started()
+	var ghost_event: Dictionary = SimEvents.draft("MOVE", 128, 0,
+		{"entityId": "ghost", "from": {"x": 0, "y": 0}, "to": {"x": 1, "y": 0}})
+	var nobody: Dictionary = SimApply.apply(started, ghost_event)
+	assert_eq(nobody["entities"], started["entities"])
+	assert_eq(nobody["rngCounter"], started["rngCounter"])
+
+
+# describe('apply MOVE_BLOCKED')
+
+func test_move_blocked_changes_nothing_but_is_still_recorded_as_something_that_happened() -> void:
+	var started: Dictionary = _small_started()
+	var blocked: Dictionary = SimApply.apply(started, _small_move_blocked_event())
+	var first: Dictionary = (blocked["entities"] as Array)[0]
+	assert_eq(first["pos"], {"x": 0, "y": 0})
+	assert_eq(blocked["turn"], started["turn"])
+
+
+func test_move_blocked_returns_the_very_same_state_object_not_a_copy_of_it() -> void:
+	## Identity, not equality: a rewrite that returned state.duplicate() would
+	## still pass a value check while quietly making every blocked move
+	## allocate.
+	var started: Dictionary = _small_started()
+	var blocked: Dictionary = SimApply.apply(started, _small_move_blocked_event())
+	assert_same(blocked, started)
+
+
+# describe('apply TURN_ADVANCED')
+
+func test_turn_advanced_takes_the_turn_number_and_active_entity_straight_from_the_payload() -> void:
+	var advanced: Dictionary = SimApply.apply(_small_started(),
+		SimEvents.draft("TURN_ADVANCED", 128, 0, {"activeEntityId": "player", "turn": 2}))
+	assert_eq(advanced["turn"], 2)
+	assert_eq(advanced["activeEntityId"], "player")
+
+
+# describe('apply with an event it cannot reduce')
+
+func test_apply_throws_rather_than_falling_off_the_switch_and_returning_undefined() -> void:
+	## The stand-in used to be 'STRIKE' — which then shipped as a real event
+	## type in a later increment, quietly turning this into a test that an
+	## ordinary event throws. An impossible case must be named something that
+	## will stay impossible. This proves the same fact as the law suite's
+	## test_an_unknown_event_type_is_refused_rather_than_folded from a second
+	## angle (a different type string, asserted against the type name
+	## specifically) — ported anyway, because every reference case is
+	## accounted for rather than merged away. Hand-built rather than
+	## SimEvents.draft()'d: draft() itself refuses an unknown type, and this
+	## case exists to prove apply() refuses one too, on an event that reached
+	## it some other way.
+	var alien := {
+		"type": "__NEVER_AN_EVENT__", "schemaVersion": 1, "rngCounter": 0, "rngDraws": 0,
+		"payload": {"nonsense": true},
+	}
+	SimApply.apply(SimState.empty(), alien)
+	assert_engine_error("unknown event type __NEVER_AN_EVENT__")
+
+
+# describe('apply') — determinism
+
+func test_apply_is_deterministic_same_state_and_event_give_an_identical_result() -> void:
+	var event: Dictionary = _small_world_init()
+	var a: Dictionary = SimApply.apply(SimState.empty(), event)
+	var b: Dictionary = SimApply.apply(SimState.empty(), event)
+	assert_eq(SimCanonical.encode(a), SimCanonical.encode(b))
+
+
+# describe('apply WORLD_BODIES, and the recorded cut')
+
+func test_world_init_reads_the_cut_when_the_floor_said_one_and_null_when_it_never_did() -> void:
+	assert_null(_small_started()["motif"])
+	var cut: Dictionary = SimEvents.draft("WORLD_INIT", 0, 0, {
+		"width": 2, "height": 1, "tiles": [SimGrid.FLOOR, SimGrid.FLOOR], "seed": 1,
+		"motif": "warren", "items": [], "opponents": [],
+		"player": {"id": "player", "kind": "you", "pos": {"x": 0, "y": 0},
+			"stats": {"hp": 5, "might": 1, "wits": 1, "speed": 1}, "tags": []},
+	})
+	assert_eq(SimApply.apply(SimState.empty(), cut)["motif"], "warren")
+
+
+func test_world_bodies_lays_the_dead_into_state_copied_drawing_nothing() -> void:
+	var lying: Array = [{"x": 1, "y": 0}, {"x": 2, "y": 1}]
+	var haunted: Dictionary = SimEvents.draft("WORLD_BODIES", 128, 0, {"bodies": lying})
+	var after: Dictionary = SimApply.apply(_small_started(), haunted)
+	assert_eq(after["bodies"], lying)
+	# Copied out of the payload — the event is shared by every fork that
+	# descends from it.
+	assert_false(is_same((after["bodies"] as Array)[0], lying[0]))
+	assert_eq(after["rngCounter"], 128)
+
+
+func test_world_bodies_is_reset_by_the_next_world_init_every_floor_is_born_empty() -> void:
+	var haunted: Dictionary = SimEvents.draft("WORLD_BODIES", 128, 0,
+		{"bodies": [{"x": 1, "y": 0}]})
+	var buried: Dictionary = SimApply.apply(_small_started(), haunted)
+	var reborn: Dictionary = SimApply.apply(buried, _small_world_init())
+	assert_eq(reborn["bodies"], [])
