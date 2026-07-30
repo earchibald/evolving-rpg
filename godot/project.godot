@@ -1,0 +1,21 @@
+; Engine expects this file at the project root. Godot rewrites it on first
+; editor open; keep it minimal and let the editor own the rest.
+config_version=5
+
+[application]
+
+config/name="Evolving RPG"
+config/description="A turn-based grid RPG that grows its own world. The sim folds a
+content-addressed event chain; the stage is only ever a projection of that fold."
+; Pinned to the OLDER of the two editors this project must load in, per the
+; migration plan's both-editors rule: standard Godot on PATH is 4.7.1.stable,
+; Xogot for Mac 1.6.5 embeds 4.6.2.rc. So: 4.6. Raising this to 4.7 would make
+; the project read as newer-than-engine inside Xogot.
+config/features=PackedStringArray("4.6")
+
+[rendering]
+
+renderer/rendering_method="forward_plus"
+; Nearest — pixel art stays crisp. The one setup note the source proposal got
+; unambiguously right.
+textures/canvas_textures/default_texture_filter=0
