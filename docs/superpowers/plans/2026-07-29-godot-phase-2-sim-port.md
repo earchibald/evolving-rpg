@@ -467,11 +467,16 @@ func test_nullable_fields_are_present_and_null() -> void:
 
 
 func test_assert_shape_rejects_a_stray_key() -> void:
+	## The M9 mistake made executable: a stored gold total beside the folded one.
+	## assert_shape uses assert(), which GUT surfaces as an engine error — so the
+	## test must actually CALL it and catch that error. Asserting only that
+	## STATE_KEYS lacks the key would be a static fact about a constant, proving
+	## nothing about assert_shape; the same tautology the entity-level absent-key
+	## test fell into, and worth not repeating.
 	var s: Dictionary = SimState.empty()
-	s["playerGold"] = 3   # the M9 mistake: a stored total beside the folded one
-	# assert_shape uses assert(), which GUT surfaces as an engine error; the
-	# contract under test is that the key set is checked at all.
-	assert_false(SimState.STATE_KEYS.has("playerGold"))
+	s["playerGold"] = 3
+	SimState.assert_shape(s)
+	assert_engine_error("playerGold")
 ```
 
 - [ ] **Step 3: RED. Step 4: Implement. Step 5: GREEN.** The `encode` equality is the real gate here — if it fails, diff the two encodings and find the key.
@@ -730,7 +735,10 @@ static func apply_resolved(state: Dictionary, outcomes: Array) -> Dictionary
 - [ ] **Step 2: Port the three suites first.**
 
 - [ ] **Step 3: RED. Step 4: Port the reducer, one event case at a time,** running the suite after each case so a divergence is attributable to the case that introduced it. Hazards, each of which has already cost this repo a debugging session:
-  - **Purity.** `state.duplicate(true)` then mutate the copy, or build fresh. A reducer that mutates its accumulator corrupts every later replay and fails far from the cause.
+  - **Purity, and GDScript has removed your safety net.** `state.duplicate(true)` then mutate the copy, or build fresh. A reducer that mutates its accumulator corrupts every later replay and fails far from the cause. **In TypeScript, `EMPTY_STATE` is `Object.freeze`d, so an in-place mutation of the fold's accumulator threw at the mutation site.** `SimState.empty()` returns a fresh Dictionary instead, which structurally eliminates the *shared-baseline* corruption — but it also means an in-place mutation now fails **silently**, surfacing only as a hash mismatch hundreds of events later. That is precisely the "far from the cause" failure the freeze existed to prevent, and closing it is this task's job. Do both:
+    1. Add a test that calls `apply(state, event)` and then asserts `SimCanonical.encode(state)` is **unchanged** — the input state is not the reducer's to touch. Do this for at least one event of every kind that mutates a nested structure (entities, items, traps, rules).
+    2. Call `SimState.assert_shape(result)` on the returned state in tests, for every event type. Note what `assert_shape` does NOT check (see below), so you know what it is not doing for you.
+  - **`assert_shape` is key-set-only, by design.** It inspects `state.keys()` and catches a missing key, an extra key, or a nullable field dropped to absent. It does **not** look at values: a state with `turn` holding a string, or a non-nullable field wrongly `null` while still keyed, passes it. Nested content — entities, items, traps — is entirely unchecked. Those are this task's responsibility, not the shape assertion's.
   - **`xp`, `level` and `gold` are DERIVED, never stored.** `xp` folds from kill history, `gold` sums `GOLD_MOVED` deltas (covenant M9). Do not add a stored total.
   - **`TURN_ADVANCED` does real work:** venom ticks (`VENOM_HARM` per round for `VENOM_TURNS`), and `creditKills`. See the `creditKills` precedent in the TS.
   - **`dropPockets` sits beside `creditKills` at *every* death site.** Miss one and pockets vanish on that path only.

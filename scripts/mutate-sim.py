@@ -12,6 +12,11 @@ a null result — never as a pass.
 Usage:  python3 scripts/mutate-sim.py <name>
         python3 scripts/mutate-sim.py <name> restore
         python3 scripts/mutate-sim.py --list
+
+NEVER use "" as the mutant. To delete a line, comment it out instead. An empty
+mutant makes the restore path search for "" — which occurs everywhere — so the
+count==1 guard trips and the file cannot be restored. Learned the hard way
+during Task 2.B2 while trying to delete `"alarm": null,`.
 """
 import sys
 
