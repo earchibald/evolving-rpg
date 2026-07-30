@@ -52,22 +52,25 @@ class_name SimMapgen
 ##   (commands/hazards.gd), so the functions land here and their suite lands
 ##   there.
 ##
-## ── Two places this file departs from the interface sketch ──────────────
-## * `walk_distance` returns **float**, not int. The reference returns
-##   `Number.POSITIVE_INFINITY` for "no walk exists", commands.ts:619 branches
-##   on `Number.isFinite(walk)` to print "?" instead of a number, and no int
-##   sentinel can carry that distinction without inventing a magic value the
-##   reference never had. Every FINITE answer is an integral float, so the
-##   `<=` comparisons in ai.ts port unchanged and nothing fractional can reach
-##   SimCanonical (the result is rendered into a story string, never stored).
-## * `_reachable_from` is a private twin of what Task 2.D2 is writing as
-##   `SimReach.reachable_from`. The three call sites below are the reference's
-##   own (`reachableFrom` from ./reachability.js); D2 runs concurrently in a
-##   separate worktree, so this file cannot reference a class that does not
-##   exist in this one without turning every script into a parse error. **At
-##   the Wave D merge this should collapse into `SimReach.reachable_from` and
-##   the twin should be deleted** — it is a verbatim copy of the same 34-line
-##   flood, kept private so nothing else can come to depend on it.
+## ── One place this file departs from the interface sketch ───────────────
+## `walk_distance` returns **float**, not int. The reference returns
+## `Number.POSITIVE_INFINITY` for "no walk exists", commands.ts:619 branches on
+## `Number.isFinite(walk)` to print "?" instead of a number, and no int
+## sentinel can carry that distinction without inventing a magic value the
+## reference never had. Every FINITE answer is an integral float, so the `<=`
+## comparisons in ai.ts port unchanged and nothing fractional can reach
+## SimCanonical (the result is rendered into a story string, never stored).
+##
+## ── Whose flood is whose ────────────────────────────────────────────────
+## The three `SimReach.reachable_from` calls below are the reference's own
+## `reachableFrom` imports from ./reachability.js — generate_map's connectivity
+## self-check, pick_spawn_points' candidate set, and repair_with_secret's truth
+## flood. That is Task 2.D2's file and it walks a SECRET like the floor it
+## really is, which is what makes the third one work: a deliberately sealed
+## room is already connected, so repair never punches it a redundant second
+## door. `_flood_honest` further down is the deliberate opposite — the
+## player's-eye view, where a secret is the wall it pretends to be — and the
+## two must not be confused for one another.
 
 ## Boards too small to hold two separated rooms become one open chamber, so
 ## trial worlds and tiny test boards flow through the same generator as the
@@ -107,34 +110,6 @@ const MIN_EXIT_WALK := 8
 const _STEPS: Array = [[1, 0], [-1, 0], [0, 1], [0, -1]]
 
 
-## Flood fill over passable tiles, 4-directional; returns a set of tile indices
-## as a Dictionary (index -> true). A private, verbatim twin of the reference's
-## reachableFrom — see the class docstring for why it is here and when it goes.
-static func _reachable_from(grid: Dictionary, x: int, y: int) -> Dictionary:
-	var seen: Dictionary = {}
-	if not SimGrid.is_passable(grid, x, y):
-		return seen
-
-	var stack: Array = [[x, y]]
-	seen[SimGrid.idx(grid, x, y)] = true
-
-	while not stack.is_empty():
-		var current: Array = stack.pop_back()
-		var cx: int = current[0]
-		var cy: int = current[1]
-		for step: Array in _STEPS:
-			var nx: int = cx + int(step[0])
-			var ny: int = cy + int(step[1])
-			if not SimGrid.is_passable(grid, nx, ny):
-				continue
-			var i := SimGrid.idx(grid, nx, ny)
-			if seen.has(i):
-				continue
-			seen[i] = true
-			stack.push_back([nx, ny])
-	return seen
-
-
 ## Chooses where a world's inhabitants stand.
 ##
 ## Candidates are the tiles genuinely reachable from the start and at least
@@ -159,7 +134,7 @@ static func pick_spawn_points(
 	var width: int = grid["width"]
 	var sx: int = start["x"]
 	var sy: int = start["y"]
-	var reachable: Dictionary = _reachable_from(grid, sx, sy)
+	var reachable: Dictionary = SimReach.reachable_from(grid, sx, sy)
 	var candidates: Array = []
 
 	for index: int in reachable:
@@ -404,7 +379,7 @@ static func generate_map(
 	# By construction every carved tile is connected; this is the loud check
 	# that the construction holds. A generator that could hand back a sealed
 	# room would break covenant M5 silently, and silence is the failure mode.
-	var reachable: Dictionary = _reachable_from(grid, int(start["x"]), int(start["y"]))
+	var reachable: Dictionary = SimReach.reachable_from(grid, int(start["x"]), int(start["y"]))
 	for i in range(tiles.size()):
 		if int(tiles[i]) == SimGrid.FLOOR and not reachable.has(i):
 			var msg := "generate_map: sealed floor at %d,%d (seed %d)" % [
@@ -660,7 +635,7 @@ static func with_exit(grid: Dictionary, exit: Dictionary) -> Dictionary:
 
 
 ## Flood fill that treats undiscovered secrets as the walls they pretend to be
-## — the player's-eye reachability, as opposed to _reachable_from's truth.
+## — the player's-eye reachability, as opposed to SimReach.reachable_from's truth.
 static func _flood_honest(grid: Dictionary, start: Dictionary) -> Dictionary:
 	var seen: Dictionary = {}
 	var sx: int = start["x"]
@@ -842,11 +817,11 @@ static func repair_with_secret(grid: Dictionary, start: Dictionary) -> Dictionar
 
 	for guard in range(8):
 		var current: Dictionary = SimGrid.make(width, height, tiles)
-		# TRUE disconnection only: _reachable_from walks secrets like the floor
+		# TRUE disconnection only: SimReach.reachable_from walks secrets like the floor
 		# they are, so a deliberately sealed room is already connected and
 		# never "repaired" with a redundant second door. Stranded means no path
 		# exists at all — the sabotage case.
-		var truth: Dictionary = _reachable_from(current, int(start["x"]), int(start["y"]))
+		var truth: Dictionary = SimReach.reachable_from(current, int(start["x"]), int(start["y"]))
 
 		var hole := -1
 		for i in range(tiles.size()):
