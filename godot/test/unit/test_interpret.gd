@@ -6,33 +6,32 @@ extends GutTest
 ## list of which 19 and why). One test per TS `it(...)`, in each source file's
 ## own order, so the suites can be diffed by eye.
 ##
-## Reconciliation: interpret.test.ts has 22 cases. 15 are ported below (in TS
-## order, under "what fires" / "conditions" / "the past does not change" /
-## "who it fires for"); 7 are DEFERRED because every one of them calls the
-## reducer `apply()`, which does not exist in sim/ yet (arrives with
-## apply.gd, Wave C — Task 2.C1 is confirmed to own at least the
-## WORLD_INIT/entity-construction slice of it; the general RULE_FIRED
-## reduction these 7 need may land in the same or a sibling Wave C task not
-## yet numbered in anything available to this task):
+## Reconciliation: interpret.test.ts has 22 cases, and ALL 22 are now ported.
+## 15 landed when this file was first written (in TS order, under "what
+## fires" / "conditions" / "the past does not change" / "who it fires for").
+## The remaining 7 all called the reducer `apply()`, which did not exist in
+## sim/ yet, and were deferred to Task 2.C1 — now discharged, appended below
+## in the reference's own section order:
 ##   - describe('applying what fired'), all 5: "resolves a heal to an
 ##     absolute figure, clamped at the ceiling", "harms, without going below
 ##     zero", "kills by the same path as a blow — dead is dead", "leaves
 ##     state alone for a spoken line", "does not mutate the state it was
 ##     given"
-##   - describe('the past does not change'), 2 of 3: "applies the recorded
-##     effect even when the rule would no longer match", "applies an effect
-##     for a rule the world no longer holds at all" (the third case in this
-##     describe block, "never treats a firing as a trigger for more firing",
-##     needs only fire_rules and IS ported below)
+##   - describe('the past does not change'), the 2 of 3 that needed apply():
+##     "applies the recorded effect even when the rule would no longer
+##     match", "applies an effect for a rule the world no longer holds at
+##     all" (the third case in this describe block, "never treats a firing
+##     as a trigger for more firing", needed only fire_rules and was ported
+##     from the start)
 ##
 ## The adopted 19 are ALL portable now — none of them touch apply(); the one
 ## that looks like it might ("raises the ceiling without raising current
 ## health") calls `applyResolved`, which is THIS file's own apply_resolved,
 ## not the reducer.
 ##
-## tests/canon/rules-in-log.test.ts (11 cases, the third suite this task
-## ports) lives entirely in test_rules_in_log.gd — every one of its cases
-## needs fold()/createWorld()/ratifyRule(), so none port here either.
+## tests/canon/rules-in-log.test.ts (11 cases, the third suite Task 2.C1
+## hand-off B ports) lives entirely in test_rules_in_log.gd — see that
+## file's own header for its reconciliation; none of its cases belong here.
 ##
 ## Faithfulness note: "never treats a firing as a trigger for more firing"
 ## (interpret.test.ts:205) asserts against a LOCAL 4-element literal
@@ -463,3 +462,97 @@ func test_fires_through_the_interpreter_composed() -> void:
 	var wrong_floor: Dictionary = _world([_entity("player", 2, 0, 5, 10)],
 		{"depth": 3, "motif": "halls", "bodies": [{"x": 2, "y": 0}], "rules": [r]})
 	assert_eq(SimInterpret.fire_rules(wrong_floor, "MOVE", "player").size(), 0)
+
+
+## ═══ adopted from interpret.test.ts's own 'applying what fired' and part of
+## 'the past does not change' (Task 2.C1 hand-off B) ═══
+## These 7 all drive SimApply.apply(state, RULE_FIRED-event) directly — not
+## fire_rules — so they use SimEvents.draft rather than this file's asEvent()
+## helper (apply() reads only type/payload/rngCounter/rngDraws; it has no use
+## for the id/parent/seq asEvent() adds, and nothing here folds a chain).
+## _state_with/_entity above (this file's own, not _world/_rule below them)
+## are what the reference's stateWith/entity build too.
+
+func test_resolves_a_heal_to_an_absolute_figure_clamped_at_the_ceiling() -> void:
+	var s: Dictionary = _state_with([], [_entity("player", 0, 0, 9, 10)])
+	var draft: Dictionary = SimEvents.draft("RULE_FIRED", 0, 0, {
+		"ruleId": "r", "actorId": "player",
+		"outcomes": [{"kind": "health", "entityId": "player", "to": 10}],
+	})
+	var after: Dictionary = SimApply.apply(s, draft)
+	var player: Dictionary = (after["entities"] as Array)[0]
+	assert_eq((player["stats"] as Dictionary)["hp"], 10)
+
+
+func test_harms_without_going_below_zero() -> void:
+	var s: Dictionary = _state_with([], [_entity("player", 0, 0, 2, 10)])
+	var draft: Dictionary = SimEvents.draft("RULE_FIRED", 0, 0, {
+		"ruleId": "r", "actorId": "player",
+		"outcomes": [{"kind": "health", "entityId": "player", "to": 0}],
+	})
+	var after: Dictionary = SimApply.apply(s, draft)
+	var player: Dictionary = (after["entities"] as Array)[0]
+	assert_eq((player["stats"] as Dictionary)["hp"], 0)
+
+
+func test_kills_by_the_same_path_as_a_blow_dead_is_dead() -> void:
+	var s: Dictionary = _state_with([], [_entity("player", 0, 0, 1, 10)])
+	var draft: Dictionary = SimEvents.draft("RULE_FIRED", 0, 0, {
+		"ruleId": "r", "actorId": "player",
+		"outcomes": [{"kind": "health", "entityId": "player", "to": 0}],
+	})
+	var after: Dictionary = SimApply.apply(s, draft)
+	var player: Dictionary = (after["entities"] as Array)[0]
+	assert_eq((player["stats"] as Dictionary)["hp"], 0)
+
+
+func test_leaves_state_alone_for_a_spoken_line() -> void:
+	var s: Dictionary = _state_with([], [_entity("player", 0, 0, 5, 10)])
+	var draft: Dictionary = SimEvents.draft("RULE_FIRED", 0, 0, {
+		"ruleId": "r", "actorId": "player",
+		"outcomes": [{"kind": "said", "text": "the stone is cold"}],
+	})
+	var after: Dictionary = SimApply.apply(s, draft)
+	var player: Dictionary = (after["entities"] as Array)[0]
+	assert_eq((player["stats"] as Dictionary)["hp"], 5)
+
+
+func test_does_not_mutate_the_state_it_was_given() -> void:
+	var s: Dictionary = _state_with([], [_entity("player", 0, 0, 5, 10)])
+	var draft: Dictionary = SimEvents.draft("RULE_FIRED", 0, 0, {
+		"ruleId": "r", "actorId": "player",
+		"outcomes": [{"kind": "health", "entityId": "player", "to": 5}],
+	})
+	SimApply.apply(s, draft)
+	var player: Dictionary = (s["entities"] as Array)[0]
+	assert_eq((player["stats"] as Dictionary)["hp"], 5)
+
+
+func test_applies_the_recorded_effect_even_when_the_rule_would_no_longer_match() -> void:
+	## The load-bearing property of the whole design. `apply` must replay what
+	## happened, never re-decide it — if it re-evaluated conditions, ratifying
+	## a rule today would silently rewrite what a run last week did. Proven
+	## directly: a rule sits in state whose condition is false right now, and
+	## the recorded RULE_FIRED still applies (apply.gd's RULE_FIRED arm never
+	## reads state["rules"] at all).
+	var would_not_match_now: Dictionary = _state_with(
+		[_rule({"require": [{"kind": "hpAtLeast", "n": 9}]})],
+		[_entity("player", 0, 0, 2, 10)])  # hp 2 — the condition is false now
+	var recorded: Dictionary = SimEvents.draft("RULE_FIRED", 0, 0, {
+		"ruleId": "r", "actorId": "player",
+		"outcomes": [{"kind": "health", "entityId": "player", "to": 5}],
+	})
+	var after: Dictionary = SimApply.apply(would_not_match_now, recorded)
+	var player: Dictionary = (after["entities"] as Array)[0]
+	assert_eq((player["stats"] as Dictionary)["hp"], 5)
+
+
+func test_applies_an_effect_for_a_rule_the_world_no_longer_holds_at_all() -> void:
+	var no_rules: Dictionary = _state_with([], [_entity("player", 0, 0, 2, 10)])
+	var recorded: Dictionary = SimEvents.draft("RULE_FIRED", 0, 0, {
+		"ruleId": "long-gone", "actorId": "player",
+		"outcomes": [{"kind": "health", "entityId": "player", "to": 5}],
+	})
+	var after: Dictionary = SimApply.apply(no_rules, recorded)
+	var player: Dictionary = (after["entities"] as Array)[0]
+	assert_eq((player["stats"] as Dictionary)["hp"], 5)

@@ -206,6 +206,31 @@ MUTATIONS: dict[str, tuple[str, str, str]] = {
         '\t\t\t\t\t"pos": _pos(s["pos"]),',
         '\t\t\t\t\t"pos": s["pos"],',
     ),
+    # --- Task 2.C1 hand-off B: leveling and the RULE_FIRED kill-credit path,
+    # guarded by test_leveling.gd and test_interpret.gd's adopted RULE_FIRED
+    # cases. Neither line below is reachable from the pre-existing four-law
+    # suite in test_apply.gd: that suite's _events() fixture never checks a
+    # numeric xp value for any event type, RULE_FIRED included. ---
+    # Inverts _credit_kills' own gate, so a player's kills pay nothing and a
+    # non-player's kills pay the player instead — the opposite of "pays for a
+    # kill a rule made, when the player owned the rule's firing" and "pays
+    # nothing when creatures kill each other" both at once.
+    "apply-credit-kills-player-only": (
+        "godot/sim/apply.gd",
+        "\tif killer_id != player_id:",
+        "\tif killer_id == player_id:",
+    ),
+    # RULE_FIRED stops crediting the rule's own actorId and credits a name
+    # nobody plays instead — so a kill a rule made never pays, no matter who
+    # fired it. The golden run never witnesses RULE_FIRED at all (5 of 25
+    # types witnessed, and it is not one), so test_pays_for_a_kill_a_rule_
+    # made_when_the_player_owned_the_rules_firing is the only guard for this
+    # line anywhere in the migration.
+    "apply-rule-fired-actor-credit": (
+        "godot/sim/apply.gd",
+        '\t\t\treturn _credit_kills(state, _drop_pockets(state, resolved), p["actorId"])',
+        '\t\t\treturn _credit_kills(state, _drop_pockets(state, resolved), "nobody")',
+    ),
     # --- Known EQUIVALENT REWRITES, kept as documentation, not as proofs. ---
     # Both produce identical bits: low bits survive two's-complement wrapping,
     # and u32's second line masks unconditionally. Running these should show NO

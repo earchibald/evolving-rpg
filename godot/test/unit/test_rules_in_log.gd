@@ -1,64 +1,302 @@
 extends GutTest
 ## Rules live in the log and nowhere else — the intended byte-twin of
-## tests/canon/rules-in-log.test.ts (11 `it(...)` blocks).
+## tests/canon/rules-in-log.test.ts (11 `it(...)` blocks). Task 2.C1 hand-off
+## B discharges the deferral Task 2.B6 recorded here: apply.gd exists now,
+## and with it RULE_RATIFIED/RULE_FIRED folding.
 ##
-## ALL 11 are deferred: every single one needs `fold()` (SimLog.fold, arriving
-## on sim/log.gd — see log.gd's own docstring: "fold() and verify_chain() join
-## in Phase 2 with apply") and/or `createWorld`/`ratifyRule` (owned by a
-## sim/commands.gd that does not exist in godot/sim/ yet) and/or
-## `verifyChain`. None of that surface is buildable from what Wave B shipped
-## (SimRule, SimState, SimEvents, SimUpcast, SimRefs, SimTables, and now
-## SimInterpret) — inventing any of it here would mean guessing at fold's and
-## commands.gd's actual signatures rather than porting them, which the task
-## brief for 2.B6 explicitly rules out. This is the legitimate "defer much or
-## all of it" outcome the brief names as expected for this file, not a
-## shortfall.
+## Reconciliation: 11 = 8 ported + 2 deferred + 1 documented as
+## architecturally inapplicable rather than faked (below). Every case, by
+## describe block, with the reference line and its outcome:
 ##
-## Every case, by describe block, with the reference line and exactly what it
-## is waiting on:
+## describe('a rule entering play'):
+##   :40  "arrives as an event and shows up in the folded state" — PORTED,
+##        test_arrives_as_an_event_and_shows_up_in_the_folded_state
+##   :50  "consumes no randomness, so ratifying cannot shift a later roll" —
+##        PORTED, test_consumes_no_randomness_so_ratifying_cannot_shift_a_later_roll
+##   :59  "keeps them in the order they were ratified" — PORTED,
+##        test_keeps_them_in_the_order_they_were_ratified
+##   :70  "still verifies as a chain" — DEFERRED to Task 2.C2: needs
+##        SimLog.verify_chain(), which (per log.gd's own docstring, same line
+##        as fold()) "need[s] the reducer and join[s] in Phase 2" — i.e. now
+##        that apply.gd exists, but 2.C2 is the task that actually writes it,
+##        starting immediately after this one. This hand-off was told not to
+##        add verify_chain() to log.gd.
 ##
-## describe('a rule entering play') — needs append + fold + createWorld +
-## ratifyRule (plus verifyChain for the fourth):
-##   - rules-in-log.test.ts:40  "arrives as an event and shows up in the
-##     folded state"
-##   - rules-in-log.test.ts:50  "consumes no randomness, so ratifying cannot
-##     shift a later roll"
-##   - rules-in-log.test.ts:59  "keeps them in the order they were ratified"
-##   - rules-in-log.test.ts:70  "still verifies as a chain" (also needs
-##     verifyChain)
+## describe('not corrupting what came before'):
+##   :78  "does not touch the state it was handed" — PORTED,
+##        test_does_not_touch_the_state_it_was_handed
+##   :99  "does not let a second apply reach back into the first result" —
+##        PORTED, test_does_not_let_a_second_apply_reach_back_into_the_first_result
+##   :111 "leaves the shared empty baseline empty" — NOT PORTED, and not
+##        blocked on a future task either. See "ON CASE :111" below: its
+##        failure mode cannot exist in this port, by a design decision
+##        already shipped (state.gd's SimState.empty()), so writing it as a
+##        passing assertion would be exactly the tautology-about-a-constant
+##        Task 2.C1's brief forbids ("a ported test must be able to fail").
+##        Reported rather than faked.
+##   :117 "starts a fresh world with no rules, whatever came before it in the
+##        log" — PORTED, test_starts_a_fresh_world_with_no_rules_whatever_came_before_it_in_the_log
 ##
-## describe('not corrupting what came before') — needs fold + append +
-## apply() directly, or createWorld + fold:
-##   - rules-in-log.test.ts:78  "does not touch the state it was handed"
-##   - rules-in-log.test.ts:99  "does not let a second apply reach back into
-##     the first result"
-##   - rules-in-log.test.ts:111 "leaves the shared empty baseline empty"
-##     (also reads EMPTY_STATE directly — SimState.empty() is available now,
-##     but the case's whole point is checking it stays empty across a
-##     ratify+fold, which still needs fold)
-##   - rules-in-log.test.ts:117 "starts a fresh world with no rules, whatever
-##     came before it in the log" (needs createWorld + fold)
+## describe('rules are a property of a world, not of the game'):
+##   :127 "gives a fork exactly the rules that existed when it forked" —
+##        PORTED, test_gives_a_fork_exactly_the_rules_that_existed_when_it_forked
+##   :149 "lets two timelines hold genuinely different rulesets" — PORTED,
+##        test_lets_two_timelines_hold_genuinely_different_rulesets
 ##
-## describe('rules are a property of a world, not of the game') — needs fold +
-## append + ratifyRule + emptyRefs/createRef/fork/getRef (the ref-graph half
-## of this, SimRefs, IS already ported — ref.gd — but every case here also
-## folds, which is the missing half):
-##   - rules-in-log.test.ts:127 "gives a fork exactly the rules that existed
-##     when it forked"
-##   - rules-in-log.test.ts:149 "lets two timelines hold genuinely different
-##     rulesets"
+## describe('the cap'):
+##   :166 "refuses to ratify past the per-world limit" — DEFERRED. The cap is
+##        enforced by commands.ts's ratifyRule (commands.ts:1851-1864:
+##        `if (state.rules.length >= MAX_RULES) throw ...`), NOT by the
+##        reducer — confirmed by reading apply.gd's own RULE_RATIFIED arm,
+##        which appends unconditionally and never reads MAX_RULES. So this
+##        case needs commands.gd, which does not exist in godot/sim/ yet
+##        (Wave E). No task number names it: the master plan
+##        (docs/superpowers/plans/2026-07-29-godot-phase-2-sim-port.md:990-994)
+##        splits commands.gd into five verb families for Tasks
+##        2.E3a-2.E3e (movement/strike, items, hazards, stances, purse) and
+##        none of their listed scopes mentions ratifyRule or the Ladder.
+##        Whichever task claims commands.gd's remaining top-level functions
+##        (ratifyRule, recordBodies) should pick this up.
 ##
-## describe('the cap') — needs append + fold + ratifyRule (validateRule's own
-## MAX_RULES=16 bound is already ported and tested — test_rule.gd's
-## test_publishes_the_per_world_rule_cap — but THIS case tests ratifyRule
-## refusing the 17th ratification against a folded state, not validateRule
-## refusing an oversized field):
-##   - rules-in-log.test.ts:166 "refuses to ratify past the per-world limit"
+## ON CASE :111 — "leaves the shared empty baseline empty": the reference
+## proves that ratifying a rule cannot corrupt `EMPTY_STATE`, a single frozen
+## object every TS fold shares (state.ts). apply.gd's own docstring records
+## why this port has no such object: "SimState.empty() returns a fresh
+## Dictionary instead, which structurally kills the shared-baseline
+## corruption." Every call to SimState.empty() is already independent, so
+## the only "port" of this case is `assert_eq(SimState.empty()["rules"],
+## [])` — true regardless of any bug anywhere in apply.gd, before or after
+## any amount of ratifying, because nothing in this suite's chains ever
+## reads from or writes through a value SimState.empty() produced. That is
+## the exact shape Task 2.C1's brief names and forbids ("no asserting a
+## static fact about a constant instead of calling the function the case is
+## named for... that exact mistake has already shipped once in this repo and
+## caught nothing"). This case's real content — ratifying does not corrupt a
+## state something else is holding — is carried, non-tautologically, by
+## :78 (test_does_not_touch_the_state_it_was_handed) below, which diffs a
+## LIVE folded state before and after apply() rather than a disconnected
+## fresh one.
 ##
-## Owning task: Wave C's apply.gd (general reducer, including RULE_FIRED and
-## RULE_RATIFIED folding) and, for fold()/verifyChain() specifically, SimLog
-## per its own docstring. Task 2.C1 is confirmed (2.B6 brief) to own at least
-## the WORLD_INIT/entity-construction slice of apply.gd; commands.gd
-## (createWorld, ratifyRule) has no task number visible to this task. Every
-## case above should be re-examined once those exist, rather than assumed
-## still blocked.
+## Substitutions, both matching test_refs.gd's own precedent (a hand-built
+## structural chain standing in for a reference helper, where the
+## substitution reproduces the same SHAPE):
+##   - _world_draft() stands in for commands.ts's createWorld(seed, w, h).
+##     None of these 11 cases read the map's geometry — only rules, xp,
+##     rngCounter — so a small hand-built WORLD_INIT is exact where it
+##     matters. (Unlike test_refs.gd's own _build(), which never folds its
+##     WORLD_INIT and so could get away with `"tiles": []`, this file DOES
+##     fold — via _fold() below — so _world_draft() carries real, correctly
+##     sized tiles.)
+##   - _ratify_draft(state, rule) stands in for commands.ts's ratifyRule
+##     EXCEPT its cap check (commands.ts:1851-1864) — reproducing exactly
+##     what that function builds on every path that does not throw: `{type:
+##     'RULE_RATIFIED', schemaVersion, rngCounter: state.rngCounter,
+##     rngDraws: 0, payload: {rule}}`. Only ":166 the cap" above ever
+##     approaches the limit, and that case is the one deferred, so this
+##     substitution is exact for all 10 others.
+##   - _fold(log, head) stands in for SimLog.fold() (Task 2.C2, see above):
+##     it replays log.chain(head) — which already exists; 2.C2 owns only
+##     fold()/verify_chain() — through SimApply.apply from SimState.empty(),
+##     which is exactly what fold() will do.
+## A real SimLog/SimRefs is used throughout (not a plain Array of drafts)
+## because two cases (:127, :149) test fork/ref structure directly and the
+## other nine gain nothing from a second, divergent way of building a chain.
+
+
+## The reference's rule(id, over).
+func _rule(id: String, over: Dictionary = {}) -> Dictionary:
+	var d: Dictionary = {
+		"id": id, "when": "WAIT", "require": [{"kind": "noCreatureWithin", "n": 6}],
+		"then": [{"kind": "heal", "n": 1}],
+		"provenance": {"events": ["seed-event"], "notes": [], "because": "because of %s" % id},
+		"ratifiedAt": "2026-07-25T00:00:00.000Z",
+	}
+	for k: String in over:
+		d[k] = over[k]
+	var r: Dictionary = SimRule.validate(d)
+	if SimRule.is_rejected(r):
+		fail_test("_rule() setup was unexpectedly rejected: %s" % r["rejected"])
+	return r
+
+
+func _tiles(w: int, h: int) -> Array:
+	var out: Array = []
+	for i in range(w * h):
+		out.append(SimGrid.FLOOR)
+	return out
+
+
+## Stands in for the reference's createWorld(seed, w, h) — see file header.
+func _world_draft(seed: int = 1234) -> Dictionary:
+	return SimEvents.draft("WORLD_INIT", 0, 0, {
+		"width": 4, "height": 4, "tiles": _tiles(4, 4), "seed": seed, "items": [], "opponents": [],
+		"player": {"id": "player", "kind": "you", "pos": {"x": 0, "y": 0},
+			"stats": {"hp": 10, "might": 3, "wits": 3, "speed": 4}, "tags": []},
+	})
+
+
+## The reference's world(): { log, head }, a fresh log with one WORLD_INIT root.
+func _world() -> Dictionary:
+	var log := SimLog.new()
+	var root: Dictionary = log.append(null, _world_draft())
+	return {"log": log, "head": root["id"]}
+
+
+## Stands in for the reference's ratifyRule(state, rule) — see file header.
+## Does NOT reproduce the cap check; ":166 the cap" is deferred instead.
+func _ratify_draft(state: Dictionary, rule: Dictionary) -> Dictionary:
+	return SimEvents.draft("RULE_RATIFIED", state["rngCounter"], 0, {"rule": rule})
+
+
+## Hand-rolled fold pending Task 2.C2 (SimLog.fold() does not exist yet —
+## see file header). Replays the chain ending at `head` through
+## SimApply.apply from SimState.empty(); log.chain() already exists and
+## supplies the ordered, real (hashed, sealed) events.
+func _fold(log: SimLog, head: Variant) -> Dictionary:
+	var state: Dictionary = SimState.empty()
+	if head == null:
+		return state
+	for event: Dictionary in log.chain(head):
+		state = SimApply.apply(state, event)
+	return state
+
+
+## Rule ids, in order — the reference's `.rules.map((r) => r.id)`.
+func _rule_ids(rules: Array) -> Array:
+	var out: Array = []
+	for r: Dictionary in rules:
+		out.append(r["id"])
+	return out
+
+
+# describe('a rule entering play') -------------------------------------------
+
+func test_arrives_as_an_event_and_shows_up_in_the_folded_state() -> void:
+	var w: Dictionary = _world()
+	var log: SimLog = w["log"]
+	var before: Dictionary = _fold(log, w["head"])
+	var event: Dictionary = log.append(w["head"], _ratify_draft(before, _rule("rule-1")))
+
+	assert_eq(event["type"], "RULE_RATIFIED")
+	var rules: Array = _fold(log, event["id"])["rules"]
+	assert_eq(rules.size(), 1)
+	assert_eq((rules[0] as Dictionary)["id"], "rule-1")
+
+
+func test_consumes_no_randomness_so_ratifying_cannot_shift_a_later_roll() -> void:
+	var w: Dictionary = _world()
+	var log: SimLog = w["log"]
+	var before: Dictionary = _fold(log, w["head"])
+	var event: Dictionary = log.append(w["head"], _ratify_draft(before, _rule("rule-1")))
+
+	assert_eq(event["rngDraws"], 0)
+	assert_eq(_fold(log, event["id"])["rngCounter"], before["rngCounter"])
+
+
+func test_keeps_them_in_the_order_they_were_ratified() -> void:
+	var w: Dictionary = _world()
+	var log: SimLog = w["log"]
+	var head: Variant = w["head"]
+	for id: String in ["first", "second", "third"]:
+		var event: Dictionary = log.append(head, _ratify_draft(_fold(log, head), _rule(id)))
+		head = event["id"]
+	assert_eq(_rule_ids(_fold(log, head)["rules"]), ["first", "second", "third"])
+
+
+# ":70 still verifies as a chain" — DEFERRED to Task 2.C2 (SimLog.verify_chain()
+# does not exist yet). See file header.
+
+
+# describe('not corrupting what came before') --------------------------------
+
+func test_does_not_touch_the_state_it_was_handed() -> void:
+	## Written the obvious way first, this could not fail: comparing two
+	## independent folds proves nothing, since each rebuilds from
+	## SimState.empty() and never shares an array to corrupt. The aliasing
+	## that can really happen is a caller holding a state across an apply —
+	## so drive apply() directly and check the input afterwards, exactly as
+	## the reference does.
+	var w: Dictionary = _world()
+	var log: SimLog = w["log"]
+	var before: Dictionary = _fold(log, w["head"])
+	var stored: Dictionary = log.append(w["head"], _ratify_draft(before, _rule("rule-1")))
+
+	var after: Dictionary = SimApply.apply(before, stored)
+
+	assert_eq((before["rules"] as Array).size(), 0)
+	assert_eq((after["rules"] as Array).size(), 1)
+	assert_false(is_same(after, before))
+	assert_false(is_same(after["rules"], before["rules"]))
+
+
+func test_does_not_let_a_second_apply_reach_back_into_the_first_result() -> void:
+	var w: Dictionary = _world()
+	var log: SimLog = w["log"]
+	var s0: Dictionary = _fold(log, w["head"])
+	var a: Dictionary = log.append(w["head"], _ratify_draft(s0, _rule("one")))
+	var s1: Dictionary = SimApply.apply(s0, a)
+	var b: Dictionary = log.append(a["id"], _ratify_draft(s1, _rule("two")))
+	var s2: Dictionary = SimApply.apply(s1, b)
+
+	assert_eq(_rule_ids(s1["rules"]), ["one"])
+	assert_eq(_rule_ids(s2["rules"]), ["one", "two"])
+
+
+# ":111 leaves the shared empty baseline empty" — NOT PORTED as a passing
+# tautology. See "ON CASE :111" in the file header for the full reasoning;
+# its real content is carried by test_does_not_touch_the_state_it_was_handed
+# above.
+
+
+func test_starts_a_fresh_world_with_no_rules_whatever_came_before_it_in_the_log() -> void:
+	var w: Dictionary = _world()
+	var log: SimLog = w["log"]
+	var ratified: Dictionary = log.append(w["head"], _ratify_draft(_fold(log, w["head"]), _rule("rule-1")))
+	# A second world init on the same log replaces state wholesale.
+	var second: Dictionary = log.append(ratified["id"], _world_draft(99))
+	assert_eq((_fold(log, second["id"])["rules"] as Array).size(), 0)
+
+
+# describe('rules are a property of a world, not of the game') --------------
+
+func test_gives_a_fork_exactly_the_rules_that_existed_when_it_forked() -> void:
+	## The property the entire increment rests on. If it fails, rules are
+	## global and the log was pointless. The fork point must be strictly
+	## BEHIND main's head, or this proves nothing — forking at the head makes
+	## "the fork point" and "the source head" the same value, and an
+	## implementation that ignored the former entirely would still pass.
+	var w: Dictionary = _world()
+	var log: SimLog = w["log"]
+	var early: Dictionary = log.append(w["head"], _ratify_draft(_fold(log, w["head"]), _rule("shared")))
+	var late: Dictionary = log.append(early["id"], _ratify_draft(_fold(log, early["id"]), _rule("main-only")))
+
+	var refs: Dictionary = SimRefs.empty()
+	refs = SimRefs.create(refs, "main", late["id"], 0, "opening")
+	refs = SimRefs.fork(log, refs, "main", "branch", early["id"], "a second timeline")
+
+	var main_rules: Array = _rule_ids(_fold(log, late["id"])["rules"])
+	var branch_rules: Array = _rule_ids(_fold(log, SimRefs.get_ref(refs, "branch")["head"])["rules"])
+
+	assert_eq(main_rules, ["shared", "main-only"])
+	assert_eq(branch_rules, ["shared"])
+
+
+func test_lets_two_timelines_hold_genuinely_different_rulesets() -> void:
+	var w: Dictionary = _world()
+	var log: SimLog = w["log"]
+	var head: Variant = w["head"]
+
+	var refs: Dictionary = SimRefs.empty()
+	refs = SimRefs.create(refs, "main", head, 0, "opening")
+	refs = SimRefs.fork(log, refs, "main", "other", head, "divergence")
+
+	var a: Dictionary = log.append(head, _ratify_draft(_fold(log, head), _rule("gentle")))
+	var b: Dictionary = log.append(head, _ratify_draft(_fold(log, head),
+		_rule("cruel", {"then": [{"kind": "harm", "n": 2}]})))
+
+	assert_eq(_rule_ids(_fold(log, a["id"])["rules"]), ["gentle"])
+	assert_eq(_rule_ids(_fold(log, b["id"])["rules"]), ["cruel"])
+
+
+# ":166 refuses to ratify past the per-world limit" — DEFERRED to Wave E's
+# commands.gd (ratifyRule's cap check). See file header.
