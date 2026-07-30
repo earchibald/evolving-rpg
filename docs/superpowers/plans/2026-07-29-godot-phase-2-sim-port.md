@@ -797,6 +797,12 @@ const FOLD_CACHE_LIMIT := 200000
 
   The `WORLD_INIT` exception is not an optimisation. A fresh floor draws from a fresh seed addressed from zero; demanding continuity across the stairs refused every saved run that had ever descended, and a player lost a session to `"diverges at seq 120"` where seq 120 was floor 2 being born. Port the exception and port the comment.
 
+- [ ] **Step 2b: Adopt the fold-dependent tests Task 2.B5 deferred to you.** `fold()` and `verify_chain()` did not exist when upcast and refs were ported, so two suites left assertions parked, marked in place with comments:
+  - `test_upcast.gd` — **4 of the 6 `upcastChain` cases** need `fold`/`verify_chain`; the deferral is recorded in that file's header.
+  - `test_refs.gd` — **3 of its 19 tests** have fold-dependent assertions deferred inline. `refs.test.ts`'s own `build()` helper drives the reducer *and* `commands.gd`, so the ported suite substituted a hand-built structural chain (mirroring `test_log.gd`'s existing no-reducer pattern). Now that `fold` exists, restore the deferred assertions; anything still needing `commands.gd` moves on to Wave E, named.
+
+  Grep both files for the deferral comments and reconcile the counts — `refs.gd` itself never needed `fold`, only its tests did.
+
 - [ ] **Step 3: Write the tests,** porting `tests/log/chain.test.ts` and adding one per divergence reason — five hand-built broken chains, each asserting the exact reason string.
 
 - [ ] **Step 4: RED → implement → GREEN.**

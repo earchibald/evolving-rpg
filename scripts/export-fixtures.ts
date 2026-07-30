@@ -460,5 +460,13 @@ if (shapeHead !== goldenRun.head) {
 }
 console.log(`state-shape verified: folds to ${rebuiltHash}, head ${shapeHead}`);
 
+// Both golden fixtures are copied rather than regenerated: regenerating one is a
+// designer-signed ceremony (ALLOW_GOLDEN_REGEN=1 plus a seed probe), and the
+// whole point of a frozen reference is that these bytes do not move.
+// golden-run-v1 is the OLD-SCHEMA chain the upcaster suite reads — it must stay
+// at v1 forever, because its job is to be old. Everything under `${OUT}` comes
+// from this one script, so `npm run fixtures` alone reproduces the directory;
+// a hand-copied fixture would drift the first time someone regenerated.
 copyFileSync('tests/fixtures/golden-run.json', `${OUT}/golden-run.json`);
+copyFileSync('tests/fixtures/golden-run-v1.json', `${OUT}/golden-run-v1.json`);
 console.log(`fixtures written to ${OUT}`);
