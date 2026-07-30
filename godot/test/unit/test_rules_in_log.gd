@@ -46,7 +46,8 @@ extends GutTest
 ##        test_lets_two_timelines_hold_genuinely_different_rulesets
 ##
 ## describe('the cap'):
-##   :166 "refuses to ratify past the per-world limit" — DEFERRED. The cap is
+##   :166 "refuses to ratify past the per-world limit" — PORTED after Wave E
+##        landed ratify_rule with its cap. Was DEFERRED because the cap is
 ##        enforced by commands.ts's ratifyRule (commands.ts:1851-1864:
 ##        `if (state.rules.length >= MAX_RULES) throw ...`), NOT by the
 ##        reducer — confirmed by reading apply.gd's own RULE_RATIFIED arm,
@@ -320,5 +321,27 @@ func test_lets_two_timelines_hold_genuinely_different_rulesets() -> void:
 	assert_eq(_rule_ids(_fold(log, b["id"])["rules"]), ["cruel"])
 
 
-# ":166 refuses to ratify past the per-world limit" — DEFERRED to Wave E's
-# commands.gd (ratifyRule's cap check). See file header.
+func test_refuses_to_ratify_past_the_per_world_limit() -> void:
+	## ":166". Deferred when this file was written because the cap lives in
+	## commands.ts's ratifyRule, NOT in the reducer — apply.gd's RULE_RATIFIED
+	## arm appends unconditionally and never reads MAX_RULES. Wave E has since
+	## ported ratify_rule with its cap, so the deferral is discharged here.
+	##
+	## The limit is a property of a WORLD, not of a rule: the same rule is
+	## perfectly ratifiable in a fork that has room for it. And the refusal is
+	## loud rather than a returned rejection, because by this point the player
+	## has already said yes — a full ruleset means whatever offered the choice
+	## is broken, not that the answer was no.
+	var w: Dictionary = _world()
+	var log: SimLog = w["log"]
+	var head: Variant = w["head"]
+	for i in range(SimRule.MAX_RULES):
+		head = log.append(head, _ratify_draft(_fold(log, head), _rule("rule-%d" % i)))["id"]
+	assert_eq((_fold(log, head)["rules"] as Array).size(), SimRule.MAX_RULES,
+		"the world fills exactly to the limit")
+
+	SimCommands.ratify_rule(_fold(log, head), _rule("one-too-many"))
+	# Both channels: assert() is compiled out of a release build, push_error is
+	# not, and the reference THROWS here.
+	assert_engine_error("limit")
+	assert_push_error("limit")

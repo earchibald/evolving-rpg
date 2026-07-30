@@ -17,17 +17,11 @@ extends GutTest
 ##   :67  gets the first strike one band harder — the stalker's own spring,
 ##        recorded — PORTED
 ##   :82  "reads as furniture to every tool: no shove, no mark, no burr" —
-##        DEFERRED. Calls shoveAt and shotTarget (src/core/commands.ts,
-##        assigned to Task 2.E3d's stances.gd) and useCarried (assigned to
-##        Task 2.E3b's items.gd). Both are sibling Wave E worktrees running
-##        CONCURRENTLY with this one and not yet merged: godot/sim/commands/
-##        holds only movement.gd and hazards.gd as this task starts, and
-##        SimCommands has no shove_at, shot_target or use_carried to call —
-##        writing this case would not compile, let alone run, tripping
-##        test.sh's script-count guard for the whole suite. Owning tasks:
-##        2.E3d (shoveAt, shotTarget) and 2.E3b (useCarried). Both have since
-##        landed, so this case is now PORTED here after the merge, as
-##        test_reads_as_furniture_to_every_tool_no_shove_no_mark_no_burr.
+##        PORTED, after the Wave E merge. Deferred when this file was
+##        written because shove_at/shot_target (2.E3d) and use_carried
+##        (2.E3b) were in sibling worktrees running CONCURRENTLY and not
+##        yet merged — calling them would not have compiled, which trips
+##        test.sh's script-count guard for the whole suite.
 ##   :95  pays feign-priced XP when it dies — the disguise is threat, threat
 ##        is reward — PORTED
 ##
