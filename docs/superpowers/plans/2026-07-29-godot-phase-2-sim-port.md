@@ -961,7 +961,7 @@ static func next_active(...) -> Variant                     # read turns.ts:19 f
 **Files:**
 - Create: `godot/sim/ai.gd`, `godot/test/unit/test_ai.gd`
 - Port from: `src/core/ai.ts` (271), `tests/core/ai.test.ts` (16)
-- **Blocked by:** 2.D2, 2.D3, 2.C1.
+- **Blocked by:** 2.D2, 2.D3, 2.C1, **and 2.D1** — corrected while executing 2.E2, which found `decide()` needs `SimMapgen.walk_distance` in four branches. The original list omitted it, and the task shipped a private port of `mapgen.ts:440` to get round the gap.
 
 **Interfaces:**
 - Consumes: `SimReach`, `SimSight`, `SimTables`, `SimState`, `SimEntity`.
