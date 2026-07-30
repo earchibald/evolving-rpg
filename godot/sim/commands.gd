@@ -106,3 +106,13 @@ static func record_bodies(state: Dictionary, bodies: Array) -> Dictionary:
 
 static func found_world(state: Dictionary, bible: Dictionary) -> Dictionary:
 	return SimMovement.found_world(state, bible)
+
+
+# ── Task 2.E3c: sim/commands/hazards.gd ───────────────────────────────────
+
+static func sense_trap(state: Dictionary, player_id: String = "player") -> Variant:
+	return SimHazards.sense_trap(state, player_id)
+
+
+static func spring_trap(state: Dictionary, victim_id: String = "player") -> Variant:
+	return SimHazards.spring_trap(state, victim_id)
