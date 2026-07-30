@@ -630,6 +630,57 @@ MUTATIONS: dict[str, tuple[str, str, str]] = {
         "\t\tif false:  # MUTATED: the keeper may stand in what paints as wall\n"
         "\t\t\tcontinue",
     ),
+    # --- Task 2.E3c: sim/commands/hazards.gd ---
+    # Shifts the sight/near sensing roll off its declared counter while
+    # leaving TRAP_SENSED's own rngCounter/rngDraws untouched — the exact
+    # blind spot this task's brief named by name ("a range assertion cannot
+    # see a draw move"). Every PORTED case in test_traps.gd checks the roll's
+    # existence, its band, or its ordering against a second roll; none of
+    # them recomputes the roll independently via SimRng, so a mutant that
+    # reads from counter + 1 while still declaring counter and rngDraws == 1
+    # honestly would sail through all sixteen of them.
+    # MEASURED at 495 tests: 493 pass, exactly 2 fail —
+    # test_the_sense_rolls_needed_and_counter_are_pinned_not_merely_counted
+    # and test_the_near_rolls_needed_is_the_near_bases_own_arithmetic, the
+    # two non-reference tests added for exactly this reason. Nothing ported
+    # from traps.test.ts fails.
+    "hazards-sense-roll-offset": (
+        "godot/sim/commands/hazards.gd",
+        "\tvar roll := SimRng.int_between(int(state[\"seed\"]), counter, 1, 20)",
+        "\tvar roll := SimRng.int_between(int(state[\"seed\"]), counter + 1, 1, 20)",
+    ),
+    # Reads the hatch's own trap level back into its risers' stats — the
+    # other hazard this task's brief named by name ("Hatch risers are
+    # level-1 bodies, not floor-band"). Reference case :216
+    # (test_the_hatch_stands_its_risers_up_inside_the_band...) pins only the
+    # riser's POSITION; nothing in the reference suite reads its stats at
+    # all, so this rule had no witness of any kind before this task.
+    # MEASURED at 495 tests: 494 pass, exactly 1 fails —
+    # test_hatch_risers_are_level_1_bodies_never_the_floors_own_band, the
+    # one non-reference test written for it. The ported hatch case (:216)
+    # does not so much as notice.
+    "hazards-hatch-riser-reads-trap-level": (
+        "godot/sim/commands/hazards.gd",
+        "\t\t\t\"stats\": SimTables.creature_stats(arch[\"kind\"], 1),",
+        "\t\t\t\"stats\": SimTables.creature_stats(arch[\"kind\"], int(trap[\"level\"])),",
+    ),
+    # The spike pit's damage draw, shifted one counter late — the same
+    # blind-spot class as the sensing mutation above, on the springing side.
+    # rngDraws == 2 (ported case :94) proves two draws happened; it does not
+    # prove the second is counter + 1 rather than counter + 2, and every
+    # damage assertion in the reference is a range (>= 1, doubled on a
+    # dodge-miss) that a shifted-but-still-in-band roll sails through, the
+    # identical shape Task 2.E3a measured for resolve_strike before its own
+    # pinning test existed.
+    # MEASURED at 495 tests: 494 pass, exactly 1 fails —
+    # test_the_spike_pits_damage_is_the_consecutive_draw_right_after_its_dodge.
+    # Every ported springing case, including :94's own 60-seed sweep over
+    # this exact trap kind, passes under the mutant.
+    "hazards-spike-pit-damage-draw-skips": (
+        "godot/sim/commands/hazards.gd",
+        "SimRng.int_between(seed, c, 1, SimTables.SPIKE_DIE)",
+        "SimRng.int_between(seed, c + 1, 1, SimTables.SPIKE_DIE)",
+    ),
 }
 
 if len(sys.argv) > 1 and sys.argv[1] == "--list":

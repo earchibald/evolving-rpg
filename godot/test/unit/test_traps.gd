@@ -449,13 +449,13 @@ func test_the_near_rolls_needed_is_the_near_bases_own_arithmetic() -> void:
 	## and could still pass the ported ordering case (":75", which only
 	## checks near.needed < sight.needed) if both bases drifted together.
 	var trap_rolled: Dictionary = _trap("spike pit", 10, {"sightRolled": true})
-	var state: Dictionary = _corridor([_you(9)], [trap_rolled], {"rngCounter": 12})
+	var state: Dictionary = _corridor([_you(9)], [trap_rolled], {"rngCounter": 20})
 	var draft: Dictionary = SimCommands.sense_trap(state, "player")
 	var payload: Dictionary = draft["payload"]
 	assert_eq(payload["method"], "near")
 	# needed = TRAP_NEAR_NEED(11) + 2*level(2*2=4) - wits(3) = 12.
 	assert_eq(int(payload["needed"]), 12)
-	assert_eq(int(payload["roll"]), SimRng.int_between(7, 12, 1, 20))
+	assert_eq(int(payload["roll"]), SimRng.int_between(7, 20, 1, 20))
 
 
 func test_the_spike_pits_damage_is_the_consecutive_draw_right_after_its_dodge() -> void:
