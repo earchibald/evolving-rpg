@@ -1319,6 +1319,21 @@ static func apply(state: Dictionary, event: Dictionary) -> Dictionary:
 	# one-frame unwind above is what a probe actually shows. That file pairs
 	# every assert with an explicit `return {}`, which is the same value the
 	# unwind produces, so its behaviour is right even where its comment is not.)
+	#
+	# push_error rides ALONGSIDE the assert rather than instead of it, because
+	# assert() is COMPILED OUT of a release build. Without this line an exported
+	# build would fall through the match and fold an unknown event as a silent
+	# no-op — precisely the "quietly return the state unchanged" the reference's
+	# default arm exists to forbid, and it would show up only in the one build
+	# nobody runs the suite against. push_error survives release, so the refusal
+	# is loud in both, and test_apply.gd asserts both channels.
+	#
+	# Every other `assert` in `sim/` shares the debug-only property. That is a
+	# migration-wide question for the designer rather than one this file may
+	# answer alone — but the reducer is where a silent no-op does the most
+	# damage, so it gets the belt as well as the braces.
+	if not SimEvents.SCHEMA_VERSIONS.has(event["type"]):
+		push_error("SimApply: unknown event type %s" % event["type"])
 	assert(SimEvents.SCHEMA_VERSIONS.has(event["type"]),
 		"SimApply: unknown event type %s" % event["type"])
 	var next: Dictionary = _reduce(state, event)

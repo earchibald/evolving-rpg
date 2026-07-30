@@ -442,14 +442,21 @@ func test_the_three_events_that_change_nothing_return_the_very_same_state() -> v
 func test_an_unknown_event_type_is_refused_rather_than_folded() -> void:
 	## The reference THROWS here: a log from a newer engine is an expected
 	## input, and quietly returning the state unchanged would fold it to
-	## nonsense. GDScript's assert() logs and continues instead of unwinding,
+	## nonsense. GDScript's assert() unwinds exactly ONE frame instead of
+	## propagating — the asserting function returns its type's default and the
+	## caller carries on (measured with a probe; see apply.gd's own note),
 	## so what is asserted is that the refusal is LOUD.
 	var rogue := {
 		"type": "SUMMONED_A_GOD", "schemaVersion": 1, "rngCounter": 9, "rngDraws": 0,
 		"payload": {},
 	}
 	SimApply.apply(_born(), rogue)
+	# BOTH channels are asserted on purpose. assert() is compiled OUT of a
+	# release build; push_error is not. If only the assert were checked, an
+	# exported build could fold an unknown event as a silent no-op and this
+	# test would still be green — see apply.gd's note at the guard.
 	assert_engine_error("unknown event type")
+	assert_push_error("unknown event type")
 
 
 # ── ported from tests/core/apply.test.ts (17 cases, all portable) ────────
@@ -640,6 +647,9 @@ func test_apply_throws_rather_than_falling_off_the_switch_and_returning_undefine
 	}
 	SimApply.apply(SimState.empty(), alien)
 	assert_engine_error("unknown event type __NEVER_AN_EVENT__")
+	# The release-build half of the same refusal: assert() is stripped from an
+	# exported build, push_error is not.
+	assert_push_error("unknown event type __NEVER_AN_EVENT__")
 
 
 # describe('apply') — determinism
@@ -681,3 +691,160 @@ func test_world_bodies_is_reset_by_the_next_world_init_every_floor_is_born_empty
 	var buried: Dictionary = SimApply.apply(_small_started(), haunted)
 	var reborn: Dictionary = SimApply.apply(buried, _small_world_init())
 	assert_eq(reborn["bodies"], [])
+
+
+# ── the carries, and the spill: two holes a reviewer proved by mutation ──
+#
+# Both of these were written after Task 2.C1's review broke the reducer and
+# watched the suite stay green. Deleting WORLD_INIT's `playerGold` carry left
+# 268/268 passing AND the golden fold still hashing correctly — the golden run
+# never crosses stairs with a purse. Deleting `_drop_pockets` from each of its
+# three death sites independently, and reversing the nudge order, likewise
+# changed nothing any test could see. The code was right both times; nothing
+# guarded it. These are the guards.
+
+
+## A tiny board built for the spill: a player, and one pocket-carrier already
+## down to its last hp, standing where every candidate tile can be named.
+func _spill_payload() -> Dictionary:
+	return {
+		"width": 5, "height": 5, "tiles": _tiles(5, 5), "seed": 7, "items": [],
+		"player": {
+			"id": "player", "kind": "player", "pos": {"x": 0, "y": 0},
+			"stats": {"hp": 10, "might": 3, "wits": 2, "speed": 3}, "tags": [],
+		},
+		"opponents": [{
+			"id": "carrier", "kind": "skirmisher", "pos": {"x": 2, "y": 2},
+			"stats": {"hp": 1, "might": 2, "wits": 1, "speed": 3}, "tags": [],
+			"pocket": {"kind": "provision", "grants": _NO_GRANTS.duplicate()},
+		}],
+	}
+
+
+func _spilled(payload: Dictionary) -> Dictionary:
+	return SimApply.apply(SimState.empty(), SimEvents.draft("WORLD_INIT", 0, 0, payload))
+
+
+func test_world_init_carries_the_purse_across_the_stairs() -> void:
+	## v15. Absence is an empty purse — every chain written before the economy
+	## carried nothing, and that is simply true of them — but a payload that
+	## SAYS a number must be believed, or descending robs the player silently.
+	var carried: Dictionary = _spill_payload()
+	carried["playerGold"] = 7
+	assert_eq(_spilled(carried)["gold"], 7, "the purse crosses the stairs")
+	assert_eq(_spilled(_spill_payload())["gold"], 0, "an absent purse reads empty")
+
+
+func test_world_init_carries_the_rest_of_the_earned_progress_too() -> void:
+	## The same `??` family as the purse, and the same silent-robbery failure if
+	## any one of them is dropped: xp, level, depth and story all ride the
+	## descent, and motif is the nullable one that must stay PRESENT.
+	var carried: Dictionary = _spill_payload()
+	carried["xp"] = 40
+	carried["level"] = 3
+	carried["depth"] = 4
+	carried["story"] = "went down carrying too much"
+	carried["motif"] = "warren"
+	var state: Dictionary = _spilled(carried)
+	assert_eq(state["xp"], 40)
+	assert_eq(state["level"], 3)
+	assert_eq(state["depth"], 4)
+	assert_eq(state["story"], "went down carrying too much")
+	assert_eq(state["motif"], "warren")
+	var bare: Dictionary = _spilled(_spill_payload())
+	assert_eq(bare["xp"], 0)
+	assert_eq(bare["level"], 1)
+	assert_eq(bare["depth"], 1)
+	assert_eq(bare["story"], "")
+	assert_null(bare["motif"], "a floor that named no cut says null, and keeps the key")
+
+
+func _pocket_of(state: Dictionary) -> Variant:
+	for i: Dictionary in (state["items"] as Array):
+		if i["id"] == "pocket-carrier":
+			return i
+	return null
+
+
+func test_a_blow_that_kills_a_carrier_spills_its_pocket_on_the_death_tile() -> void:
+	var killing := SimEvents.draft("STRIKE", 0, 0, {
+		"attackerId": "player", "targetId": "carrier", "hit": true, "damage": 1, "crit": false,
+	})
+	var after: Dictionary = SimApply.apply(_spilled(_spill_payload()), killing)
+	var dropped: Variant = _pocket_of(after)
+	assert_not_null(dropped, "STRIKE is a death site: the pocket spills")
+	assert_eq((dropped as Dictionary)["kind"], "provision")
+	assert_eq((dropped as Dictionary)["pos"], {"x": 2, "y": 2}, "on the tile it died on")
+
+
+func test_a_slam_that_kills_a_carrier_spills_where_the_shove_left_it() -> void:
+	## The second death site. The spill reads the position AFTER the shove
+	## moved the body, not the one it was standing on when the shove began.
+	var slam := SimEvents.draft("SHOVE", 0, 0, {
+		"shoverId": "player", "targetId": "carrier", "to": {"x": 3, "y": 2},
+		"slammed": true, "struckId": null,
+	})
+	var after: Dictionary = SimApply.apply(_spilled(_spill_payload()), slam)
+	var dropped: Variant = _pocket_of(after)
+	assert_not_null(dropped, "SHOVE is a death site: the pocket spills")
+	assert_eq((dropped as Dictionary)["pos"], {"x": 3, "y": 2}, "where the slam left it")
+
+
+func test_a_rule_that_kills_a_carrier_spills_its_pocket_too() -> void:
+	## The third death site, and the one most easily forgotten: a kill a rule
+	## made is still a kill, and the pocket is still set down.
+	var fired := SimEvents.draft("RULE_FIRED", 0, 0, {
+		"ruleId": "rule-1", "actorId": "player",
+		"outcomes": [{"kind": "health", "entityId": "carrier", "to": 0}],
+	})
+	var after: Dictionary = SimApply.apply(_spilled(_spill_payload()), fired)
+	assert_not_null(_pocket_of(after), "RULE_FIRED is a death site: the pocket spills")
+
+
+func test_a_pocket_is_nudged_one_pace_when_something_already_lies_there() -> void:
+	## The five candidate tiles are tried in a FIXED order — here, then east,
+	## west, south, north — because a spill that picked its tile any other way
+	## would replay differently on a different day.
+	var occupied: Dictionary = _spill_payload()
+	occupied["items"] = [{"id": "in-the-way", "kind": "relic", "pos": {"x": 2, "y": 2},
+		"grants": _NO_GRANTS.duplicate()}]
+	var killing := SimEvents.draft("STRIKE", 0, 0, {
+		"attackerId": "player", "targetId": "carrier", "hit": true, "damage": 1, "crit": false,
+	})
+	var dropped: Variant = _pocket_of(SimApply.apply(_spilled(occupied), killing))
+	assert_not_null(dropped, "a taken death tile nudges rather than swallows")
+	assert_eq((dropped as Dictionary)["pos"], {"x": 3, "y": 2}, "east is tried before west")
+
+
+func test_the_floor_swallows_a_pocket_only_when_every_neighbouring_tile_is_taken() -> void:
+	## Poverty is honest; a stack of invisible items is not. With all five
+	## candidates occupied there is nowhere to set the thing down, and the
+	## reducer drops it rather than hiding it under another item.
+	var boxed: Dictionary = _spill_payload()
+	var blockers: Array = []
+	for t: Array in [[2, 2], [3, 2], [1, 2], [2, 3], [2, 1]]:
+		blockers.append({"id": "block-%d-%d" % [t[0], t[1]], "kind": "relic",
+			"pos": {"x": t[0], "y": t[1]}, "grants": _NO_GRANTS.duplicate()})
+	boxed["items"] = blockers
+	var killing := SimEvents.draft("STRIKE", 0, 0, {
+		"attackerId": "player", "targetId": "carrier", "hit": true, "damage": 1, "crit": false,
+	})
+	var after: Dictionary = SimApply.apply(_spilled(boxed), killing)
+	assert_null(_pocket_of(after), "nowhere to set it down, so it is gone")
+	assert_eq((after["items"] as Array).size(), 5, "and nothing else moved")
+
+
+func test_a_body_that_was_already_dead_does_not_spill_a_second_time() -> void:
+	## `before` is the world as the blow found it: a creature spills exactly
+	## once, on the event that took it from alive to not. Striking a corpse
+	## again must not mint a second pocket.
+	var killing := SimEvents.draft("STRIKE", 0, 0, {
+		"attackerId": "player", "targetId": "carrier", "hit": true, "damage": 1, "crit": false,
+	})
+	var dead: Dictionary = SimApply.apply(_spilled(_spill_payload()), killing)
+	var again: Dictionary = SimApply.apply(dead, killing)
+	var pockets := 0
+	for i: Dictionary in (again["items"] as Array):
+		if i["id"] == "pocket-carrier":
+			pockets += 1
+	assert_eq(pockets, 1, "one death, one pocket")
