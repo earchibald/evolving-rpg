@@ -258,7 +258,13 @@ func test_records_where_it_burst_and_how_far() -> void:
 	assert_not_null(used)
 	var d: Dictionary = used
 	assert_eq(int(d["rngDraws"]), 0)
-	assert_eq(d["payload"]["effect"], {"kind": "flare", "at": {"x": 5, "y": 5}, "radius": SimTables.FLARE_RADIUS})
+	# The LITERAL 7, not SimTables.FLARE_RADIUS. The reference writes the
+	# constant into its expected payload, so the recorded radius is compared
+	# against the very number that produced it and no drift can show —
+	# MEASURED during the Wave E review: FLARE_RADIUS 7 -> 9 failed ZERO of
+	# 629 tests. Seven is how far the flare's knowledge reaches; if that
+	# changes, this line is meant to be edited by hand.
+	assert_eq(d["payload"]["effect"], {"kind": "flare", "at": {"x": 5, "y": 5}, "radius": 7})
 	var after: Dictionary = SimApply.apply(state, _seal(d))
 	var player: Dictionary = SimEntity.find(after["entities"], "player")
 	assert_false(player.has("satchel"))

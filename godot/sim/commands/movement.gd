@@ -1148,10 +1148,18 @@ static func vigil_kept(state: Dictionary, entity_id: String) -> Dictionary:
 	return SimEvents.draft("VIGIL_KEPT", int(state["rngCounter"]), 0, {"entityId": entity_id})
 
 
-## Whether anything living, or anything already raised in this same stir, is
-## standing on a tile. Both halves matter: two echoes must not rise onto one
-## grave, and a riser must not arrive on top of a body already there.
-static func _stood(entities: Array, risen: Array, x: int, y: int) -> bool:
+## Whether anything living, or anything already raised in this same pass, is
+## standing on a tile. Both halves matter: two risers must not stand up on one
+## square, and a riser must not arrive on top of a body already there.
+##
+## PUBLIC, and the one copy in the migration. `SimStances.call_out` raises
+## bodies exactly the way `stir_world` does and had a private twin of this
+## function, line for line, differing only in a loop variable's name. Two
+## copies of a spawn-collision test in `sim/` is a chain waiting to fork: fix
+## one and not the other and the cry and the stir disagree about whether a
+## tile is free, from the same state. Collapsed for the same reason the flood
+## fill and `SimMapgen.walk_distance` were before it.
+static func stood(entities: Array, risen: Array, x: int, y: int) -> bool:
 	for e: Dictionary in entities:
 		if not SimEntity.is_alive(e):
 			continue
@@ -1206,7 +1214,7 @@ static func stir_world(state: Dictionary, player_id: String = "player") -> Varia
 	if not has_echo:
 		var n := 0
 		for b: Dictionary in (state["bodies"] as Array):
-			if _stood(entities, risen, int(b["x"]), int(b["y"])):
+			if stood(entities, risen, int(b["x"]), int(b["y"])):
 				continue
 			n += 1
 			var worn: Dictionary = (carrier["stats"] as Dictionary).duplicate()
@@ -1251,7 +1259,7 @@ static func stir_world(state: Dictionary, player_id: String = "player") -> Varia
 				continue
 			if absi(x - int(at_pos["x"])) + absi(y - int(at_pos["y"])) < SimTables.WAVE_DISTANCE:
 				continue
-			if _stood(entities, risen, x, y):
+			if stood(entities, risen, x, y):
 				continue
 			candidates.append({"x": x, "y": y})
 	if candidates.size() > 0:

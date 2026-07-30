@@ -20,14 +20,19 @@ class_name SimStances
 ## does NOT own, each named here so no reader has to wonder whether it was
 ## dropped:
 ##   vigilKept   :1250  -> Task 2.E3a, shipped in commands/movement.gd
-##   stirWorld   :1276  -> the heart's WORLD_STIRRED producer. It is not in any
-##                        2.E3a-e family (the plan's table hands it to none of
-##                        the five) and it is NOT in this file's verb list, so
-##                        it is DEFERRED, unowned, and reported as such. Its
-##                        reducer arm already exists in sim/apply.gd.
+##   stirWorld   :1276  -> the heart's WORLD_STIRRED producer. This task found
+##                        it UNOWNED — the plan's 2.E3a-e table hands it to
+##                        none of the five families — and reported it as such.
+##                        That deferral is DISCHARGED: it was adopted into
+##                        commands/movement.gd (:1189, beside create_world and
+##                        the descent, because it is a world-level verb),
+##                        re-exported through commands.gd, and witnessed by
+##                        the eight tests in test_stir.gd. Its own reference
+##                        suite, tests/play/bottom.test.ts, is the session
+##                        layer and stays deferred to Phase 3 BY NAME.
 ##   lungeStrike :1049  -> Task 2.E3a, shipped in commands/movement.gd
-## 9 of the 12 functions in :1049-:1429 are ported here; 2 were 2.E3a's; 1 is
-## deferred unowned. 9 + 2 + 1 = 12.
+## 9 of the 12 functions in :1049-:1429 are ported here; 3 are shipped in
+## commands/movement.gd; 0 are deferred. 9 + 3 + 0 = 12.
 ##
 ## **EVERY function here returns a DRAFT, never state.** The caller appends it
 ## through the log. That is what keeps authority in the chain and lets the
@@ -330,8 +335,8 @@ static func loose_shot(state: Dictionary, entity_id: String, target_id: String) 
 ##   counter + 2i      the archetype, one weighted pick over `answering`
 ##   counter + 2i + 1  the tile, one index into `candidates`
 ## `candidates` is rebuilt for every riser because a riser already placed
-## occupies its tile (`_stood` reads `risen` as well as `entities`), so the
-## second draw's RANGE depends on the first riser's answer. That is why the
+## occupies its tile (`SimMovement.stood` reads `risen` as well as `entities`),
+## so the second draw's RANGE depends on the first riser's answer. That is why the
 ## offsets matter and a plausible-band assertion cannot see them move: shift
 ## the tile draw by one and every riser still lands on legal ground at a legal
 ## distance — a different tile, on a chain that still verifies.
@@ -385,7 +390,7 @@ static func call_out(state: Dictionary, entity_id: String, prey_id: String = "pl
 					continue
 				if absi(x - int(prey_pos["x"])) + absi(y - int(prey_pos["y"])) < SimTables.CALL_DISTANCE:
 					continue
-				if _stood(entities, risen, x, y):
+				if SimMovement.stood(entities, risen, x, y):
 					continue
 				candidates.append({"x": x, "y": y})
 		if candidates.is_empty():
@@ -408,22 +413,6 @@ static func call_out(state: Dictionary, entity_id: String, prey_id: String = "pl
 		"callerId": entity_id,
 		"opponents": risen,
 	})
-
-
-## Whether a living body — already in the world, or already raised by this
-## same cry — stands on (x, y). The reference's `stood` closure, lifted out.
-static func _stood(entities: Array, risen: Array, x: int, y: int) -> bool:
-	for e: Dictionary in entities:
-		if not SimEntity.is_alive(e):
-			continue
-		var p: Dictionary = e["pos"]
-		if int(p["x"]) == x and int(p["y"]) == y:
-			return true
-	for r: Dictionary in risen:
-		var p: Dictionary = r["pos"]
-		if int(p["x"]) == x and int(p["y"]) == y:
-			return true
-	return false
 
 
 # ── holding position ──────────────────────────────────────────────────────

@@ -17,21 +17,26 @@ extends GutTest
 ## that demonstrates the same fact, or (twice, unavoidably) a literal kept
 ## from the TS source with a comment saying why.
 ##
-## 24 of the 63 TS cases are deferred — they exercise modules that do not
-## exist in sim/ yet. Listed here by source file and owning future module,
-## so the task that ports each module can find its cases without re-deriving
-## which is which:
+## 24 of the 63 TS cases could not land here — they exercise modules that did
+## not exist in sim/ when Task 2.B3 ran. Listed by source file and owning
+## module, so the task that ports each module can find its cases without
+## re-deriving which is which. TWENTY-TWO have since been DISCHARGED, each in
+## the suite named beside it; the two that remain both name a later phase.
+##
+##   4 STILL DEFERRED   Phase 5 (assay/register.ts) x2, Phase 3 (ui/fov.ts) x2
+##   20 DISCHARGED      leveling 9, mapgen 3, commands 8
+##   4 + 20 = 24.
 ##
 ## From tables.test.ts (2 cases — need a Godot port of src/assay/register.ts,
-## which nothing in sim/ provides yet):
+## which nothing in sim/ provides yet. PHASE 5, still open):
 ##   - "keeps every kind inside the covenant's name rules" (assayName)
 ##   - "every kind still answers the register — the new names are names"
 ##
 ## From leveling.test.ts (all 9 — every case folds a chain through
 ## WORLD_INIT/STRIKE/RULE_FIRED via fold()/append()/emptyLog(), which needs
-## the reducer in apply.gd; fold() itself is slated to land on SimLog per
-## its own docstring, but the WORLD_INIT/STRIKE/RULE_FIRED reduction fold
-## performs is apply.gd's, not yet ported):
+## the reducer in apply.gd). apply.gd landed in Task 2.C1 and ALL NINE ARE
+## DISCHARGED in godot/test/unit/test_leveling.gd, whose header reconciles
+## against this list one for one:
 ##   - "pays the victim's threat value, exactly"
 ##   - "pays nothing for a wound that does not finish"
 ##   - "pays nothing when creatures kill each other"
@@ -43,29 +48,41 @@ extends GutTest
 ##   - "starts every world at level 1 with no xp"
 ##
 ## From size.test.ts (7 — need createWorld, owned by commands.gd; one also
-## needs apply.gd's fold, one needs mapgen.gd's generateMap):
+## needs apply.gd's fold, one needs mapgen.gd's generateMap). ALL SEVEN ARE
+## DISCHARGED — six into godot/test/unit/test_commands.gd (createWorld's own
+## suite, under its ADOPTED banner) and one into test_mapgen.gd:
 ##   - "the stretched door spends on numbers, not menace — and the vale
-##     keeps its variety" (commands.gd)
+##     keeps its variety" (commands.gd -> test_commands.gd)
 ##   - "a stretch-1 world is bit-identical to the world before boards could
-##     breathe" (commands.gd)
+##     breathe" (commands.gd -> test_commands.gd)
 ##   - "the expanse pays a doubled budget for a bigger population, spread
-##     thinner" (commands.gd + apply.gd)
+##     thinner" (commands.gd + apply.gd -> test_commands.gd)
 ##   - "the expanse owes more prizes and a fuller pantry; the teaching floor
-##     holds one whatever the acreage" (commands.gd)
+##     holds one whatever the acreage" (commands.gd -> test_commands.gd)
 ##   - "the room cap scales with area, so the motif keeps its density"
-##     (mapgen.gd)
-##   - "refuses a board past the chokepoint" (commands.gd)
+##     (mapgen.gd -> test_mapgen.gd)
+##   - "refuses a board past the chokepoint" (commands.gd -> test_commands.gd)
 ##   - "every floor of the expanse still stands its whole account in the
-##     story" (commands.gd)
+##     story" (commands.gd -> test_commands.gd)
 ##
-## From motifs.test.ts (6 — mapgen.gd, commands.gd, or an fov equivalent):
-##   - "cuts the halls broad and the warren tight" (mapgen.gd)
-##   - "keeps the warren inside its caps" (mapgen.gd)
-##   - "names the band in the story, where the ledger reads it" (commands.gd)
+## From motifs.test.ts (6 — mapgen.gd, commands.gd, or an fov equivalent).
+## FOUR ARE DISCHARGED; the two fov cases are PHASE 3 and still open:
+##   - "cuts the halls broad and the warren tight" (mapgen.gd ->
+##     test_mapgen.gd)
+##   - "keeps the warren inside its caps" (mapgen.gd -> test_mapgen.gd)
+##   - "names the band in the story, where the ledger reads it" (commands.gd
+##     -> test_commands.gd)
 ##   - "sees 9 on the first floor and 7 in the deep" (src/ui/fov.ts —
 ##     UI-layer field of view, no sim/ or stage port exists anywhere yet)
 ##   - "the raw sweep honors a passed radius" (src/ui/fov.ts, same as above)
-##   - "records the cut in the birth event, matching the band" (commands.gd)
+##   - "records the cut in the birth event, matching the band" (commands.gd
+##     -> test_commands.gd)
+##
+## The eight commands.gd cases were outstanding through the whole of Wave E:
+## `commands.gd` shipped there, but the wave's audit asked only "is every
+## export ported?" and never "does any existing ledger name commands.gd as an
+## owner?" — and these eight are addressed to a MODULE, not to a task number,
+## so no task-number grep could reach them. Closed by the Wave E fix pass.
 
 
 ## key -> expected row count, copied from the task brief's own table so a
