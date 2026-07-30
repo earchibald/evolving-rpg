@@ -106,3 +106,21 @@ static func record_bodies(state: Dictionary, bodies: Array) -> Dictionary:
 
 static func found_world(state: Dictionary, bible: Dictionary) -> Dictionary:
 	return SimMovement.found_world(state, bible)
+
+
+# ── Task 2.E3b: sim/commands/items.gd ─────────────────────────────────────
+
+static func take_underfoot(state: Dictionary, entity_id: String, deliberate: bool = false) -> Variant:
+	return SimItems.take_underfoot(state, entity_id, deliberate)
+
+
+static func take_or_refuse(state: Dictionary, entity_id: String) -> Variant:
+	return SimItems.take_or_refuse(state, entity_id)
+
+
+static func use_carried(state: Dictionary, entity_id: String, slot: int = 0) -> Variant:
+	return SimItems.use_carried(state, entity_id, slot)
+
+
+static func read_scroll(state: Dictionary, entity_id: String) -> Variant:
+	return SimItems.read_scroll(state, entity_id)
