@@ -737,7 +737,19 @@ static func apply_resolved(state: Dictionary, outcomes: Array) -> Dictionary
 
 **Files:**
 - Create: `godot/sim/apply.gd`, `godot/test/unit/test_apply.gd`, `godot/test/unit/test_leveling.gd`, `godot/test/unit/test_dispositions.gd`
-- Port from: `src/core/apply.ts` (847 lines), `tests/core/apply.test.ts` (17), `tests/core/leveling.test.ts` (9), `tests/core/dispositions.test.ts` (12)
+- Port from: `src/core/apply.ts` (847 lines), `tests/core/apply.test.ts` (17), `tests/core/leveling.test.ts` (9), `tests/core/dispositions.test.ts` (**1 of its 12** — see below)
+
+**PLAN CORRECTION, made while executing 2.C1.** This task was written expecting
+all 12 of `dispositions.test.ts` to be reducer tests. They are not: the file
+imports `decide` from `ai.js` and `createWorld` from `commands.js`, and 11 of
+its 12 cases are about how a guard or a wanderer *chooses*, or about what
+generation deals — Wave E work (2.E2 `ai.gd`, 2.E3a `commands.gd`), not Wave C.
+Exactly **one** case is a reducer test: "the reducer advances the leg when a
+step lands on a waypoint — any waypoint, forward only". That one is ported here;
+`test_dispositions.gd` is created now and carries the other 11 as a named
+deferral record with their reference line numbers and owning tasks, so the file
+exists to be filled rather than remembered. **2.E2 and 2.E3a must reconcile
+against that record**: 1 + 11 = 12.
 - **Blocked by:** all of Waves A and B.
 
 **Interfaces:**
