@@ -109,3 +109,36 @@ func test_a_neighbour_off_the_grid_edge_is_never_marked_reachable() -> void:
 func test_floor_count_does_not_count_exit_or_secret_tiles() -> void:
 	var grid := SimGrid.make(2, 2, [F, SimGrid.EXIT, SimGrid.SECRET, F])
 	assert_eq(SimReach.floor_count(grid), 2)
+
+
+func test_the_flood_visits_in_the_exact_order_the_reference_visits() -> void:
+	## Added after Wave D's review reversed the four neighbours and watched
+	## 347/347 stay green with an identical assert count. This file's header
+	## says the traversal order is deliberately preserved; nothing committed
+	## held it to that, and "the same tiles in a different order" is precisely
+	## the divergence that passes a set-comparison and forks every chain that
+	## ever pathed.
+	##
+	## The order is observable because reachable_from returns a Dictionary and
+	## GDScript Dictionaries keep insertion order. Hand-derived on a 3x3 open
+	## board flooded from (0,0), with idx = y*3 + x, stack popped from the BACK
+	## and neighbours pushed east, west, south, north:
+	##
+	##   pop (0,0) -> push (1,0)=1, (0,1)=3          seen 0,1,3
+	##   pop (0,1) -> push (1,1)=4, (0,2)=6          seen +4,6
+	##   pop (0,2) -> push (1,2)=7                   seen +7
+	##   pop (1,2) -> push (2,2)=8                   seen +8
+	##   pop (2,2) -> push (2,1)=5                   seen +5
+	##   pop (2,1) -> push (2,0)=2                   seen +2
+	##   pop (2,0), (1,1), (1,0) -> nothing new
+	##
+	## Reversing the neighbour list, or swapping the stack for a queue, changes
+	## this sequence on the first pop.
+	var tiles: Array = []
+	for i in range(9):
+		tiles.append(SimGrid.FLOOR)
+	var grid: Dictionary = SimGrid.make(3, 3, tiles)
+
+	var seen: Dictionary = SimReach.reachable_from(grid, 0, 0)
+	assert_eq(seen.keys(), [0, 1, 3, 4, 6, 7, 8, 5, 2],
+		"the flood's visit order, not merely the set of tiles it lands on")
