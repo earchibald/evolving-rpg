@@ -7,10 +7,10 @@ extends GutTest
 ## same relationship test_secrets.gd has to mapgen.gd's two functions.
 ##
 ## ── Reconciliation ────────────────────────────────────────────────────────
-## 6 = 5 PORTED + 1 DEFERRED. Line numbers are tests/core/mimics.test.ts at
+## 6 = 6 PORTED + 0 DEFERRED. Line numbers are tests/core/mimics.test.ts at
 ## ts-baseline.
 ##
-## describe('the mimic') — 5, 4 PORTED + 1 DEFERRED
+## describe('the mimic') — 5, all PORTED
 ##   :48  is unmasked by the walk, never struck through its guise — PORTED
 ##   :62  holds perfectly still while hidden, whatever stands beside it —
 ##        PORTED

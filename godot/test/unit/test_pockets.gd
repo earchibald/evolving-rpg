@@ -32,7 +32,7 @@ extends GutTest
 ##        meaningful half — no item on the floor carries a "pocket-" id
 ##        before any death — is ported whole.
 ##
-## 3 + 2 = 5 ported. 1 deferred. 5 + 1 = 6.
+## 4 + 2 = 6 ported. 0 deferred.
 
 
 func _corridor(entities: Array, over: Dictionary = {}) -> Dictionary:

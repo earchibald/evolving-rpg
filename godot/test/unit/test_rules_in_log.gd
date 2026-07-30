@@ -4,7 +4,7 @@ extends GutTest
 ## B discharges the deferral Task 2.B6 recorded here: apply.gd exists now,
 ## and with it RULE_RATIFIED/RULE_FIRED folding.
 ##
-## Reconciliation: 11 = 9 ported + 1 deferred + 1 documented as
+## Reconciliation: 11 = 10 ported + 0 deferred + 1 documented as
 ## architecturally inapplicable rather than faked (below). Every case, by
 ## describe block, with the reference line and its outcome:
 ##
