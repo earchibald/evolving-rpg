@@ -99,6 +99,23 @@ MUTATIONS: dict[str, tuple[str, str, str]] = {
         '"WORLD_INIT": 15,',
         '"WORLD_INIT": 14,',
     ),
+    # Defeats the "already at current version, pass through untouched" guard
+    # that every upcaster in the file relies on to stay a no-op on modern
+    # data — the exact shape of "make one upcaster fire unconditionally".
+    # With the guard never tripping, every event falls through into its
+    # type's upcast branch regardless of version. WORLD_INIT and STRIKE
+    # happen to reconstruct an equivalent payload even then (their inner
+    # guards are themselves version-gated), but MOVE and TURN_ADVANCED have
+    # no type-specific branch at all and fall to the terminal
+    # "no upcaster from" assert, which is caught here two ways: the identity
+    # test's loop hits an unhandled engine error on the first such event, and
+    # test_passes_a_current_version_event_through_untouched fails its
+    # is_same() check directly.
+    "upcast-version-guard": (
+        "godot/sim/upcast.gd",
+        "\tif version == current:",
+        "\tif version == current + 1:",
+    ),
     # --- Known EQUIVALENT REWRITES, kept as documentation, not as proofs. ---
     # Both produce identical bits: low bits survive two's-complement wrapping,
     # and u32's second line masks unconditionally. Running these should show NO
