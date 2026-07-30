@@ -2070,3 +2070,47 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > **Try it:** still nothing to press. Phase 3 is the first playable thing, and
 > the reducer was the wall in front of it. Next is the fold itself, then
 > generation and sight, then the verbs.
+
+> [!IMPORTANT]
+> **10:52 — The fold is real now, and the audit admits the one thing it cannot
+> see**
+> `fold()` and `verify_chain()` have joined the log, which is what turns the
+> replay loop I had been writing by hand into the thing the Phase 2 gates
+> actually measure. The golden run folds to the signed hash cold, warm, and with
+> the memo forced to clear mid-walk; `verify_chain` on that same run returns
+> "sound", which is gate 2.F2 answered ahead of its own task.
+>
+> **A review found the order was decorative.** `verify_chain` asks five
+> questions — is the hash right, is this a type I know, is it a version I
+> implement, is the sequence unbroken, does the randomness line up — and the
+> *order* is the specification, because it decides which answer a player is
+> given when more than one is wrong at once. That order was pinned by nothing:
+> the reviewer reversed all five checks and the whole suite still passed, because
+> every test broke exactly one thing at a time. There are now four chains that
+> are broken in two ways at once, each asserting that the earlier question wins.
+> Reversing any pair fails a named test.
+>
+> **And a real limit, which I have written down rather than papered over.**
+> `verify_chain` **cannot detect a structurally broken log** — a cycle, or a
+> missing event. Delete one event out of the golden run's four hundred and
+> fifty-one and it still reports the chain sound. The reference does not have
+> this problem: there, a broken chain *throws*, and the throw travels straight
+> out through the audit. GDScript's `assert` does not travel — it unwinds
+> exactly one frame and the caller carries on none the wiser. So the hole is
+> loud (an engine error is printed) but not *reported* (the return value cannot
+> carry it). A caller who needs structural soundness must ask `chain()` directly.
+>
+> **This is the third time that same difference has bitten**, and it is now the
+> defining mismatch between the two languages in this port: TypeScript throws
+> and unwinds the world; GDScript complains and returns you a default. It
+> deserves one deliberate pass over every `assert` in `sim/` — deciding, per
+> site, whether a wrong answer or a loud crash is the lesser evil — rather than
+> three more patches discovered one debugging session at a time. **That is a
+> decision for you, not for a port task**, because it changes what the engine
+> does when it is handed something broken, and that is a design question wearing
+> an implementation's clothes.
+>
+> Also recorded, since it was found and would otherwise be lost: two cases from
+> the reference's `append()` suite still have no test here — the log-immutability
+> clause of A5, and A7. Phase 1's gap, not Phase 2's, and now named in
+> `test_log.gd` itself so it stops being invisible.

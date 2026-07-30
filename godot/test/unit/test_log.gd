@@ -1,7 +1,18 @@
 extends GutTest
-## Append and chain. fold() and the rng-counter half of verify_chain() need the
-## reducer and arrive in Phase 2; what is provable now is position-sealing,
+## Append and chain. Written in Phase 1, when fold() and verify_chain() did not
+## exist yet; Task 2.C2 shipped both, and their tests live in test_chain.gd —
+## including chain()'s own root-first / missing-event / cycle cases, which were
+## a gap here and were closed there because fold()'s identical guards needed the
+## identical forged-log fixtures anyway.
+##
+## What remains provable HERE is append()'s own contract: position-sealing,
 ## convergent-history idempotence, root-first ordering and the deep freeze.
+##
+## STILL UNCOVERED, and named so it stops being invisible: two cases from the
+## reference's append() suite (the log-immutability clause of A5, and A7) have
+## no test in this repo. Found during Task 2.C2's reconciliation, and out of
+## that task's file authorization to fix — recorded here rather than patched in
+## passing, which is why this docstring says it instead of the report only.
 
 const DRAFT_A := {"type": "WAIT", "schemaVersion": 1, "rngCounter": 0, "payload": {"n": 1}}
 const DRAFT_B := {"type": "WAIT", "schemaVersion": 1, "rngCounter": 1, "payload": {"n": 2}}
