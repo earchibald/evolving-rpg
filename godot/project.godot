@@ -15,6 +15,11 @@ config/description="A turn-based grid RPG that grows its own world. The sim fold
 content-addressed event chain; the stage is only ever a projection of that fold."
 config/features=PackedStringArray("4.6")
 
+[autoload]
+
+; The chain, and the only writer to it. Every stage node reads through this.
+Chronicle="*res://autoload/Chronicle.gd"
+
 [rendering]
 
 textures/canvas_textures/default_texture_filter=0
