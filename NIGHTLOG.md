@@ -2165,3 +2165,62 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > **Try it:** still nothing to press, and this is the last stretch where that is
 > true. What remains is the verbs — the blow, the take, the trap, the shove, the
 > purse — and then the gates. Phase 3 is the playable one.
+
+> [!IMPORTANT]
+> **15:24 — Phase 2 is across: the ported engine folds the old engine's own
+> history to the same signature, byte for byte**
+> Every deterministic line of the TypeScript engine now has a GDScript twin, and
+> the twin has been made to prove it rather than asked to promise it. Replaying
+> the committed golden run — 451 recorded events — through the ported reducer
+> produces a world whose signature is
+> `2272ed6e…b260056`: the exact number the TypeScript engine signed when it
+> played that run. The same chain audits clean from root to head. Fifty-two test
+> scripts, six hundred and fifty-four tests.
+>
+> **What that hash does and does not prove, stated plainly.** It proves the five
+> event types the golden run actually contains. The other twenty rest entirely
+> on the ported unit suites — which is why those were ported whole, case by
+> case, with every single one accounted for in the file that carries it.
+>
+> **The engine was attacked sixty-four times to see whether the tests would
+> notice.** Sixty-four recorded mutations, each one a real bug deliberately
+> introduced: a rejected dice roll refunded, a draw taken one step early, a
+> creature's leash shortened, a pocket that fails to spill, the order of the
+> flood fill reversed. **Sixty-two were caught.** The two that were not are the
+> two marked in advance as equivalent rewrites — changes that alter the code
+> without altering its meaning — and they are recorded as null results, not as
+> passes. No test has weakened since its proof was written.
+>
+> **Folding the whole run costs 1.9 milliseconds** against a budget of one
+> second.
+>
+> **Things that looked wrong and were ported wrong on purpose**, because a bug
+> quietly fixed forks every chain the game has ever written. Both want your
+> ruling:
+> - **The warden cannot find its way home from far enough away.** Its walk back
+>   to its post measures with a reach of 8 where the ordinary guard's identical
+>   walk measures the whole board. A warden shoved more than eight walking steps
+>   from its post waits there forever. (`ai.gd`, at the vigil's call site.)
+> - **A board eleven, twelve or thirteen tiles wide, cut to the halls pattern,
+>   inverts a range check.** The old engine throws there; this one refuses. No
+>   board in use is that size. (`mapgen.gd`.)
+>
+> **And a cost you should know about.** The balance suite — the one that plays
+> hundreds of floors to check the sawtooth still bites — takes nine minutes.
+> The plan says never thin the sample, because the sample size *is* the test, so
+> it stands as written and all eight of its pins pass on the reference's own
+> numbers, nothing widened. But a full test run is now nine minutes for
+> everyone, every time. Whether those pins move behind an opt-in flag is your
+> call, not mine: making them faster means making them weaker.
+>
+> **The thing worth saying about how this went.** Nine separate tests were found
+> that could never have failed — two of them in the *old* engine's own suite,
+> inherited silently by a faithful port. The shape is always the same: a test
+> that reads its expected value off the very constant it is guarding, so moving
+> the constant moves the goalposts and the test notices nothing. One of them was
+> guarding a rule named "never beside you" while a trap could stand a monster
+> directly beside you. They are all pinned to plain numbers now, with the
+> arithmetic written out beside them.
+>
+> **Try it:** still nothing to press — and this is the last time that will be
+> true. Phase 2 was the whole engine; Phase 3 is the part you can play.
