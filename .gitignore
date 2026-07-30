@@ -25,3 +25,8 @@ watermarked_img_*.png
 
 # Godot's import cache — regenerated from the committed .tscn/.gd on any open.
 godot/.godot/
+
+# Agent worktrees. Parallel migration tasks each run in their own git worktree
+# under here; the branches are real and get merged, but the checkouts are
+# scratch and must never be committed into the repo they are checkouts OF.
+.claude/worktrees/
