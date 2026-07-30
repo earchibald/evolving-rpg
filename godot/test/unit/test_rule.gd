@@ -77,12 +77,19 @@ func test_allows_no_conditions_at_all_a_rule_that_always_fires_is_legal() -> voi
 ## GDScript stand-ins for the JS JUNK array's scalars, collections and one
 ## "exotic, definitely not a plain Dictionary" Variant (a Callable stands in
 ## for JS's function/Map/Set/regex/Date cases, all of which must fail
-## _is_plain_object the same way).
+## _is_plain_object the same way). The last three entries before __proto__
+## use _with_field, matching the reference's `{ ...GOOD, require: null }` /
+## `{ ...GOOD, then: 'heal' }` / `{ ...GOOD, provenance: 7 }`: each is an
+## otherwise-valid rule with exactly one field broken, so validate() reaches
+## past id/when and into that field's own shape check rather than stopping at
+## "id: expected a name" the way a bare `{"require": null}` would. See the
+## three test_junk_* tests below, which pin the specific branch each one
+## reaches.
 func _junk() -> Array:
 	return [
 		null, 0, 1, -1, NAN, INF, "", "rule", true, false,
 		[], [1, 2, 3], {}, {"when": "WAIT"}, Callable(),
-		{"require": null}, {"then": "heal"}, {"provenance": 7},
+		_with_field("require", null), _with_field("then", "heal"), _with_field("provenance", 7),
 		{"__proto__": {"polluted": true}},
 	]
 
@@ -91,6 +98,28 @@ func test_returns_rather_than_throws_on_junk() -> void:
 	for value: Variant in _junk():
 		var r: Variant = SimRule.validate(value)
 		assert_true(SimRule.is_rejected(r), "junk value should be rejected, not accepted or crash: %s" % [value])
+
+
+## The three _with_field junk cases above are built to each reach a SPECIFIC
+## deep branch, not merely "some rejection, somehow" — pinned here on the
+## exact rejection text, so a future change that reshapes them back into
+## something that is rejected earlier (e.g. at "id") cannot pass silently.
+func test_junk_require_null_is_refused_by_the_require_shape_check() -> void:
+	var r: Dictionary = SimRule.validate(_with_field("require", null))
+	assert_true(SimRule.is_rejected(r))
+	assert_string_contains(r["rejected"], "require: expected a list")
+
+
+func test_junk_then_a_string_is_refused_by_the_then_shape_check() -> void:
+	var r: Dictionary = SimRule.validate(_with_field("then", "heal"))
+	assert_true(SimRule.is_rejected(r))
+	assert_string_contains(r["rejected"], "then: expected a list")
+
+
+func test_junk_provenance_a_number_is_refused_by_the_provenance_shape_check() -> void:
+	var r: Dictionary = SimRule.validate(_with_field("provenance", 7))
+	assert_true(SimRule.is_rejected(r))
+	assert_string_contains(r["rejected"], "provenance: expected an object")
 
 
 func test_survives_something_deeply_nested_without_blowing_the_stack() -> void:
