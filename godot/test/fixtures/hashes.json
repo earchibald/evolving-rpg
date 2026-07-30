@@ -1,0 +1,48 @@
+[
+  {
+    "draft": {
+      "type": "WAIT",
+      "schemaVersion": 1,
+      "rngCounter": 3,
+      "payload": {
+        "entityId": "p1"
+      }
+    },
+    "parent": null,
+    "seq": 0,
+    "id": "4d6a00dcb9dca40a6b390de584de90f0328c5443d028811081ebd8866a1b1da9"
+  },
+  {
+    "draft": {
+      "type": "WAIT",
+      "schemaVersion": 1,
+      "rngCounter": 3,
+      "payload": {
+        "entityId": "p1"
+      }
+    },
+    "parent": "abc123",
+    "seq": 4,
+    "id": "54a8660bbcbd5ad4cfa2af8f5a249e0d450b67a87f584ec6ff19e9690823a4e7"
+  },
+  {
+    "draft": {
+      "type": "MOVE",
+      "schemaVersion": 2,
+      "rngCounter": 0,
+      "payload": {
+        "entityId": "p1",
+        "nested": {
+          "a": [
+            1,
+            2
+          ],
+          "b": "x"
+        }
+      }
+    },
+    "parent": null,
+    "seq": 0,
+    "id": "4782ac7e7f9c64b52feaaddc25013f402e6c6e3a6c451ff9a88251e1f957f199"
+  }
+]

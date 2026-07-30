@@ -1,0 +1,85 @@
+[
+  {
+    "input": null,
+    "expected": "null"
+  },
+  {
+    "input": true,
+    "expected": "true"
+  },
+  {
+    "input": false,
+    "expected": "false"
+  },
+  {
+    "input": 0,
+    "expected": "0"
+  },
+  {
+    "input": -7,
+    "expected": "-7"
+  },
+  {
+    "input": 2,
+    "expected": "2"
+  },
+  {
+    "input": 4294967295,
+    "expected": "4294967295"
+  },
+  {
+    "input": "two",
+    "expected": "\"two\""
+  },
+  {
+    "input": "quote \" back \\ slash \n newline",
+    "expected": "\"quote \\\" back \\\\ slash \\n newline\""
+  },
+  {
+    "input": [],
+    "expected": "[]"
+  },
+  {
+    "input": [
+      1,
+      "two",
+      null,
+      [
+        2
+      ]
+    ],
+    "expected": "[1,\"two\",null,[2]]"
+  },
+  {
+    "input": {},
+    "expected": "{}"
+  },
+  {
+    "input": {
+      "b": [
+        1,
+        "two",
+        null
+      ],
+      "a": {
+        "z": true,
+        "m": 2
+      }
+    },
+    "expected": "{\"a\":{\"m\":2,\"z\":true},\"b\":[1,\"two\",null]}"
+  },
+  {
+    "input": {
+      "Z": 2,
+      "a": 1
+    },
+    "expected": "{\"Z\":2,\"a\":1}"
+  },
+  {
+    "input": {
+      "keep": 1,
+      "drop": null
+    },
+    "expected": "{\"drop\":null,\"keep\":1}"
+  }
+]

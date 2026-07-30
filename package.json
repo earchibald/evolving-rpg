@@ -10,6 +10,7 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "golden": "tsx scripts/generate-golden.ts",
+    "fixtures": "tsx scripts/export-fixtures.ts",
     "play": "tsx scripts/play.ts",
     "trial": "tsx scripts/trial.ts",
     "loop": "tsx scripts/loop.ts",
