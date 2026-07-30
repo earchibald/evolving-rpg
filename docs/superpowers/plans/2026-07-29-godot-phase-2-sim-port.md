@@ -564,12 +564,25 @@ func test_the_bestiary_is_the_reference_bestiary() -> void:
 **The fixture's actual shape, as delivered by Task 2.B1** — use these key names, not the ones this plan guessed before the dump existed:
 
 ```
-tables.json  = { damageDice, neededToHit, chanceIn20, critFloor, threatOf,
-                 creatureStats, xpToReach, levelForXp, growthAt, sizeStretch,
-                 bountyStretch,                       # each: [{args:[…], value:…}]
-                 bestiary, verbThreat, motifs }       # dumped verbatim
+tables.json  = { 23 function keys, each [{args:[…], value:…}]
+                 + bestiary, verbThreat, motifs      # dumped verbatim
+               }                                      # 26 top-level keys total
 ```
-Row counts to assert against so a silently truncated dump is caught: `damageDice` 23, `neededToHit` 441, `chanceIn20` 31, `critFloor` 23, `threatOf` 168, `creatureStats` 84, `xpToReach` 42, `levelForXp` 84, `growthAt` 14, `sizeStretch` 7, `bountyStretch` 6, `bestiary` 8, `verbThreat` 8, `motifs` 3.
+**Every exported numeric function is covered — port all 23 against their rows, and transcribe none by hand.** Row counts to assert against, so a silently truncated dump is caught:
+
+| key | rows | key | rows | key | rows |
+|---|---|---|---|---|---|
+| `damageDice` | 23 | `bountyStretch` | 6 | `valueOf` | 20 |
+| `neededToHit` | 441 | `meanDamage` | 23 | `draughtCeiling` | 11 |
+| `chanceIn20` | 31 | `braceWall` | 23 | `smokeTurns` | 11 |
+| `critFloor` | 23 | `spawnBudget` | 44 | `trapCount` | 44 |
+| `threatOf` | 168 | `wardenLevel` | 11 | `trapLevelAt` | 11 |
+| `creatureStats` | 84 | `sightAt` | 11 | `alarmTurns` | 4 |
+| `xpToReach` | 42 | `grantValue` | 73 | `bestiary` | 8 |
+| `levelForXp` | 84 | `growthAt` | 14 | `verbThreat` | 8 |
+| `sizeStretch` | 7 | | | `motifs` | 3 |
+
+**`tables.json` now holds 30 genuinely fractional numbers**, not 9: `meanDamage` returns means, and its rows are fractional by nature. This is exactly why `load_table_json` exists — reach for it, never `load_json`, and do **not** round a mean to make a comparison tidy.
 
 **Two conventions inside this file, local to it and NOT the absent-key law:** a `null` in `args` means an omitted optional argument (only `threatOf`'s `kind` is optional), and a `null` in `value` means the reference returned `undefined` (`xpToReach` past the ladder, `creatureStats` for an unknown kind). No listed function ever legitimately receives or returns `null`, which is what makes the convention unambiguous.
 
