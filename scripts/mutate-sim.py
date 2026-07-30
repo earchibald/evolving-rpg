@@ -1039,6 +1039,57 @@ MUTATIONS: dict[str, tuple[str, str, str]] = {
         "const POCKET_IN := 3",
         "const POCKET_IN := 4",
     ),
+    # --- Task 3.4: godot/stage/input/Keymap.gd ---
+    # Keymap has no TS reference to drift from (debug.ts has no test file at
+    # all), so these rows are not "did the port keep a signed constant" —
+    # they are "does test_keymap.gd actually pin the mapping, or just its own
+    # shape". Each mutant is a single row of the private lookup tables or the
+    # modal-arm descriptor, restorable independently.
+    #
+    # ArrowUp's delta — flips north to south for the arrow key only, leaving
+    # w's own (separately-keyed) entry untouched.
+    # MEASURED against test_keymap.gd: exactly 2 of 42 fail —
+    # test_arrow_up_unarmed_walks_north and test_arrow_up_armed_shoves_north.
+    # w's north tests, and every other direction, are unaffected.
+    "keymap-arrow-up-delta": (
+        "godot/stage/input/Keymap.gd",
+        '"ArrowUp": [0, -1], "w": [0, -1],',
+        '"ArrowUp": [0, 1], "w": [0, -1],',
+    ),
+    # x's (arms, clears) pair — the modal shove's one load-bearing exception.
+    # Setting clears=true alongside arms=true breaks the invariant the whole
+    # design rests on: "exactly one of arms/clears is ever true."
+    # MEASURED against test_keymap.gd: exactly 3 of 42 fail —
+    # test_x_arms_the_shove_and_names_no_command,
+    # test_x_pressed_again_while_already_armed_stays_armed, and
+    # test_arms_and_clears_are_mutually_exclusive_across_every_bound_and_unbound_key
+    # (two failed asserts inside that last one, armed=false and armed=true).
+    "keymap-x-clears-too": (
+        "godot/stage/input/Keymap.gd",
+        'return _descriptor("", 0, 0, true, false)',
+        'return _descriptor("", 0, 0, true, true)',
+    ),
+    # q/Q's satchel slots, swapped — the case-sensitive half of the mapping.
+    # MEASURED against test_keymap.gd: exactly 2 of 42 fail —
+    # test_lowercase_q_uses_the_first_satchel_slot and
+    # test_uppercase_q_uses_the_second_satchel_slot.
+    "keymap-satchel-slots-swapped": (
+        "godot/stage/input/Keymap.gd",
+        '"q": "use_carried_0",\n\t"Q": "use_carried_1",',
+        '"q": "use_carried_1",\n\t"Q": "use_carried_0",',
+    ),
+    # The unbound-key fallback — the empty descriptor that c/t/g/m/n/p (and
+    # anything else this file has no name for) is supposed to get instead of
+    # a guessed verb. Mutated to guess "wait" instead of naming nothing.
+    # MEASURED against test_keymap.gd: exactly 8 of 42 fail — the six named
+    # letters (c/t/g/m/n/p), test_a_key_this_game_has_no_name_for_also_
+    # resolves_to_nothing (two failed asserts inside it), and
+    # test_an_unbound_key_still_clears_an_armed_shove.
+    "keymap-unbound-guesses-wait": (
+        "godot/stage/input/Keymap.gd",
+        "\treturn _descriptor(\"\", 0, 0, false, true)",
+        "\treturn _descriptor(\"wait\", 0, 0, false, true)",
+    ),
 }
 
 if len(sys.argv) > 1 and sys.argv[1] == "--list":
