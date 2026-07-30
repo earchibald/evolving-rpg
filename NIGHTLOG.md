@@ -1498,3 +1498,138 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > own world's copy: the row reads n/24 there now.
 >
 > 969 tests, typecheck clean. One row, one law, one source.
+
+## 2026-07-29 — 18:19 — the stairs learn to surprise you, and the bell learns to ring
+
+> Dear Designer,
+>
+> Eight notes from the long run, and your ruling on the stairs came in
+> while I was still measuring the first one. Taking them in the order
+> they matter.
+>
+> **The stairs.** You said it looked like they were always in a corner,
+> and in that map the northeast one. Half right, and the wrong half is
+> interesting: measured over 480 floors a board, the corner is real
+> and worse the bigger the board — 69% of expanses put the way out in
+> a corner box — but the northeast is not. The four quadrants came out
+> 25% each; you had found your own floor's corner, not a bias.
+>
+> Then the column neither of us had looked at. Over 480 expanse floors
+> the shortest walk to the stairs was **78 steps**. Not usually far.
+> Always far, and always the same kind of far. Which is exactly what
+> you then said out loud, so I built it: the exit draws a distance
+> BAND now — the long way six times in ten, the middle three, close by
+> one — and then draws its tile from every candidate in that band. The
+> corner habit halved on every board (69% → 32% on the expanse),
+> because corners are where the LONGEST walks end and only six floors
+> in ten now ask for the longest walk. About one floor in eleven puts
+> the stairs inside twenty steps. The floor's own story names the band
+> out loud, so you can see which kind of floor you got.
+>
+> One thing measurement forced, and I think it is the good part: as a
+> pure fraction of the floor, "close by" on the expanse came out at
+> sixty-seven steps of walking, which is not what the word means. So
+> the close band carries a ceiling in STEPS, not fractions — one room
+> apart is one room apart on the waste as much as in the vale.
+>
+> A near stair does not hand you the floor. The relic and the
+> provision still lie where they lay, off the road and guarded, so a
+> close exit buys the descent and costs you the armory. The old
+> placement could not ask you that question at all.
+>
+> **The bell.** You said the alarm didn't seem to attract monsters.
+> You were right, and not for the reason I expected. Four bodies in
+> five on any floor are POSTED GUARDS, and the bell was excusing every
+> one of them — it only ever lifted the awareness cap for free
+> hunters. Simulated on real floors with you standing on the trap for
+> the whole ringing: **half a body moved.** I rang it five times
+> longer and exactly the same half a body moved. The clock was never
+> the problem; the leash was.
+>
+> So a ringing bell takes guards off their posts now. Not the warden —
+> the warden is bound to the door by role and the watched stairs are
+> load-bearing — but every shelf-guard on the floor, yes. That moved
+> it from half a body to 3.85 of the 4.7 on an expanse floor. And
+> *then* the clock started buying something, so it scales with the
+> board: 12 turns in the vale, 24 on the expanse, 36 on the waste,
+> which lands about one arrival per bell everywhere. The vale is
+> bit-identical, as always.
+>
+> **Spotting traps.** You thought it might be too easy. It was: the old
+> two rolls compounded to 84–91% found at every depth and level in the
+> game, which is a formality wearing a dice roll's clothes. It reads
+> 68–78% now — the miss went from about one trap in nine to about one
+> in four. I stopped there rather than going further on purpose: a
+> trap you cannot see is a chore, a trap you can see is a puzzle, and
+> most of them should still be puzzles. Wits still earns its keep, 5%
+> on both rolls per point.
+>
+> **The little map.** Both of your filings landed. It ghosts to 28%
+> opacity when you are standing underneath it — asked of the layout,
+> not computed from the camera, so it is the actual rectangles that
+> decide — and comes back when you step out. And the marks stopped
+> obeying the two-pixels-per-tile scale: the way out is a bright green
+> **diamond** now, prizes are gold squares, you are a white one, each
+> with a dark halo so it reads over pale floor and dark wall alike.
+> Shape as well as colour, since colour alone at that size was a
+> guess. Verified in a live board, not just in my head.
+>
+> **Examining things.** Mouseover, as you said would do for now: the
+> satchel row and the scroll row carry their details, with the real
+> numbers pulled from the tables at the depth you are standing on, so
+> the words cannot drift from the mechanics. Gated the way you phrased
+> it — *when we have learned what it does in a world* — so it is
+> derived from this chain: a kind you have spent is a kind you
+> understand, and a rewind un-learns it. Unlearned things say so
+> instead of spilling.
+>
+> **Two I did not build, and why.**
+>
+> *Disarming traps* — no, we have no such verb, and you could not find
+> it because it is not there. Designed and priced, waiting on your
+> word: one attempt per trap ever (spend it and the trap is yours to
+> route around forever), attempted from an adjacent tile, `d20 + wits`
+> against the trap's own bar, and a fumble springs it on you. That
+> shape means the attempt is a decision and not a button, and it
+> cannot be farmed. Reason I held it: it is a new verb and a new
+> event, and shipping it in the same breath as a trap rebalance would
+> confound the thing I just measured. Say go and it is an afternoon.
+>
+> *Sound* — you asked me to do some sourcing, so here is the sourcing
+> rather than a folder of files. My recommendation is that we
+> synthesise it in the browser and ship **no audio assets at all**:
+> short WebAudio envelopes, a handful of voices (step, blow landing,
+> kill, pickup, trap, level, death), a few dozen lines of code, no
+> licences to track, no download weight, and every sound tunable by
+> editing a number instead of re-cutting a file. A slab-voiced dungeon
+> wants dry clicks and low thuds, which is precisely what synthesis is
+> good at; sampled foley would fight the register. Mute lives on the
+> keymap as a top-level toggle, no volume, as you said. I did not
+> build it blind because I cannot hear it — this is the one thing in
+> the round where your ear has to be in the loop, and I would rather
+> hand you three candidate palettes to listen to than one I chose
+> alone.
+>
+> **The ceremony.** 976 tests, typecheck clean. The golden had to be
+> regenerated — two new draws per floor move the generation stream —
+> and I re-probed the seed rather than just re-recording: the old
+> seed-15 run had quietly stopped killing anything, and seed 17 gives
+> 28 strikes, two crits, three lunges, a pickup and all three
+> creatures dead on the ground. The fixture tests more than it did.
+>
+> One pin moved and I want you to see it rather than find it: the
+> vale's depth-5 band re-opened from 13 to 16. That is the pipeline,
+> not the deep going soft, and I measured it as such — a fresh body
+> dropped on ONE floor and asked to leave it reads depth 3 5→4, depth
+> 5 1→2, depth 7 0→0 out of 20, far-only exits against banded. The
+> bite is where it was. More bodies simply reach the depth to be
+> bitten, which is the same thing we recorded when the teaching floor
+> learned to reach you. Every other pin, vale and expanse, unmoved.
+>
+> Math for all of it in BALANCE.md, "The stairs move" and "The traps
+> answer back". And the procedure for reading a round like this one is
+> written into AGENTS.md now, because your notes sat unread for an
+> hour while I worked out where they lived: a run only produces a
+> listener report if it was *submitted*, so a night that ends in death
+> leaves the freshest thinking in the repo sitting in notes.jsonl with
+> nothing pointing at it. That is fixed as a habit, not as code.

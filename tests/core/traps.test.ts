@@ -3,7 +3,7 @@ import { FLOOR, WALL, EXIT, makeGrid } from '../../src/core/grid.js';
 import { createWorld, senseTrap, springTrap, attemptMove, endsTurn } from '../../src/core/commands.js';
 import { apply } from '../../src/core/apply.js';
 import { SCHEMA_VERSIONS } from '../../src/core/events.js';
-import { trapCount, trapKindsAt, TRAP_NEAR_RADIUS, SNARE_TURNS, ALARM_TURNS, HATCH_BAND, NEEDLE_VENOM_TURNS } from '../../src/core/tables.js';
+import { trapCount, trapKindsAt, TRAP_NEAR_RADIUS, SNARE_TURNS, ALARM_TURNS, alarmTurns, HATCH_BAND, NEEDLE_VENOM_TURNS, TRAP_SIGHT_NEED, TRAP_NEAR_NEED, trapLevelAt } from '../../src/core/tables.js';
 import { playerStep } from '../../src/play/session.js';
 import { emptyLog, append, fold, chain } from '../../src/log/chain.js';
 import type { Entity } from '../../src/core/entity.js';
@@ -171,6 +171,45 @@ describe('springing', () => {
     // ringing, it comes.
     expect(decide({ ...rung, alarm: null }, 'foe-1')).toEqual({ kind: 'wait' });
     expect(decide(rung, 'foe-1')).toEqual({ kind: 'step', dx: -1, dy: 0 });
+  });
+
+  it('the ringing bell takes posted guards off their posts — the filing that said it attracted nobody', () => {
+    // The designer, 2026-07-29: "the alarm bell trap doesn't seem...to attract
+    // monsters." Measured on real expanse floors, 83% of the bodies were
+    // POST-LEASHED GUARDS and the bell excused every one of them — barely half
+    // a body per floor took a single step, at any clock. A guard whose whole
+    // floor is screaming does not keep standing by its shelf.
+    const posted = { ...foe(22), disposition: 'guard' as const, post: { x: 22, y: 1 } };
+    const state = corridor([you(3), posted], [trap('alarm bell', 3)]);
+    const rung = apply(state, sealed(springTrap(state, 'player')!));
+
+    // Quiet: the leash holds it home (GUARD_LEASH 4, the player 19 away).
+    expect(decide({ ...rung, alarm: null }, 'foe-1')).toEqual({ kind: 'wait' });
+    // Ringing: it leaves the post and comes.
+    expect(decide(rung, 'foe-1')).toEqual({ kind: 'step', dx: -1, dy: 0 });
+  });
+
+  it('the bell rings longer on a bigger board, so the summons can be answered at all', () => {
+    // Twelve turns was tuned in the vale and never re-read when the boards
+    // began to breathe: on the expanse the median body stands 57 steps from
+    // the bell, so the old clock called to bodies that could not arrive.
+    expect(alarmTurns(1)).toBe(ALARM_TURNS);
+    expect(alarmTurns(2)).toBe(2 * ALARM_TURNS);
+    expect(alarmTurns(3)).toBe(3 * ALARM_TURNS);
+  });
+
+  it('a trap is still usually found, but missing one is now an ordinary event', () => {
+    // The designer: "might be too easy for me to spot traps." The old 10/8
+    // compounded to 84-91% found at every depth and level in the game. The
+    // doctrine (hidden = chore, visible = puzzle) says most traps SHOULD be
+    // found — so this pins the window, not a number: mostly found, regularly
+    // missed.
+    const wits = 6;
+    const level = trapLevelAt(6);
+    const chance = (need: number): number => Math.max(0, Math.min(20, 21 - (need + 2 * level - wits))) / 20;
+    const found = 1 - (1 - chance(TRAP_SIGHT_NEED)) * (1 - chance(TRAP_NEAR_NEED));
+    expect(found).toBeGreaterThan(0.6);
+    expect(found).toBeLessThan(0.85);
   });
 
   it('the hatch stands its risers up inside the band — never beside you — and the reducer seats them', () => {

@@ -67,12 +67,12 @@ That is the whole game. Everything else is reading.
 | **hollow bell** | ring it: the way out answers from wherever it stands, and every unfound prize on the floor glints onto your map. Knowledge, never power |
 | **scroll** | one page carried at a time, read with `r`, gone when read. Unread it wears a strange mark — "a scroll marked KOR-VETH" — and the first reading teaches this world what that mark means, forever. No scroll deals damage: they buy knowledge, position and time |
 | **the boards** | a new world's ground, chosen at the door: **the vale** (the old 48×32), **the expanse** (four times the ground — the default), **the waste** (eight times). Bigger boards hold more of everything but thinner per step — the journey is the point. A wipe passes the same door: the one world that remains starts on the ground you pick there |
-| **the window** | on big boards the map shows a window that follows you; the small see-through map floating in the window's corner keeps the whole journey, fog and all, with the window's frame drawn on |
+| **the window** | on big boards the map shows a window that follows you; the small see-through map floating in the window's corner keeps the whole journey, fog and all, with the window's frame drawn on. The way out is a green diamond on it, prizes are gold, you are white — and it fades almost away when you walk underneath it, so it never hides the tile you are standing on |
 | **patrol** | some creatures walk rounds of the floor now instead of standing. A corridor that was empty is not empty forever |
 | **a guard's post** | the keeper and every relic guard own their ground: chase or flee, they return to it rather than drifting off across the floor |
 | **mimic** | very rarely, an item on the floor was never an item. The floor's story admits when something here is not what it seems; beasts give it a wide berth; reaching for it is how it is asked. It strikes first, and it always carries something worth the teeth |
-| **trap** | marked ground you were sharp enough to see — or unmarked ground you were not. Two chances to know each one: a wits look when it first comes into view, a second, easier look the first time you pass close. A revealed trap wears an ember ring on the map, and the rail warns when one lies beside you |
-| **the trap kinds** | spikes (blood, dodgeable), the venom needle (fast — learn to dodge it by level 3), the strangling snare (holds your legs a few rounds; blows still swing), the alarm bell (the whole floor knows you, for a while), the hatch and nest (things climb out, paces off), the maw (the floor gives way — the next floor down, no rest), the lodestone (elsewhere, instantly) |
+| **trap** | marked ground you were sharp enough to see — or unmarked ground you were not. Two chances to know each one: a wits look when it first comes into view, a second, easier look the first time you pass close. Together those catch about three in four. A revealed trap wears an ember ring on the map, and the rail warns when one lies beside you. There is no way to disarm one — you route around it, or you walk it and hope |
+| **the trap kinds** | spikes (blood, dodgeable), the venom needle (fast — learn to dodge it by level 3), the strangling snare (holds your legs a few rounds; blows still swing), the alarm bell (the whole floor knows you and comes for you — guards leave their posts, and it rings longer on a bigger board), the hatch and nest (things climb out, paces off), the maw (the floor gives way — the next floor down, no rest), the lodestone (elsewhere, instantly) |
 | **spill** | what a slain creature was carrying, set down where it fell. About one in three carries something — the reason a fight in a corridor can pay |
 | **shove** | your push. It never misses: open ground moves them, a wall hurts them, another body tangles both. The wall is the argument |
 | **brace** | your guard, for one round: harder to hit, no trample can move you, a coiled spring breaks on it — and whatever misses you reels |
@@ -126,9 +126,19 @@ all the way down.
 
 **Watch the ground.** From floor two the floors keep traps. Most are
 found things — your eyes do the work as you walk — and found traps are
-marked and warned about. The unfound ones are the stories. If the floor
-gives way under you, that is not a death: it is the next floor, arrived
-at hard.
+marked and warned about. Roughly one in four gets past you, though, so
+the ground is worth your attention rather than your trust. The unfound
+ones are the stories. If the floor gives way under you, that is not a
+death: it is the next floor, arrived at hard. And if you ring the alarm
+bell, do not stand there listening to it — the floor comes, guards and
+all, for as long as it rings.
+
+**The stairs are not always far.** Most floors put the way out at the
+long end of a long walk, but not all of them: sometimes it is the middle
+distance, and every so often it is one room away. The floor's own story
+line says which kind you got. A close stair is not a gift — the prize
+and the provision still lie off your road, guarded, so a short floor
+asks whether you came down here to descend or to be paid.
 
 **Trust carefully.** The floor's story tells you when one thing here is
 not what it seems. Items the beasts walk wide of deserve a second look —

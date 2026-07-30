@@ -1,4 +1,5 @@
-import { strikeLine, crossings } from '../../src/ui/words.js';
+import { strikeLine, crossings, whatItDoes } from '../../src/ui/words.js';
+import { PROVISIONS, SCROLLS, draughtCeiling, smokeTurns, FLARE_RADIUS } from '../../src/core/tables.js';
 import { assayLine } from '../../src/assay/register.js';
 
 const blow = (over: Partial<Parameters<typeof strikeLine>[0]> = {}): Parameters<typeof strikeLine>[0] => ({
@@ -100,5 +101,31 @@ describe('the shot, told', () => {
   it('a slinger\'s landed shot wears the volley\'s swing word', () => {
     const theirs = strikeLine(blow({ mine: false, ranged: true, attackerKind: 'slinger', them: 'the pale slinger', tier: 'hit', seq: 12 }));
     expect(theirs).toMatch(/stings|cracks/u);
+  });
+});
+
+describe('examining what you carry', () => {
+  // The designer's filing, 2026-07-29: "when we have learned what an item or a
+  // scroll does in a world we should be able to examine the item for details."
+  // The gate lives in the view (has this chain spent one?); these are the words
+  // it shows once the gate opens.
+  it('has words for every provision and every scroll the game can hand you', () => {
+    for (const p of PROVISIONS) expect(whatItDoes(p.kind, 4), p.kind).not.toBeNull();
+    for (const s of SCROLLS) expect(whatItDoes(s.kind, 4), s.kind).not.toBeNull();
+  });
+
+  it('says nothing at all about a kind it does not know, rather than guessing', () => {
+    expect(whatItDoes('keen edge', 4)).toBeNull();
+    expect(whatItDoes('', 1)).toBeNull();
+  });
+
+  it('quotes the tables, at the depth you are standing on — so the words cannot drift', () => {
+    // Depth-scaled numbers are asked of the table, not typed into the prose.
+    expect(whatItDoes('vital draught', 2)).toContain(String(draughtCeiling(2)));
+    expect(whatItDoes('vital draught', 8)).toContain(String(draughtCeiling(8)));
+    expect(draughtCeiling(2)).not.toBe(draughtCeiling(8));
+    expect(whatItDoes('still smoke', 1)).toContain(String(smokeTurns(1)));
+    expect(whatItDoes('still smoke', 7)).toContain(String(smokeTurns(7)));
+    expect(whatItDoes('tallow flare', 3)).toContain(String(FLARE_RADIUS));
   });
 });

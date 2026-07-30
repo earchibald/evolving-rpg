@@ -207,7 +207,14 @@ kbd {
   box-shadow: 0 2px 12px rgba(0, 0, 0, .55);
   opacity: .9;
   pointer-events: none;
+  transition: opacity .18s ease-out;
 }
+
+/* Standing underneath it: the map yields, because the tile you are on outranks
+   the plan of the floor (the designer, 2026-07-29 — the far northeast corner is
+   exactly where the overlay lives). Ghosted, not hidden: you still get the
+   shape of where you are, and it comes back the moment you step out. */
+.minimap.under { opacity: .28; }
 
 /* The seed at the door: same cloth as every other typed word. */
 .seed-row { display: flex; flex-direction: column; gap: .25rem; font-size: .78rem; color: var(--soft); }

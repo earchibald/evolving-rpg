@@ -264,34 +264,19 @@ export function generateMap(
 }
 
 /**
- * The farthest walkable tile from the start, by flood-fill distance rather than
- * straight-line — so "far" means far to walk, not far to look at. Ties break on
- * tile index, which is deterministic and independent of traversal order.
- *
- * Draws nothing: where the way out lies is decided by the map's shape, not by
- * chance, which is what makes every world's journey the longest one available
- * to it rather than an accident.
+ * Every walkable tile's distance from the start, in steps of walking rather
+ * than straight-line — so "far" means far to walk, not far to look at. Keyed
+ * by tile index; the one flood-fill every "how far is that" question here
+ * shares, so they cannot disagree about the shape of the floor.
  */
-export function farthestFrom(grid: Grid, start: { x: number; y: number }): { x: number; y: number } {
+export function walkDistances(grid: Grid, start: { x: number; y: number }): Map<number, number> {
   const seen = new Map<number, number>();
   const queue: Array<{ x: number; y: number; d: number }> = [{ ...start, d: 0 }];
   seen.set(start.y * grid.width + start.x, 0);
 
-  let best = { x: start.x, y: start.y };
-  let bestDistance = -1;
-  let bestIndex = Number.POSITIVE_INFINITY;
-
   while (queue.length > 0) {
     const here = queue.shift();
     if (here === undefined) break;
-
-    const index = here.y * grid.width + here.x;
-    if (here.d > bestDistance || (here.d === bestDistance && index < bestIndex)) {
-      best = { x: here.x, y: here.y };
-      bestDistance = here.d;
-      bestIndex = index;
-    }
-
     for (const [nx, ny] of [[here.x + 1, here.y], [here.x - 1, here.y], [here.x, here.y + 1], [here.x, here.y - 1]] as const) {
       if (!isPassable(grid, nx, ny)) continue;
       const key = ny * grid.width + nx;
@@ -301,7 +286,113 @@ export function farthestFrom(grid: Grid, start: { x: number; y: number }): { x: 
     }
   }
 
+  return seen;
+}
+
+/**
+ * The farthest walkable tile from the start. Ties break on tile index, which is
+ * deterministic and independent of traversal order.
+ *
+ * Draws nothing. This is the FAR ANCHOR — the bottom's heart lies here, and the
+ * exit's bands are measured against it — not, since the designer's ruling
+ * below, the way out on an ordinary floor.
+ */
+export function farthestFrom(grid: Grid, start: { x: number; y: number }): { x: number; y: number } {
+  const distances = walkDistances(grid, start);
+  let best = { x: start.x, y: start.y };
+  let bestDistance = -1;
+  for (const [index, d] of [...distances].sort((a, b) => a[0] - b[0])) {
+    if (d <= bestDistance) continue;
+    best = { x: index % grid.width, y: Math.floor(index / grid.width) };
+    bestDistance = d;
+  }
   return best;
+}
+
+/**
+ * Where the way out lies (the designer's ruling, 2026-07-29, spoken mid-run:
+ * "farthest walkable tile every time needs some kind of randomicity. every
+ * once in a while the stairs WILL be one room apart!").
+ *
+ * Measured before the change, 480 floors a board: the exit landed in a corner
+ * box on 69% of expanses, and the SHORTEST walk to it in the whole sample was
+ * 78 steps. Not "usually long" — always long, and always the same shape of
+ * long. The floor had one honest thing to say about itself and said it every
+ * time.
+ *
+ * So: bands, drawn. The scale is the floor's own reach — fractions of the
+ * longest walk it actually offers — so the vale and the waste both get a long
+ * way and a close one in their own terms. Two counted draws, the band then the
+ * tile inside it, and the tile is drawn from ALL of the band's candidates,
+ * which is what breaks the corner habit: corners are where the longest walks
+ * end, not where the middling ones do.
+ *
+ * A close exit is not a shortcut handed over — it is the floor asking a
+ * question. The relic and the provision still lie where they lay, off the
+ * road, so a near stair buys the descent and costs the armory. That is the
+ * choice the old placement could never offer.
+ */
+export const EXIT_BANDS: readonly {
+  readonly name: string;
+  readonly from: number;
+  readonly to: number;
+  readonly weight: number;
+  /** A ceiling in STEPS, not fractions. "One room apart" is one room apart on
+   *  the waste as much as in the vale — measured first as a pure fraction, and
+   *  45% of a 150-step expanse is sixty-seven steps of walking, which is not
+   *  what the word close means. */
+  readonly maxSteps?: number;
+}[] = Object.freeze([
+  Object.freeze({ name: 'the long way', from: 0.8, to: 1, weight: 6 }),
+  Object.freeze({ name: 'the middle', from: 0.45, to: 0.8, weight: 3 }),
+  Object.freeze({ name: 'close by', from: 0, to: 0.45, weight: 1, maxSteps: 25 }),
+]);
+
+/** No exit nearer than this many steps of walking. The stairs may be one room
+ *  apart; they are never underfoot, and the teaching floor's baseline walk
+ *  (the relic and its guard, eight steps in) needs a road to stand on. */
+export const MIN_EXIT_WALK = 8;
+
+export function chooseExit(
+  seed: number,
+  counter: number,
+  grid: Grid,
+  start: { x: number; y: number },
+): { exit: { x: number; y: number }; band: string; counterAfter: number } {
+  let c = counter;
+  const distances = [...walkDistances(grid, start)].sort((a, b) => a[0] - b[0]);
+  const reach = distances.reduce((m, [, d]) => Math.max(m, d), 0);
+
+  const total = EXIT_BANDS.reduce((s, b) => s + b.weight, 0);
+  let roll = intBetween(seed, c, 1, total); c += 1;
+  let chosen = 0;
+  for (let i = 0; i < EXIT_BANDS.length; i += 1) {
+    roll -= EXIT_BANDS[i]!.weight;
+    if (roll <= 0) { chosen = i; break; }
+  }
+
+  // The chosen band first, then the others in declared order — longest way
+  // out is the last resort, which is where a floor too small to hold a band
+  // honestly ends up. Drawless: the fallback order is fixed.
+  const order = [chosen, ...EXIT_BANDS.map((_b, i) => i).filter((i) => i !== chosen)];
+  for (const i of order) {
+    const band = EXIT_BANDS[i]!;
+    const lo = Math.max(MIN_EXIT_WALK, Math.ceil(band.from * reach));
+    const hi = Math.min(i === 0 ? reach : Math.floor(band.to * reach), band.maxSteps ?? reach);
+    const candidates = distances.filter(([, d]) => d >= lo && d <= hi);
+    if (candidates.length === 0) continue;
+    const pick = candidates[intBetween(seed, c, 0, candidates.length - 1)]!; c += 1;
+    return {
+      exit: { x: pick[0] % grid.width, y: Math.floor(pick[0] / grid.width) },
+      band: band.name,
+      counterAfter: c,
+    };
+  }
+
+  // A floor with nothing eight steps away at all: the far anchor, and the
+  // draw spent so the stream reads the same either way.
+  c += 1;
+  return { exit: farthestFrom(grid, start), band: 'the long way', counterAfter: c };
 }
 
 /** A shortest walk between two tiles, root-first and inclusive of both ends,

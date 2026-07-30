@@ -3,7 +3,7 @@ import { emptyRefs, createRef, getRef, setHead, fork, reset, listRefs } from '..
 import { createWorld, ratifyRule, foundWorld } from '../core/commands.js';
 import { validateBible, isRefusedBible } from '../canon/bible.js';
 import { smithName, DEFAULT_WORDS, fnv1a, scrollLabel } from '../canon/namesmith.js';
-import { strikeLine, crossings } from './words.js';
+import { strikeLine, crossings, whatItDoes } from './words.js';
 import { storyOf, remember, rememberedOn, epitaphOf, notable } from '../canon/chronicler.js';
 import { SCHEMA_VERSIONS } from '../core/events.js';
 import { playerStep, playerWait, playerUse, playerShove, playerBrace, playerTake, playerVolley, playerRead, runWorldTurns, buryIfDead, beginAgain, descend, descendThrough, isGrave } from '../play/session.js';
@@ -714,27 +714,74 @@ function paintMinimap(
       const at = idx(state.grid, x, y);
       if (!fog.seen.has(at)) continue;
       const tile = state.grid.tiles[at];
-      if (tile === EXIT) pen.fillStyle = ink('--exit', '#7fbf7f');
-      else if (tile === WALL || tile === SECRET) pen.fillStyle = ink('--rule', '#2a2f38');
+      // The exit is not painted as ground — it gets a MARK below, drawn over
+      // everything, because two green pixels among two hundred grey ones was
+      // the whole of the designer's complaint.
+      if (tile === WALL || tile === SECRET) pen.fillStyle = ink('--rule', '#2a2f38');
       else pen.fillStyle = ink('--faint', '#5b6472');
       pen.fillRect(x * scale, y * scale, scale, scale);
     }
   }
+
+  /**
+   * A mark, drawn to be FOUND (the designer's filing, 2026-07-29: "the exit and
+   * other things shown on the minimap need to be much clearer"). Two pixels per
+   * tile is the right scale for a floor plan and the wrong scale for a
+   * landmark, so landmarks stop obeying it: a mark is sized in pixels, centred
+   * on its tile, and carries a dark halo so it reads over pale floor and dark
+   * wall alike. Squares for things you can carry, a diamond for the way out —
+   * shape as well as colour, since colour alone at this size is a guess.
+   */
+  const mark = (x: number, y: number, fill: string, size: number, diamond = false): void => {
+    const cx = x * scale + scale / 2;
+    const cy = y * scale + scale / 2;
+    const r = size / 2;
+    pen.beginPath();
+    if (diamond) {
+      pen.moveTo(cx, cy - r); pen.lineTo(cx + r, cy);
+      pen.lineTo(cx, cy + r); pen.lineTo(cx - r, cy);
+      pen.closePath();
+    } else {
+      pen.rect(cx - r, cy - r, size, size);
+    }
+    pen.fillStyle = fill;
+    pen.strokeStyle = 'rgba(8, 9, 11, .92)';
+    pen.lineWidth = 1.5;
+    pen.stroke();
+    pen.fill();
+  };
+
   // Prizes the run knows about (the bell's gift carries here too).
   for (const prize of state.items) {
     const at = idx(state.grid, prize.pos.x, prize.pos.y);
     if (!fog.seen.has(at)) continue;
-    pen.fillStyle = ink('--item', '#c9a227');
-    pen.fillRect(prize.pos.x * scale, prize.pos.y * scale, scale, scale);
+    mark(prize.pos.x, prize.pos.y, ink('--item', '#c9a227'), 6);
+  }
+  // The way out, brightest thing on the plan.
+  for (let at = 0; at < state.grid.tiles.length; at += 1) {
+    if (state.grid.tiles[at] !== EXIT || !fog.seen.has(at)) continue;
+    mark(at % state.grid.width, Math.floor(at / state.grid.width), ink('--exit', '#7fbf7f'), 9, true);
   }
   // You, and the frame the big map is looking through.
   if (anchor !== undefined) {
-    pen.fillStyle = ink('--player', '#e8e9ec');
-    pen.fillRect(anchor.pos.x * scale - 1, anchor.pos.y * scale - 1, scale + 2, scale + 2);
+    mark(anchor.pos.x, anchor.pos.y, ink('--player', '#e8e9ec'), 7);
   }
   pen.strokeStyle = ink('--soft', '#99a1b0');
   pen.lineWidth = 1;
   pen.strokeRect(cam.x * scale + 0.5, cam.y * scale + 0.5, cam.w * scale - 1, cam.h * scale - 1);
+
+  // The overlay gets out of your way (the designer's filing, same run: "the
+  // overlay map needs to become more transparent when the player is underneath
+  // it"). Asked of the LAYOUT rather than computed from the camera — the cell
+  // and the canvas both know where they are on screen, and rectangles that
+  // actually overlap are the only honest test.
+  const standing = document.querySelector('.cell.player');
+  const over = standing !== null && (() => {
+    const a = standing.getBoundingClientRect();
+    const b = map.getBoundingClientRect();
+    return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+  })();
+  map.classList.toggle('under', over);
 }
 
 function render(): void {
@@ -1027,6 +1074,37 @@ function render(): void {
     tips.set('hit points', `${p.hp} of a ceiling of ${player.maxHp}: ${born} at birth + ${levelHp} from levels + ${gearHp} from what you wear. wounds close whole at each level, and on the stairs of a cleared floor.`);
     tips.set('you deal', `1d${d.die}+${d.flat} each blow that lands — the band your might ${p.might} sits in.${next} a crit doubles the roll.`);
   }
+  // Examining what you carry (the designer's filing, 2026-07-29). The gate is
+  // the designer's own wording — "when we have LEARNED what an item or a
+  // scroll does IN A WORLD" — so it is derived from this chain exactly like the
+  // scroll's name is: a kind you have spent before is a kind you understand,
+  // and a rewind un-learns it. Unlearned things say so instead of spilling.
+  {
+    const spent = head === null ? [] : chain(log, head);
+    const learned = (kind: string, event: 'ITEM_USED' | 'SCROLL_READ'): boolean =>
+      spent.some((e) => e.type === event && (e.payload as { kind?: string }).kind === kind);
+
+    const carried = player?.satchel ?? [];
+    if (carried.length > 0) {
+      tips.set('satchel', carried.map((c, i) => {
+        const name = oracle.ask(describeQuestion('item', c.kind, {}, worldRoot())).name;
+        const key = i === 0 ? 'q' : 'Q';
+        const does = whatItDoes(c.kind, state.depth);
+        return learned(c.kind, 'ITEM_USED') && does !== null
+          ? `${name} (${key}): ${does}`
+          : `${name} (${key}): what it does is not known in this world yet — spend one and find out.`;
+      }).join('\n\n'));
+    }
+
+    const scroll = player?.scroll;
+    if (scroll !== undefined) {
+      const does = whatItDoes(scroll.kind, state.depth);
+      tips.set('the scroll', learned(scroll.kind, 'SCROLL_READ') && does !== null
+        ? `${oracle.ask(describeQuestion('item', scroll.kind, {}, worldRoot())).name} (r): ${does}`
+        : 'an unread mark. this world has not learned what this one says — r reads it, and the reading is the learning.');
+    }
+  }
+
   // The native title only. The first cut drew its own styled box as well,
   // and the two tooltips stacked — one popup per question is the rule.
   const tipped = (node: HTMLElement, key: string): void => {

@@ -175,12 +175,27 @@ export function decide(state: GameState, entityId: string): Action {
     // Intruder inside the leash: an ordinary hunt from here down.
   }
 
+  // The alarm ringing: the floor knows where you are. Read here because it
+  // answers two questions below — whether a posted guard leaves its post, and
+  // how far the hunt may search.
+  //
+  // The designer's filing, 2026-07-29: "the alarm bell trap doesn't seem...to
+  // attract monsters". Measured, they were right by arithmetic, and the clock
+  // was not the reason: 83% of an expanse floor's bodies are POST-LEASHED
+  // GUARDS, and the bell used to excuse every one of them. Per belled floor,
+  // barely half a body took a single step — and ringing five times longer
+  // moved exactly the same half. So the leash is what the bell cuts. A guard
+  // whose whole floor is screaming does not keep standing by its shelf; the
+  // warden's vigil does, because the warden is bound to the door BY ROLE and
+  // the stairs being watched is load-bearing.
+  const alarmed = state.alarm !== null && state.turn < state.alarm.until;
+
   // A posted guard is the vigil's homeward half without the mend (v10):
   // it hunts only what comes within GUARD_LEASH of its post — the leash
   // anchored to the POST, not to wherever the chase has dragged it — and
   // walks home when the leash empties. The keeper and every relic guard
   // hold their prizes now instead of freezing where a chase went cold.
-  if (self.disposition === 'guard' && verb !== 'vigil') {
+  if (self.disposition === 'guard' && verb !== 'vigil' && !alarmed) {
     const post = self.post ?? self.pos;
     const intruderNear = walkDistance(state.grid, post, scent) <= GUARD_LEASH;
     if (!intruderNear) {
@@ -231,12 +246,8 @@ export function decide(state: GameState, entityId: string): Action {
     }
   }
 
-  // The alarm ringing: the floor knows you, and the awareness cap — the
-  // wall of eight steps that makes a closed corridor a refuge — is gone
-  // until the ringing stops. Guards stay leashed (they guard) and the
-  // vigil holds its arena; it is the free hunters and the wanderers the
-  // bell belongs to.
-  const alarmed = state.alarm !== null && state.turn < state.alarm.until;
+  // The awareness cap — the wall of eight steps that makes a closed corridor
+  // a refuge — is gone while the ringing lasts.
   const step = firstStep(state, entityId, self.pos, scent,
     alarmed ? state.grid.width + state.grid.height : AWARENESS);
   if (step !== null) return { kind: 'step', dx: step.dx, dy: step.dy };

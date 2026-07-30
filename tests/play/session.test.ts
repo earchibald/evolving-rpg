@@ -3,7 +3,8 @@ import { playerStep, playerWait, runWorldTurns, descend } from '../../src/play/s
 import { emptyRefs, createRef, getRef } from '../../src/log/refs.js';
 import type { DraftEvent } from '../../src/core/events.js';
 import { createWorld, outcome } from '../../src/core/commands.js';
-import { farthestFrom } from '../../src/core/mapgen.js';
+import { farthestFrom, chooseExit, generateMap, walkDistance, MIN_EXIT_WALK } from '../../src/core/mapgen.js';
+import { motifAt } from '../../src/core/tables.js';
 import { EXIT, FLOOR } from '../../src/core/grid.js';
 import { reachableFrom } from '../../src/core/reachability.js';
 import { SCHEMA_VERSIONS } from '../../src/core/events.js';
@@ -47,12 +48,44 @@ describe('the world a run starts in', () => {
     }
   });
 
-  it('puts the way out at the far end, not next to you', () => {
-    const player = state.entities[0];
-    if (player === undefined) throw new Error('no player');
-    const exitIndex = state.grid.tiles.findIndex((t) => t === EXIT);
-    const exit = { x: exitIndex % state.grid.width, y: Math.floor(exitIndex / state.grid.width) };
-    expect(farthestFrom(state.grid, player.pos)).toEqual(exit);
+  it('puts the way out a real walk away, never underfoot — but no longer always at the far end', () => {
+    // The designer's ruling, 2026-07-29: the farthest tile every time needed
+    // randomicity, and every once in a while the stairs will be one room apart.
+    // So the law is a floor and a ceiling, not an identity: at least
+    // MIN_EXIT_WALK steps, never more than the floor's own longest walk.
+    // Checked across many worlds, because on any single seed a band draw is
+    // just one number.
+    for (let seed = 0; seed < 40; seed += 1) {
+      const built = fold(
+        append(emptyLog(), null, createWorld(seed, 24, 16)).log,
+        append(emptyLog(), null, createWorld(seed, 24, 16)).event.id,
+      );
+      const you = built.entities[0];
+      if (you === undefined) throw new Error(`no player for seed ${seed}`);
+      const exitIndex = built.grid.tiles.findIndex((t) => t === EXIT);
+      const exit = { x: exitIndex % built.grid.width, y: Math.floor(exitIndex / built.grid.width) };
+      const walk = walkDistance(built.grid, you.pos, exit);
+      const reach = walkDistance(built.grid, you.pos, farthestFrom(built.grid, you.pos));
+      expect(walk).toBeGreaterThanOrEqual(Math.min(MIN_EXIT_WALK, reach));
+      expect(walk).toBeLessThanOrEqual(reach);
+    }
+  });
+
+  it('draws the way out from every band across enough worlds, and the close one is close in STEPS', () => {
+    // The measurement that made the ruling land: as a pure fraction of reach,
+    // "close by" on a 96x64 board was sixty-seven steps of walking. The band
+    // carries a step ceiling now, so a close stair is close on every board.
+    const drawn = new Set<string>();
+    let closest = Number.POSITIVE_INFINITY;
+    for (let seed = 0; seed < 60; seed += 1) {
+      const { motif, counterAfter } = motifAt(seed, 0, 3);
+      const g = generateMap(seed, counterAfter, 96, 64, motif);
+      const { exit, band } = chooseExit(seed, g.counterAfter, g.grid, g.start);
+      drawn.add(band);
+      closest = Math.min(closest, walkDistance(g.grid, g.start, exit));
+    }
+    expect([...drawn].sort()).toEqual(['close by', 'the long way', 'the middle']);
+    expect(closest).toBeLessThanOrEqual(25);
   });
 
   it('leaves something worth having, guarded — and one provision, free', () => {

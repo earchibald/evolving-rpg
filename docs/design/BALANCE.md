@@ -424,3 +424,150 @@ band, depth-5 inside its band.
   (bounty rent 81 buys 3–4 mixed bodies; no patrol boost landed). The
   boredom filing may walk one floor down. That is the bounty's
   territory — fights-per-heal — and takes its own measured pass.
+
+## The stairs move (2026-07-29 — the exit-placement ruling, math run)
+
+The designer, mid-run, on reading that the way out was always the farthest
+walkable tile: *"farthest walkable tile every time needs some kind of
+randomicity. every once in a while the stairs WILL be one room apart!"*
+
+### What was true (480 floors a board, depths 1–8, 60 seeds)
+
+| Board | exit in a corner box | quadrants NE/NW/SE/SW | walk start→exit min / median / max |
+|---|---|---|---|
+| vale 48x32 | 42% | 28 / 27 / 23 / 23 | 32 / 56 / 96 |
+| expanse 96x64 | **69%** | 25 / 26 / 24 / 25 | **78** / 112 / 174 |
+| waste 128x96 | 65% | 28 / 25 / 25 / 22 | 110 / 159 / 242 |
+
+Two readings, one right and one wrong. The corner was real and worse on the
+big boards — the longest walk from a room center ends where two edges meet, so
+"farthest" and "corner" are close to the same word. The northeast was not:
+the quadrants are even to within a few points, and the designer had simply
+found their own floor's corner. And the number neither of us had looked at is
+the third column: over 480 expanse floors the stairs were **never** closer
+than 78 steps. Not usually far. Always far, and always the same far.
+
+### The bands
+
+`chooseExit` (src/core/mapgen.ts) draws a band off the floor's own reach —
+the longest walk available to it — then draws a tile from every candidate
+inside the band. Two counted draws per floor.
+
+| Band | Range | Weight |
+|---|---|---|
+| the long way | [0.80, 1.00] × reach | 6 |
+| the middle | [0.45, 0.80) × reach | 3 |
+| close by | up to 0.45 × reach, **ceiling 25 STEPS** | 1 |
+
+`MIN_EXIT_WALK` 8 is the floor under all of them: the stairs may be one room
+apart, never underfoot, and the teaching floor's baseline walk (relic and
+guard, eight steps in) needs a road to stand on. The step ceiling on the close
+band is the one thing measurement forced: as a pure fraction, "close by" on
+the expanse came out at sixty-seven steps of walking, which is not what the
+word means. One room apart is one room apart on every board.
+
+### What it reads now
+
+| Board | corner box | bands drawn (long / middle / close) | walk min / p10 / median / max | within 20 steps |
+|---|---|---|---|---|
+| vale | 22% | 58 / 30 / 12 | 8 / 21 / 43 / 84 | 10% |
+| expanse | 32% | 68 / 25 / 8 | 8 / 49 / 89 / 150 | 5% |
+| waste | 37% | 61 / 30 / 9 | 8 / 67 / 125 / 218 | 5% |
+
+Corner habit roughly halved on every board — because corners are where the
+LONGEST walks end, and only six floors in ten now ask for the longest walk.
+About one floor in eleven puts the stairs within twenty steps, which is the
+"every once in a while" the ruling asked for.
+
+The trade is a real one and worth saying plainly: a close stair does not hand
+the floor over, it asks a question. The relic and the provision still lie
+where they lay, off the road and guarded, so a near exit buys the descent and
+costs the armory. The old placement could not offer that choice at all.
+
+### Cost paid
+
+- **Golden re-probed and regenerated.** Two new draws per floor moved the
+  generation stream. Seed 15 came back with 8 strikes, no corpses and no
+  verb moves; probed across 140 seeds, **seed 17** carries 28 strikes, two
+  crits, three lunges, a pickup and all three creatures dead — the fixture
+  tests more than it did before, which is the only good reason to move one.
+- **The vale's d5 pin re-opened 13 → 16.** Pipeline, not softening, and
+  measured as such: a fresh body dropped on ONE floor and asked to leave it
+  reads depth 3 5→4 of 20, depth 5 1→2 of 20, depth 7 0→0, far-only exits
+  versus banded. The bite is where it was; more bodies reach the depth to be
+  bitten. Same phenomenon the 07-28 re-pin recorded, same justification.
+- **All eight sawtooth pins otherwise unmoved**, including every expanse pin.
+
+## The traps answer back (2026-07-29 — two filings, one measured pass)
+
+### The bell that summoned nobody
+
+*"the alarm bell trap doesn't seem...to attract monsters"* — floor 5, turn 682.
+
+Right, and not for the reason either of us would have guessed first. Counted
+over 240 floors a board, depths 3–8:
+
+| Board | belled floors | median creature→bell walk | inside the 12-turn clock | free hunters vs POSTED GUARDS |
+|---|---|---|---|---|
+| vale | 91/240 | 26 steps | 18% | 19% / **81%** |
+| expanse | 147/240 | 57 steps | **5%** | 17% / **83%** |
+
+The bell lifted the awareness cap and excused every posted guard — and four
+bodies in five on any floor are posted guards. Simulated on real floors, the
+player standing on the trap for the whole ringing:
+
+| clock | bodies that MOVED (of ~4.7/floor) | ended within 12 steps | adjacent |
+|---|---|---|---|
+| 12 (as shipped) | 0.54 | 0.26 | 0.04 |
+| 60 | 0.54 | 0.54 | 0.07 |
+
+Ringing five times longer moved *exactly the same half a body*. The clock was
+never the constraint; the leash was. Control number, for scale: with no bell
+at all and the player standing still for sixty turns, **not one body moves
+closer**.
+
+With the leash cut while the bell rings — the warden's vigil excepted, because
+it is bound to the door by role and the stairs being watched is load-bearing:
+
+| clock | moved | within 12 steps | adjacent |
+|---|---|---|---|
+| 12 | 3.83 | 0.52 | 0.11 |
+| **24** | 3.85 | **1.00** | 0.13 |
+| 40 | 3.85 | 1.57 | 0.46 |
+| 60 | 3.85 | 2.26 | 0.70 |
+
+82% of the floor answers now, and the clock finally buys something. Hence
+`alarmTurns(stretch)` = 12/24/36: the vale keeps 12 and reads ~1.4 arrivals,
+the expanse takes 24 for ~1.0, the waste 36. One arrival per bell on every
+board, and stretch 1 stays bit-identical.
+
+### The traps you could not miss
+
+*"might be too easy for me to spot traps."* — floor 8, turn 2, nine of
+thirty-six hit points.
+
+Two chances at `d20 + wits ≥ need + 2·level`, at 10 and 8:
+
+| depth · level | wits | sight | near | found | MISSED |
+|---|---|---|---|---|---|
+| 2 · 2 | 3 | 60% | 70% | 88% | 12% |
+| 4 · 4 | 4 | 55% | 65% | 84% | 16% |
+| 6 · 9 | 6 | 65% | 75% | 91% | 9% |
+| 8 · 12 | 7 | 60% | 70% | 88% | 12% |
+
+84–91% found everywhere in the game — a formality, not a puzzle. At **14/11**
+the miss becomes 22–32%: depth 2 · 2 reads 73% found, depth 4 · 4 reads 68%,
+depth 6 · 9 reads 78%. Traps stay *mostly found things* on purpose — the
+sibling engine's "hidden = chore, visible = puzzle" is the reason this stopped
+at 14/11 rather than going further — but missing one is now an ordinary
+evening rather than a story about the dice. Wits still buys real ground: a
+point is 5% on both rolls, and it arrives every third level.
+
+### Deferred, on the record
+
+- **Disarming traps** (*"Do we have the ability to try to disarm traps? I
+  couldn't find it."*) — no, and it is not built. Designed and priced in
+  NIGHTLOG 2026-07-29 18:19: one attempt per trap ever, `d20 + wits` against
+  the trap's own bar, adjacency only, a fumble springs it. A new verb and a
+  new event is the designer's call, and it should not ship in the same breath
+  as a trap rebalance it would immediately confound.

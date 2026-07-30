@@ -87,9 +87,17 @@ describe('the rising sawtooth, measured on fixed seeds', () => {
     // spawns pay the snowballing fighter more XP than they cost (measured
     // 4→12, 5→11, 6→13 — non-monotone). The ceiling still catches a
     // trivialised deep; the floor still catches a wall.
+    //
+    // Re-pinned 13→16 on 2026-07-29 when the exit learned distance bands (the
+    // designer's ruling: the stairs may sometimes be one room apart). This
+    // number read 15 straight after, and it is pipeline, not softening —
+    // measured per-floor, a fresh body dropped on ONE floor and asked to leave
+    // it: depth 3 5→4 of 20, depth 5 1→2 of 20, depth 7 0→0, far-only exits
+    // versus banded. The bite is where it was; more bodies simply reach the
+    // depth to be bitten, which is the same thing the 07-28 re-pin recorded.
     const d5 = survived(brawler, 5);
     expect(d5).toBeGreaterThanOrEqual(1);
-    expect(d5).toBeLessThanOrEqual(13);
+    expect(d5).toBeLessThanOrEqual(16);
   });
 });
 

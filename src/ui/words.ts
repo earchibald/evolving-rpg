@@ -1,4 +1,4 @@
-import { verbOf } from '../core/tables.js';
+import { verbOf, draughtCeiling, smokeTurns, FLARE_RADIUS, TRAP_EATER_REACH, BLINK_CLEAR, SUNDER_RADIUS } from '../core/tables.js';
 
 /**
  * The combat voice: more words, spent carefully.
@@ -185,4 +185,44 @@ export function crossings(preHp: number, postHp: number, maxHp: number): string[
     said.push('nearly spent — one wrong step ends this');
   }
   return said;
+}
+
+/**
+ * What a carried thing DOES, in plain words with the real numbers in them
+ * (the designer's filing, 2026-07-29: "when we have learned what an item or a
+ * scroll does in a world we should be able to examine the item for details.
+ * mouseover works for now.").
+ *
+ * Presentation, so it lives here — but every number is read out of the tables
+ * that decide it, and the depth-scaled ones are asked at the depth you are
+ * standing on, so the words cannot drift from the mechanics. A kind with no
+ * entry says nothing rather than lying.
+ */
+export function whatItDoes(kind: string, depth: number): string | null {
+  switch (kind) {
+    case 'vital draught':
+      return `drinks whole: every wound closed, and your ceiling rises ${String(draughtCeiling(depth))} for good at this depth.`;
+    case 'still smoke':
+      return `for ${String(smokeTurns(depth))} turns the hunts chase where you WERE, not where you are. anything already in arm's reach is not fooled.`;
+    case 'tallow flare':
+      return `light reaches ${String(FLARE_RADIUS)} paces: the shape of the floor, remembered. never who is standing in it.`;
+    case 'ash ward':
+      return 'drinks one landing blow whole — no wound, no venom, no flinch, and a drawn shot stays drawn. one warding to a body.';
+    case 'iron burr':
+      return 'every hostile at arm\'s reach reels: each spends its next action standing there.';
+    case 'hollow bell':
+      return 'the way out and every prize you have not found join what you have seen. knowledge, never ground.';
+    case 'scroll of unveiling':
+      return 'every secret door and every trap on this floor, known at once.';
+    case 'scroll of the still hour':
+      return 'every hostile on the floor spends its next action reeling — the burr at the floor\'s scale.';
+    case 'scroll of the trap eater':
+      return `every trap within ${String(TRAP_EATER_REACH)} steps of walking is eaten.`;
+    case 'scroll of the blink step':
+      return `you stand somewhere else — a tile with no hostile within ${String(BLINK_CLEAR)}. sometimes an escape, sometimes a stranding.`;
+    case 'scroll of stone song':
+      return `stone within ${String(SUNDER_RADIUS)} tiles opens into floor. it only ever ADDS ground.`;
+    default:
+      return null;
+  }
 }

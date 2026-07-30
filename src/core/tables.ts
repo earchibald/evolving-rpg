@@ -972,10 +972,19 @@ export function trapLevelAt(depth: number): number {
 
 /** The three rolls, one shape: d20 + stat ≥ need + 2·level. Sight is the
  *  first look, near is the second chance up close (easier — closer is
- *  louder), dodge is the last instant. At depth 4 (level 2, wits 4-5) the
- *  two detection chances compound to ≈83%: most traps are found things. */
-export const TRAP_SIGHT_NEED = 10;
-export const TRAP_NEAR_NEED = 8;
+ *  louder), dodge is the last instant.
+ *
+ *  Re-tuned on the designer's filing, 2026-07-29: "might be too easy for me
+ *  to spot traps." Measured, they were right — the old 10/8 compounded to
+ *  84-91% found across every depth and level in the game, which is not a
+ *  puzzle, it is a formality. 14/11 puts the miss at 22-32%: traps are still
+ *  mostly FOUND things (the sibling engine's "hidden = chore, visible =
+ *  puzzle" doctrine survives, and it is the reason these needs are not
+ *  harsher), but missing one is now an ordinary event rather than a story
+ *  about the dice. Wits still buys real ground — every third level, a point,
+ *  and a point is 5% on both rolls. */
+export const TRAP_SIGHT_NEED = 14;
+export const TRAP_NEAR_NEED = 11;
 export const TRAP_DODGE_NEED = 12;
 /** How close (steps of walking) "very near" is. */
 export const TRAP_NEAR_RADIUS = 2;
@@ -985,6 +994,18 @@ export const SPIKE_DIE = 4;
 export const NEEDLE_VENOM_TURNS = 4;
 export const SNARE_TURNS = 3;
 export const ALARM_TURNS = 12;
+/**
+ * How long the bell rings, on the board it rings on. Twelve turns was tuned
+ * in the vale and never re-read when the boards began to breathe: on the
+ * expanse the median body stands 57 steps from the bell, so a twelve-turn
+ * summons called to bodies that could not possibly arrive. Measured with the
+ * leash cut (see ai.ts): the vale keeps 12 and ~1.4 bodies reach you, the
+ * expanse needs 24 for ~1.0, the waste 36. One arrival per bell on every
+ * board — and stretch 1 is bit-identical to before, as always.
+ */
+export function alarmTurns(stretch = 1): number {
+  return ALARM_TURNS * Math.max(1, Math.floor(stretch));
+}
 export const MAW_DIE = 6;
 export const MAW_FLAT = 2;
 /** Where a hatch's risers stand up: steps of walking from the trap,

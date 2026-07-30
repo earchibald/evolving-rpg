@@ -78,6 +78,83 @@ changes — a spoken complaint that recurs across readings outranks any
 single sweep — and dispatch the listener persona over old packets for
 trends. Nothing in this path touches the chain; replay stays exact.
 
+## Reviewing a round of gameplay (the standing procedure)
+
+"Read the last round" is a recurring job. Do it in this order; the order is the
+lesson, because every step out of place has cost a wrong fix at least once.
+
+**Where a round lives.** All of it under `runs/`, written by
+`server/chronicle-plugin.ts` as the browser plays:
+
+| Path | What it is |
+|---|---|
+| `runs/notes.jsonl` | **Every typed note, both channels — the designer's own voice.** One line per note: `channel` (designer \| gamemaster), `said`, `reply`, `world`, `head`, `turn`, `at` (UTC), and `status` (floor, turn, level, hitPoints, fullHealth, carrying). Append-only, survives everything. |
+| `runs/feedback/<stamp>.md` | The listener's reading of one **submitted** run, with a verdict line in `runs/feedback/index.jsonl`. |
+| `runs/witness/listener-*.packet.json` | The raw packet behind each report (plus audio). Re-read these with the listener persona for trends. |
+| `runs/latest.json` | The whole live session, overwritten every save — load it to inspect the designer's actual worlds. |
+| `runs/archive/<stamp>-<n>-events.json` | The session as it stood *before* anything shrank it. |
+| `runs/history.jsonl` | One line per save: counts only, a trail. |
+
+**The submission trap.** A packet exists only when a run was *submitted* —
+begin-again, another world, or wipe. A designer who died and closed the tab
+leaves **no listener report at all**, and the freshest thinking in the repo is
+then sitting in `runs/notes.jsonl` with nothing pointing at it. So:
+
+1. **`date` first, in its own call.** Notes are stamped UTC; six diary entries
+   have drifted from guessing the time, and "today" in a note may be tomorrow.
+2. **Tail `runs/notes.jsonl`.** Every note stamped later than the newest
+   `runs/feedback/index.jsonl` stamp is UNREAD by any listener. Those are the
+   round. Read them with their `status` — "floor 8, 9 of 36 hit points" changes
+   what a sentence means.
+3. **Then read the last feedback report(s)** for what recurs. A complaint that
+   appears in two readings outranks any single sweep.
+4. **Then the chain, for facts.** Census the event types in `runs/latest.json`;
+   `WORLD_REMEMBERED` payloads say how each life ended, in order.
+5. **Verify every filing against the code before acting.** A filing is a
+   symptom report, not a diagnosis — the designer is nearly always right about
+   the *feel* and often wrong about the *cause*. "The stairs are always in the
+   northeast" was corner-true and northeast-false (quadrants measured 25% each);
+   "the bell doesn't attract monsters" was not perception at all but 83% of the
+   floor being post-leashed guards the bell excused.
+6. **Measure before and after, on real floors.** Anything touching tables or
+   generation gets numbers on both sides — see `docs/design/BALANCE.md` for the
+   form. Write throwaway `.scratch-*.ts` at the repo root, run with `npx tsx`,
+   delete when done.
+7. **Land what is proven; put new subsystems to the designer with their cost.**
+   Tuning a table on measured evidence is the job. A new verb, a new event or a
+   new subsystem is the designer's call — design it, price it, recommend, wait.
+8. **Answer in `NIGHTLOG.md`**, one stamped entry per pass, addressed to the
+   designer in plain language: what they said, what was true, what landed, what
+   you refuse or defer and why. Quote the filing verbatim in the code comment
+   where the fix lands — the source should say who asked and what for.
+
+## Operating notes that have cost time
+
+- **Golden regen is a ceremony**, gated on `ALLOW_GOLDEN_REGEN=1 npm run golden`.
+  After any change to the generation draw stream, PROBE seeds before regenerating
+  (autoplay the brawler across ~140 seeds; score strikes, crits, corpses, verb
+  moves, pickups) and update `SEED` in `scripts/generate-golden.ts`. A fixture
+  that stopped killing anything is a fixture that stopped testing the interesting
+  code — that is how seed 15 became seed 17.
+- **A balance pin that breaks is a question, not a chore.** Separate the
+  *pipeline* (how many bodies reach a depth) from the *per-floor bite* (can a
+  fresh body leave one floor) before re-pinning anything, and record both numbers
+  in the test's own comment.
+- **Pause the dev server during mutation proofs.** Vite HMR once served a
+  sabotaged generator to the designer's live tab and recorded a broken floor.
+  Vite *plugin* changes need a restart, not HMR.
+- **Scripted multi-file edits: python with a per-target `assert count`.** Two
+  silent no-ops taught this.
+- **Browser pane facts.** Each preview tab has its own localStorage, so playing
+  there cannot hurt the designer's save — check the event count before trusting
+  that. Hidden tabs freeze timers and defer work; long `await` loops in injected
+  JS will time out. Force a navigate before verifying, and close the Forge dialog
+  first — it swallows keys.
+- **Model calls cost money** (`claude` CLI, ~$0.2–0.3, 30–90s each): a wipe or a
+  new world triggers a founding. Don't churn worlds in live checks.
+- **`fold()` is memoised by event id**, and `Date.now()`/randomness stay out of
+  core: every generation choice is a counted draw, and rejected draws still count.
+
 ## Known shape of the game (updated 2026-07-26, increment 7)
 
 **Fighting pays, decisively.** Kills yield threat-value XP; levels grow the
@@ -274,6 +351,35 @@ deep 4/10); the vale's five pins never moved. The UI run: kbd wears ink
 (the .6-opacity faint stack is dead), the dungeon set lives on an
 always-on bar, the meta set in a `p` palette — help, bar and palette all
 render from the ONE KEYMAP. Chests deferred on the record.
+
+**The way out is drawn, not deduced** (the designer's mid-run ruling,
+2026-07-29 — "farthest walkable tile every time needs some kind of
+randomicity. every once in a while the stairs WILL be one room apart!";
+math in BALANCE.md "The stairs move"): `chooseExit` draws a distance BAND
+off the floor's own reach — the long way [0.8, 1] weight 6, the middle
+[0.45, 0.8) weight 3, close by weight 1 with an absolute ceiling of 25
+STEPS — then draws the tile from every candidate in it. Two counted draws
+per floor; the bottom is untouched (its exit is the stair you came down
+by, and `farthestFrom` is the heart's anchor). Measured: the corner habit
+fell from 69% of expanse floors to 32%, the quadrants were already even at
+25% each (the designer's "northeast" was the corner, not a bias), and the
+shortest walk in 480 floors went from 78 steps to 8. The floor's story
+names its band out loud. Cost paid: the golden re-probed to seed 17 (the
+old fixture had stopped killing anything), and the vale's d5 pipeline pin
+re-opened 13→16 with the per-floor bite measured unchanged.
+
+**The traps answer back** (the same round's filings): the alarm bell used to
+summon nobody — 83% of an expanse floor's bodies are POST-LEASHED GUARDS and
+the bell excused every one, so barely half a body per floor took a step, at any
+clock. A ringing bell now takes guards OFF their posts (the warden's vigil
+holds — it is bound to the door by role), which moved 0.54 bodies to 3.85 of
+4.7 per floor, and it rings `alarmTurns(stretch)` — 12/24/36 — because 12 turns
+on a board whose median body stands 57 steps away called to bodies that could
+not arrive. Spotting also got real: 10/8 compounded to 84–91% found at every
+depth and level in the game, and 14/11 puts the miss at 22–32% — mostly found
+still (the "hidden = chore, visible = puzzle" doctrine is why it is not
+harsher), regularly missed now. Disarming traps: asked for, designed, NOT
+built — the designer's call, on the record in NIGHTLOG.
 
 **The boards are rooms and corridors** (three sizes, docs/design/MAPS.md): total
 connectivity mutation-proofed; creatures hunt by BFS walking distance 8 (a

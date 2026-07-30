@@ -1,9 +1,9 @@
-import { generateMap, pickSpawnPoints, farthestFrom, withExit, walkDistance, walkPath, sealSecretRoom, repairWithSecret } from './mapgen.js';
+import { generateMap, pickSpawnPoints, farthestFrom, chooseExit, withExit, walkDistance, walkPath, sealSecretRoom, repairWithSecret } from './mapgen.js';
 import { inBounds, isPassable } from './grid.js';
 import { findEntity, isAlive } from './entity.js';
 import { intBetween } from './rng.js';
 import { clearShot, withinReach } from './sight.js';
-import { neededToHit, chanceIn20, damageDice, critFloor, WHIFF, BESTIARY, creatureStats, threatOf, spawnBudget, depthBands, wardenAt, ARMORY, relicGrant, slotFor, RELIC_TRAITS, motifAt, verbOf, wardenLevel, DOOR_PRICE_CAP, AMBUSH_MIGHT_BONUS, AMBUSH_FROM_DEPTH, braceWall, CALL_RISERS, CALL_DISTANCE, dominates, wearsTrait, FLARE_RADIUS, provisionsAt, provisionOf, draughtCeiling, smokeTurns, BOTTOM_DEPTH, HEART_KIND, WAVE_DISTANCE, SHOT_RANGE, sizeStretch, MAX_BOARD_DIM, WANDER_FROM_DEPTH, ROUTE_STOPS, MIMIC_IN, MIMIC_FROM_DEPTH, mimicGuises, sightAt, trapOf, trapKindsAt, trapCount, trapLevelAt, TRAP_SIGHT_NEED, TRAP_NEAR_NEED, TRAP_DODGE_NEED, TRAP_NEAR_RADIUS, SPIKE_DIE, NEEDLE_VENOM_TURNS, SNARE_TURNS, ALARM_TURNS, MAW_DIE, MAW_FLAT, HATCH_BAND, scrollOf, scrollsAt, SCROLL_IN, BLINK_CLEAR, SUNDER_RADIUS, TRAP_EATER_REACH, POCKET_IN, POCKET_SHARES } from './tables.js';
+import { neededToHit, chanceIn20, damageDice, critFloor, WHIFF, BESTIARY, creatureStats, threatOf, spawnBudget, depthBands, wardenAt, ARMORY, relicGrant, slotFor, RELIC_TRAITS, motifAt, verbOf, wardenLevel, DOOR_PRICE_CAP, AMBUSH_MIGHT_BONUS, AMBUSH_FROM_DEPTH, braceWall, CALL_RISERS, CALL_DISTANCE, dominates, wearsTrait, FLARE_RADIUS, provisionsAt, provisionOf, draughtCeiling, smokeTurns, BOTTOM_DEPTH, HEART_KIND, WAVE_DISTANCE, SHOT_RANGE, sizeStretch, MAX_BOARD_DIM, WANDER_FROM_DEPTH, ROUTE_STOPS, MIMIC_IN, MIMIC_FROM_DEPTH, mimicGuises, sightAt, trapOf, trapKindsAt, trapCount, trapLevelAt, TRAP_SIGHT_NEED, TRAP_NEAR_NEED, TRAP_DODGE_NEED, TRAP_NEAR_RADIUS, SPIKE_DIE, NEEDLE_VENOM_TURNS, SNARE_TURNS, alarmTurns, MAW_DIE, MAW_FLAT, HATCH_BAND, scrollOf, scrollsAt, SCROLL_IN, BLINK_CLEAR, SUNDER_RADIUS, TRAP_EATER_REACH, POCKET_IN, POCKET_SHARES } from './tables.js';
 import type { Relic } from './tables.js';
 import type { Entity, Stats, Pos } from './entity.js';
 import { itemAt } from './item.js';
@@ -243,9 +243,15 @@ export function createWorld(
   // came down by — the tile you are standing on when the floor is born.
   // Seize the heart and carry it back: the ending is the reversal, not the
   // touch.
+  // Where the way out lies is DRAWN now, from a band of the floor's own reach
+  // (the designer's mid-run ruling: the farthest tile every time needs some
+  // randomicity, and every once in a while the stairs will be one room apart).
+  // The bottom keeps its reversal untouched — there the far anchor is the
+  // heart's, and the exit is the stair you came down by.
   const bottom = depth >= BOTTOM_DEPTH;
   const far = farthestFrom(generated.grid, generated.start);
-  const exit = bottom ? generated.start : far;
+  const chosenExit = chooseExit(seed, generated.counterAfter, generated.grid, generated.start);
+  const exit = bottom ? generated.start : chosenExit.exit;
   const opened = withExit(generated.grid, exit);
 
   // Sometimes a room keeps itself secret — every doorway an illusory wall.
@@ -256,7 +262,7 @@ export function createWorld(
   // better than the throw.
   // At the bottom, the far anchor protects the heart's room from sealing
   // (exit === start there, so both ends stay open either way).
-  const secret = sealSecretRoom(seed, generated.counterAfter, opened, generated.rooms, generated.start, bottom ? far : exit, cut.motif.secretIn);
+  const secret = sealSecretRoom(seed, chosenExit.counterAfter, opened, generated.rooms, generated.start, bottom ? far : exit, cut.motif.secretIn);
   const repaired = repairWithSecret(secret.grid, generated.start);
   const grid = repaired.grid;
 
@@ -611,7 +617,7 @@ export function createWorld(
   const story = `${cut.motif.name} · ${generated.story}`
     + (bottom
       ? ` · the bottom — the heart lies ${Number.isFinite(walk) ? walk : '?'} steps of walking away, and the way out is the stair you came down by`
-      : ` · the way out is ${Number.isFinite(walk) ? walk : '?'} steps of walking`)
+      : ` · the way out is ${chosenExit.band}, ${Number.isFinite(walk) ? walk : '?'} steps of walking`)
     + ` · a budget of ${spawnBudget(depth, stretch)} paid ${spent} for ${population.chosen.length}: ${kinds}`
     + ` · ${watcher} watches ${bottom ? 'the heart' : 'the stairs'}`
     + ` · ${relics.map((r) => r.kind).join(' and ') || 'nothing'} lies guarded`
@@ -957,7 +963,9 @@ export function springTrap(state: GameState, victimId = 'player'): Extract<Draft
     }
     if (trap.kind === 'venom needle') return { kind: 'venom', turns: NEEDLE_VENOM_TURNS };
     if (trap.kind === 'strangling snare') return { kind: 'snare', turns: SNARE_TURNS };
-    if (trap.kind === 'alarm bell') return { kind: 'alarm', until: state.turn + ALARM_TURNS };
+    if (trap.kind === 'alarm bell') {
+      return { kind: 'alarm', until: state.turn + alarmTurns(sizeStretch(state.grid.width, state.grid.height)) };
+    }
     if (trap.kind === 'the maw') {
       const damage = intBetween(state.seed, c, 1, MAW_DIE) + MAW_FLAT; c += 1;
       return { kind: 'maw', damage };

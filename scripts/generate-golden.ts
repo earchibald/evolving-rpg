@@ -35,12 +35,14 @@ if (process.env.ALLOW_GOLDEN_REGEN !== '1') {
 // or combat turns the golden red, and regenerating past it is the ceremony
 // above.
 //
-// Seed hand-picked by probe (re-picked when the secret-room roll shifted
-// the stream, and again when the verbs and the provision draw reshaped it):
-// 13 strikes, a crit, an item equipped, a lunge on record, escapes. A golden
-// fixture that never fights leaves the newest and riskiest code untouched
-// by the strongest test in the repo.
-const SEED = 15;
+// Seed hand-picked by probe (re-picked when the secret-room roll shifted the
+// stream, again when the verbs and the provision draw reshaped it, and again
+// when the exit's distance bands added two draws to every floor's generation):
+// 28 strikes, two crits, three lunges on record, an item equipped, all three
+// creatures dead on the ground, escapes — 451 events. A golden fixture that
+// never fights leaves the newest and riskiest code untouched by the strongest
+// test in the repo, and the old seed-15 run had stopped killing anything.
+const SEED = 17;
 const WIDTH = 48;
 const HEIGHT = 32;
 const POLICY = 'brawler';
