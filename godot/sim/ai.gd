@@ -35,32 +35,19 @@ class_name SimAi
 ## reach it. It is still written with no spare keys, because the caller
 ## switches on shape.
 ##
-## ── `walk_distance` and the missing SimMapgen ─────────────────────────────
-## The reference imports `walkDistance` from mapgen.ts (mapgen.ts:440), which
-## in this port belongs to `SimMapgen` — Task 2.D1, NOT merged to main at this
-## file's base (fbeb81f). This task's own "Blocked by" line omits 2.D1, which
-## is a gap in the plan rather than a fact about the code: four of decide()'s
-## branches (the vigil leash, the guard leash, the stalker's lurk, the
-## caller's cry) cannot be written without it.
+## ── walking distance, and why it is SimMapgen's ───────────────────────────
+## `decide()` measures four of its branches in WALKING steps, not in straight
+## lines: a wall a creature cannot walk through, it cannot smell through. That
+## measurement is `SimMapgen.walk_distance`.
 ##
-## So `_walk_distance` below is a faithful private port of mapgen.ts:440,
-## eighteen lines, and this file therefore compiles whether 2.D1 lands before
-## or after it. **When SimMapgen merges, `_walk_distance` should be deleted
-## and its four call sites pointed at `SimMapgen.walk_distance`** — two ports
-## of one reference function is one more than the migration wants, and a
-## divergence between them would be invisible until a hunt disagreed. The
-## Task 2.E2 report files this for the designer.
-##
-## ── Why `SimReach` is NOT what the hunt paths with ────────────────────────
-## The task sketch says the hunt paths "through SimReach", and the plan lists
-## SimReach among this file's consumers. Measured against the reference, it
-## does not: ai.ts imports nothing from reachability.ts. `SimReach.
-## reachable_from` answers "which tiles connect", with no distance and no
-## first step, and `floor_count` is a census. The two questions decide()
-## actually asks — "how far is that to walk" and "which way is the first step"
-## — are `walkDistance` and this file's own `_first_step`. Named here because
-## a later reader will otherwise look for a SimReach call that was never
-## supposed to exist. AStarGrid2D is forbidden and is nowhere in this file.
+## This file briefly carried a private port of it, because 2.D1 had not landed
+## when 2.E2 was written. It has landed; the twin was diffed line by line
+## against `SimMapgen.walk_distance` — identical BFS, identical neighbour order
+## ([1,0], [-1,0], [0,1], [0,-1]), goal tested on DEQUEUE in both, `INF` when
+## unreachable in both — and deleted. There is exactly one walking distance in
+## `sim/`, which is the point: two would drift, and a drift here is a creature
+## deciding differently and a chain that forks.
+
 
 ## How far a creature notices you from: steps of *walking*, not line of
 ## flight. Eight steps down a corridor is eight steps; eight steps through a
@@ -80,55 +67,6 @@ static func _manhattan(a: Dictionary, b: Dictionary) -> int:
 	var bp: Dictionary = b["pos"]
 	return absi(int(ap["x"]) - int(bp["x"])) + absi(int(ap["y"]) - int(bp["y"]))
 
-
-## How far the walk to a tile is, or INF if there is no walk at all.
-##
-## A private port of mapgen.ts:440 — see this file's header for why it is here
-## and not called on SimMapgen. INF stands in for the reference's
-## `Number.POSITIVE_INFINITY`, the same INF-as-TS-Infinity reading SimSight
-## already uses; it is compared against a leash and never stored, so nothing
-## fractional reaches SimCanonical.
-##
-## The reference dequeues with `Array.shift()`. A head index reproduces that
-## FIFO order exactly at O(1) — the visit sequence is identical, not merely
-## equivalent — which matters because BFS order is what makes the answer
-## deterministic.
-##
-## Note the ordering, which is the OPPOSITE of _first_step's below and
-## deliberately so: passability is tested BEFORE the neighbour is keyed, so an
-## off-map coordinate never reaches the wrapping `y*width+x`.
-static func _walk_distance(grid: Dictionary, from: Dictionary, to: Dictionary) -> float:
-	var from_x: int = from["x"]
-	var from_y: int = from["y"]
-	var to_x: int = to["x"]
-	var to_y: int = to["y"]
-
-	var seen: Dictionary = {}
-	seen[SimGrid.idx(grid, from_x, from_y)] = true
-	var queue: Array = [[from_x, from_y, 0]]
-	var head: int = 0
-
-	while head < queue.size():
-		var here: Array = queue[head]
-		head += 1
-		if here[0] == to_x and here[1] == to_y:
-			return float(here[2])
-		var neighbours: Array = [
-			[here[0] + 1, here[1]], [here[0] - 1, here[1]],
-			[here[0], here[1] + 1], [here[0], here[1] - 1],
-		]
-		for n: Array in neighbours:
-			var nx: int = n[0]
-			var ny: int = n[1]
-			if not SimGrid.is_passable(grid, nx, ny):
-				continue
-			var key: int = SimGrid.idx(grid, nx, ny)
-			if seen.has(key):
-				continue
-			seen[key] = true
-			queue.append([nx, ny, int(here[2]) + 1])
-
-	return INF
 
 
 ## First step of the hunt: a breadth-first search out to AWARENESS steps, over
@@ -320,7 +258,7 @@ static func decide(state: Dictionary, entity_id: String) -> Dictionary:
 	# The vigil, before anything else: a warden's world is its post.
 	if verb == "vigil":
 		var post: Dictionary = me["post"] if me.get("post") != null else my_pos
-		var intruder_near: bool = _walk_distance(grid, post, scent) <= SimTables.VIGIL_LEASH
+		var intruder_near: bool = SimMapgen.walk_distance(grid, post, scent) <= SimTables.VIGIL_LEASH
 		if not intruder_near:
 			var home: bool = int(my_pos["x"]) == int(post["x"]) \
 				and int(my_pos["y"]) == int(post["y"])
@@ -372,7 +310,7 @@ static func decide(state: Dictionary, entity_id: String) -> Dictionary:
 	# hold their prizes now instead of freezing where a chase went cold.
 	if me.get("disposition") == "guard" and verb != "vigil" and not alarmed:
 		var post: Dictionary = me["post"] if me.get("post") != null else my_pos
-		var intruder_near: bool = _walk_distance(grid, post, scent) <= SimTables.GUARD_LEASH
+		var intruder_near: bool = SimMapgen.walk_distance(grid, post, scent) <= SimTables.GUARD_LEASH
 		if not intruder_near:
 			var home: bool = int(my_pos["x"]) == int(post["x"]) \
 				and int(my_pos["y"]) == int(post["y"])
@@ -387,7 +325,7 @@ static func decide(state: Dictionary, entity_id: String) -> Dictionary:
 	# Coiled: perfectly still until the quarry is close enough to commit to.
 	# The stillness is in plain sight — that is the tell, and the dread.
 	if verb == "ambush" and tags.has("ambush"):
-		var near: bool = _walk_distance(grid, my_pos, scent) <= SimTables.LURK_RANGE
+		var near: bool = SimMapgen.walk_distance(grid, my_pos, scent) <= SimTables.LURK_RANGE
 		if not near:
 			return {"kind": "wait"}
 
@@ -396,7 +334,7 @@ static func decide(state: Dictionary, entity_id: String) -> Dictionary:
 	# It cries at the scent — a smoked floor gets called down on where you
 	# were, which is exactly what the smoke is for.
 	if verb == "call" and tags.has("call") \
-		and _walk_distance(grid, my_pos, scent) <= SimTables.CALL_RANGE:
+		and SimMapgen.walk_distance(grid, my_pos, scent) <= SimTables.CALL_RANGE:
 		return {"kind": "call"}
 
 	# A fooled hunter cannot strike or lunge at what it has lost — it walks
