@@ -152,3 +152,20 @@ static func wait(state: Dictionary, entity_id: String) -> Dictionary:
 # sim/commands/purse.gd's header for the full account. This section marks
 # the family present and accounted for, so the table of contents above stays
 # honest about all five rather than silently reading as four.
+    ),
+# ── Task 2.E3b: sim/commands/items.gd ─────────────────────────────────────
+
+static func take_underfoot(state: Dictionary, entity_id: String, deliberate: bool = false) -> Variant:
+	return SimItems.take_underfoot(state, entity_id, deliberate)
+
+
+static func take_or_refuse(state: Dictionary, entity_id: String) -> Variant:
+	return SimItems.take_or_refuse(state, entity_id)
+
+
+static func use_carried(state: Dictionary, entity_id: String, slot: int = 0) -> Variant:
+	return SimItems.use_carried(state, entity_id, slot)
+
+
+static func read_scroll(state: Dictionary, entity_id: String) -> Variant:
+	return SimItems.read_scroll(state, entity_id)

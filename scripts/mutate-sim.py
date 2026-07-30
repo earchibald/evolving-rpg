@@ -802,6 +802,50 @@ MUTATIONS: dict[str, tuple[str, str, str]] = {
         "\t\t\tpaid[\"gold\"] = int(state[\"gold\"]) + int(p[\"delta\"])",
         "\t\t\tpaid[\"gold\"] = int(state[\"gold\"])",
     ),
+    # --- Task 2.E3b: sim/commands/items.gd ---
+    # Disables the dominance guard in take_underfoot's gear ladder: walking
+    # would take ANY relic underfoot, tradeoff or sidegrade included, instead
+    # of only a strict upgrade. The family hazard named by the brief: "the
+    # dominance rule — walking takes only STRICT upgrades; tradeoffs wait for
+    # the deliberate key."
+    # MEASURED at 513 tests: 508 pass, exactly 5 fail, in two files — wider
+    # than first predicted (3, test_loot.gd only), because equipment.test.ts's
+    # walk-driven play() also crosses this exact branch. test_loot.gd (3):
+    # test_refuses_a_tradeoff_underfoot_the_price_is_nobodys_to_pay_unasked
+    # (the heavy edge's speed cost no longer holds it back),
+    # test_leaves_a_sidegrade_lying_until_chosen (the sure edge, an equal
+    # trade, is no longer left for the , key), and
+    # test_a_strict_downgrade_is_still_taken_when_chosen_the_no_better_than_
+    # line_was_the_liar (the wax blade downgrade is taken by a bare walk,
+    # which the first assertion in that test exists specifically to refuse).
+    # test_equipment.gd (2): test_leaves_a_lesser_item_on_the_floor (the
+    # weaker keen edge is picked up off the floor instead of staying there,
+    # so the item-count and might-total assertions both miss) and
+    # test_ignores_an_equal_item_too_a_sidegrade_is_not_worth_the_stoop (the
+    # equal-value 'other edge' stops being left behind).
+    "items-dominance-rule-bypassed": (
+        "godot/sim/commands/items.gd",
+        "\tif not deliberate and not SimTables.dominates(grants, worn_grants):",
+        "\tif false and not deliberate and not SimTables.dominates(grants, worn_grants):",
+    ),
+    # Routes a taken relic's gear slot by grant-shape alone (slot_of),
+    # skipping the trait-first check (slot_for) that sends a 'ranged' relic
+    # to the dedicated 'sling' hand. The family hazard named by the brief:
+    # "ranged relics route BY TRAIT to the sling slot (slot_for routes the
+    # trait first, slot_of routes the rest by grants)." A leaden sling grants
+    # only might, so slot_of alone would route it to 'weapon' — competing
+    # with (and, under the dominance rule, losing to) whatever sword is
+    # already worn there, instead of taking its own hand beside it.
+    # MEASURED at 513 tests: 512 pass, exactly 1 fails —
+    # test_walking_takes_the_sling_into_its_own_slot_beside_a_worn_sword_
+    # both_stay_might_stacks (test_dual_wield.gd): the sling (might 1) no
+    # longer dominates the worn keen edge (might 2) once both are routed to
+    # 'weapon', so takeUnderfoot returns null where the test expects a take.
+    "items-sling-routed-by-grants-not-trait": (
+        "godot/sim/commands/items.gd",
+        "\tvar gear_slot: String = SimTables.slot_for(item[\"kind\"], grants)",
+        "\tvar gear_slot: String = SimTables.slot_of(grants)",
+    ),
 }
 
 if len(sys.argv) > 1 and sys.argv[1] == "--list":
