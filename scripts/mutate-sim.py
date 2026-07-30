@@ -146,6 +146,23 @@ MUTATIONS: dict[str, tuple[str, str, str]] = {
         "\tvar seq: int = 0 if at == null else log.chain(at).size() - 1",
         "\tvar seq: int = 0 if at == null else log.chain(at).size()",
     ),
+    # Negates hpAtMost's own comparison (<= becomes its strict opposite, >) —
+    # inverting one condition kind inside holds(), as the task brief asks for.
+    # NOTE for future editors: the tempting alternative mutant here is
+    # swapping in hpAtLeast's own operator (<= -> >=) rather than negating,
+    # but that produces text BYTE-IDENTICAL to the very next match branch
+    # ("hpAtLeast": return a_stats["hp"] >= condition["n"]), which trips this
+    # script's own count==1 safety guard on restore (found 2, not 1) — a new
+    # variant of the empty-string trap this docstring already warns about.
+    # Caught directly by test_interpret.gd's test_reads_hit_points, which
+    # exercises hpAtMost at both a passing and a failing boundary, and
+    # indirectly by test_never_treats_a_firing_as_a_trigger_for_more_firing,
+    # whose self-feeding rule gates on hpAtMost.
+    "interpret-hpatmost-comparison": (
+        "godot/sim/interpret.gd",
+        '\t\t\treturn a_stats["hp"] <= condition["n"]',
+        '\t\t\treturn a_stats["hp"] > condition["n"]',
+    ),
     # --- Known EQUIVALENT REWRITES, kept as documentation, not as proofs. ---
     # Both produce identical bits: low bits survive two's-complement wrapping,
     # and u32's second line masks unconditionally. Running these should show NO
