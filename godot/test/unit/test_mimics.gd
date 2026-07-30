@@ -25,11 +25,9 @@ extends GutTest
 ##        SimCommands has no shove_at, shot_target or use_carried to call —
 ##        writing this case would not compile, let alone run, tripping
 ##        test.sh's script-count guard for the whole suite. Owning tasks:
-##        2.E3d (shoveAt, shotTarget) and 2.E3b (useCarried). Once both land
-##        and this worktree merges with theirs, this case belongs wherever
-##        the merged commands.gd's own cross-family suite lives — nothing
-##        about it is specific to hazards.gd, it is a property THOSE three
-##        functions must hold about a hidden mimic.
+##        2.E3d (shoveAt, shotTarget) and 2.E3b (useCarried). Both have since
+##        landed, so this case is now PORTED here after the merge, as
+##        test_reads_as_furniture_to_every_tool_no_shove_no_mark_no_burr.
 ##   :95  pays feign-priced XP when it dies — the disguise is threat, threat
 ##        is reward — PORTED
 ##
@@ -37,7 +35,7 @@ extends GutTest
 ##   :102 never on the teaching floor; rarely, at most once, past it —
 ##        wearing a plausible kind
 ##
-## 4 + 1 = 5 ported. 1 deferred. 5 + 1 = 6.
+## 6 ported, 0 deferred — the file's ledger closes.
 
 
 func _corridor(entities: Array) -> Dictionary:
@@ -123,8 +121,33 @@ func test_gets_the_first_strike_one_band_harder_the_stalkers_own_spring_recorded
 	assert_true(false, "no seed under 80 landed the mimic's first blow")
 
 
-# :82 "reads as furniture to every tool: no shove, no mark, no burr" —
-# DEFERRED. See the file header's reconciliation.
+func test_reads_as_furniture_to_every_tool_no_shove_no_mark_no_burr() -> void:
+	## ":82". Deferred by Task 2.E3c only because shove_at, shot_target and
+	## use_carried lived in sibling worktrees that had not merged yet — calling
+	## them would not have compiled, which trips test.sh's script-count guard
+	## for the whole suite. All three have landed, so the deferral is discharged
+	## here rather than left standing against tasks that are already done.
+	##
+	## The lie is total while `hidden` holds: a mimic is not a body any tool can
+	## address. Nothing may shove it, nothing may mark it for a shot, and the
+	## burr's scatter must not count it among the things it staggers.
+	var you: Dictionary = _you(5)
+	you["satchel"] = [{"kind": "iron burr"}]
+	var state: Dictionary = _corridor([you, _mimic(6)])
+
+	assert_null(SimCommands.shove_at(state, "player", 1, 0),
+		"a hidden mimic cannot be shoved — there is nothing there to shove")
+	assert_null(SimCommands.shot_target(state, "player"),
+		"nor marked: a shot needs a target the shooter believes in")
+
+	var burr: Variant = SimCommands.use_carried(state, "player", 0)
+	assert_not_null(burr, "the burr itself still resolves")
+	var draft: Dictionary = burr
+	assert_eq(draft["type"], "ITEM_USED")
+	var effect: Dictionary = (draft["payload"] as Dictionary)["effect"]
+	assert_eq(effect["kind"], "burr")
+	assert_eq(effect["staggered"], [],
+		"the scatter finds nobody: furniture does not reel")
 
 
 func test_pays_feign_priced_xp_when_it_dies_the_disguise_is_threat_threat_is_reward() -> void:

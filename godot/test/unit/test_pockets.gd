@@ -8,22 +8,15 @@ extends GutTest
 ## mapgen.gd's two functions.
 ##
 ## ── Reconciliation ────────────────────────────────────────────────────────
-## 6 = 5 PORTED + 1 DEFERRED. Line numbers are tests/core/pockets.test.ts at
+## 6 = 6 PORTED + 0 DEFERRED. Line numbers are tests/core/pockets.test.ts at
 ## ts-baseline.
 ##
-## describe('the pocket spills') — 4, 3 PORTED + 1 DEFERRED
+## describe('the pocket spills') — 4, all PORTED
 ##   :52  a killing blow sets the carried thing down where the body falls —
 ##        PORTED
-##   :70  "a slam kill spills too — any death, one law" — DEFERRED. Calls
-##        shoveAt (src/core/commands.ts, assigned to Task 2.E3d's
-##        stances.gd), a sibling Wave E worktree running CONCURRENTLY with
-##        this one and not yet merged: SimCommands has no shove_at to call
-##        here, and adding one would not compile. apply.gd's own shove
-##        handler already calls _drop_pockets (apply.gd:535, confirmed
-##        reading the reducer before writing this file) — the reducer side
-##        of this case shipped with movement.gd/hazards.gd's prerequisites,
-##        it is only the DRAFTING side, shoveAt itself, that is missing.
-##        Owning task: 2.E3d.
+##   :70  "a slam kill spills too — any death, one law" — PORTED after the
+##        Wave E merge (it needed 2.E3d's shove_at, which had not landed
+##        when this file was written).
 ##   :79  a taken tile nudges the spill one pace by fixed order — PORTED
 ##   :95  the survivor keeps its pocket: no drop without a death — PORTED
 ##
@@ -126,8 +119,25 @@ func test_a_killing_blow_sets_the_carried_thing_down_where_the_body_falls() -> v
 	assert_true(false, "no seed under 40 landed the blow")
 
 
-# :70 "a slam kill spills too — any death, one law" — DEFERRED. See the file
-# header's reconciliation.
+func test_a_slam_kill_spills_too_any_death_one_law() -> void:
+	## ":70". Deferred by Task 2.E3c only because `shove_at` lived in a sibling
+	## worktree (2.E3d) that had not merged yet. It has, so the deferral is
+	## discharged here rather than left standing against a finished task.
+	##
+	## The carrier is against the corridor's east wall, so the shove has nowhere
+	## to put it and slams it instead — and a slam that finishes a wounded thing
+	## is still a death, so the pocket is still set down. Any death, one law:
+	## blow, slam, or rule.
+	var state: Dictionary = _corridor([_you(17), _carrier(18)])
+	var shoved: Variant = SimCommands.shove_at(state, "player", 1, 0)
+	assert_not_null(shoved, "there is a body to shove")
+	var draft: Dictionary = shoved
+	assert_true(bool((draft["payload"] as Dictionary)["slammed"]),
+		"nowhere to go, so it is slammed into the wall")
+
+	var after: Dictionary = SimApply.apply(state, _seal(draft))
+	assert_not_null(_find_item(after["items"], "pocket-foe-1"),
+		"the slam killed it, so what it carried lies where it fell")
 
 
 func test_a_taken_tile_nudges_the_spill_one_pace_by_fixed_order() -> void:
