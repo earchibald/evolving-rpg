@@ -491,8 +491,8 @@ MUTATIONS: dict[str, tuple[str, str, str]] = {
     # anywhere for which end of the leash is nailed down.
     "ai-guard-leash-anchored-to-self": (
         "godot/sim/ai.gd",
-        '\t\tvar intruder_near: bool = _walk_distance(grid, post, scent) <= SimTables.GUARD_LEASH',
-        '\t\tvar intruder_near: bool = _walk_distance(grid, my_pos, scent) <= SimTables.GUARD_LEASH',
+        '\t\tvar intruder_near: bool = SimMapgen.walk_distance(grid, post, scent) <= SimTables.GUARD_LEASH',
+        '\t\tvar intruder_near: bool = SimMapgen.walk_distance(grid, my_pos, scent) <= SimTables.GUARD_LEASH',
     ),
     # Moves _first_step's bounds check BELOW the key and the goal test, which
     # revives the LATENT HUNT BUG NIGHTLOG records against ai.ts's own
