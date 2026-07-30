@@ -552,6 +552,84 @@ MUTATIONS: dict[str, tuple[str, str, str]] = {
         "\t\t\tgoal = route[(leg + 1) % route.size()]",
         "\t\t\tpass  # MUTATED: the round never yields, it jams on its own doorstep",
     ),
+    # --- Task 2.E3a: sim/commands/movement.gd ---
+    # THE CHAIN-FORKING HAZARD Wave D handed this task by name. walk_distance
+    # returns a FLOAT (INF means "no walk exists"), so "%s" renders "63.0"
+    # where TypeScript's template literal writes "63". The story is a
+    # GameState field: it goes through canonical.encode and into the fold
+    # hash, so this one character forks every chain built on that floor.
+    # MEASURED at 458 tests: 456 pass, exactly 2 fail —
+    # test_the_golden_world_is_rebuilt_byte_for_byte (the committed golden
+    # WORLD_INIT's story reads "...the long way, 63 steps of walking..."; the
+    # mutant writes "63.0", failing both the story comparison and the
+    # whole-payload canonical one) and test_the_walking_distance_in_the_
+    # story_is_never_rendered_as_a_float (all three depths, including the
+    # bottom's separate heart sentence). Every OTHER create_world test passes
+    # under the mutant, which is the whole point: the reference's own "is
+    # deterministic for a seed" compares create_world against itself, so both
+    # sides render "63.0" together and it cannot see this.
+    "movement-story-walk-as-float": (
+        "godot/sim/commands/movement.gd",
+        '\treturn ("%d" % walk) if is_finite(walk) else "?"',
+        '\treturn ("%s" % walk) if is_finite(walk) else "?"',
+    ),
+    # Spends the damage draw on counter + 2 instead of counter + 1, so a
+    # strike's two draws stop being consecutive. The counter still advances
+    # by STRIKE_DRAWS, so every rngDraws assertion still passes — what breaks
+    # is WHICH numbers came out, which is exactly the class of divergence
+    # replay verification finds far from its cause.
+    # MEASURED TWICE, and the first run is why the row is worth keeping. With
+    # only the 56 ported cases present this mutant failed NOTHING — 456 of 456
+    # passed. Every damage assertion in the reference suite is a RANGE (2..4
+    # on a hit, 4..8 on a crit, <= 4 uncoiled), and "takes hit points away on
+    # a hit" compares the reducer against the draft's own damage, so both
+    # sides move together. The golden run pins no strike either: it re-hashes
+    # recorded events rather than re-deriving them. test_a_strikes_two_draws_
+    # are_the_two_CONSECUTIVE_draws_it_declares was added to close that, and
+    # RE-MEASURED at 458 tests: 457 pass, exactly 1 fails — that test, with
+    # "[3] expected to equal [4]".
+    "movement-strike-damage-draw-skips": (
+        "godot/sim/commands/movement.gd",
+        "\tvar rolled_damage := SimRng.int_between(seed, counter + 1, 1, int(band[\"die\"])) + int(band[\"flat\"])",
+        "\tvar rolled_damage := SimRng.int_between(seed, counter + 2, 1, int(band[\"die\"])) + int(band[\"flat\"])",
+    ),
+    # Drops the teaching floor's relic pull: depth 1's keen edge goes back to
+    # lying on whatever far tile the draw put it on, instead of standing on
+    # the walked road eight steps in. This is the rule a real player died bare
+    # twice for, and until Task 2.E3a it was untested anywhere in sim/.
+    # MEASURED at 458 tests: 456 pass, exactly 2 fail — test_lays_the_keen_
+    # edge_on_the_path_eight_steps_of_walking_in_on_every_seed (one of the
+    # three cases Task 2.D1 deferred here, failing on 6 of its 20 seeds) and
+    # test_the_golden_world_is_rebuilt_byte_for_byte (seed 17's edge moves
+    # from 39,12 to 16,11, taking its guard with it). Two independent
+    # witnesses for one rule, which is what the deferred sweep bought:
+    # the golden pins ONE board, the sweep pins twenty.
+    "movement-teaching-floor-relic-not-pulled": (
+        "godot/sim/commands/movement.gd",
+        "\t\t\tguard_posts[0] = {\"x\": int(post[\"x\"]), \"y\": int(post[\"y\"])}",
+        "\t\t\tpass  # MUTATED: the teaching floor no longer reaches the player",
+    ),
+    # Lets the keeper stand on an illusory wall. A keeper standing in what
+    # paints as wall gives the secret away and reads as a haunting — and the
+    # line is only ever reached on a floor that SEALED, which before this task
+    # nothing in the migration produced (Task 2.D1 disclosed seal_secret_room's
+    # committing path as UNREACHED, not merely untested).
+    # MEASURED TWICE. First run was a NULL RESULT — 0 of 457 failed — and the
+    # reason was measured rather than guessed: across depths 1-9 x seeds 1-60
+    # on the vale board, 172 of 540 worlds SEAL, but only TWO put a sealed
+    # doorway beside the way out (depth 7 and depth 8, both seed 32), and
+    # neither seed was driven by any test. So the line was not equivalent, it
+    # was UNREACHED. test_the_keeper_never_stands_in_what_paints_as_wall was
+    # added on exactly those two worlds — asserting the precondition too, so
+    # it cannot go quietly vacuous if generation drifts — and RE-MEASURED at
+    # 458 tests: 457 pass, exactly 1 fails, that one.
+    "movement-keeper-may-stand-on-a-secret": (
+        "godot/sim/commands/movement.gd",
+        "\t\tif SimGrid.tile_at(grid, int(p[\"x\"]), int(p[\"y\"])) == SimGrid.SECRET:\n"
+        "\t\t\tcontinue",
+        "\t\tif false:  # MUTATED: the keeper may stand in what paints as wall\n"
+        "\t\t\tcontinue",
+    ),
 }
 
 if len(sys.argv) > 1 and sys.argv[1] == "--list":

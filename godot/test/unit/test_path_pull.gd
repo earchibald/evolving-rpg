@@ -1,9 +1,9 @@
 extends GutTest
 ## walk_path — the road, root-first. The byte-twin of tests/core/path-pull.test.ts
-## (5 cases): 2 ported, 3 deferred.
+## (5 cases): 5 ported, 0 deferred.
 ##
 ## ── The reconciliation ──────────────────────────────────────────────────
-## PORTED
+## PORTED by Task 2.D1
 ##   "returns nothing when there is no walk at all" — verbatim.
 ##   "walks a shortest path whose length is the walk distance" — ported with
 ##     its WORLD SUBSTITUTED, and that substitution is the disclosure: the TS
@@ -16,23 +16,24 @@ extends GutTest
 ##     createWorld does to build it (commands.ts:236-255), so the assertions
 ##     port unchanged and only their scaffolding differs.
 ##
-## DEFERRED to Task 2.E3a (`commands/movement.gd`, which ships create_world)
-## — each one's SUBJECT is
-## createWorld's item placement, not walk_path. walk_path is the ruler they
-## hold up to it, and there is nothing here to substitute:
+## PORTED by Task 2.E3a — DISCHARGING the three cases Task 2.D1 deferred to
+## it, now that `sim/commands/movement.gd` ships create_world. Each one's
+## SUBJECT is createWorld's item placement, not walk_path; walk_path is only
+## the ruler they hold up to it, which is why there was nothing to substitute
+## and they had to wait. They live at the bottom of this file, under their own
+## describe heading, because this is their reference file:
 ##   "lays the keen edge on the path, eight steps of walking in, on every
-##     seed" — needs createWorld and OPPONENT_MIN_DISTANCE.
-##   "leaves the deep floors' detour economy alone" — needs createWorld at
+##     seed" — needed createWorld and OPPONENT_MIN_DISTANCE.
+##   "leaves the deep floors' detour economy alone" — needed createWorld at
 ##     depth 2 and its relic draw.
 ##   "keeps the provision off the path — the satchel still pays for scouting"
-##     — needs createWorld's pantry.
+##     — needed createWorld's pantry.
 ##
-## 2 ported + 3 deferred = 5.
+## 2 + 3 = 5 ported, 0 deferred.
 ##
-## The teaching floor's rule those three guard (depth 1's one relic stands ON
+## The teaching floor's rule those three guard — depth 1's one relic stands ON
 ## the walked path, eight steps in, so a human who simply walks the floor meets
-## its guard early and its prize on the way) is untested anywhere in sim/ until
-## Task 2.E3a lands them.
+## its guard early and its prize on the way — now has its witness in sim/.
 
 
 ## The board createWorld builds, minus everything createWorld does that is not
@@ -133,3 +134,114 @@ func test_the_road_is_the_same_road_on_every_seed_it_is_asked_for() -> void:
 				1, "seed %d: step %d is not a step" % [seed, i])
 			assert_true(SimGrid.is_passable(grid, int(here["x"]), int(here["y"])),
 				"seed %d: step %d walks through a wall" % [seed, i])
+
+
+# ── describe('the teaching floor reaches the player') ─────────────────────
+# The three cases Task 2.D1 deferred to Task 2.E3a, DISCHARGED. Reference
+# lines are tests/core/path-pull.test.ts:50, :66 and :81 at ts-baseline.
+
+const _WIDTH := 48
+const _HEIGHT := 32
+
+
+## The world as create_world builds it, read back as a grid the way the TS
+## helper's worldGrid() does.
+func _world(seed: int, depth: int = 1) -> Dictionary:
+	var payload: Dictionary = (SimCommands.create_world(
+		seed, _WIDTH, _HEIGHT, "player", depth) as Dictionary)["payload"]
+	var grid: Dictionary = SimGrid.make(
+		int(payload["width"]), int(payload["height"]), payload["tiles"])
+	var exit: Variant = null
+	for y in range(int(grid["height"])):
+		for x in range(int(grid["width"])):
+			if SimGrid.tile_at(grid, x, y) == SimGrid.EXIT:
+				exit = {"x": x, "y": y}
+				break
+		if exit != null:
+			break
+	assert_not_null(exit, "seed %d depth %d has no exit" % [seed, depth])
+	return {"payload": payload, "grid": grid, "exit": exit}
+
+
+func _on_path(path: Array, at: Dictionary) -> bool:
+	for t: Dictionary in path:
+		if int(t["x"]) == int(at["x"]) and int(t["y"]) == int(at["y"]):
+			return true
+	return false
+
+
+func test_lays_the_keen_edge_on_the_path_eight_steps_of_walking_in_on_every_seed() -> void:
+	# The teaching floor reaches the player (the baseline-balance ruling):
+	# depth 1's one relic — the fighter's whole early curve — stands ON the
+	# walked path, eight steps in.
+	#
+	# The eight is spelled as the LITERAL 8, where the reference writes
+	# OPPONENT_MIN_DISTANCE. A test that reads its expectation out of the
+	# constant it guards moves both sides together and can never fail; this
+	# migration has already measured that mistake once (Task 2.E2, AWARENESS).
+	for seed in range(1, 21):
+		var world: Dictionary = _world(seed)
+		var payload: Dictionary = world["payload"]
+		var player_pos: Dictionary = (payload["player"] as Dictionary)["pos"]
+		var path: Array = SimMapgen.walk_path(world["grid"], player_pos, world["exit"])
+
+		var edge: Variant = null
+		for i: Dictionary in (payload["items"] as Array):
+			if i["kind"] == "keen edge":
+				edge = i
+				break
+		assert_not_null(edge, "seed %d: the teaching floor owes a keen edge" % seed)
+		var edge_pos: Dictionary = (edge as Dictionary)["pos"]
+
+		var at: int = mini(8, path.size() - 2)
+		assert_eq(edge_pos,
+			{"x": int((path[at] as Dictionary)["x"]), "y": int((path[at] as Dictionary)["y"])},
+			"seed %d: the edge is not %d steps along the road" % [seed, at])
+		# Its guard stands on it — the fight is on the road too.
+		var guarded := false
+		for o: Dictionary in (payload["opponents"] as Array):
+			var pos: Dictionary = o["pos"]
+			if int(pos["x"]) == int(edge_pos["x"]) and int(pos["y"]) == int(edge_pos["y"]):
+				guarded = true
+				break
+		assert_true(guarded, "seed %d: the edge lies unguarded" % seed)
+
+
+func test_leaves_the_deep_floors_detour_economy_alone() -> void:
+	# Depth 2+ relics stay where the draws put them: across seeds, at least one
+	# first relic lies OFF the path — the pull is the teaching floor's rule,
+	# not the game's.
+	var off_path := 0
+	for seed in range(1, 11):
+		var world: Dictionary = _world(seed, 2)
+		var payload: Dictionary = world["payload"]
+		var player_pos: Dictionary = (payload["player"] as Dictionary)["pos"]
+		var path: Array = SimMapgen.walk_path(world["grid"], player_pos, world["exit"])
+		var first: Dictionary = (payload["items"] as Array)[0]
+		if not _on_path(path, first["pos"]):
+			off_path += 1
+	assert_gt(off_path, 0, "every depth-2 first relic landed on the road")
+
+
+func test_keeps_the_provision_off_the_path() -> void:
+	# The satchel still pays for scouting: a guarded consumable would just be
+	# another relic, and an on-path one is not a detour, it is a toll both
+	# already collected.
+	var off := 0
+	for seed in range(1, 11):
+		var world: Dictionary = _world(seed)
+		var payload: Dictionary = world["payload"]
+		var player_pos: Dictionary = (payload["player"] as Dictionary)["pos"]
+		var path: Array = SimMapgen.walk_path(world["grid"], player_pos, world["exit"])
+		var provision: Variant = null
+		for i: Dictionary in (payload["items"] as Array):
+			if i["kind"] != "keen edge":
+				provision = i
+				break
+		assert_not_null(provision, "seed %d: the floor owes a provision" % seed)
+		if not _on_path(path, (provision as Dictionary)["pos"]):
+			off += 1
+	# More than five of ten, the reference's own threshold — a provision that
+	# happens to fall on the road now and then is fine; one that always does
+	# would mean the pantry had been pulled onto the path too.
+	assert_gt(off, 5, "the pantry has been pulled onto the road")
