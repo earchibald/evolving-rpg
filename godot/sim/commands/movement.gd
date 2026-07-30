@@ -1148,6 +1148,130 @@ static func vigil_kept(state: Dictionary, entity_id: String) -> Dictionary:
 	return SimEvents.draft("VIGIL_KEPT", int(state["rngCounter"]), 0, {"entityId": entity_id})
 
 
+## Whether anything living, or anything already raised in this same stir, is
+## standing on a tile. Both halves matter: two echoes must not rise onto one
+## grave, and a riser must not arrive on top of a body already there.
+static func _stood(entities: Array, risen: Array, x: int, y: int) -> bool:
+	for e: Dictionary in entities:
+		if not SimEntity.is_alive(e):
+			continue
+		var p: Dictionary = e["pos"]
+		if int(p["x"]) == x and int(p["y"]) == y:
+			return true
+	for r: Dictionary in risen:
+		var rp: Dictionary = r["pos"]
+		if int(rp["x"]) == x and int(rp["y"]) == y:
+			return true
+	return false
+
+
+## The seized world stirring: while the heart is carried, every WAVE_EVERY
+## turns the bottom floor answers back.
+##
+## The first stir raises the dead — your own past falls stand up where the
+## bodies lie, wearing your current strength whole. The best deaths you ever
+## died become the last things between you and out; graves grant the world
+## teeth, never the player loot. Every stir after (and the first, if the floor
+## is graveless) draws one riser from the bestiary at the bottom's band, on a
+## drawn tile at least WAVE_DISTANCE from the carrier — pressure arriving as a
+## chase, never out of the air beside you.
+##
+## Everything is resolved here and recorded whole (kinds, stats, tiles), so
+## replay raises the same dead the same way forever. Null when nothing can
+## rise — a stir that raises nobody is not a fact worth recording.
+##
+## WHY THIS LIVES HERE. Task 2.E3d found it UNOWNED: the plan's 2.E3a-e table
+## hands the WORLD_STIRRED producer to none of the five families, so nothing in
+## the migration could produce the event `apply.gd` already knows how to fold.
+## It is a world-level verb like create_world and the descent, so it joins them.
+## Its only suite is tests/play/bottom.test.ts, which is the session layer and
+## therefore PHASE 3's — deferred there by name, not dropped.
+static func stir_world(state: Dictionary, player_id: String = "player") -> Variant:
+	var found: Variant = SimEntity.find(state["entities"], player_id)
+	if found == null:
+		return null
+	var carrier: Dictionary = found
+
+	var risen: Array = []
+	var c: int = int(state["rngCounter"])
+	var entities: Array = state["entities"]
+	var grid: Dictionary = state["grid"]
+
+	# The echoes, once: whoever fell here rises with the carrier's strength.
+	var has_echo := false
+	for e: Dictionary in entities:
+		if e["kind"] == "echo":
+			has_echo = true
+			break
+	if not has_echo:
+		var n := 0
+		for b: Dictionary in (state["bodies"] as Array):
+			if _stood(entities, risen, int(b["x"]), int(b["y"])):
+				continue
+			n += 1
+			var worn: Dictionary = (carrier["stats"] as Dictionary).duplicate()
+			worn["hp"] = carrier["maxHp"]
+			risen.append({
+				"id": "echo-%d" % n,
+				"kind": "echo",
+				"pos": {"x": b["x"], "y": b["y"]},
+				"stats": worn,
+				"tags": [],
+			})
+
+	# One riser from the bestiary, at the bottom's own band, on a drawn tile far
+	# enough away that its arrival is a chase. The archetype draw is spent
+	# BEFORE the tile search, so it is spent even on a floor with nowhere to put
+	# anything — the reference does the same, and the counter must agree.
+	var spawnable: Array = []
+	var arch_total := 0
+	for a: Dictionary in SimTables.BESTIARY:
+		if int(a["weight"]) > 0:
+			spawnable.append(a)
+			arch_total += int(a["weight"])
+	var pick: int = SimRng.int_between(state["seed"], c, 1, arch_total)
+	c += 1
+	var arch: Dictionary = spawnable[0]
+	for a: Dictionary in spawnable:
+		pick -= int(a["weight"])
+		if pick <= 0:
+			arch = a
+			break
+	var level: int = maxi(1, floori(float(SimTables.BOTTOM_DEPTH) / 3.0))
+
+	var width: int = grid["width"]
+	var height: int = grid["height"]
+	var at_pos: Dictionary = carrier["pos"]
+	var candidates: Array = []
+	for y in range(height):
+		for x in range(width):
+			if not SimGrid.is_passable(grid, x, y):
+				continue
+			if SimGrid.tile_at(grid, x, y) == SimGrid.EXIT:
+				continue
+			if absi(x - int(at_pos["x"])) + absi(y - int(at_pos["y"])) < SimTables.WAVE_DISTANCE:
+				continue
+			if _stood(entities, risen, x, y):
+				continue
+			candidates.append({"x": x, "y": y})
+	if candidates.size() > 0:
+		var index: int = SimRng.int_between(state["seed"], c, 0, candidates.size() - 1)
+		c += 1
+		var tile: Dictionary = candidates[index]
+		risen.append({
+			"id": "risen-%d" % int(state["turn"]),
+			"kind": arch["kind"] if level == 1 else "%s-%d" % [arch["kind"], level],
+			"pos": {"x": tile["x"], "y": tile["y"]},
+			"stats": SimTables.creature_stats(arch["kind"], level),
+			"tags": [],
+		})
+
+	if risen.is_empty():
+		return null
+	return SimEvents.draft("WORLD_STIRRED", int(state["rngCounter"]),
+		c - int(state["rngCounter"]), {"opponents": risen})
+
+
 static func advance_turn(state: Dictionary) -> Dictionary:
 	var next: Dictionary = SimTurns.next_active(state["entities"], state["activeEntityId"])
 	var turn: int = int(state["turn"])

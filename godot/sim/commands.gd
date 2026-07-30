@@ -84,6 +84,13 @@ static func vigil_kept(state: Dictionary, entity_id: String) -> Dictionary:
 	return SimMovement.vigil_kept(state, entity_id)
 
 
+## The bottom floor answering back while the heart is carried. Null when
+## nothing can rise. Found unowned by Task 2.E3d and assigned to the movement
+## family; see SimMovement.stir_world for why.
+static func stir_world(state: Dictionary, player_id: String = "player") -> Variant:
+	return SimMovement.stir_world(state, player_id)
+
+
 static func advance_turn(state: Dictionary) -> Dictionary:
 	return SimMovement.advance_turn(state)
 
