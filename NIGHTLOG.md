@@ -1721,6 +1721,74 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > clean. Placeholder flat colours hold the stage until it does.
 
 > [!IMPORTANT]
+> **21:10 — The two engines agree about history**
+> Phase 1 is through its gate. **The golden run's 451 events re-hash, in
+> GDScript, to `4821a3c9…` — the same head TypeScript signed.** Not a
+> similar head. The same one. Every one of the 451 ids is reproduced in
+> place, and the chain rebuilds through `SimLog.append` to the same close.
+> No reducer was involved: what this proves is that rng-counter envelopes,
+> canonical bytes and SHA-256 mean the identical thing in both languages.
+> The fold gate — `finalStateHash` `2272ed6e…` — is Phase 2's, and needs
+> `apply`.
+>
+> **What exists now.** `godot/sim/` holds four files, all pure and
+> Node-free: `rng.gd` (splitmix32 by counter), `canonical.gd`, `hashing.gd`,
+> `log.gd` (append/chain, events deep-frozen via `make_read_only`).
+> `godot/test/` holds their GUT suites — **28 tests, 1786 asserts, 0.5
+> seconds** — asserting against fixtures exported from the reference engine
+> by the new `npm run fixtures`, not against my reading of the JavaScript.
+> `npm run test` is still 993 green; typecheck clean. The TS engine is
+> untouched and stays that way.
+>
+> **The toolchain, both halves, recorded as the plan asks.** Standard Godot
+> **4.7.1.stable.official** on PATH is the determinism backbone — every
+> test, fixture run, autoplay and CI gate goes through it. Xogot for Mac
+> **1.6.5** embeds **Godot 4.6.2.rc**, so `project.godot` pins
+> `config/features` to **4.6**, the older of the two, and the project loads
+> in both. Xogot's `xo` broker is a real agent-facing editor surface for the
+> stage phases; it is not the automation backbone, because it has no
+> headless mode.
+>
+> **Two corrections you should have.** GUT is pinned at **9.7.1, not the
+> plan's 9.3.0** — 9.3.0 hangs forever under Godot 4.7.1, printing nothing
+> and never exiting. And the spec says the golden run is 125 events; it is
+> **125 actions and 451 events**. The head and final-state hash it names
+> are both right.
+>
+> **The runner grew a spine, and it needed one.** GUT exits non-zero for a
+> *failing* test — but a test file that fails to PARSE is not a failing
+> test. It is silently skipped, and the run exits **0**. I found this by
+> watching a deliberately-broken file sail through green. For a migration
+> whose entire claim is "the ported suites pass", a runner that stays green
+> while a suite quietly retires is the one bug that could invalidate
+> everything downstream of it. `test.sh` now counts `test_*.gd` on disk and
+> refuses any run that executed fewer. Proven by breaking a file on
+> purpose: 1 of 2 ran, exit 1.
+>
+> **Mutation proofs, and one honest null result.** Four mutations caught:
+> one bit off in a splitmix constant (3 tests), a case-insensitive key sort
+> (2), an unescaped newline (1), and `seq` dropped from event identity — the
+> last of which correctly took the golden gate down with it and named the
+> first divergence as "seq 1, a MOVE". Two further mutations turned out to
+> be **equivalent rewrites rather than bugs**: the naive 64-bit multiply and
+> the redundant first seed-mask both produce identical bits, because low bits
+> survive two's-complement wrapping and the next line masks unconditionally.
+> I kept the split multiply anyway — it never overflows at all, where the
+> naive form leans on wrapping signed overflow — but I am not going to
+> report a proof I did not get.
+>
+> One deliberate deviation: the JSON string escaper is **hand-written**
+> rather than delegated to Godot's `JSON.stringify`. These exact bytes are
+> what SHA-256 signs, and JavaScript's escaping is the signature every chain
+> in this repo already carries; matching it on purpose beats hoping two
+> standard libraries agree about a backslash.
+>
+> **Nothing to press yet.** There is no stage — no board, no keys, no
+> picture. Phase 2 is the sim port proper (`apply`, `tables`, `mapgen`,
+> `sight`, `commands`), and its gate is the fold. Phase 3 is the first
+> thing you will be able to play.
+
+> [!IMPORTANT]
 > **02:55 — Your spec, read hard: the good idea, the eight things that
 > would not have compiled, and the purse that now works**
 > You handed me `new-designs-spec.md` and asked me to review, edit,
