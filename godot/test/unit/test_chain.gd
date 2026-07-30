@@ -21,9 +21,12 @@ extends GutTest
 ##   - C2-C4 (chain()'s own root-first/missing-event/cycle cases) were a
 ##     pre-existing Phase 1 gap in test_log.gd — closed here, opportunistically,
 ##     because fold()'s identical guards need the identical forged-log
-##     fixtures anyway. A3/A5/A6's log-immutability clause/A7 remain
+##     fixtures anyway. A3/A5/A6's log-immutability clause/A7 remained
 ##     out of scope: append()'s own behaviour, untouched by this task, and
-##     flagged separately rather than patched in passing.
+##     flagged separately rather than patched in passing. A5 and A7 have
+##     since been ported in test_log.gd; A3 and A6's clause are about the
+##     reference log's PERSISTENCE and have no counterpart in a mutable
+##     SimLog, as test_log.gd's own docstring now says.
 
 
 ## A short, real, single-floor chain: this suite's analogue of the

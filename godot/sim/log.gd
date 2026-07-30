@@ -35,10 +35,20 @@ const FOLD_CACHE_LIMIT := 200000
 ## Returns the sealed event. Idempotent on convergent history: appending the
 ## same content at the same position twice yields the one event both times,
 ## because the id IS the content and the position.
+##
+## A head this log has never seen is refused rather than sealed onto. This is
+## the only door events come in by, so it is the cheapest place to decline the
+## hole that chain() and fold() below each spend a guard refusing to walk. The
+## refusal carries an explicit return for the reason fold()'s docstring gives
+## at length: assert() unwinds only the frame it is in, and in a build where
+## it has been compiled out there is no unwind at all — the next line would
+## then read a key that is not there.
 func append(head: Variant, draft: Dictionary) -> Dictionary:
 	var seq := 0
 	if head != null:
-		assert(events.has(head), "append: unknown head %s" % head)
+		if not events.has(head):
+			assert(false, "append: unknown head %s" % head)
+			return {}
 		seq = (events[head] as Dictionary)["seq"] + 1
 	var id := SimHash.hash_event(draft, head, seq)
 	if events.has(id):
