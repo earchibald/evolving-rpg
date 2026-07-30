@@ -285,6 +285,43 @@ MUTATIONS: dict[str, tuple[str, str, str]] = {
         "\tvar a := (seed + imul32(counter, GAMMA)) & MASK32",
         "\tvar a := seed + imul32(counter, GAMMA)",
     ),
+    # --- Task 2.D3: sight.gd, guarded entirely by the ported
+    # tests/core/sight.test.ts suite (test_sight.gd) — this file has no
+    # other witness at all: it is not part of GameState, so no fold/golden
+    # gate touches it, and Wave E (commands.gd, the only future caller of
+    # within_reach/clear_shot) has not landed yet either. ---
+    # Neuters the corner rule so two solid tiles kissing at a lattice point
+    # no longer stop the shot — the exact case the brief calls out by name.
+    # Caught only by test_slips_a_single_corner_but_never_two_walls_kissing,
+    # which is the one ported case built to require BOTH flanking cells
+    # solid before it demands a block.
+    "sight-corner-kissing-passes": (
+        "godot/sim/sight.gd",
+        "\t\t\tif _solid(grid, x + sx, y) and _solid(grid, x, y + sy):\n\t\t\t\treturn false",
+        "\t\t\tif _solid(grid, x + sx, y) and _solid(grid, x, y + sy):\n\t\t\t\tpass  # MUTATED: two walls kissing no longer stop the shot",
+    ),
+    # Drops the "+ radius" slack from the reach disc, turning the reference's
+    # dx²+dy² <= r²+r into a bare dx²+dy² <= r² — an equivalent-looking
+    # distance check that is NOT the same inequality, which is exactly the
+    # trap the brief warns against porting into. Caught only by
+    # test_rounds_the_diagonal_the_way_sight_does (29 <= 30 needs the slack;
+    # 29 <= 25 is false), not by the straight-edge case (25 <= 30 and
+    # 25 <= 25 agree, so that case alone could not tell the two apart).
+    "sight-reach-disc-drops-the-slack": (
+        "godot/sim/sight.gd",
+        "\treturn dx * dx + dy * dy <= radius * radius + radius",
+        "\treturn dx * dx + dy * dy <= radius * radius",
+    ),
+    # Flips _stands' liveness guard, so a living body is skipped (never
+    # blocks) and a corpse is checked instead (always blocks). Breaks both
+    # halves of test_is_stopped_by_a_living_body_between_never_by_the_dead_
+    # never_by_the_ends at once: the living body between archer and mark
+    # stops blocking, and the hp=0 corpse in its place starts blocking.
+    "sight-dead-body-blocks": (
+        "godot/sim/sight.gd",
+        "\t\tif not SimEntity.is_alive(e):",
+        "\t\tif SimEntity.is_alive(e):",
+    ),
 }
 
 if len(sys.argv) > 1 and sys.argv[1] == "--list":
