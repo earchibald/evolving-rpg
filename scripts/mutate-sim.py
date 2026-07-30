@@ -423,6 +423,37 @@ MUTATIONS: dict[str, tuple[str, str, str]] = {
         "\t#c += 1\n"
         '\treturn {"exit": farthest_from(grid, start), "band": "the long way", "counterAfter": c}',
     ),
+    # --- Task 2.E1: turns.gd ---
+    # Reverses initiative_order's tie-break from ascending id to descending —
+    # the brief's own mandated mutation ("a different tie-break is a
+    # different chain"). MEASURED: only
+    # test_breaks_speed_ties_by_ascending_id_so_order_never_depends_on_input_
+    # order fails, and it fails on BOTH assertions, not one — "backwards"
+    # input ([c,b,a], already "sorted" by the broken descending rule) stays
+    # ['c','b','a'], and "forwards" input ([a,b,c]) flips to ['c','b','a']
+    # too. No other test touches a speed tie: every other fixture in the file
+    # uses distinct speeds, so the primary sort key alone decides them and
+    # this branch is never reached. See Task 2.E1's report for the full
+    # observed failure output.
+    "turns-tiebreak-reversed": (
+        "godot/sim/turns.gd",
+        '\treturn (a["id"] as String) < (b["id"] as String)',
+        '\treturn (a["id"] as String) > (b["id"] as String)',
+    ),
+    # Swaps next_active's wrap arithmetic from the ALIVE order's own length to
+    # the raw (unfiltered) roster's length — the exact seam
+    # test_a_non_active_roster_member_dying_mid_round_does_not_disturb_the_wrap
+    # was written to guard, closing the gap Increment 1's review flagged
+    # (no ported TS case ever mixes a living active entity with a dead,
+    # non-active one). MEASURED: only that one test fails; every one of the
+    # 10 ported cases either never reaches this line (both early-return
+    # branches above it) or calls next_active on a roster where every member
+    # is alive, so order.size() == entities.size() and the swap is silent.
+    "turns-next-active-wrap-uses-raw-roster-length": (
+        "godot/sim/turns.gd",
+        "\tvar next: int = (at + 1) % order.size()",
+        "\tvar next: int = (at + 1) % entities.size()",
+    ),
 }
 
 if len(sys.argv) > 1 and sys.argv[1] == "--list":
