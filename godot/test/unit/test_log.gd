@@ -6,13 +6,21 @@ extends GutTest
 ## identical forged-log fixtures anyway.
 ##
 ## What remains provable HERE is append()'s own contract: position-sealing,
-## convergent-history idempotence, root-first ordering and the deep freeze.
+## convergent-history idempotence, the refusal of an unknown head, root-first
+## ordering and the deep freeze.
 ##
-## STILL UNCOVERED, and named so it stops being invisible: two cases from the
-## reference's append() suite (the log-immutability clause of A5, and A7) have
-## no test in this repo. Found during Task 2.C2's reconciliation, and out of
-## that task's file authorization to fix — recorded here rather than patched in
-## passing, which is why this docstring says it instead of the report only.
+## A5 (an unknown head is refused) and A7 (a head that reset can redo its move)
+## were 2.C2's reconciliation's two real gaps — recorded in this docstring
+## rather than patched in passing, because they sat outside that task's file
+## authorization. Both are ported now, at the bottom of this file.
+##
+## What stays unported is A3 and the log-immutability clause of A6, and neither
+## is a gap. Both assert that the reference's EventLog is PERSISTENT: append
+## hands back a NEW log, and a repeat append hands back the identical one. This
+## port's SimLog is a mutable instance appending into its own `events`, so
+## there is no second log for either claim to be about. The claim underneath
+## them — that a repeat append writes nothing — is what
+## test_convergent_history_is_idempotent checks in their place.
 
 const DRAFT_A := {"type": "WAIT", "schemaVersion": 1, "rngCounter": 0, "payload": {"n": 1}}
 const DRAFT_B := {"type": "WAIT", "schemaVersion": 1, "rngCounter": 1, "payload": {"n": 2}}
@@ -82,3 +90,39 @@ func test_chain_forks_share_their_root() -> void:
 func test_chain_of_nothing_is_empty() -> void:
 	var log := SimLog.new()
 	assert_eq((log.chain(null) as Array).size(), 0)
+
+
+func test_append_rejects_a_head_it_has_never_seen() -> void:
+	## A5. An unknown parent is a chain that never existed, and sealing an
+	## event onto one would open the very hole chain() and fold() spend a guard
+	## each refusing to walk. Cheaper to refuse it at the only door events come
+	## in by.
+	var log := SimLog.new()
+	log.append("nope-not-a-real-hash", DRAFT_A)
+	assert_engine_error("unknown head")
+	assert_eq(log.events.size(), 0, "and nothing was written")
+
+
+func test_a_world_can_redo_a_move_it_reset_away() -> void:
+	## A7. Reset walks a head backwards; the next press of the same key then
+	## reproduces an id the log already holds. In the reference that THREW, and
+	## the debug view has no try/catch, so the key silently stopped working —
+	## the regression that shipped, and the reason append() returns the sealed
+	## event instead of refusing a repeat.
+	##
+	## Distinct from test_convergent_history_is_idempotent above, which is two
+	## holders converging at the root. This is one holder rewinding past its
+	## own move and making it again, which is the shape a reset actually has.
+	## Nothing here folds, so the payloads are the file's usual stand-ins.
+	var log := SimLog.new()
+	var root: Dictionary = log.append(null, SimEvents.draft("WORLD_INIT", 0, 9, {"seed": 20260724}))
+	var step := SimEvents.draft("MOVE", 9, 0,
+		{"entityId": "player", "from": {"x": 0, "y": 0}, "to": {"x": 1, "y": 0}})
+
+	var moved: Dictionary = log.append(root["id"], step)
+	# The reset: head goes back to the world init, and the same move is made
+	# from there a second time.
+	var redone: Dictionary = log.append(root["id"], step)
+
+	assert_eq(redone["id"], moved["id"], "the redone move IS the move, not a second one")
+	assert_eq(log.events.size(), 2, "and the log did not grow to hold a twin")
