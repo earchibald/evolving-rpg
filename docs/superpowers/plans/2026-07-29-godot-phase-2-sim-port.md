@@ -66,8 +66,12 @@ Conversely, a TS field explicitly set to `null` (`motif`, `bible`, `smoke`, `ala
 
 | Interface | Fields that must be ABSENT when unset |
 |---|---|
-| `Entity` (`src/core/entity.ts:14`) | `disposition`, `gear`, `route`, `scroll`, `pocket`, `satchel` — and any other `?`-marked field; read the interface in full at `ts-baseline` |
+| `Entity` (`src/core/entity.ts:14`) | **All nine, verified exhaustive against `ts-baseline` during Task 2.A2 and confirmed by review:** `post`, `disposition`, `route`, `leg`, `guise`, `scroll`, `pocket`, `gear`, `satchel`. The six always-present fields are `id`, `kind`, `pos`, `stats`, `tags`, `maxHp`. |
 | `Blow` (`src/canon/interpret.ts:37`) | all fields (defaults to `{}`) |
+
+**`gear` is a dict keyed by slot**, not a list like `satchel`. The law very likely applies one level down — an unworn slot is an absent key *inside* `gear`, not a `null` — but that is inference, not measurement: the golden run has one entity with `gear` and it does not exercise an empty slot. Whichever task first writes `gear` must check the reference and settle it.
+
+**A warning about the absent-key tests themselves.** The entity-level test given in Task 2.A2 (`test_optional_fields_are_absent_not_null`) is **tautological, and known to be** — it hand-builds a Dictionary literal without the optional keys and then asserts the literal lacks them, which is true by construction. Nothing in `entity.gd` can fail it, because `entity.gd` has no builder. It is kept as executable documentation of the law, not as a guard. **The real guard has to live where entities are first CONSTRUCTED — `apply.gd`'s `WORLD_INIT` case, Task 2.C1.** That task must add a non-tautological regression test: build an entity through the actual reducer path, then assert the constructed entity has no `null`-valued keys and that its absent optionals are absent. Without that, the law is asserted nowhere that could ever break.
 
 **Enforcement:** Task 2.B2 ships `SimState.assert_shape(state)` and every wave from B onward calls it in tests. `test_state_shape.gd` (shipped in 2.A0) already pins the oracle itself, so a drifting dump is caught before anything is measured against it.
 
@@ -430,6 +434,11 @@ const STATE_KEYS: Array[String] = [...]  # the 20 keys, sorted
   `empty()` returns a new Dictionary each call. The TS `EMPTY_STATE` is a frozen shared singleton; in GDScript a shared frozen dict would force every reducer to copy anyway, so returning fresh is simpler and equivalent — **but the key set and values must be identical**.
 
 - [ ] **Step 1: Port the state shape.** The 20 keys, from `src/core/state.ts:13`: `grid, entities, items, turn, activeEntityId, seed, rngCounter, rules, xp, level, depth, gold, story, motif, bodies, bible, smoke, traps, alarm, unveiled`.
+
+- [ ] **Step 1b: Adopt the three tests Task 2.A2 deferred to you.** `tests/core/entity.test.ts` has a `describe('EMPTY_STATE', …)` block whose three cases belong to `state.ts`, not `entity.ts`, and could not be ported before `SimState` existed. Port them here — they are otherwise lost coverage:
+  1. *"has no entities and no active turn"*
+  2. *"is a solid one-tile grid, so nothing is walkable before a world exists"* (exercises `SimGrid.is_passable` against the empty state's 1×1 WALL grid)
+  3. *"is frozen, so a reducer mutating its accumulator fails loudly instead of corrupting every later replay"* — note that `SimState.empty()` deliberately returns a **fresh** Dictionary rather than a shared frozen one, so this test cannot port literally. Port its *intent*: assert that mutating the result of one `empty()` call cannot be observed through a later `empty()` call.
 
 - [ ] **Step 2: Write the test that pins it against the TS dump**
 
