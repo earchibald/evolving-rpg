@@ -44,6 +44,11 @@ MUTATIONS: dict[str, tuple[str, str, str]] = {
         "\treturn x >= 0 and y >= 0 and x < width and y < height",
         "\treturn x >= 0 and y >= 0 and x <= width and y <= height",
     ),
+    "entity-is-alive": (
+        "godot/sim/entity.gd",
+        "\treturn hp > 0",
+        "\treturn true",
+    ),
     # --- Known EQUIVALENT REWRITES, kept as documentation, not as proofs. ---
     # Both produce identical bits: low bits survive two's-complement wrapping,
     # and u32's second line masks unconditionally. Running these should show NO
