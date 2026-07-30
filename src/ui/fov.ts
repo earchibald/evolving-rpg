@@ -1,8 +1,10 @@
-import { WALL, SECRET, FLOOR, tileAt, idx, inBounds } from '../core/grid.js';
+import { WALL, SECRET, FLOOR, EXIT, tileAt, idx, inBounds } from '../core/grid.js';
 import { sightAt } from '../core/tables.js';
 import type { Grid } from '../core/grid.js';
 import type { EventLog } from '../log/chain.js';
 import type { GameEvent } from '../core/events.js';
+import type { GameState } from '../core/state.js';
+import { isAlive } from '../core/entity.js';
 
 /**
  * Fog of war — what the PLAY view knows.
@@ -265,4 +267,36 @@ export function fogAt(
     ? visibleFrom(acc.grid, acc.pos.x, acc.pos.y, acc.sight, acc.trod)
     : new Set<number>();
   return { seen: acc.seen, visible, revealed: acc.trod };
+}
+
+/**
+ * What is worth stopping a run for, named.
+ *
+ * The designer's rule for the run is "until it spots *anything* new", so
+ * "anything" has to be a SET and "new" has to be a set difference — a guess
+ * would stop on nothing or on every step. These are the things a player would
+ * actually look up for: every living creature and every item currently in
+ * view, every trap the run has found, and the way out once the map holds it.
+ *
+ * Newly-seen GROUND is deliberately not in here. A pace down a corridor
+ * uncovers a tile or two, so ground-as-novelty would stop the run every single
+ * step; the caller watches the SIZE of the newly-seen set instead, which is
+ * what tells a corridor going on from a corridor opening up.
+ */
+export function notablesInView(state: GameState, fog: { seen: ReadonlySet<number>; visible: ReadonlySet<number> }): Set<string> {
+  const out = new Set<string>();
+  for (const e of state.entities) {
+    if (e.kind === 'you' || !isAlive(e)) continue;
+    if (fog.visible.has(idx(state.grid, e.pos.x, e.pos.y))) out.add(`body:${e.id}`);
+  }
+  for (const item of state.items) {
+    if (fog.visible.has(idx(state.grid, item.pos.x, item.pos.y))) out.add(`thing:${item.id}`);
+  }
+  for (const t of state.traps) {
+    if (t.revealed) out.add(`trap:${t.id}`);
+  }
+  for (let at = 0; at < state.grid.tiles.length; at += 1) {
+    if (state.grid.tiles[at] === EXIT && fog.seen.has(at)) { out.add('the way out'); break; }
+  }
+  return out;
 }

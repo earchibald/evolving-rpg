@@ -368,6 +368,22 @@ names its band out loud. Cost paid: the golden re-probed to seed 17 (the
 old fixture had stopped killing anything), and the vale's d5 pipeline pin
 re-opened 13→16 with the per-floor bite measured unchanged.
 
+**The run walks the corridor for you** (the designer's last ask of the round,
+2026-07-29): shift + a direction paces that way at RUN_PACE_MS 330 — "about 3
+spaces/second", their number — until a wall, until anything NEW comes into
+sight, until it opens up, until harm, or 300 paces. Entirely view-side: a run
+appends the same MOVEs a hand would, mints no event, needs no schema, leaves
+bots and golden untouched, and rewinds a pace at a time. It stops on what the
+PLAYER can see, not what the world knows — an untrodden secret reads as wall
+because it is painted as wall. "Anything new" is a set difference over
+`notablesInView` (fov.ts, unit-tested): bodies and items in view, found traps,
+the way out once the map holds it — deliberately NOT new ground, or every pace
+in a corridor would stop it. The opening threshold is measured, not guessed:
+over ~43k paces on 30 expanse floors a corridor pace uncovers a median of 3
+tiles and open ground 6, so RUN_OPENING 20 fires on 5% of corridor paces (the
+junctions) where the first guess of 12 fired on 12% (a stutter). Refuses to
+start while anything has you in sight; any key ends it.
+
 **The traps answer back** (the same round's filings): the alarm bell used to
 summon nobody — 83% of an expanse floor's bodies are POST-LEASHED GUARDS and
 the bell excused every one, so barely half a body per floor took a step, at any

@@ -20,6 +20,13 @@ guarding by stepping onto it. Find the stairs. Go down.
 The game talks to you constantly in the journal under the map. When in
 doubt, read the last three lines — they always say what just happened.
 
+**Long corridors walk themselves.** Hold shift and press a direction and you
+walk that way on your own, a few paces a second, until a wall stops you or
+until something worth looking at comes into view — a creature, a thing on the
+floor, a trap you spot, the way out, or the corridor opening into a room. Any
+key stops it. It will not start while something already has you in sight, and
+it will not walk you onto a trap you have found.
+
 ---
 
 ## 2. The keys
@@ -28,6 +35,7 @@ doubt, read the last three lines — they always say what just happened.
 |---|---|
 | arrows / wasd | walk — into a creature is an attack, into a wall costs nothing |
 | `.` or space | stand still for a turn |
+| shift + a direction | run — walk that way on your own, about three paces a second, until a wall or until anything new comes into sight |
 | `x`, then a direction | shove — drive whatever stands beside you one pace |
 | `z` | brace — set yourself against the coming round |
 | `f` | the sling — press once to draw (everyone sees it), again to let fly |

@@ -1,9 +1,10 @@
-import { visibleFrom, fogAt, SIGHT } from '../../src/ui/fov.js';
+import { visibleFrom, fogAt, SIGHT, notablesInView } from '../../src/ui/fov.js';
 import { createWorld } from '../../src/core/commands.js';
 import { autoplay } from '../../src/play/autoplay.js';
 import { brawler } from '../../src/play/policies.js';
 import type { Grid } from '../../src/core/grid.js';
-import { FLOOR, WALL, makeGrid, idx } from '../../src/core/grid.js';
+import { FLOOR, WALL, EXIT, makeGrid, idx } from '../../src/core/grid.js';
+import type { GameState } from '../../src/core/state.js';
 import { emptyLog, append } from '../../src/log/chain.js';
 import { SCHEMA_VERSIONS } from '../../src/core/events.js';
 import type { DraftEvent } from '../../src/core/events.js';
@@ -184,5 +185,106 @@ describe('the trodden-neighborhood invariant', () => {
         }
       }
     }
+  });
+});
+
+describe('what stops a run', () => {
+  // The designer's rule, 2026-07-29: shift and a direction walks "until it hits
+  // a wall OR until it spots *anything* new". "Anything new" is a set
+  // difference, so this pins what goes in the set.
+  const board = (): Grid => {
+    // A long 30x5 hall with a solid border; everything inside is floor. Long
+    // enough that its far end lies past SIGHT, which is how "out of sight"
+    // gets tested without standing a creature inside a wall.
+    const width = 30; const height = 5;
+    const tiles = new Array<number>(width * height).fill(WALL);
+    for (let y = 1; y < height - 1; y += 1) for (let x = 1; x < width - 1; x += 1) tiles[y * width + x] = FLOOR;
+    return makeGrid(width, height, tiles);
+  };
+
+  const world = (over: Partial<GameState> = {}): GameState => {
+    const grid = board();
+    return {
+      grid,
+      entities: [{ id: 'player', kind: 'you', pos: { x: 1, y: 2 }, stats: { hp: 9, might: 3, wits: 3, speed: 3 }, tags: [], maxHp: 9 }],
+      items: [], turn: 1, activeEntityId: 'player', seed: 1, rngCounter: 0, rules: [],
+      xp: 0, level: 1, depth: 3, story: '', motif: null, bodies: [], bible: null,
+      smoke: null, traps: [], alarm: null, unveiled: [], ...over,
+    } as GameState;
+  };
+
+  const eyes = (state: GameState): { seen: ReadonlySet<number>; visible: ReadonlySet<number> } => {
+    const you = state.entities[0]!;
+    const visible = visibleFrom(state.grid, you.pos.x, you.pos.y, SIGHT);
+    return { seen: visible, visible };
+  };
+
+  it('counts a living body in view, and ignores one out of sight or already dead', () => {
+    const seen = world({
+      entities: [
+        { id: 'player', kind: 'you', pos: { x: 1, y: 2 }, stats: { hp: 9, might: 3, wits: 3, speed: 3 }, tags: [], maxHp: 9 },
+        { id: 'foe-1', kind: 'bruiser', pos: { x: 5, y: 2 }, stats: { hp: 7, might: 4, wits: 1, speed: 1 }, tags: [], maxHp: 7 },
+      ],
+    } as Partial<GameState>);
+    expect([...notablesInView(seen, eyes(seen))]).toContain('body:foe-1');
+
+    const dead = world({
+      entities: [
+        { id: 'player', kind: 'you', pos: { x: 1, y: 2 }, stats: { hp: 9, might: 3, wits: 3, speed: 3 }, tags: [], maxHp: 9 },
+        { id: 'foe-1', kind: 'bruiser', pos: { x: 5, y: 2 }, stats: { hp: 0, might: 4, wits: 1, speed: 1 }, tags: [], maxHp: 7 },
+      ],
+    } as Partial<GameState>);
+    expect([...notablesInView(dead, eyes(dead))]).not.toContain('body:foe-1');
+
+    // The same body at the hall's far end, past where sight reaches.
+    const hidden = world({
+      entities: [
+        { id: 'player', kind: 'you', pos: { x: 1, y: 2 }, stats: { hp: 9, might: 3, wits: 3, speed: 3 }, tags: [], maxHp: 9 },
+        { id: 'foe-1', kind: 'bruiser', pos: { x: 27, y: 2 }, stats: { hp: 7, might: 4, wits: 1, speed: 1 }, tags: [], maxHp: 7 },
+      ],
+    } as Partial<GameState>);
+    expect([...notablesInView(hidden, eyes(hidden))]).not.toContain('body:foe-1');
+  });
+
+  it('counts a thing on the floor, a trap the run has found, and the way out once it is on the map', () => {
+    const withItem = world({ items: [{ id: 'relic-1', kind: 'keen edge', pos: { x: 4, y: 2 }, grants: { hp: 0, might: 2, wits: 0, speed: 0 } }] } as Partial<GameState>);
+    expect([...notablesInView(withItem, eyes(withItem))]).toContain('thing:relic-1');
+
+    const found = world({
+      traps: [{ id: 'trap-1', kind: 'spike pit', pos: { x: 6, y: 2 }, level: 1, sightRolled: true, nearRolled: false, revealed: true, sprung: false }],
+    } as Partial<GameState>);
+    expect([...notablesInView(found, eyes(found))]).toContain('trap:trap-1');
+
+    // An unfound trap is not something you have spotted.
+    const unfound = world({
+      traps: [{ id: 'trap-1', kind: 'spike pit', pos: { x: 6, y: 2 }, level: 1, sightRolled: true, nearRolled: false, revealed: false, sprung: false }],
+    } as Partial<GameState>);
+    expect([...notablesInView(unfound, eyes(unfound))]).not.toContain('trap:trap-1');
+
+    const plain = world();
+    const tiles = [...plain.grid.tiles];
+    tiles[2 * plain.grid.width + 8] = EXIT;
+    const withExit = { ...plain, grid: makeGrid(plain.grid.width, plain.grid.height, tiles) } as GameState;
+    expect([...notablesInView(withExit, eyes(withExit))]).toContain('the way out');
+  });
+
+  it('says nothing about bare ground — or a run down a corridor would stop every pace', () => {
+    const empty = world();
+    expect([...notablesInView(empty, eyes(empty))]).toEqual([]);
+  });
+
+  it('is a set, so "new" is a difference: the same view twice adds nothing', () => {
+    const s = world({ items: [{ id: 'relic-1', kind: 'keen edge', pos: { x: 4, y: 2 }, grants: { hp: 0, might: 2, wits: 0, speed: 0 } }] } as Partial<GameState>);
+    const before = notablesInView(s, eyes(s));
+    const after = notablesInView(s, eyes(s));
+    expect([...after].filter((n) => !before.has(n))).toEqual([]);
+
+    // One creature walks into view: exactly one new name.
+    const arrived = {
+      ...s,
+      entities: [...s.entities, { id: 'foe-9', kind: 'skirmisher', pos: { x: 7, y: 2 }, stats: { hp: 3, might: 3, wits: 2, speed: 4 }, tags: [], maxHp: 3 }],
+    } as GameState;
+    const now = notablesInView(arrived, eyes(arrived));
+    expect([...now].filter((n) => !before.has(n))).toEqual(['body:foe-9']);
   });
 });

@@ -1633,3 +1633,50 @@ the game you're reading about — start here, then `AGENTS.md` for the tools.
 > listener report if it was *submitted*, so a night that ends in death
 > leaves the freshest thinking in the repo sitting in notes.jsonl with
 > nothing pointing at it. That is fixed as a habit, not as code.
+
+## 2026-07-29 — 19:36 — the corridor walks itself
+
+> Dear Designer,
+>
+> Shift and a direction, as you settled on. It paces that way on its own
+> at your three-a-second and stops when there is a reason to: a wall, a
+> body or a thing or a found trap or the way out coming into sight, the
+> corridor opening into a room, any harm, or any key you press. It will
+> not start while something already has you in sight, and it will not
+> walk you onto a trap you already found — a convenience should never be
+> an autopilot with a death in it.
+>
+> One choice worth your veto: it stops on what YOU can see, not on what
+> the world knows. An untrodden secret door reads as wall to the run,
+> because it reads as wall on your screen. A run that strolled through a
+> wall you were looking at would be the fog telling a lie.
+>
+> Two numbers I measured rather than guessed. The pace is 330ms, which
+> is your three a second. And "it opens up" needed a threshold — how
+> many newly-seen tiles in one pace count as *new*. I guessed 12 first
+> and then went and counted: over about 43,000 paces on thirty expanse
+> floors, a pace inside a corridor uncovers a median of three tiles and
+> a pace in open ground six. Twelve would have fired on 12% of corridor
+> paces — a stop every eight paces, which is a stutter, not a run. It
+> sits at 20 now, which fires on 5% of corridor paces, and those 5% are
+> exactly the ones worth stopping for: a corridor that suddenly shows
+> you twenty new tiles has arrived at a junction or a room's mouth.
+>
+> None of this touches the engine. A run appends the same steps your
+> hand would; there is no new event, no schema, nothing for the bots or
+> the golden fixture to notice, and a rewind un-walks it one pace at a
+> time. The stop rule lives in fov.ts as a set of names — bodies and
+> things in view, traps you have found, the way out once your map holds
+> it — so "anything new" is a set difference and not a vibe, and it is
+> unit-tested that way. New GROUND is deliberately not in that set;
+> ground-as-novelty is what stops a run every single pace.
+>
+> 980 tests, typecheck clean. Verified live: it starts, it paces, and it
+> printed "you stop after 9 paces — the wall" walking a corridor north.
+> The one thing I did not catch firing in a live run is a stop for
+> something newly in sight — the floor I was on is a warren of short
+> corridors and every run ended at a wall first. That branch rests on
+> the tested set difference rather than on my having watched it happen,
+> which you should know before you trust it.
+>
+> Go and give it a spin.
