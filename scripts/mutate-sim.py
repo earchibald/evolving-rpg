@@ -49,6 +49,17 @@ MUTATIONS: dict[str, tuple[str, str, str]] = {
         "\treturn hp > 0",
         "\treturn true",
     ),
+    # Clamps the GRANT at zero before it is summed, not the resulting stat
+    # (every field in the ported negative-grant test lands >= 0 after the
+    # real sum, so clamping the sum itself would be an equivalent rewrite
+    # here — this instead reproduces the tempting "a grant shouldn't be
+    # negative" defensive fix, which is exactly what would silently erase
+    # the heavy edge's speed cost).
+    "item-granted-clamp": (
+        "godot/sim/item.gd",
+        '\t\t"speed": stats["speed"] + grants["speed"],',
+        '\t\t"speed": stats["speed"] + maxi(grants["speed"], 0),',
+    ),
     # --- Known EQUIVALENT REWRITES, kept as documentation, not as proofs. ---
     # Both produce identical bits: low bits survive two's-complement wrapping,
     # and u32's second line masks unconditionally. Running these should show NO
