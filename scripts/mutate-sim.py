@@ -374,6 +374,55 @@ MUTATIONS: dict[str, tuple[str, str, str]] = {
         "\t\tif not SimEntity.is_alive(e):",
         "\t\tif SimEntity.is_alive(e):",
     ),
+    # --- Task 2.D1: sim/mapgen.gd, guarded by the six-board identity sweep in
+    # test_mapgen.gd plus the two draw-accounting cases beside it ---
+    # THE MANDATED ONE. A rejected rectangle hands its four draws back instead
+    # of spending them, which is the single rule the whole file is organised
+    # around: "every counted draw, INCLUDING a rejected one, advances the
+    # counter." The rooms it keeps are unchanged for the first rejection and
+    # every draw after it lands on a different counter, so the board diverges
+    # AND counterAfter diverges — the sweep fails on both halves at once, which
+    # is the point: a port that only matched tiles would still be wrong.
+    "mapgen-rejected-draw-refunded": (
+        "godot/sim/mapgen.gd",
+        "\t\tif clashes:\n\t\t\tcontinue",
+        "\t\tif clashes:\n\t\t\tc -= 4\n\t\t\tcontinue",
+    ),
+    # Drops the one-tile wall margin between rooms, so two rooms that merely
+    # touch are accepted instead of rejected. Each attempt still costs its four
+    # draws, but the target fills after FEWER attempts, so the board, the start,
+    # the rooms and counterAfter all move together. Measured: all six boards
+    # fail on both halves of the sweep.
+    "mapgen-room-margin": (
+        "godot/sim/mapgen.gd",
+        "\treturn ax - 1 < bx + bw and ax + aw + 1 > bx \\\n"
+        "\t\tand ay - 1 < by + bh and ay + ah + 1 > by",
+        "\treturn ax < bx + bw and ax + aw > bx \\\n"
+        "\t\tand ay < by + bh and ay + ah > by",
+    ),
+    # Walks the four neighbours south-first instead of east-first. INVISIBLE to
+    # the board sweep and to every distance in the file — flood membership and
+    # BFS depth are both order-independent — and visible only in which of the
+    # equally-short roads walk_path returns. Caught solely by
+    # test_the_road_bends_east_before_it_bends_south, which exists because
+    # Wave E's createWorld lays the teaching floor's relic ON that road.
+    "mapgen-step-order": (
+        "godot/sim/mapgen.gd",
+        "const _STEPS: Array = [[1, 0], [-1, 0], [0, 1], [0, -1]]",
+        "const _STEPS: Array = [[0, 1], [0, -1], [1, 0], [-1, 0]]",
+    ),
+    # choose_exit's fallback stops spending its second draw, so a floor too
+    # cramped to fill any band leaves the stream one draw short of every other
+    # floor. Also invisible to the six-board sweep — all six find a band — and
+    # caught only by test_choose_exit_spends_exactly_two_draws_on_every_path_out,
+    # which is the whole reason that case was written.
+    "mapgen-exit-fallback-draw": (
+        "godot/sim/mapgen.gd",
+        "\tc += 1\n"
+        '\treturn {"exit": farthest_from(grid, start), "band": "the long way", "counterAfter": c}',
+        "\t#c += 1\n"
+        '\treturn {"exit": farthest_from(grid, start), "band": "the long way", "counterAfter": c}',
+    ),
 }
 
 if len(sys.argv) > 1 and sys.argv[1] == "--list":
