@@ -116,6 +116,20 @@ MUTATIONS: dict[str, tuple[str, str, str]] = {
         "\tif version == current:",
         "\tif version == current + 1:",
     ),
+    # Drops the "- 1" from fork()'s seq arithmetic, recording the fork point
+    # at the length of the chain up to and including it rather than its
+    # actual seq (chain()[i] has .seq == i, so the true fork-point seq is
+    # length - 1). The reference's own test comment names this exact case:
+    # "every other fork test checks only .head, so dropping the - 1 would
+    # ship silently" — every fork test but one only checks .head, which this
+    # mutation never touches, so only
+    # test_records_the_fork_point_sequence_not_the_source_head_sequence
+    # catches it.
+    "refs-fork-seq": (
+        "godot/sim/refs.gd",
+        "\tvar seq: int = 0 if at == null else log.chain(at).size() - 1",
+        "\tvar seq: int = 0 if at == null else log.chain(at).size()",
+    ),
     # --- Known EQUIVALENT REWRITES, kept as documentation, not as proofs. ---
     # Both produce identical bits: low bits survive two's-complement wrapping,
     # and u32's second line masks unconditionally. Running these should show NO
