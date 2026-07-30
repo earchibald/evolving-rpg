@@ -33,6 +33,8 @@ Every task's requirements implicitly include this section. These are inherited v
 - **Fixtures are law:** `godot/test/fixtures/*` and `tests/fixtures/golden-run.json` are committed and **never regenerated to make a failing test pass**. Regeneration requires designer sign-off and happens only from `ts-baseline`.
 - **TS freeze:** `src/` is bugfix-only. Any TS change re-runs `npm run fixtures` and is called out to the designer.
 - **Test runner:** `./godot/test.sh` only. It counts `test_*.gd` on disk and fails if fewer ran — a parse error is a skipped script, not a failing test, and GUT exits 0 on those. Never work around this guard.
+- **GUT idiom: never `assert_ne(x, null)`.** GUT 9.7.1's comparator cannot diff against `null`; it pushes `"cannot set differences"` / `"Only Arrays and Dictionaries are supported"`, which GUT counts as an *unexpected error* and fails the test even when the assertion's intent holds. Use `assert_not_null(x)` / `assert_null(x)`. This bites on every port of a TS `expect(x).not.toBeNull()` or `toBeDefined()`, which is most suites — and the failure message points at the comparator, not at your test, so it costs a debugging session each time.
+- **Already proven, do not re-litigate:** GDScript reproduces the state-hash recipe (`sha256` over `SimCanonical.encode(state)`) against the reference's own golden final state — see `godot/test/unit/test_state_shape.gd`. So when the 2.F1 fold gate fails, the encoder and the hash are *not* the suspects; `apply` is.
 - **Mutation-proof discipline:** every ported suite gets at least one mutation spot-check — break the implementation guard, confirm the ported test fails, restore. Use `scripts/mutate-sim.py` (Task 2.A0). A mutation that turns out to be an *equivalent rewrite* is reported as a null result, not as a pass.
 - **Behavioural doubt:** consult the TS source at tag `ts-baseline` (`git show ts-baseline:src/core/apply.ts`), never memory of it.
 - **Repo voice:** commits are a single evocative line in the existing style plus `Co-Authored-By: Claude <model> <noreply@anthropic.com>`.
@@ -55,16 +57,19 @@ finalStateHash: bytesToHex(sha256(new TextEncoder().encode(canonicalJson(finalSt
 
 Conversely, a TS field explicitly set to `null` (`motif`, `bible`, `smoke`, `alarm`, `activeEntityId`) **must be present with value `null`**.
 
-The fields this bites on — every one of them optional in TS, so every one of them must be absent-when-unset in GDScript:
+**This is measured, not inferred.** Task 2.A0's `state-shape.json` dump was read against the golden run, and these are the facts it reports:
 
-| Interface | Optional fields (absent when unset) |
+- `GameState` has exactly **20 keys**: `activeEntityId alarm bible bodies depth entities gold grid items level motif rngCounter rules seed smoke story traps turn unveiled xp`.
+- In the golden final state, **`alarm`, `bible` and `smoke` are present with value `null`**. (`motif` and `activeEntityId` are nullable in the type and null in `EMPTY_STATE`, but carry values by the end of this run — so all five must be *present*, and their value is whatever the fold produces.)
+- The golden run's four entities use this key union: `disposition gear id kind maxHp pos post stats tags`. **`disposition` is present on 2 of 4 and `gear` on 1 of 4** — absent on the rest, **not null**. Those two are the discriminating cases: get them wrong and the fold hash misses while every individual entity still looks plausible.
+- `route`, `scroll`, `pocket` and `satchel` never appear in this run at all. They are still absent-when-unset fields — they just aren't exercised by golden, so **no gate will catch a mistake in them.** Wave E's suites are the only thing that will.
+
+| Interface | Fields that must be ABSENT when unset |
 |---|---|
-| `Entity` (`src/core/entity.ts:14`) | `route?`, `scroll?`, `pocket?`, `satchel?` — plus every other `?`-marked field in that interface; read it in full at `ts-baseline` |
+| `Entity` (`src/core/entity.ts:14`) | `disposition`, `gear`, `route`, `scroll`, `pocket`, `satchel` — and any other `?`-marked field; read the interface in full at `ts-baseline` |
 | `Blow` (`src/canon/interpret.ts:37`) | all fields (defaults to `{}`) |
 
-And the fields that must be present-with-`null`: `GameState.activeEntityId`, `.motif`, `.bible`, `.smoke`, `.alarm`.
-
-**Enforcement:** Task 2.B2 ships `SimState.assert_shape(state)` and every wave from B onward calls it in tests. Task 2.A0 ships a TS-side shape dump so the comparison is mechanical rather than eyeballed.
+**Enforcement:** Task 2.B2 ships `SimState.assert_shape(state)` and every wave from B onward calls it in tests. `test_state_shape.gd` (shipped in 2.A0) already pins the oracle itself, so a drifting dump is caught before anything is measured against it.
 
 A second, quieter trap: **integers**. Every number in the state is an integer. `SimCanonical.encode` refuses fractional floats and folds integral floats to int form, but a GDScript division (`/`) yields float. Use integer division (`floori`, or `int(a / b)` only where the TS used `Math.floor`) and match the TS rounding exactly.
 
