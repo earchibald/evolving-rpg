@@ -706,6 +706,102 @@ MUTATIONS: dict[str, tuple[str, str, str]] = {
         "\t\tif int(a[\"weight\"]) > 0 and depth >= from_depth and SimTables.verb_of(a[\"kind\"]) != \"call\":",
         "\t\tif int(a[\"weight\"]) > 0 and depth >= from_depth:  # MUTATED: a voice may answer a voice",
     ),
+    # --- Task 2.E3e: sim/commands/purse.gd (no functions of its own — see
+    # that file's header; the three rows below guard tables.gd's value_of and
+    # apply.gd's GOLD_MOVED/WORLD_INIT arms, the infrastructure test_purse.gd
+    # is the ONLY witness for, per the golden-run count in that file's own
+    # header: 1 WORLD_INIT with no playerGold key, 0 GOLD_MOVED, of 451
+    # events) ---
+    # value_of prices a provision at the relic/scroll rate (2) instead of the
+    # provision rate (1) — the exact finding the design spec's own mutation
+    # pass names (2026-07-30-economy-mining-and-sprites.md §III, Increment A:
+    # "pricing provisions as relics fails 1 — that third one passed the whole
+    # suite until the proof exposed it, because every other assertion was an
+    # inequality against the ceiling rather than the band's shape"). The
+    # mutant is the literal 2, not the identifier LOOT_VALUE: that text
+    # already occurs twice earlier in this same function (the ARMORY and
+    # SCROLLS branches), which trips this script's own count==1 safety guard
+    # on restore — the empty-mutant trap's sibling, a collision found live
+    # while proving this row rather than predicted.
+    # MEASURED: 469 tests, 467 pass, exactly 2 fail —
+    # test_pays_less_for_a_thing_you_were_going_to_use_up_than_for_a_thing_you_
+    # were_going_to_wear (this task's sharpened, literal-valued case, on its
+    # provision loop: expected 1, got 2) AND test_tables.gd's PRE-EXISTING
+    # test_every_numeric_table_matches_the_reference, which sweeps value_of
+    # against every row of godot/test/fixtures/tables.json and so is ALSO a
+    # witness for this exact line — a fact worth recording since it means
+    # this mutant is not this task's sole proof of the line, unlike in the
+    # TS reference (which had no such fixture sweep). The two remain
+    # independently worth keeping: the fixture sweep pins every kind's exact
+    # number from a frozen dump, while this test reads SimTables.PROVISIONS/
+    # ARMORY/SCROLLS live, so it alone would catch a new kind added to a
+    # table without a matching fixture row. test_prices_every_kind_the_
+    # dungeon_can_actually_drop (>0) and test_keeps_the_main_dungeon_nominal_
+    # pocket_change_never_a_living (<= LOOT_VALUE) both stay green, because a
+    # provision priced at 2 is still positive and still at-or-under the
+    # ceiling — proof that this task's brief was right to insist those two
+    # inequalities cannot stand in for the exact-value case.
+    "purse-value-of-provisions-as-relics": (
+        "godot/sim/tables.gd",
+        "\t\t\treturn PROVISION_VALUE",
+        "\t\t\treturn 2",
+    ),
+    # WORLD_INIT stops reading playerGold from the payload at all, so a
+    # descending floor always opens a purse of exactly 0 regardless of what
+    # the payload asked to carry — the stairs-carry silently dropped, the
+    # exact regression v15's own carry exists to forbid (docs/superpowers/
+    # specs/2026-07-30-economy-mining-and-sprites.md §III, Increment A:
+    # "WORLD_INIT v14 -> v15 carries playerGold, exactly as v8 taught the
+    # satchel to cross the stairs").
+    # MEASURED, and the count itself is worth recording: 469 tests, 466 pass,
+    # exactly 3 fail, not the 2 this row's own author first predicted —
+    # test_apply.gd's PRE-EXISTING test_world_init_carries_the_purse_across_
+    # the_stairs (added by Task 2.C1's reviewer, no TS counterpart) is also a
+    # witness for this exact line and fails alongside
+    # test_carries_what_the_player_had_like_the_satchel_learned_to_at_v9
+    # (expected 17, got 0) and
+    # test_does_not_let_a_new_floor_forget_money_already_earned_mid_run
+    # (expected 9, got 0, on its second assertion; the first, which checks
+    # the GOLD_MOVED fold rather than the carry, still passes). The
+    # over-confident prediction is left in this comment's history lesson on
+    # purpose: this migration's own standing rule is MEASURE, not predict,
+    # and this row is why. test_folds_a_floor_that_never_said_to_an_empty_
+    # purse is UNCHANGED by this mutant: it already expects 0 for an absent
+    # playerGold, which is what the mutant returns unconditionally — the
+    # reason that test exists separately from the others, so a broken carry
+    # cannot hide behind it.
+    "purse-world-init-gold-carry-dropped": (
+        "godot/sim/apply.gd",
+        "\t\t\t\t\"gold\": _or(p.get(\"playerGold\"), 0),",
+        "\t\t\t\t\"gold\": 0,",
+    ),
+    # GOLD_MOVED stops folding the delta at all — the reducer's one arithmetic
+    # step becomes a no-op, so every exchange is recorded but none of them
+    # counts. Breaking the fold outright, as distinct from the carry above:
+    # the design spec's own three-proof set names this pairing by name
+    # ("breaking the stairs carry fails 2 tests, breaking the fold fails 3"),
+    # and this row is the one place in the whole file where the prediction
+    # and the measurement actually agree on the count — see the row above for
+    # the time they did not.
+    # MEASURED: 469 tests, 466 pass, exactly 3 fail —
+    # test_sums_what_exchange_recorded (both non-zero checkpoints: expected 7
+    # after two sales, got 0; expected -43 after the purchase, got 0 — the
+    # leading `expect(state.gold).toBe(0)` checkpoint before any GOLD_MOVED
+    # is unaffected, since a no-op fold of nothing is still nothing),
+    # test_sums_honestly_rather_than_clamping_so_an_unaffordable_spend_is_a_
+    # visible_bug (expected -1, got 0), and
+    # test_does_not_let_a_new_floor_forget_money_already_earned_mid_run
+    # (expected 9 on its OWN first assertion, before the carry is even
+    # reached — this mutant and the carry mutant above both fail that test,
+    # but for different reasons and on different assertions, which is why
+    # both rows earn their own proof rather than sharing one).
+    # test_spends_no_randomness_an_exchange_is_arithmetic_not_a_roll is
+    # UNCHANGED: it asserts rngCounter, which this line never touches.
+    "purse-gold-moved-ignores-delta": (
+        "godot/sim/apply.gd",
+        "\t\t\tpaid[\"gold\"] = int(state[\"gold\"]) + int(p[\"delta\"])",
+        "\t\t\tpaid[\"gold\"] = int(state[\"gold\"])",
+    ),
 }
 
 if len(sys.argv) > 1 and sys.argv[1] == "--list":

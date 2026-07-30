@@ -143,3 +143,12 @@ static func call_out(state: Dictionary, entity_id: String, prey_id: String = "pl
 
 static func wait(state: Dictionary, entity_id: String) -> Dictionary:
 	return SimStances.wait(state, entity_id)
+    ),
+# ── Task 2.E3e: sim/commands/purse.gd ──────────────────────────────────────
+#
+# No delegations here on purpose, not a missed row: commands.ts has no
+# GOLD_MOVED producer at ts-baseline (nothing spends gold yet — the mine and
+# the shop are Phase 6), so SimPurse exports no functions to re-export. See
+# sim/commands/purse.gd's header for the full account. This section marks
+# the family present and accounted for, so the table of contents above stays
+# honest about all five rather than silently reading as four.
