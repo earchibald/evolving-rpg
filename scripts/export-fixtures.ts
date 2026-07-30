@@ -13,6 +13,9 @@ import {
   damageDice, neededToHit, chanceIn20, critFloor, threatOf, creatureStats,
   xpToReach, levelForXp, growthAt, sizeStretch, bountyStretch,
   BESTIARY, VERB_THREAT, MOTIFS,
+  meanDamage, braceWall, spawnBudget, wardenLevel, sightAt, grantValue,
+  valueOf, draughtCeiling, smokeTurns, trapCount, trapLevelAt, alarmTurns,
+  ARMORY, SCROLLS, PROVISIONS, relicGrant,
 } from '../src/core/tables.js';
 import { generateMap } from '../src/core/mapgen.js';
 import { canonicalJson } from '../src/log/canonical.js';
@@ -200,6 +203,94 @@ const sizeStretchRows = ([
 // float — see the task report for how that interacts with FixtureLoader.
 const bountyStretchRows = [-2, 0, 1, 2, 3, 4].map((stretch) => ({ args: [stretch], value: bountyStretch(stretch) }));
 
+// Reviewer follow-up: Step 1 says "every exported numeric function in
+// src/core/tables.ts" and the brief's Interfaces line named only 11 of
+// them. These 12 were missed on the first pass. 2.B3 ports the whole
+// 1,077-line file with no one to ask; a function with no row here gets
+// hand-transcribed into a GDScript assertion instead — "retyped and
+// hoped," the exact failure this file exists to prevent. Several are
+// load-bearing: valueOf prices the M9 economy, and spawnBudget,
+// wardenLevel, trapCount, trapLevelAt and alarmTurns all carry measured
+// balance history in their numbers (their own docstrings cite specific
+// survival-rate regressions the current constants fix).
+//
+// Every depth/stretch call site was re-checked at ts-baseline before
+// picking a domain, not assumed: createWorld's own `stretch` is always
+// `sizeStretch(width, height)` (commands.ts:231), and that binding is what
+// reaches chooseSpawns → spawnBudget (commands.ts:145,162) and trapCount
+// (commands.ts:544) — both still inside createWorld's scope, no
+// intervening function rebinds it. springTrap's alarmTurns call
+// (commands.ts:967) recomputes sizeStretch independently from
+// state.grid and lands on the same {1,2,3} range by a separate path.
+// depth's real band is 1..BOTTOM_DEPTH (9) — stated directly by the
+// constant's own docstring ("the world has a floor... the ninth floor"),
+// not inferred from a caller.
+const DEPTH_DOMAIN = [0, ...range(1, 9), 10]; // one out-of-range probe below 1 and above 9
+const STRETCH_GUARD_DOMAIN = [0, 1, 2, 3]; // the three real values, plus 0 to probe Math.max(1, floor(stretch))
+
+// meanDamage: might's whole domain, same as damageDice, since it IS
+// damageDice's mean. (die+1)/2 is a genuine half-integer for four of the
+// five bands (only might 3-4's 1d3+1 lands whole) — rounding that away
+// would hide the same class of int-division bug bountyStretch's rows
+// already exist to catch.
+const meanDamageRows = MIGHT_DOMAIN.map((might) => ({ args: [might], value: meanDamage(might) }));
+
+// braceWall: a defender's wits through the same Math.max(0, …) guard as
+// critFloor, so it gets the same domain.
+const braceWallRows = WITS_DOMAIN.map((wits) => ({ args: [wits], value: braceWall(wits) }));
+
+// spawnBudget(depth, stretch): the floor's whole spawn rent. Crossed like
+// neededToHit's two axes, over the domains real play actually uses.
+const spawnBudgetRows = DEPTH_DOMAIN.flatMap((depth) =>
+  STRETCH_GUARD_DOMAIN.map((stretch) => ({ args: [depth, stretch], value: spawnBudget(depth, stretch) })),
+);
+
+const wardenLevelRows = DEPTH_DOMAIN.map((depth) => ({ args: [depth], value: wardenLevel(depth) }));
+
+const sightAtRows = DEPTH_DOMAIN.map((depth) => ({ args: [depth], value: sightAt(depth) }));
+
+// grantValue(grants): takes a Stats "grant" object, not a scalar, so its
+// meaningful domain is what relicGrant() actually produces for every real
+// relic at every real depth — not synthetic Stats nobody would ever pass.
+// relicGrant is not one of the 12 flagged functions and is not dumped as
+// its own key; it is only this row's domain generator, exactly as
+// creatureStats already generates threatOf's stats above. One all-zero
+// Stats pins the plain-sum behaviour at its own boundary.
+const grantValueRows = [
+  ...ARMORY.flatMap((relic) =>
+    range(1, 9).map((depth) => {
+      const grants = relicGrant(relic, depth);
+      return { args: [grants], value: grantValue(grants) };
+    }),
+  ),
+  { args: [{ hp: 0, might: 0, wits: 0, speed: 0 }], value: grantValue({ hp: 0, might: 0, wits: 0, speed: 0 }) },
+];
+
+// valueOf(kind): every kind the dungeon can actually drop — every ARMORY
+// relic, every SCROLLS kind, every PROVISIONS kind — plus one kind that is
+// none of them, pinning the M9 economy's "an unknown kind is worth nothing
+// rather than throwing."
+const valueOfRows = [
+  ...ARMORY.map((r) => ({ args: [r.kind], value: valueOf(r.kind) })),
+  ...SCROLLS.map((s) => ({ args: [s.kind], value: valueOf(s.kind) })),
+  ...PROVISIONS.map((p) => ({ args: [p.kind], value: valueOf(p.kind) })),
+  { args: ['gremlin'], value: valueOf('gremlin') },
+];
+
+const draughtCeilingRows = DEPTH_DOMAIN.map((depth) => ({ args: [depth], value: draughtCeiling(depth) }));
+
+const smokeTurnsRows = DEPTH_DOMAIN.map((depth) => ({ args: [depth], value: smokeTurns(depth) }));
+
+// trapCount(depth, stretch): crossed the same way as spawnBudget, for the
+// same reason — both are floor-shaping rent functions of the same two axes.
+const trapCountRows = DEPTH_DOMAIN.flatMap((depth) =>
+  STRETCH_GUARD_DOMAIN.map((stretch) => ({ args: [depth, stretch], value: trapCount(depth, stretch) })),
+);
+
+const trapLevelAtRows = DEPTH_DOMAIN.map((depth) => ({ args: [depth], value: trapLevelAt(depth) }));
+
+const alarmTurnsRows = STRETCH_GUARD_DOMAIN.map((stretch) => ({ args: [stretch], value: alarmTurns(stretch) }));
+
 const tablesFixture = {
   damageDice: damageDiceRows,
   neededToHit: neededToHitRows,
@@ -212,6 +303,20 @@ const tablesFixture = {
   growthAt: growthAtRows,
   sizeStretch: sizeStretchRows,
   bountyStretch: bountyStretchRows,
+  // The reviewer-flagged completion (see the block above): every remaining
+  // exported numeric function Step 1's broad reading covers.
+  meanDamage: meanDamageRows,
+  braceWall: braceWallRows,
+  spawnBudget: spawnBudgetRows,
+  wardenLevel: wardenLevelRows,
+  sightAt: sightAtRows,
+  grantValue: grantValueRows,
+  valueOf: valueOfRows,
+  draughtCeiling: draughtCeilingRows,
+  smokeTurns: smokeTurnsRows,
+  trapCount: trapCountRows,
+  trapLevelAt: trapLevelAtRows,
+  alarmTurns: alarmTurnsRows,
   // Verbatim data, not sampled function rows: the bestiary, the verb pricing
   // table and the depth motifs are what the port must copy exactly rather
   // than retype and hope. mapgen.json's own cases were generated against
@@ -222,13 +327,31 @@ const tablesFixture = {
 };
 assertFinite('tables', tablesFixture);
 writeFileSync(`${OUT}/tables.json`, JSON.stringify(tablesFixture, null, 2));
+
+// A running count of genuinely non-integral numbers anywhere in the dump —
+// computed, not eyeballed, since the GDScript consumer's loader choice
+// depends on this number being right (see the task report).
+function countFractional(value: unknown): number {
+  if (typeof value === 'number') return Number.isInteger(value) ? 0 : 1;
+  if (Array.isArray(value)) return value.reduce((n: number, v) => n + countFractional(v), 0);
+  if (value !== null && typeof value === 'object') {
+    return Object.values(value).reduce((n: number, v) => n + countFractional(v), 0);
+  }
+  return 0;
+}
+
 console.log(
   `tables.json: damageDice=${damageDiceRows.length} neededToHit=${neededToHitRows.length} ` +
   `chanceIn20=${chanceIn20Rows.length} critFloor=${critFloorRows.length} threatOf=${threatOfRows.length} ` +
   `creatureStats=${creatureStatsRows.length} xpToReach=${xpToReachRows.length} levelForXp=${levelForXpRows.length} ` +
   `growthAt=${growthAtRows.length} sizeStretch=${sizeStretchRows.length} bountyStretch=${bountyStretchRows.length} ` +
+  `meanDamage=${meanDamageRows.length} braceWall=${braceWallRows.length} spawnBudget=${spawnBudgetRows.length} ` +
+  `wardenLevel=${wardenLevelRows.length} sightAt=${sightAtRows.length} grantValue=${grantValueRows.length} ` +
+  `valueOf=${valueOfRows.length} draughtCeiling=${draughtCeilingRows.length} smokeTurns=${smokeTurnsRows.length} ` +
+  `trapCount=${trapCountRows.length} trapLevelAt=${trapLevelAtRows.length} alarmTurns=${alarmTurnsRows.length} ` +
   `bestiary=${BESTIARY.length} verbThreat=${Object.keys(VERB_THREAT).length} motifs=${Object.keys(MOTIFS).length}`,
 );
+console.log(`tables.json: ${countFractional(tablesFixture)} genuinely fractional numbers`);
 
 // mapgen: a full generateMap() result for every (seed, size) pair 2.D1 will
 // replay. The fact that matters most is counterAfter — generation spends
