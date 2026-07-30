@@ -97,9 +97,12 @@ SimLog.append(head: Variant, draft: Dictionary) -> Dictionary
 SimLog.chain(head: Variant) -> Array                    # root-first
 # Phase 2 ADDS to this class: fold(), verify_chain()
 
-FixtureLoader.load_json(path: String) -> Variant         # integral floats -> int
-FixtureLoader.normalize(value: Variant) -> Variant
+FixtureLoader.load_json(path: String) -> Variant          # chain/state: fractional REFUSED
+FixtureLoader.load_table_json(path: String) -> Variant    # tables: fractional coefficients KEPT
+FixtureLoader.normalize(value: Variant, allow_fractional := false) -> Variant
 ```
+
+**Which loader, and why it matters.** Both fold integral floats to `int`, so an integer is always an `int`. They differ only on fractional numbers: `load_json` crashes (in a chain or state fixture a fraction is corruption), `load_table_json` keeps them. **`tables.json` genuinely contains nine fractional numbers** — `VERB_THREAT` prices verbs at 1.1–1.3, and `bountyStretch((S+1)/2)` returns 1.5 and 2.5. Those are the data; rounding them would hide the integer-division bug class their rows exist to catch. So **`tables.json` must be read with `load_table_json`**; every other fixture uses `load_json`. Nothing fractional ever reaches `SimCanonical`, because the state stores the integer *results* of these coefficients, never the coefficients.
 
 Files: `godot/sim/{rng,canonical,hashing,log}.gd`, `godot/test/support/fixture_loader.gd`.
 
@@ -539,7 +542,10 @@ static func dominates(a: Dictionary, b: Dictionary) -> bool
 
 ```gdscript
 func test_every_numeric_table_matches_the_reference() -> void:
-	var fx: Dictionary = FixtureLoader.load_json("res://test/fixtures/tables.json")
+	# load_table_json, NOT load_json: this file legitimately holds fractional
+	# coefficients (VERB_THREAT 1.1-1.3, bountyStretch 1.5/2.5) and the strict
+	# loader would crash on them. See the loader note in the delivered interfaces.
+	var fx: Dictionary = FixtureLoader.load_table_json("res://test/fixtures/tables.json")
 	for row: Dictionary in fx["neededToHit"]:
 		assert_eq(SimTables.needed_to_hit(row["args"][0], row["args"][1]), row["value"],
 			"needed_to_hit%s" % [row["args"]])
@@ -550,10 +556,24 @@ func test_every_numeric_table_matches_the_reference() -> void:
 
 
 func test_the_bestiary_is_the_reference_bestiary() -> void:
-	var fx: Dictionary = FixtureLoader.load_json("res://test/fixtures/tables.json")
-	assert_eq(SimCanonical.encode(SimTables.BESTIARY), SimCanonical.encode(fx["BESTIARY"]),
+	var fx: Dictionary = FixtureLoader.load_table_json("res://test/fixtures/tables.json")
+	assert_eq(SimCanonical.encode(SimTables.BESTIARY), SimCanonical.encode(fx["bestiary"]),
 		"a retyped table is a forked game")
 ```
+
+**The fixture's actual shape, as delivered by Task 2.B1** — use these key names, not the ones this plan guessed before the dump existed:
+
+```
+tables.json  = { damageDice, neededToHit, chanceIn20, critFloor, threatOf,
+                 creatureStats, xpToReach, levelForXp, growthAt, sizeStretch,
+                 bountyStretch,                       # each: [{args:[…], value:…}]
+                 bestiary, verbThreat, motifs }       # dumped verbatim
+```
+Row counts to assert against so a silently truncated dump is caught: `damageDice` 23, `neededToHit` 441, `chanceIn20` 31, `critFloor` 23, `threatOf` 168, `creatureStats` 84, `xpToReach` 42, `levelForXp` 84, `growthAt` 14, `sizeStretch` 7, `bountyStretch` 6, `bestiary` 8, `verbThreat` 8, `motifs` 3.
+
+**Two conventions inside this file, local to it and NOT the absent-key law:** a `null` in `args` means an omitted optional argument (only `threatOf`'s `kind` is optional), and a `null` in `value` means the reference returned `undefined` (`xpToReach` past the ladder, `creatureStats` for an unknown kind). No listed function ever legitimately receives or returns `null`, which is what makes the convention unambiguous.
+
+**`threatOf` is dumped three ways on identical stats** — priced (kind passed), unpriced (kind `null`), and with an unmapped kind string. The gap between the priced and unpriced rows for the same `(kind, level)` **is** the verb multiplier, made a fact in the fixture instead of a claim in a comment. Assert all three groups; the unmapped-kind group must price exactly like no kind at all.
 
 - [ ] **Step 3: RED. Step 4: Implement.** Watch integer division: `xpToReach`/`levelForXp`/`growthAt` use `Math.floor` semantics. **Step 5: GREEN.**
 
@@ -782,16 +802,30 @@ const MIN_EXIT_WALK := 8
 
 - [ ] **Step 2: Port the suites, and add the board-identity sweep** — the strongest test in Phase 2:
 
+**The fixture's actual shape, as delivered by Task 2.B1:**
+
+```
+mapgen.json = { tileConstants, defaultMotif,
+                cases: [ { seed, width, height, counterIn, drawsConsumed,
+                           result: { grid, start, rooms, counterAfter, story } } ] }
+```
+Six cases: seeds 17 / 99 / 12345 × 48×32 and 96×64. `counterIn` is 0 throughout; `drawsConsumed` is `counterAfter - counterIn`. All numbers are integers, so this file uses the strict `load_json`.
+
 ```gdscript
 func test_generates_the_reference_boards_tile_for_tile() -> void:
-	var fx: Array = FixtureLoader.load_json("res://test/fixtures/mapgen.json")
-	for case: Dictionary in fx:
+	var fx: Dictionary = FixtureLoader.load_json("res://test/fixtures/mapgen.json")
+	var cases: Array = fx["cases"]
+	assert_eq(cases.size(), 6, "all six recorded boards")
+	for c: Dictionary in cases:
+		var want: Dictionary = c["result"]
 		var got: Dictionary = SimMapgen.generate_map(...)   # per the case's recorded args
-		assert_eq(SimCanonical.encode(got["grid"]), SimCanonical.encode(case["grid"]),
-			"seed %d at %dx%d" % [case["seed"], case["width"], case["height"]])
-		assert_eq(got["counterAfter"], case["counterAfter"],
+		assert_eq(SimCanonical.encode(got["grid"]), SimCanonical.encode(want["grid"]),
+			"seed %d at %dx%d" % [c["seed"], c["width"], c["height"]])
+		assert_eq(got["counterAfter"], want["counterAfter"],
 			"the draw stream spent the same randomness")
 ```
+
+**`counterAfter` is the stronger assertion, not the weaker one.** Two different generators can coincidentally agree on a board while spending different randomness — and then diverge on the very next draw, somewhere far away and much later. Matching draw counts cannot be faked that way. If the board matches but `counterAfter` does not, the port is wrong even though it looks right; treat that as a hard failure, never a rounding issue.
 
 - [ ] **Step 3: RED. Step 4: Implement. Step 5: GREEN.** If a board diverges, bisect by counter: dump the TS draw sequence for that seed and compare draw-by-draw to find the first extra or missing draw. **This debugging is Opus work.**
 
