@@ -551,7 +551,7 @@ static func mimic_guises(depth: int) -> Array
 static func brace_wall(wits: int) -> int
 static func threat_of(stats: Dictionary, kind: String = "") -> int
 static func size_stretch(width: int, height: int) -> int
-static func bounty_stretch(stretch: int) -> int
+static func bounty_stretch(stretch: int) -> float   # float, NOT int — (S+1)/2 returns 1.5 and 2.5
 static func value_of(kind: String) -> int                           # M9: relic/scroll 2, provision 1, else 0
 static func dominates(a: Dictionary, b: Dictionary) -> bool
 ```
@@ -747,6 +747,8 @@ static func apply_resolved(state: Dictionary, outcomes: Array) -> Dictionary
 **This task is Opus's.** A silent drift here forks every chain. Sonnet may port the three test suites as a separate reviewed hand-off, but the reducer body is authored or line-reviewed by Opus.
 
 - [ ] **Step 1: Read `git show ts-baseline:src/core/apply.ts` in full — all 847 lines, all 25 event cases.** Do not port case-by-case from memory of the type names.
+
+- [ ] **Step 1c: Adopt the 9 tests Task 2.B3 deferred to you — all of `tests/core/leveling.test.ts`.** Every case in that file drives the reducer (XP is folded from kill history, and levelling heals to full), so none of it could be ported before `apply.gd` existed. It is named in `godot/test/unit/test_tables.gd`'s header. Nine cases; reconcile the count.
 
 - [ ] **Step 2: Port the three suites first.**
 
