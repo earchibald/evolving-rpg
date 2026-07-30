@@ -231,6 +231,44 @@ MUTATIONS: dict[str, tuple[str, str, str]] = {
         '\t\t\treturn _credit_kills(state, _drop_pockets(state, resolved), p["actorId"])',
         '\t\t\treturn _credit_kills(state, _drop_pockets(state, resolved), "nobody")',
     ),
+    # --- Task 2.C2: SimLog.fold / SimLog.verify_chain ---
+    # Drops the WORLD_INIT rng-counter exception outright, demanding
+    # continuity across every event including a fresh floor's own opening
+    # WORLD_INIT — the exact regression the exception's own comment names:
+    # "refused every saved run that had ever descended". The golden run
+    # never descends (its one WORLD_INIT is the root, already at counter 0,
+    # matching EMPTY_STATE — see the Task 2.C2 report), so this mutation is a
+    # confirmed NULL RESULT against golden-run.json specifically; it is
+    # caught by test_chain.gd's own two-floor descent fixture instead, which
+    # exists for exactly this reason.
+    "log-world-init-rng-exception": (
+        "godot/sim/log.gd",
+        '\t\tif event["type"] != "WORLD_INIT" and int(state["rngCounter"]) != int(event["rngCounter"]):',
+        '\t\tif int(state["rngCounter"]) != int(event["rngCounter"]):',
+    ),
+    # Flips verify_chain's sequence-gap comparison to its own opposite: fires
+    # on every event whose seq matches its position (i.e. every honest
+    # event) and stays silent on an actual gap. Breaks broadly on purpose —
+    # every sound chain this suite folds starts failing at its own seq 0 —
+    # which is what proves the check is load-bearing at all, not just for
+    # the one hand-forged gap it exists to catch.
+    "log-verify-chain-sequence-gap-flip": (
+        "godot/sim/log.gd",
+        '\t\tif int(event["seq"]) != expected_seq:',
+        '\t\tif int(event["seq"]) == expected_seq:',
+    ),
+    # Walks fold()'s pending list forward instead of backward, applying the
+    # event closest to HEAD first and the one closest to the root LAST.
+    # Since WORLD_INIT replaces state wholesale regardless of what it is
+    # handed, a WORLD_INIT applied last (as it now is, for any chain that
+    # fits in one pending batch) simply overwrites everything the other
+    # events did — the fold silently loses every event after its own
+    # WORLD_INIT rather than crashing.
+    "log-fold-apply-order-reversed": (
+        "godot/sim/log.gd",
+        "\tfor i in range(pending.size() - 1, -1, -1):",
+        "\tfor i in range(pending.size()):",
+    ),
     # --- Known EQUIVALENT REWRITES, kept as documentation, not as proofs. ---
     # Both produce identical bits: low bits survive two's-complement wrapping,
     # and u32's second line masks unconditionally. Running these should show NO
