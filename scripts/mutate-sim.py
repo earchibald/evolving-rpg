@@ -285,6 +285,58 @@ MUTATIONS: dict[str, tuple[str, str, str]] = {
         "\tvar a := (seed + imul32(counter, GAMMA)) & MASK32",
         "\tvar a := seed + imul32(counter, GAMMA)",
     ),
+    # --- Task 2.D2: reachability.gd ---
+    # Reorders reachable_from's neighbour loop to key a neighbour by idx and
+    # mark it seen BEFORE checking is_passable, instead of after — the exact
+    # bug class NIGHTLOG records in ai.ts's firstStep (a different function):
+    # an out-of-bounds or walled neighbour reads as reachable because it was
+    # keyed before its passability was known. MEASURED (not predicted): 5 of
+    # the file's 8 tests fail — test_finds_the_whole_open_grid (9 -> 15),
+    # test_does_not_cross_a_full_wall_so_a_sealed_room_stays_sealed (3 -> 11
+    # on both its assertions), test_does_not_move_diagonally (1 -> 5, on
+    # in-bounds WALL neighbours), test_reaches_every_floor_tile_by_index_not_
+    # just_the_right_count (12 -> 20), and test_a_neighbour_off_the_grid_
+    # edge_is_never_marked_reachable (1 -> 3, on out-of-bounds neighbours).
+    # The other 3 are unreached by this line: floor_count never calls this
+    # loop, and the not-standable-start case returns before reaching it.
+    "reach-bounds-before-key": (
+        "godot/sim/reachability.gd",
+        "\t\t\tif not SimGrid.is_passable(grid, nx, ny):\n"
+        "\t\t\t\tcontinue\n"
+        "\t\t\tvar i := SimGrid.idx(grid, nx, ny)\n"
+        "\t\t\tif seen.has(i):\n"
+        "\t\t\t\tcontinue\n"
+        "\t\t\tseen[i] = true\n"
+        "\t\t\tstack.push_back([nx, ny])",
+        "\t\t\tvar i := SimGrid.idx(grid, nx, ny)\n"
+        "\t\t\tif seen.has(i):\n"
+        "\t\t\t\tcontinue\n"
+        "\t\t\tseen[i] = true\n"
+        "\t\t\tif not SimGrid.is_passable(grid, nx, ny):\n"
+        "\t\t\t\tcontinue\n"
+        "\t\t\tstack.push_back([nx, ny])",
+    ),
+    # Drops north ([cx, cy - 1]) from the four-directional neighbour list —
+    # the total-connectivity mutation proof Task 2.D2's brief calls for by
+    # name. MEASURED: 2 of 8 tests fail — test_finds_the_whole_open_grid
+    # (9 -> 6; flooded from the grid's CENTRE, so the top row is only
+    # reachable by going north) and
+    # test_reaches_every_floor_tile_by_index_not_just_the_right_count
+    # (12 -> 8, with tiles 0-3 specifically missing; flooded from an
+    # INTERIOR tile for the same reason). The other 6 do NOT catch this
+    # mutation, including, surprisingly, the other reachableFrom cases —
+    # every one of them starts at the topmost row of its own reachable
+    # region (a grid corner, or the top of a walled-off single column), so
+    # nothing above the start ever needs a "north" step regardless of
+    # whether north exists. This is exactly why this test was rewritten
+    # mid-port to start at an interior tile rather than (0,0): the original
+    # corner-start version of this same test passed against this mutation
+    # and would have been a false negative on the very proof it exists for.
+    "reach-drop-a-direction": (
+        "godot/sim/reachability.gd",
+        "\t\t\t[cx + 1, cy], [cx - 1, cy], [cx, cy + 1], [cx, cy - 1],",
+        "\t\t\t[cx + 1, cy], [cx - 1, cy], [cx, cy + 1],",
+    ),
 }
 
 if len(sys.argv) > 1 and sys.argv[1] == "--list":

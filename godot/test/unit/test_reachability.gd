@@ -79,13 +79,18 @@ func test_counts_only_floor_tiles() -> void:
 ## -- beyond the ported suite --
 
 func test_reaches_every_floor_tile_by_index_not_just_the_right_count() -> void:
+	# Started at an INTERIOR tile (1,1), not a corner: with floor in all
+	# four directions from the start, every one of the four is load-bearing
+	# for full coverage. A corner start would let a dropped direction hide —
+	# starting at (0,0) in a grid whose rows only go DOWN from there, "north"
+	# is never needed regardless of whether it is implemented at all.
 	var tiles := [
 		F, F, F, F,
 		F, F, F, F,
 		F, F, F, F,
 	]
 	var grid := SimGrid.make(4, 3, tiles)
-	var reachable := SimReach.reachable_from(grid, 0, 0)
+	var reachable := SimReach.reachable_from(grid, 1, 1)
 	assert_eq(reachable.size(), tiles.size())
 	for i in range(tiles.size()):
 		assert_true(reachable.has(i), "tile %d must be reachable" % i)
